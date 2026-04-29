@@ -1,0 +1,20 @@
+/**
+ * Cloudflare-Deploy-Konfiguration für die Astro-Site Grünhainichen.
+ *
+ * Funktionsweise:
+ *  1. Workers-Builds führt `npm run build:gruenhainichen` aus
+ *  2. Astro produziert Static-Files in `apps/gruenhainichen/dist`
+ *  3. `wrangler deploy` lädt genau dieses Verzeichnis als statische Assets hoch
+ *  4. Der Worker selbst macht nichts ausser Asset-Serving
+ *
+ * Sobald `apps/verband/`, `apps/boernichen/` etc. existieren, bekommt jede App
+ * eine eigene wrangler-Datei und ein eigenes Cloudflare-Projekt.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vv-wildenstein-gruenhainichen",
+  "compatibility_date": "2025-04-01",
+  "assets": {
+    "directory": "./apps/gruenhainichen/dist"
+  }
+}
