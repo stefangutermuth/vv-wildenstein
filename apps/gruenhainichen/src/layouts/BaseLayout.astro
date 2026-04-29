@@ -12,6 +12,16 @@ import GrhHeaderCompact from '../components/global/GrhHeaderCompact.astro';
 import GrhMegaMenu from '../components/global/GrhMegaMenu.astro';
 import GrhFooter from '../components/global/GrhFooter.astro';
 import GrhLoader from '../components/global/GrhLoader.astro';
+import { getCmsSource } from '../lib/cms';
+
+// Diagnose: was hat der Build wirklich an ENV-Werten gesehen?
+const _diagSource = getCmsSource();
+const _diagViaImport = (import.meta.env.PUBLIC_CMS_SOURCE as string | undefined) ?? '';
+const _diagViaProcess =
+  (typeof process !== 'undefined' && process.env.PUBLIC_CMS_SOURCE) || '';
+const _diagAuthUserSet =
+  !!((typeof process !== 'undefined' && process.env.WP_AUTH_USER) ||
+     (import.meta.env.WP_AUTH_USER as string | undefined));
 
 interface Props {
   title?: string;
@@ -49,6 +59,11 @@ const orgJsonLd = {
 <!doctype html>
 <html lang="de">
   <head>
+    {/* Build-Diagnose — sichtbar im HTML-Source */}
+    <meta name="x-cms-diag-source" content={_diagSource} />
+    <meta name="x-cms-diag-import-meta" content={_diagViaImport} />
+    <meta name="x-cms-diag-process-env" content={_diagViaProcess} />
+    <meta name="x-cms-diag-auth-set" content={String(_diagAuthUserSet)} />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
