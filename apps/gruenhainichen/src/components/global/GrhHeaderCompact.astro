@@ -131,13 +131,10 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     margin-top: 4px;
   }
   @media (max-width: 720px) {
-    .grh-headerc__name { font-size: 2.15rem; font-stretch: 110%; }
-    .grh-headerc__sub  { font-size: 9px; letter-spacing: 0.2em; }
-  }
-  @media (max-width: 480px) {
-    .grh-headerc__brand { gap: var(--grh-space-3); }
-    .grh-headerc__name { font-size: var(--grh-fs-lg); font-stretch: 100%; }
-    .grh-headerc__sub { display: none; }
+    /* Mobile: nur das Wappen — Schriftzug + Subline ausblenden */
+    .grh-headerc__brandtext { display: none; }
+    .grh-headerc__inner { min-height: 88px; }
+    .grh-header--compact.is-scrolled .grh-headerc__inner { min-height: 72px; }
   }
 
   /* === Tools (Wetter + Social + Burger) ===================== */
@@ -162,8 +159,10 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     border-color: var(--grh-forest-900);
     transform: translateY(-1px);
   }
-  @media (max-width: 480px) {
-    .grh-headerc__social { width: 36px; height: 36px; }
+  /* Mobile: Wetter und Social aus — nur Burger bleibt */
+  @media (max-width: 720px) {
+    .grh-headerc__social,
+    .grh-headerc__weather { display: none; }
   }
 
   /* === Wetter-Pille ========================================= */

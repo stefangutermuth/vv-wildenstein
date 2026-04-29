@@ -3,13 +3,12 @@ import { getCollection } from 'astro:content';
 import GrhIcon from '../primitives/GrhIcon.astro';
 import GrhWappen from './GrhWappen.astro';
 import { navigation as nav } from '../../lib/navigation';
+import { getNews } from '../../lib/cms';
 
 // Inhalte für die linke dunkle Spalte
-const newsAll = (await getCollection('news')).sort(
-  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
-);
-const latestNews  = newsAll.filter((n) => n.data.category !== 'sperrung').slice(0, 3);
-const sperrungen  = newsAll.filter((n) => n.data.category === 'sperrung').slice(0, 2);
+const newsAll = await getNews();
+const latestNews  = newsAll.filter((n) => n.category !== 'sperrung').slice(0, 3);
+const sperrungen  = newsAll.filter((n) => n.category === 'sperrung').slice(0, 2);
 
 const upcomingEvents = (await getCollection('events'))
   .filter((e) => e.data.startDate.valueOf() >= Date.now() - 86400000)
@@ -29,7 +28,10 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
       <div class="grh-mega__brief-top">
         <a href="/" class="grh-mega__brief-brand" aria-label="Startseite">
           <GrhWappen size={64} class="grh-mega__brief-wappen" />
-          <span class="grh-mega__brief-name">Grünhainichen</span>
+          <span class="grh-mega__brief-brandtext">
+            <span class="grh-mega__brief-sub">Gemeinde</span>
+            <span class="grh-mega__brief-name">Grünhainichen</span>
+          </span>
         </a>
       </div>
 
@@ -40,9 +42,9 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
           <ul>
             {latestNews.map((n) => (
               <li>
-                <a href={`/neuigkeiten/${n.slug}`}>
-                  <time>{fmtShortDate.format(n.data.date)}</time>
-                  <span>{n.data.title}</span>
+                <a href={n.href}>
+                  <time>{fmtShortDate.format(n.date)}</time>
+                  <span>{n.title}</span>
                 </a>
               </li>
             ))}
@@ -62,9 +64,9 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
             <ul>
               {sperrungen.map((s) => (
                 <li>
-                  <a href={`/neuigkeiten/${s.slug}`}>
-                    <time>{fmtShortDate.format(s.data.date)}</time>
-                    <span>{s.data.title}</span>
+                  <a href={s.href}>
+                    <time>{fmtShortDate.format(s.date)}</time>
+                    <span>{s.title}</span>
                   </a>
                 </li>
               ))}
@@ -228,14 +230,23 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
     padding-bottom: var(--grh-space-5);
   }
   .grh-mega__brief-brand {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: var(--grh-space-3);
     text-decoration: none;
     color: inherit;
+    width: 100%;
   }
   .grh-mega__brief-wappen {
     filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.4));
+  }
+  .grh-mega__brief-brandtext {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    line-height: 1;
+    flex: 1;
+    min-width: 0;
   }
   .grh-mega__brief-name {
     font-family: var(--grh-font-display);
@@ -244,6 +255,27 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
     color: var(--grh-cream-50);
     letter-spacing: -0.02em;
     line-height: 1;
+  }
+  .grh-mega__brief-sub {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-500);
+    font-weight: 600;
+  }
+  /* Mobile: Schriftzug fliegt bis fast an den rechten Rand —
+     gleicher Abstand zum Rand wie das Wappen links (Brief-Padding). */
+  @media (max-width: 980px) {
+    .grh-mega__brief-name {
+      font-size: clamp(2.23rem, 10.24vw, 4.1rem);
+      letter-spacing: -0.03em;
+      font-stretch: 105%;
+    }
+    .grh-mega__brief-sub  { font-size: 11px; letter-spacing: 0.22em; }
+  }
+  @media (max-width: 480px) {
+    .grh-mega__brief-sub { font-size: 10px; letter-spacing: 0.2em; }
   }
 
   .grh-mega__brief-content {
@@ -629,6 +661,23 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
     transition: color var(--grh-dur-fast);
   }
   .grh-mega__foot a:hover { color: var(--grh-forest-900); }
+
+  /* === Mobile-Override: Brief-Block aufs Brand-Banner reduzieren ============
+     Steht am Ende, damit es die Default-Regeln (display:flex) sicher schlägt. */
+  @media (max-width: 980px) {
+    .grh-mega__brief {
+      padding: var(--grh-space-5) var(--grh-space-5);
+      gap: 0;
+      flex: 0 0 auto;
+      overflow: visible;
+    }
+    .grh-mega__brief-top {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .grh-mega__brief-content,
+    .grh-mega__brief-foot { display: none; }
+  }
 </style>
 
 <script>

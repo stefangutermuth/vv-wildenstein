@@ -16,16 +16,15 @@ import GrhButton from '../components/primitives/GrhButton.astro';
 import GrhIcon from '../components/primitives/GrhIcon.astro';
 
 import { getCurrentSeason } from '../lib/seasons';
+import { getNews } from '../lib/cms';
 
-const newsAll = (await getCollection('news')).sort(
-  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
-);
+const newsAll = await getNews();
 const featuredNews =
-  newsAll.find((n) => n.data.featured && n.data.category !== 'sperrung') ??
-  newsAll.find((n) => n.data.category !== 'sperrung') ??
+  newsAll.find((n) => n.featured && n.category !== 'sperrung') ??
+  newsAll.find((n) => n.category !== 'sperrung') ??
   newsAll[0];
-const otherNews = newsAll.filter((n) => n.slug !== featuredNews.slug && n.data.category !== 'sperrung').slice(0, 3);
-const sperrungen = newsAll.filter((n) => n.data.category === 'sperrung').slice(0, 3);
+const otherNews = newsAll.filter((n) => n.slug !== featuredNews.slug && n.category !== 'sperrung').slice(0, 3);
+const sperrungen = newsAll.filter((n) => n.category === 'sperrung').slice(0, 3);
 
 const categoryLabel: Record<string, string> = {
   verwaltung:    'Verwaltung',
@@ -261,21 +260,21 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
     <div class="grh-news2">
       {/* === Linke Hälfte: Editorial-News ============================ */}
       <div class="grh-news2__main">
-        <a class="grh-news2__feature" href={`/neuigkeiten/${featuredNews.slug}`}>
-          <div class="grh-news2__feature-media" data-cat={featuredNews.data.category}>
-            {featuredNews.data.image ? (
-              <img src={featuredNews.data.image} alt={featuredNews.data.title} loading="lazy" decoding="async" />
+        <a class="grh-news2__feature" href={featuredNews.href}>
+          <div class="grh-news2__feature-media" data-cat={featuredNews.category}>
+            {featuredNews.image ? (
+              <img src={featuredNews.image} alt={featuredNews.title} loading="lazy" decoding="async" />
             ) : (
               <div class="grh-news2__feature-fallback" aria-hidden="true"></div>
             )}
             <span class="grh-news2__badge grh-news2__badge--lg">
-              {categoryLabel[featuredNews.data.category]}
+              {categoryLabel[featuredNews.category]}
             </span>
           </div>
           <div class="grh-news2__feature-body">
-            <time class="grh-news2__date">{fmtDate.format(featuredNews.data.date)}</time>
-            <h3 class="grh-news2__feature-title">{featuredNews.data.title}</h3>
-            <p class="grh-news2__feature-excerpt">{featuredNews.data.excerpt}</p>
+            <time class="grh-news2__date">{fmtDate.format(featuredNews.date)}</time>
+            <h3 class="grh-news2__feature-title">{featuredNews.title}</h3>
+            <p class="grh-news2__feature-excerpt">{featuredNews.excerpt}</p>
             <span class="grh-news2__feature-cta">
               Weiterlesen <GrhIcon name="arrow-right" size={16} />
             </span>
@@ -285,18 +284,18 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
         {otherNews.length > 0 && (
           <div class="grh-news2__grid">
             {otherNews.map((n) => (
-              <a class="grh-news2__card" href={`/neuigkeiten/${n.slug}`}>
-                <div class="grh-news2__card-media" data-cat={n.data.category}>
-                  {n.data.image ? (
-                    <img src={n.data.image} alt={n.data.title} loading="lazy" decoding="async" />
+              <a class="grh-news2__card" href={n.href}>
+                <div class="grh-news2__card-media" data-cat={n.category}>
+                  {n.image ? (
+                    <img src={n.image} alt={n.title} loading="lazy" decoding="async" />
                   ) : (
                     <div class="grh-news2__card-fallback" aria-hidden="true"></div>
                   )}
-                  <span class="grh-news2__badge">{categoryLabel[n.data.category]}</span>
+                  <span class="grh-news2__badge">{categoryLabel[n.category]}</span>
                 </div>
                 <div class="grh-news2__card-body">
-                  <time class="grh-news2__date">{fmtDate.format(n.data.date)}</time>
-                  <h4 class="grh-news2__card-title">{n.data.title}</h4>
+                  <time class="grh-news2__date">{fmtDate.format(n.date)}</time>
+                  <h4 class="grh-news2__card-title">{n.title}</h4>
                 </div>
               </a>
             ))}
@@ -316,33 +315,33 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
         {sperrungen.length > 0 ? (
           <ul class="grh-news2__alert-list">
             {sperrungen.map((s) => (
-              <li class={`grh-news2__alert grh-news2__alert--${s.data.severity ?? 'info'}`}>
-                <a href={`/neuigkeiten/${s.slug}`} class="grh-news2__alert-link">
+              <li class={`grh-news2__alert grh-news2__alert--${s.severity ?? 'info'}`}>
+                <a href={s.href} class="grh-news2__alert-link">
                   <span class="grh-news2__alert-dot" aria-hidden="true"></span>
                   <div class="grh-news2__alert-body">
                     <span class="grh-news2__alert-tag">
-                      {severityLabel[s.data.severity ?? 'info']}
-                      {s.data.ortsteil && s.data.ortsteil !== 'alle' && (
-                        <> · {s.data.ortsteil.charAt(0).toUpperCase() + s.data.ortsteil.slice(1)}</>
+                      {severityLabel[s.severity ?? 'info']}
+                      {s.ortsteil && s.ortsteil !== 'alle' && (
+                        <> · {s.ortsteil.charAt(0).toUpperCase() + s.ortsteil.slice(1)}</>
                       )}
                     </span>
-                    <h4 class="grh-news2__alert-title">{s.data.title}</h4>
-                    {s.data.affectedStreet && (
+                    <h4 class="grh-news2__alert-title">{s.title}</h4>
+                    {s.affectedStreet && (
                       <p class="grh-news2__alert-meta">
                         <GrhIcon name="map-pin" size={11} />
-                        <span>{s.data.affectedStreet}</span>
+                        <span>{s.affectedStreet}</span>
                       </p>
                     )}
-                    {s.data.detour && (
+                    {s.detour && (
                       <p class="grh-news2__alert-meta">
                         <GrhIcon name="arrow-right" size={11} />
-                        <span>{s.data.detour}</span>
+                        <span>{s.detour}</span>
                       </p>
                     )}
-                    {s.data.validUntil && (
+                    {s.validUntil && (
                       <p class="grh-news2__alert-until">
                         <GrhIcon name="clock" size={11} />
-                        gültig bis {fmtUntil.format(s.data.validUntil)}
+                        gültig bis {fmtUntil.format(s.validUntil)}
                       </p>
                     )}
                   </div>
