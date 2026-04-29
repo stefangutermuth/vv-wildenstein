@@ -79,14 +79,16 @@
 
       {/* === Variante 2: Schachfigur (Borstendorf) ================== */}
       <svg class="grh-loader__svg grh-loader__svg--chess" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-        {/* Schachbrett-Grundfläche */}
+        {/* Schachbrett-Grundfläche (echte SVG-Datei) */}
         <g class="grh-loader__board">
-          <rect x="20"  y="170" width="30" height="20" fill="#13301F" />
-          <rect x="50"  y="170" width="30" height="20" fill="#FAF7F1" stroke="#13301F" />
-          <rect x="80"  y="170" width="30" height="20" fill="#13301F" />
-          <rect x="110" y="170" width="30" height="20" fill="#FAF7F1" stroke="#13301F" />
-          <rect x="140" y="170" width="30" height="20" fill="#13301F" />
-          <rect x="170" y="170" width="30" height="20" fill="#FAF7F1" stroke="#13301F" />
+          <image
+            href="/images/loader/schachbrett.svg"
+            x="35"
+            y="170"
+            width="150"
+            height="50"
+            preserveAspectRatio="xMidYMid meet"
+          />
         </g>
 
         {/* Springer-Silhouette, springt */}

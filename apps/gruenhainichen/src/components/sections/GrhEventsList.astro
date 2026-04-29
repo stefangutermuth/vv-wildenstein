@@ -39,41 +39,53 @@ const monShort = (d: Date) => fmtMon.format(d).replace('.', '');
   {single.length > 0 && (
     <section class="grh-evs__group">
       <header class="grh-evs__group-head">
-        <span class="grh-eyebrow">Tagesveranstaltungen</span>
-        <h3>Termine zum Vormerken.</h3>
+        <div class="grh-evs__group-head-text">
+          <span class="grh-eyebrow">Tagesveranstaltungen</span>
+          <h3>Termine zum Vormerken.</h3>
+        </div>
+        <div class="grh-evs__nav" aria-hidden="false">
+          <button type="button" class="grh-evs__nav-btn" data-grh-carousel-prev aria-label="Vorherige Termine">
+            <GrhIcon name="arrow-right" size={16} />
+          </button>
+          <button type="button" class="grh-evs__nav-btn" data-grh-carousel-next aria-label="Weitere Termine">
+            <GrhIcon name="arrow-right" size={16} />
+          </button>
+        </div>
       </header>
 
-      <ol class="grh-evs__day-grid">
-        {single.map((e) => (
-          <li class="grh-evs__day">
-            <a href={e.href ?? '#'} class="grh-evs__day-link">
-              <div class="grh-evs__poster">
-                {e.image ? (
-                  <img src={e.image} alt={`Plakat ${e.title}`} loading="lazy" decoding="async" />
-                ) : (
-                  <div class="grh-evs__poster-fallback" aria-hidden="true"></div>
-                )}
-                <div class="grh-evs__poster-overlay"></div>
-                <div class="grh-evs__poster-date">
-                  <span class="grh-evs__poster-day">{fmtDay.format(e.startDate)}</span>
-                  <span class="grh-evs__poster-mon">{monShort(e.startDate)}</span>
+      <div class="grh-evs__carousel" data-grh-carousel>
+        <ol class="grh-evs__day-track" data-grh-carousel-track>
+          {single.map((e) => (
+            <li class="grh-evs__day">
+              <a href={e.href ?? '#'} class="grh-evs__day-link">
+                <div class="grh-evs__poster">
+                  {e.image ? (
+                    <img src={e.image} alt={`Plakat ${e.title}`} loading="lazy" decoding="async" />
+                  ) : (
+                    <div class="grh-evs__poster-fallback" aria-hidden="true"></div>
+                  )}
+                  <div class="grh-evs__poster-overlay"></div>
+                  <div class="grh-evs__poster-date">
+                    <span class="grh-evs__poster-day">{fmtDay.format(e.startDate)}</span>
+                    <span class="grh-evs__poster-mon">{monShort(e.startDate)}</span>
+                  </div>
+                  {e.featured && <span class="grh-evs__poster-badge">Empfehlung</span>}
                 </div>
-                {e.featured && <span class="grh-evs__poster-badge">Empfehlung</span>}
-              </div>
 
-              <div class="grh-evs__day-body">
-                <h4>{e.title}</h4>
-                <p class="grh-evs__day-loc">
-                  <GrhIcon name="map-pin" size={12} />
-                  {e.ortsteil && <span>{ortsteilLabel[e.ortsteil]} ·</span>}
-                  <span>{e.location}</span>
-                </p>
-                <p class="grh-evs__day-teaser">{e.teaser}</p>
-              </div>
-            </a>
-          </li>
-        ))}
-      </ol>
+                <div class="grh-evs__day-body">
+                  <h4>{e.title}</h4>
+                  <p class="grh-evs__day-loc">
+                    <GrhIcon name="map-pin" size={12} />
+                    {e.ortsteil && <span>{ortsteilLabel[e.ortsteil]} ·</span>}
+                    <span>{e.location}</span>
+                  </p>
+                  <p class="grh-evs__day-teaser">{e.teaser}</p>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </div>
     </section>
   )}
 
@@ -135,11 +147,53 @@ const monShort = (d: Date) => fmtMon.format(d).replace('.', '');
 
   .grh-evs__group-head {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--grh-space-4);
     margin-bottom: var(--grh-space-6);
     padding-bottom: var(--grh-space-3);
     border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-evs__group-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Carousel-Pfeile rechts oben */
+  .grh-evs__nav {
+    display: flex;
+    gap: 8px;
+  }
+  .grh-evs__nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--grh-line);
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-800);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background var(--grh-dur-fast),
+                border-color var(--grh-dur-fast),
+                color var(--grh-dur-fast),
+                transform var(--grh-dur-fast),
+                opacity var(--grh-dur-fast);
+  }
+  .grh-evs__nav-btn:hover:not(:disabled) {
+    background: var(--grh-forest-800);
+    color: var(--grh-candle-500);
+    border-color: var(--grh-forest-800);
+  }
+  .grh-evs__nav-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .grh-evs__nav-btn[data-grh-carousel-prev] :global(svg) {
+    transform: rotate(180deg);
   }
   .grh-evs__group-head h3 {
     font-family: var(--grh-font-display);
@@ -190,18 +244,48 @@ const monShort = (d: Date) => fmtMon.format(d).replace('.', '');
   }
   .grh-evs__poster-badge--lg { font-size: 10px; padding: 5px 10px; }
 
-  /* === Tagesveranstaltungen — Plakat-Grid =================== */
-  .grh-evs__day-grid {
-    display: grid;
-    grid-template-columns: 1fr;
+  /* === Tagesveranstaltungen — horizontales Carousel ========= */
+  .grh-evs__carousel {
+    position: relative;
+    margin-inline: calc(var(--grh-space-5) * -1);
+  }
+  .grh-evs__day-track {
+    display: flex;
     gap: var(--grh-space-5);
     list-style: none;
-    padding: 0;
     margin: 0;
+    padding: var(--grh-space-2) var(--grh-space-5);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* sanftes Edge-Fade rechts/links, damit klar wird: hier geht's weiter */
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 24px,
+      #000 calc(100% - 24px),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 24px,
+      #000 calc(100% - 24px),
+      transparent 100%
+    );
   }
-  @media (min-width: 540px)  { .grh-evs__day-grid { grid-template-columns: 1fr 1fr; } }
-  @media (min-width: 980px)  { .grh-evs__day-grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (min-width: 1280px) { .grh-evs__day-grid { grid-template-columns: repeat(4, 1fr); } }
+  .grh-evs__day-track::-webkit-scrollbar { display: none; }
+  .grh-evs__day {
+    flex: 0 0 auto;
+    width: calc(100% - var(--grh-space-6));
+    max-width: 320px;
+    scroll-snap-align: start;
+  }
+  @media (min-width: 540px)  { .grh-evs__day { width: 280px; } }
+  @media (min-width: 980px)  { .grh-evs__day { width: 300px; } }
+  @media (min-width: 1280px) { .grh-evs__day { width: 320px; } }
 
   .grh-evs__day-link {
     display: flex;
@@ -387,3 +471,34 @@ const monShort = (d: Date) => fmtMon.format(d).replace('.', '');
   }
   .grh-evs__multi-link:hover .grh-evs__multi-cta { gap: 14px; color: var(--grh-moss-600); }
 </style>
+
+<script>
+  // Tagesveranstaltungen — Carousel-Steuerung (Pfeile + Disabled-Zustand)
+  document.querySelectorAll<HTMLElement>('[data-grh-carousel]').forEach((root) => {
+    const track = root.querySelector<HTMLElement>('[data-grh-carousel-track]');
+    if (!track) return;
+
+    const head = root.previousElementSibling;
+    const prev = head?.querySelector<HTMLButtonElement>('[data-grh-carousel-prev]');
+    const next = head?.querySelector<HTMLButtonElement>('[data-grh-carousel-next]');
+
+    const step = () => {
+      const card = track.querySelector<HTMLElement>('li');
+      if (!card) return 320;
+      const gap = parseFloat(getComputedStyle(track).columnGap || '24');
+      return card.offsetWidth + gap;
+    };
+
+    const updateButtons = () => {
+      const max = track.scrollWidth - track.clientWidth - 1;
+      if (prev) prev.disabled = track.scrollLeft <= 0;
+      if (next) next.disabled = track.scrollLeft >= max;
+    };
+
+    prev?.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+    next?.addEventListener('click', () => track.scrollBy({ left:  step(), behavior: 'smooth' }));
+    track.addEventListener('scroll', updateButtons, { passive: true });
+    window.addEventListener('resize', updateButtons);
+    updateButtons();
+  });
+</script>

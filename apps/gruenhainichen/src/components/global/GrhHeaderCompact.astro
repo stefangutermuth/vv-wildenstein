@@ -105,7 +105,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   .grh-headerc__brandtext {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 4px;
     line-height: 1;
     /* Subline definiert die Bezugsbreite — der Name skaliert darauf hin */
@@ -113,7 +113,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   }
   .grh-headerc__name {
     font-family: var(--grh-font-display);
-    font-size: clamp(2.52rem, 4.83vw, 3.36rem);
+    font-size: clamp(2.7rem, 5vw, 3.6rem);
     font-weight: 500;
     color: var(--grh-forest-900);
     letter-spacing: -0.03em;
@@ -131,7 +131,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     margin-top: 4px;
   }
   @media (max-width: 720px) {
-    .grh-headerc__name { font-size: 2rem; font-stretch: 110%; }
+    .grh-headerc__name { font-size: 2.15rem; font-stretch: 110%; }
     .grh-headerc__sub  { font-size: 9px; letter-spacing: 0.2em; }
   }
   @media (max-width: 480px) {
