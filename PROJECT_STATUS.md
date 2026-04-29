@@ -14,7 +14,7 @@ Diese Datei dokumentiert den Stand, alle getroffenen Entscheidungen, Zugänge (o
 | Production-Site Grünhainichen| https://vv-wildenstein-gruenhainichen.stefan-0ea.workers.dev               | **live** ✓    |
 | GitHub-Repo                  | https://github.com/stefangutermuth/vv-wildenstein                          | live          |
 | Cloudflare-Projekt           | `vv-wildenstein-gruenhainichen` im Account `f0ea2c6b50485053bbacc2c5963a6eb6` | live   |
-| Lokaler Dev-Server           | http://localhost:4327 (Port frei wählbar)                                  | nach `npm run dev` |
+| Lokaler Dev-Server           | http://localhost:4321 (Astro-Default; fällt auf 4322 zurück, falls belegt) | nach `npm run dev` |
 | Spätere Production-Domain    | gruenhainichen.com (DNS-Setup steht aus)                                   | offen         |
 
 ---

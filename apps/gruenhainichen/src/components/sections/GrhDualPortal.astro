@@ -35,8 +35,6 @@ const portals = [
 <div class="grh-dualportal">
   {portals.map((p) => (
     <a class={`grh-dualportal__card grh-dualportal__card--${p.side} grh-reveal`} href={p.href}>
-      <span class="grh-dualportal__num" aria-hidden="true">{p.num}</span>
-
       <div class="grh-dualportal__head">
         <div class="grh-dualportal__icon-wrap">
           <GrhIcon name={p.icon as any} size={32} />
