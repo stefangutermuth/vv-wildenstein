@@ -20,9 +20,25 @@ import { getCurrentSeason } from '../lib/seasons';
 const newsAll = (await getCollection('news')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
-const featuredNews = newsAll.find((n) => n.data.featured && n.data.category !== 'sperrung') ?? newsAll[0];
+const featuredNews =
+  newsAll.find((n) => n.data.featured && n.data.category !== 'sperrung') ??
+  newsAll.find((n) => n.data.category !== 'sperrung') ??
+  newsAll[0];
 const otherNews = newsAll.filter((n) => n.slug !== featuredNews.slug && n.data.category !== 'sperrung').slice(0, 3);
 const sperrungen = newsAll.filter((n) => n.data.category === 'sperrung').slice(0, 3);
+
+const categoryLabel: Record<string, string> = {
+  verwaltung:    'Verwaltung',
+  veranstaltung: 'Veranstaltung',
+  sperrung:      'Sperrung',
+  tourismus:     'Tourismus',
+};
+const severityLabel: Record<string, string> = {
+  info:  'Hinweis',
+  warn:  'Einschränkung',
+  alert: 'Vollsperrung',
+};
+const fmtUntil = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long' });
 
 const events = (await getCollection('events'))
   .sort((a, b) => a.data.startDate.valueOf() - b.data.startDate.valueOf())
@@ -242,51 +258,142 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
 
   {/* === 7) News + Sperrungen ============================================ */}
   <GrhSection tone="paper" padding="lg" eyebrow="Aktuelles" title="Was uns gerade bewegt." align="left">
-    <div class="grh-news">
-      {/* Feature */}
-      <a class="grh-news__feature" href={`/neuigkeiten/${featuredNews.slug}`}>
-        <div class="grh-news__feature-meta">
-          <span class="grh-eyebrow">{featuredNews.data.category}</span>
-          <time>{fmtDate.format(featuredNews.data.date)}</time>
-        </div>
-        <h3 class="grh-news__feature-title">{featuredNews.data.title}</h3>
-        <p>{featuredNews.data.excerpt}</p>
-        <span class="grh-news__feature-cta">Weiterlesen <GrhIcon name="arrow-right" size={16} /></span>
-      </a>
+    <div class="grh-news2">
+      {/* === Linke Hälfte: Editorial-News ============================ */}
+      <div class="grh-news2__main">
+        <a class="grh-news2__feature" href={`/neuigkeiten/${featuredNews.slug}`}>
+          <div class="grh-news2__feature-media" data-cat={featuredNews.data.category}>
+            {featuredNews.data.image ? (
+              <img src={featuredNews.data.image} alt={featuredNews.data.title} loading="lazy" decoding="async" />
+            ) : (
+              <div class="grh-news2__feature-fallback" aria-hidden="true"></div>
+            )}
+            <span class="grh-news2__badge grh-news2__badge--lg">
+              {categoryLabel[featuredNews.data.category]}
+            </span>
+          </div>
+          <div class="grh-news2__feature-body">
+            <time class="grh-news2__date">{fmtDate.format(featuredNews.data.date)}</time>
+            <h3 class="grh-news2__feature-title">{featuredNews.data.title}</h3>
+            <p class="grh-news2__feature-excerpt">{featuredNews.data.excerpt}</p>
+            <span class="grh-news2__feature-cta">
+              Weiterlesen <GrhIcon name="arrow-right" size={16} />
+            </span>
+          </div>
+        </a>
 
-      {/* Smaller news + sperrungs-rail */}
-      <div class="grh-news__rail">
-        <ul class="grh-news__list">
-          {otherNews.map((n) => (
+        {otherNews.length > 0 && (
+          <div class="grh-news2__grid">
+            {otherNews.map((n) => (
+              <a class="grh-news2__card" href={`/neuigkeiten/${n.slug}`}>
+                <div class="grh-news2__card-media" data-cat={n.data.category}>
+                  {n.data.image ? (
+                    <img src={n.data.image} alt={n.data.title} loading="lazy" decoding="async" />
+                  ) : (
+                    <div class="grh-news2__card-fallback" aria-hidden="true"></div>
+                  )}
+                  <span class="grh-news2__badge">{categoryLabel[n.data.category]}</span>
+                </div>
+                <div class="grh-news2__card-body">
+                  <time class="grh-news2__date">{fmtDate.format(n.data.date)}</time>
+                  <h4 class="grh-news2__card-title">{n.data.title}</h4>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* === Rechte Hälfte: Sperrungen + Service ===================== */}
+      <aside class="grh-news2__alerts">
+        <header class="grh-news2__alerts-head">
+          <span class="grh-eyebrow grh-news2__alerts-eyebrow">
+            <GrhIcon name="map-pin" size={12} /> Verkehr &amp; Sperrungen
+          </span>
+          <h3>Was unterwegs zählt.</h3>
+        </header>
+
+        {sperrungen.length > 0 ? (
+          <ul class="grh-news2__alert-list">
+            {sperrungen.map((s) => (
+              <li class={`grh-news2__alert grh-news2__alert--${s.data.severity ?? 'info'}`}>
+                <a href={`/neuigkeiten/${s.slug}`} class="grh-news2__alert-link">
+                  <span class="grh-news2__alert-dot" aria-hidden="true"></span>
+                  <div class="grh-news2__alert-body">
+                    <span class="grh-news2__alert-tag">
+                      {severityLabel[s.data.severity ?? 'info']}
+                      {s.data.ortsteil && s.data.ortsteil !== 'alle' && (
+                        <> · {s.data.ortsteil.charAt(0).toUpperCase() + s.data.ortsteil.slice(1)}</>
+                      )}
+                    </span>
+                    <h4 class="grh-news2__alert-title">{s.data.title}</h4>
+                    {s.data.affectedStreet && (
+                      <p class="grh-news2__alert-meta">
+                        <GrhIcon name="map-pin" size={11} />
+                        <span>{s.data.affectedStreet}</span>
+                      </p>
+                    )}
+                    {s.data.detour && (
+                      <p class="grh-news2__alert-meta">
+                        <GrhIcon name="arrow-right" size={11} />
+                        <span>{s.data.detour}</span>
+                      </p>
+                    )}
+                    {s.data.validUntil && (
+                      <p class="grh-news2__alert-until">
+                        <GrhIcon name="clock" size={11} />
+                        gültig bis {fmtUntil.format(s.data.validUntil)}
+                      </p>
+                    )}
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="grh-news2__alert-empty">Aktuell keine Sperrungen gemeldet.</p>
+        )}
+
+        <a href="/neuigkeiten/sperrungen" class="grh-news2__alerts-more">
+          Alle Verkehrsmeldungen <GrhIcon name="arrow-right" size={12} />
+        </a>
+
+        <div class="grh-news2__service">
+          <h4 class="grh-news2__service-title">Service &amp; Notfall</h4>
+          <ul class="grh-news2__service-list">
             <li>
-              <a href={`/neuigkeiten/${n.slug}`}>
-                <time>{fmtDate.format(n.data.date)}</time>
-                <h4>{n.data.title}</h4>
-                <span class="grh-news__list-cat">{n.data.category}</span>
+              <a href="/leben/maengelmelder">
+                <span class="grh-news2__service-icon"><GrhIcon name="map-pin" size={14} /></span>
+                <span class="grh-news2__service-label">
+                  <strong>Schaden melden</strong>
+                  <em>Schlagloch, Lampe, Müll</em>
+                </span>
+                <GrhIcon name="arrow-right" size={12} />
               </a>
             </li>
-          ))}
-        </ul>
-
-        <aside class="grh-news__sper">
-          <h4><GrhIcon name="map-pin" size={14} /> Sperrungen &amp; Verkehrsinfos</h4>
-          {sperrungen.length > 0 ? (
-            <ul>
-              {sperrungen.map((s) => (
-                <li>
-                  <a href={`/neuigkeiten/${s.slug}`}>
-                    <time>{fmtDate.format(s.data.date)}</time>
-                    <span>{s.data.title}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Aktuell keine Sperrungen gemeldet.</p>
-          )}
-          <a href="/neuigkeiten/sperrungen" class="grh-news__sper-link">Alle Verkehrsmeldungen →</a>
-        </aside>
-      </div>
+            <li>
+              <a href="tel:+4937294170-0">
+                <span class="grh-news2__service-icon"><GrhIcon name="phone" size={14} /></span>
+                <span class="grh-news2__service-label">
+                  <strong>Bauhof &amp; Bürgerbüro</strong>
+                  <em>037294 / 170-0</em>
+                </span>
+                <GrhIcon name="arrow-right" size={12} />
+              </a>
+            </li>
+            <li>
+              <a href="tel:112">
+                <span class="grh-news2__service-icon grh-news2__service-icon--alert"><GrhIcon name="phone" size={14} /></span>
+                <span class="grh-news2__service-label">
+                  <strong>Notruf 112</strong>
+                  <em>Feuerwehr &amp; Rettungsdienst</em>
+                </span>
+                <GrhIcon name="arrow-right" size={12} />
+              </a>
+            </li>
+          </ul>
+        </div>
+      </aside>
     </div>
   </GrhSection>
 
@@ -450,112 +557,401 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
   }
   .grh-manifest__sig strong { font-weight: 600; }
 
-  /* === News ================================================== */
-  .grh-news {
+  /* === News v2 — Editorial-Spread + Alert-Spalte ============= */
+  .grh-news2 {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--grh-space-7);
   }
-  @media (min-width: 980px) { .grh-news { grid-template-columns: 1.3fr 1fr; gap: var(--grh-space-7); } }
+  @media (min-width: 1024px) {
+    .grh-news2 {
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+      gap: var(--grh-space-8);
+    }
+  }
 
-  .grh-news__feature {
+  .grh-news2__main {
     display: flex;
     flex-direction: column;
-    gap: var(--grh-space-4);
+    gap: var(--grh-space-6);
+    min-width: 0;
+  }
+
+  /* Feature-Card — groß, Bild oben/links ====================== */
+  .grh-news2__feature {
+    display: grid;
+    grid-template-columns: 1fr;
     text-decoration: none;
     color: inherit;
     background: var(--grh-cream-50);
-    padding: var(--grh-space-7);
     border: 1px solid var(--grh-line);
-    border-radius: 2px;
+    border-radius: var(--grh-radius-lg);
+    overflow: hidden;
+    transition: transform var(--grh-dur-base), box-shadow var(--grh-dur-base), border-color var(--grh-dur-base);
+  }
+  @media (min-width: 720px) {
+    .grh-news2__feature { grid-template-columns: 1.1fr 1fr; }
+  }
+  .grh-news2__feature:hover {
+    transform: translateY(-3px);
+    border-color: var(--grh-candle-500);
     box-shadow: var(--grh-shadow-md);
-    transition: transform var(--grh-dur-base);
   }
-  .grh-news__feature:hover { transform: translateY(-3px); }
-  .grh-news__feature-meta {
-    display: flex; gap: var(--grh-space-4); align-items: center;
-    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: var(--grh-stone-400);
+
+  .grh-news2__feature-media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--grh-paper-100);
   }
-  .grh-news__feature-title {
+  @media (min-width: 720px) {
+    .grh-news2__feature-media { aspect-ratio: auto; min-height: 280px; }
+  }
+  .grh-news2__feature-media img,
+  .grh-news2__card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1s var(--grh-ease-out);
+  }
+  .grh-news2__feature:hover .grh-news2__feature-media img,
+  .grh-news2__card:hover .grh-news2__card-media img { transform: scale(1.04); }
+
+  .grh-news2__feature-fallback,
+  .grh-news2__card-fallback {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #2A6B43, #13301F);
+  }
+  /* Kategoriespezifische Fallback-Tints */
+  [data-cat="tourismus"] .grh-news2__card-fallback,
+  [data-cat="tourismus"] .grh-news2__feature-fallback {
+    background: linear-gradient(160deg, #5BAE78, #2A6B43);
+  }
+  [data-cat="verwaltung"] .grh-news2__card-fallback,
+  [data-cat="verwaltung"] .grh-news2__feature-fallback {
+    background: linear-gradient(160deg, #4A6B7A, #2C4250);
+  }
+  [data-cat="veranstaltung"] .grh-news2__card-fallback,
+  [data-cat="veranstaltung"] .grh-news2__feature-fallback {
+    background: linear-gradient(160deg, #C9974A, #8C6224);
+  }
+
+  .grh-news2__badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: var(--grh-radius-pill);
+    box-shadow: var(--grh-shadow-sm);
+  }
+  .grh-news2__badge--lg { font-size: 11px; padding: 6px 12px; }
+
+  .grh-news2__feature-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    padding: var(--grh-space-6);
+  }
+  .grh-news2__date {
     font-family: var(--grh-font-display);
-    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-moss-600);
+  }
+  .grh-news2__feature-title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.5rem, 2.6vw, 2.2rem);
     line-height: 1.15;
     color: var(--grh-forest-900);
     letter-spacing: -0.02em;
+    margin: 0;
   }
-  .grh-news__feature p {
+  .grh-news2__feature-excerpt {
     font-size: var(--grh-fs-md);
-    line-height: 1.7;
+    line-height: 1.65;
     color: var(--grh-stone-700);
+    margin: 0;
     flex: 1;
   }
-  .grh-news__feature-cta {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-weight: 600; color: var(--grh-forest-800);
+  .grh-news2__feature-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
     border-bottom: 1.5px solid var(--grh-candle-500);
-    padding-bottom: 4px; width: fit-content;
-    text-transform: uppercase; font-size: 11px; letter-spacing: 0.2em;
+    padding-bottom: 4px;
+    width: fit-content;
+    margin-top: var(--grh-space-2);
+    transition: gap var(--grh-dur-base), color var(--grh-dur-base);
+  }
+  .grh-news2__feature:hover .grh-news2__feature-cta {
+    gap: 14px;
+    color: var(--grh-moss-600);
   }
 
-  .grh-news__rail { display: flex; flex-direction: column; gap: var(--grh-space-5); }
-
-  .grh-news__list {
-    display: flex; flex-direction: column;
-    border-top: 1px solid var(--grh-line);
-  }
-  .grh-news__list li { border-bottom: 1px solid var(--grh-line); }
-  .grh-news__list a {
+  /* 3-Card-Grid unter dem Feature ============================ */
+  .grh-news2__grid {
     display: grid;
-    grid-template-columns: 80px 1fr auto;
-    gap: var(--grh-space-3);
-    align-items: baseline;
-    padding: var(--grh-space-3) 0;
-    text-decoration: none; color: inherit;
-    transition: padding var(--grh-dur-fast);
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
   }
-  .grh-news__list a:hover { padding-left: var(--grh-space-2); color: var(--grh-forest-800); }
-  .grh-news__list time {
-    font-family: var(--grh-font-display); font-style: italic;
-    font-size: var(--grh-fs-sm); color: var(--grh-moss-600);
+  @media (min-width: 540px)  { .grh-news2__grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1024px) { .grh-news2__grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .grh-news2__card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    transition: transform var(--grh-dur-base), border-color var(--grh-dur-base), box-shadow var(--grh-dur-base);
   }
-  .grh-news__list h4 {
+  .grh-news2__card:hover {
+    transform: translateY(-3px);
+    border-color: var(--grh-candle-500);
+    box-shadow: var(--grh-shadow-sm);
+  }
+  .grh-news2__card-media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--grh-paper-100);
+  }
+  .grh-news2__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: var(--grh-space-4);
+  }
+  .grh-news2__card-title {
     font-family: var(--grh-font-display);
     font-size: var(--grh-fs-md);
-    color: var(--grh-forest-900);
     line-height: 1.25;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+    margin: 0;
     font-weight: 500;
   }
-  .grh-news__list-cat {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
-    color: var(--grh-stone-400);
+
+  /* === Alerts/Sperrungen-Spalte ============================== */
+  .grh-news2__alerts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-5);
+    padding: var(--grh-space-6);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-top: 4px solid var(--grh-alert-600);
+    border-radius: var(--grh-radius-md);
+    align-self: start;
+  }
+  .grh-news2__alerts-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: var(--grh-space-3);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-news2__alerts-eyebrow {
+    color: var(--grh-alert-600) !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+  }
+  .grh-news2__alerts-head h3 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.3rem, 2vw, 1.7rem);
+    line-height: 1.2;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+    margin: 0;
   }
 
-  .grh-news__sper {
-    background: var(--grh-cream-50);
-    border-left: 3px solid var(--grh-alert-600);
-    padding: var(--grh-space-5);
-    border-radius: 2px;
+  .grh-news2__alert-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
-  .grh-news__sper h4 {
-    font-family: var(--grh-font-body);
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em;
+  .grh-news2__alert {
+    background: var(--grh-paper-100);
+    border-radius: var(--grh-radius-sm, 6px);
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-news2__alert:hover { background: var(--grh-cream-50); }
+
+  .grh-news2__alert-link {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--grh-space-3);
+    align-items: start;
+    padding: var(--grh-space-4);
+    text-decoration: none;
+    color: inherit;
+  }
+  .grh-news2__alert-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.6);
+  }
+  .grh-news2__alert--info  .grh-news2__alert-dot { background: var(--grh-moss-600); }
+  .grh-news2__alert--warn  .grh-news2__alert-dot { background: #C9974A; }
+  .grh-news2__alert--alert .grh-news2__alert-dot {
+    background: var(--grh-alert-600);
+    animation: grh-news2-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes grh-news2-pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.6); }
+    50%      { box-shadow: 0 0 0 4px rgba(176, 47, 47, 0.25); }
+  }
+
+  .grh-news2__alert-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .grh-news2__alert-tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+  }
+  .grh-news2__alert--alert .grh-news2__alert-tag { color: var(--grh-alert-600); }
+  .grh-news2__alert-title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    line-height: 1.25;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+    margin: 0;
+    font-weight: 500;
+  }
+  .grh-news2__alert-meta,
+  .grh-news2__alert-until {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--grh-fs-sm);
+    line-height: 1.45;
+    color: var(--grh-stone-700);
+    margin: 0;
+  }
+  .grh-news2__alert-until {
+    margin-top: 4px;
+    color: var(--grh-moss-600);
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .grh-news2__alert-empty {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .grh-news2__alerts-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     color: var(--grh-alert-600);
-    margin-bottom: var(--grh-space-3);
-    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    text-decoration: none;
+    align-self: flex-start;
+    transition: gap var(--grh-dur-base);
   }
-  .grh-news__sper ul { display: flex; flex-direction: column; gap: var(--grh-space-2); }
-  .grh-news__sper a {
-    display: flex; flex-direction: column; gap: 2px;
-    text-decoration: none; color: inherit;
-    font-size: var(--grh-fs-sm); line-height: 1.45;
+  .grh-news2__alerts-more:hover { gap: 12px; }
+
+  /* Service & Notfall-Box innerhalb der Alert-Spalte ========== */
+  .grh-news2__service {
+    border-top: 1px solid var(--grh-line);
+    padding-top: var(--grh-space-4);
+    margin-top: var(--grh-space-2);
   }
-  .grh-news__sper a:hover { color: var(--grh-alert-600); }
-  .grh-news__sper time { font-size: 11px; color: var(--grh-stone-400); letter-spacing: 0.05em; }
-  .grh-news__sper-link {
-    display: inline-block; margin-top: var(--grh-space-4);
-    color: var(--grh-alert-600); font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;
+  .grh-news2__service-title {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-news2__service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .grh-news2__service-list a {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--grh-space-3);
+    align-items: center;
+    padding: 10px 12px;
+    text-decoration: none;
+    color: inherit;
+    border-radius: var(--grh-radius-sm, 6px);
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-news2__service-list a:hover {
+    background: var(--grh-paper-100);
+  }
+  .grh-news2__service-icon {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-800);
+    flex-shrink: 0;
+  }
+  .grh-news2__service-icon--alert {
+    background: rgba(176, 47, 47, 0.12);
+    color: var(--grh-alert-600);
+  }
+  .grh-news2__service-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.3;
+    min-width: 0;
+  }
+  .grh-news2__service-label strong {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-forest-900);
+    font-weight: 600;
+  }
+  .grh-news2__service-label em {
+    font-style: normal;
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    letter-spacing: 0.04em;
   }
 
   /* === Vereine & Leben ======================================= */

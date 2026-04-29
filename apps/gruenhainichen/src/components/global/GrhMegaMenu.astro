@@ -8,7 +8,7 @@ import { navigation as nav } from '../../lib/navigation';
 const newsAll = (await getCollection('news')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
-const latestNews  = newsAll.filter((n) => n.data.category !== 'sperrung').slice(0, 2);
+const latestNews  = newsAll.filter((n) => n.data.category !== 'sperrung').slice(0, 3);
 const sperrungen  = newsAll.filter((n) => n.data.category === 'sperrung').slice(0, 2);
 
 const upcomingEvents = (await getCollection('events'))
@@ -34,6 +34,24 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
       </div>
 
       <div class="grh-mega__brief-content">
+        {/* Aktuelle News */}
+        <section class="grh-mega__brief-section">
+          <h3>Aktuelles</h3>
+          <ul>
+            {latestNews.map((n) => (
+              <li>
+                <a href={`/neuigkeiten/${n.slug}`}>
+                  <time>{fmtShortDate.format(n.data.date)}</time>
+                  <span>{n.data.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <a class="grh-mega__brief-more" href="/neuigkeiten">
+            Alle Neuigkeiten <GrhIcon name="arrow-right" size={12} />
+          </a>
+        </section>
+
         {/* Sperrungen — falls aktuell */}
         {sperrungen.length > 0 && (
           <section class="grh-mega__brief-section grh-mega__brief-section--alert">
@@ -53,24 +71,6 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
             </ul>
           </section>
         )}
-
-        {/* Aktuelle News */}
-        <section class="grh-mega__brief-section">
-          <h3>Aktuelles</h3>
-          <ul>
-            {latestNews.map((n) => (
-              <li>
-                <a href={`/neuigkeiten/${n.slug}`}>
-                  <time>{fmtShortDate.format(n.data.date)}</time>
-                  <span>{n.data.title}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-          <a class="grh-mega__brief-more" href="/neuigkeiten">
-            Alle Neuigkeiten <GrhIcon name="arrow-right" size={12} />
-          </a>
-        </section>
 
         {/* Demnächst */}
         {upcomingEvents.length > 0 && (

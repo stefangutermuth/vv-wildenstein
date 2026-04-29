@@ -12,6 +12,11 @@ const news = defineCollection({
     image: z.string().optional(),
     excerpt: z.string(),
     featured: z.boolean().default(false),
+    // Optional, nur für category === 'sperrung' relevant
+    affectedStreet: z.string().optional(),
+    detour: z.string().optional(),
+    validUntil: z.date().optional(),
+    severity: z.enum(['info', 'warn', 'alert']).optional(),
   }),
 });
 
