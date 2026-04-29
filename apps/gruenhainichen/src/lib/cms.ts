@@ -35,7 +35,11 @@ export interface NewsItem {
   severity?: Severity;
 }
 
-const SOURCE = (import.meta.env.PUBLIC_CMS_SOURCE ?? 'local').toLowerCase();
+const SOURCE = (
+  import.meta.env.PUBLIC_CMS_SOURCE ??
+  (typeof process !== 'undefined' ? process.env.PUBLIC_CMS_SOURCE : undefined) ??
+  'local'
+).toLowerCase();
 
 export async function getNews(): Promise<NewsItem[]> {
   if (SOURCE === 'wordpress') {

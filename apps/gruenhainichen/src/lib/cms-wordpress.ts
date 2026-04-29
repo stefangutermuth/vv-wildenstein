@@ -16,15 +16,25 @@ import type { NewsItem, NewsCategory, Ortsteil } from './cms';
 
 const WP_BASE =
   (import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env.PUBLIC_WP_API_BASE : undefined) ??
   'https://vv-wildenstein.com/wp-json/wp/v2';
 
 /**
  * Build-Time Basic-Auth (für die Media-API, die in dieser Installation
  * für anonyme Aufrufer gesperrt ist). Werte kommen aus Server-Env-Variablen,
  * die NICHT mit PUBLIC_ präfixiert sind und damit nie ans Frontend gelangen.
+ *
+ * In Cloudflare Workers Builds sind ENV-Variablen nur via process.env
+ * verfügbar, nicht über Astro's import.meta.env. Lokal beides möglich.
  */
-const WP_AUTH_USER = (import.meta.env.WP_AUTH_USER as string | undefined) ?? '';
-const WP_AUTH_PASS = (import.meta.env.WP_AUTH_PASS as string | undefined) ?? '';
+const WP_AUTH_USER =
+  (typeof process !== 'undefined' ? process.env.WP_AUTH_USER : undefined) ??
+  (import.meta.env.WP_AUTH_USER as string | undefined) ??
+  '';
+const WP_AUTH_PASS =
+  (typeof process !== 'undefined' ? process.env.WP_AUTH_PASS : undefined) ??
+  (import.meta.env.WP_AUTH_PASS as string | undefined) ??
+  '';
 
 function buildAuthHeader(): Record<string, string> {
   if (!WP_AUTH_USER || !WP_AUTH_PASS) return {};
