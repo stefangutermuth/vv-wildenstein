@@ -17,19 +17,20 @@ vv-wildenstein/
 
 ## Aktueller Stand
 
-**Phase 1 — gestalterischer Master** (live):
+**Phase 1 — gestalterischer Master** (live ✓):
 - `apps/gruenhainichen/` ist ein vollständiger Astro-Build mit dem editorialen Design-System
-- Inhalte aktuell als Astro Content Collections (Markdown). Wechsel auf WordPress-API kommt in Phase 2.
+- UX-Feinschliff abgeschlossen (Mobile-Header, Mega-Menü, Loader mit zwei singenden Engeln, etc.)
 
-**Phase 2 — Headless WordPress** (geplant):
-- Eine einzige WP-Instanz auf `vv-wildenstein.com/wp-admin` als Content-Backbone
-- Custom Post Types `news`, `event`, `ortsteil`, `meldung`
-- Standort-Taxonomie: jeder Eintrag wird mit den passenden Standorten getaggt
-- Astro-Frontends ziehen ihren gefilterten Anteil per REST/GraphQL
+**Phase 2 — Headless WordPress** (live ✓):
+- WP-Instanz auf `vv-wildenstein.com` ist Content-Backbone
+- News + Sperrungen + Bilder werden beim Build aus REST gefetched
+- Standort-Filter über WP-Categories (`gruenhainichen`, `borstendorf`, `waldkirchen-*`)
+- CMS-Adapter (`apps/gruenhainichen/src/lib/cms.ts`) schaltet via ENV zwischen `local` und `wordpress`
+- Events kommen weiterhin aus lokalen Markdown-Dateien (per iCal-Import vorbefüllt) — späteres Custom-WP-Plugin wird das übernehmen
 
-**Phase 3 — alle Subsites live**:
+**Phase 3 — alle Subsites** (geplant):
 - Design-System aus `apps/gruenhainichen/` in `packages/design-system/` extrahieren
-- `apps/verband/` und `apps/boernichen/` übernehmen das gleiche System mit eigenem Wappen und Bildmaterial
+- `apps/verband/`, `apps/boernichen/`, `apps/maengelmelder/` (PWA) übernehmen das System
 
 ## Setup
 
@@ -37,9 +38,14 @@ vv-wildenstein/
 # Einmalig nach Clone
 npm install
 
-# Dev-Server für Grünhainichen
+# Dev-Server mit lokalen Markdown-News (Default)
 npm run dev
 # → http://localhost:4321
+
+# Dev-Server mit Live-WP-Inhalten:
+cp apps/gruenhainichen/.env.example apps/gruenhainichen/.env.local
+# WP_AUTH_USER + WP_AUTH_PASS dort eintragen, dann
+npm run dev
 
 # Production-Build
 npm run build:gruenhainichen
