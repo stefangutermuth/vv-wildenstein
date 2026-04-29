@@ -1,0 +1,803 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+import GrhHero from '../components/hero/GrhHero.astro';
+import GrhSection from '../components/sections/GrhSection.astro';
+import GrhDualPortal from '../components/sections/GrhDualPortal.astro';
+import GrhTraditionShowcase from '../components/sections/GrhTraditionShowcase.astro';
+import GrhTourismGrid from '../components/sections/GrhTourismGrid.astro';
+import GrhOrtsteilSpread from '../components/sections/GrhOrtsteilSpread.astro';
+import GrhEventsList from '../components/sections/GrhEventsList.astro';
+
+import GrhNewsCard from '../components/cards/GrhNewsCard.astro';
+
+import GrhButton from '../components/primitives/GrhButton.astro';
+import GrhIcon from '../components/primitives/GrhIcon.astro';
+
+import { getCurrentSeason } from '../lib/seasons';
+
+const newsAll = (await getCollection('news')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const featuredNews = newsAll.find((n) => n.data.featured && n.data.category !== 'sperrung') ?? newsAll[0];
+const otherNews = newsAll.filter((n) => n.slug !== featuredNews.slug && n.data.category !== 'sperrung').slice(0, 3);
+const sperrungen = newsAll.filter((n) => n.data.category === 'sperrung').slice(0, 3);
+
+const events = (await getCollection('events'))
+  .sort((a, b) => a.data.startDate.valueOf() - b.data.startDate.valueOf())
+  .slice(0, 8)
+  .map((e) => ({
+    title: e.data.title,
+    startDate: e.data.startDate,
+    endDate: e.data.endDate,
+    location: e.data.location,
+    ortsteil: e.data.ortsteil,
+    teaser: e.data.teaser,
+    featured: e.data.featured,
+    image: e.data.image,
+    href: `/veranstaltungen/${e.slug}`,
+  }));
+
+const ortsteile = (await getCollection('ortsteile')).sort((a, b) => a.data.order - b.data.order);
+const ortsteilSpread = ortsteile.map((o, i) => ({
+  index: i + 1,
+  name: o.data.name,
+  key: o.data.key,
+  tagline: o.data.tagline,
+  description: o.data.description,
+  image: o.data.image,
+  href: `/gemeinde/ortsteile/${o.data.key}`,
+}));
+
+const season = getCurrentSeason();
+const showAdventSection = season === 'advent';
+
+const featured = showAdventSection
+  ? {
+      eyebrow: 'Advent',
+      title: 'Lebendiger Adventskalender',
+      subtitle: 'Jeden Abend ein neues Türchen — ein Lichtermeer aus Schwibbögen, Engeln und Bergmann.',
+      ctas: [{ label: 'Programm 2026', href: '/leben/lebendiger-adventskalender', variant: 'primary' as const }],
+    }
+  : {
+      eyebrow: 'EURORANDO 2026',
+      title: 'Zwei Touren auf dem Zschopautalweg',
+      subtitle: '23. & 27. September · Anmeldung offen',
+      logo: '/images/logos/eurorando-2026-white.webp',
+      logoAlt: 'EURORANDO 2026',
+      ctas: [
+        { label: 'Anmelden', href: '/veranstaltungen/eurorando-2026', variant: 'primary' as const },
+      ],
+    };
+
+const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+---
+<BaseLayout
+  header="compact"
+  title="Gemeinde Grünhainichen · Borstendorf · Waldkirchen im Erzgebirge"
+  description="Offizielle Website der Gemeinde Grünhainichen mit den Ortsteilen Borstendorf, Grünhainichen und Waldkirchen/Erzgeb. Heimat der Wendt-&-Kühn-Engel und des Schachwanderwegs."
+>
+  <GrhHero
+    season={season}
+    featured={featured}
+    slides={[
+      {
+        src: '/images/hero/floeha-antje-wolfeil.jpeg',
+        alt: 'Die Flöha im Gemeindegebiet Grünhainichen',
+        caption: 'Flöha im Herbst',
+        credit: 'Antje Wolfeil',
+      },
+      {
+        src: '/images/ortsteile/borstendorf-schachwanderweg.jpg',
+        alt: 'Schachfiguren am Schachwanderweg mit Blick auf Borstendorf',
+        caption: 'Schachwanderweg Borstendorf',
+        credit: 'TVE / Bernd März',
+      },
+      {
+        src: '/images/tradition/wendt-kuehn-freilandspieldose.jpg',
+        alt: 'Freilandspieldose von Wendt & Kühn im Frühling',
+        caption: 'Wendt-&-Kühn-Welt',
+      },
+      {
+        src: '/images/ortsteile/waldkirchen-blaufarbenwerk.jpg',
+        alt: 'Historischer Platz im Blaufarbenwerk Zschopenthal, Waldkirchen',
+        caption: 'Blaufarbenwerk Zschopenthal',
+      },
+      {
+        src: '/images/tradition/fuchsturm.jpg',
+        alt: 'Der Fuchsturm im Mai',
+        caption: 'Fuchsturm',
+      },
+    ]}
+  />
+
+  {/* === Schnelleinstieg: zwei Karten direkt unter dem Hero =============== */}
+  <GrhSection tone="cream" padding="md">
+    <GrhDualPortal />
+  </GrhSection>
+
+  {/* === 1) Editorial-Manifest =========================================== */}
+  <GrhSection tone="cream" padding="lg" pattern="topo" align="left">
+    <div class="grh-manifest">
+      <div class="grh-manifest__lead">
+        <span class="grh-eyebrow">01 — Worum es hier geht</span>
+        <h2 class="grh-manifest__head grh-text-reveal">
+          Eine Gemeinde aus drei Charakteren.
+          <em>Holzkunst, Schachfiguren und ein Wald,
+            der nach Tannen und Geschichten riecht.</em>
+        </h2>
+      </div>
+      <div class="grh-manifest__copy">
+        <p>
+          Grünhainichen liegt zwischen Zschopau und Flöha — kein Touristenposter,
+          sondern ein Stück gewachsenes Erzgebirge. Drei Ortsteile, jeder mit eigenem
+          Wappen, eigener Tonlage, eigenem Selbstverständnis. Was sie verbindet, ist
+          ein leiser Stolz darauf, dass hier Dinge entstehen, die anderswo nur erzählt werden.
+        </p>
+        <p class="grh-manifest__sig">
+          <strong>Borstendorf</strong> · <strong>Grünhainichen</strong> · <strong>Waldkirchen / Erzgeb.</strong>
+        </p>
+      </div>
+    </div>
+  </GrhSection>
+
+  {/* === Stacking Cards: Sektionen 2, 3, 4 stapeln sich beim Scrollen ===== */}
+  <div class="grh-cardstack">
+    <div class="grh-cardstack__card grh-cardstack__card--1">
+      <GrhSection tone="cream" padding="lg" eyebrow="02 — Drei Ortsteile" title="Eine Heimat, drei Charaktere." align="left">
+        <GrhOrtsteilSpread items={ortsteilSpread} />
+      </GrhSection>
+    </div>
+
+    <div class="grh-cardstack__card grh-cardstack__card--2">
+      <GrhSection tone="paper" padding="lg" pattern="topo">
+        <GrhTraditionShowcase
+          topic="wendt-kuehn"
+          numeral="11"
+          numeralLabel="Punkte auf jedem Engelflügel"
+          eyebrow="03 — Holzkunst seit 1915"
+          title="Die Engel mit den elf Punkten."
+          body="In der Wendt & Kühn KG entstehen seit 1915 die berühmten Grünhainichener Engel® — kugelrunder Kopf, weißes Hemd mit hellblauen Akzenten, grüne Flügel mit genau elf weißen Punkten. Die Wendt-&-Kühn-Welt zeigt Schauwerkstatt, Manufakturgarten und einen historischen Musterschrank mit über 600 Figuren. Eintritt frei."
+          pullQuote="Aus Lindenholz werden Geschichten."
+          image="/images/tradition/wendt-kuehn-freilandspieldose.jpg"
+          imageAlt="Die Freilandspieldose von Wendt & Kühn im Frühling"
+          facts={[
+            { value: '1915',  label: 'gegründet' },
+            { value: '11',    label: 'weiße Punkte' },
+            { value: '> 600', label: 'Figuren im Musterschrank' },
+          ]}
+          ctas={[
+            { label: 'Wendt-&-Kühn-Welt besuchen', href: '/tourismus/sehenswuerdigkeiten' },
+            { label: 'Werkstatt entdecken',         href: '/tourismus/sehenswuerdigkeiten#werkstatt', variant: 'ghost' },
+          ]}
+        />
+      </GrhSection>
+    </div>
+
+    <div class="grh-cardstack__card grh-cardstack__card--3">
+      <GrhSection tone="cream" padding="lg">
+        <GrhTraditionShowcase
+          topic="schachdorf"
+          numeral="1871"
+          numeralLabel="Erste Schachbrettfabrik"
+          eyebrow="04 — Schachdorf seit 1871"
+          title="Das Dorf, in dem Schach Pflichtfach war."
+          body="1871 entstand in Borstendorf nach einem Großauftrag der Leipziger Messe die erste Schachbrettfabrik. In Hochzeiten produzierte K.P. Uhlig 7.000 Schachsätze pro Monat — bis zum DDR-Ende war Borstendorf alleiniger DDR-Schachhersteller. 1937 stand Schach hier sogar als Pflichtfach im Stundenplan. Heute trägt der Schachwanderweg dieses Erbe weiter: 14 km, 16 überlebensgroße Figuren."
+          pullQuote="Vom Springer bis zur Dame: ein Wanderweg, der Schach spielt."
+          image="/images/ortsteile/borstendorf-schachwanderweg.jpg"
+          imageAlt="Schachfiguren am Borstendorfer Schachwanderweg mit Blick auf den Ortsteil"
+          facts={[
+            { value: '1871',   label: 'erste Schachbrettfabrik' },
+            { value: '7.000',  label: 'Schachsätze pro Monat (Uhlig)' },
+            { value: '14 km',  label: 'Schachwanderweg' },
+          ]}
+          reverse={true}
+          ctas={[
+            { label: 'Schachwanderweg entdecken', href: '/tourismus/wandern' },
+            { label: 'Schachtraditionszimmer',    href: '/tourismus/sehenswuerdigkeiten#schachzimmer', variant: 'ghost' },
+          ]}
+        />
+      </GrhSection>
+    </div>
+
+    <div class="grh-cardstack__card grh-cardstack__card--4">
+      <GrhSection tone="paper" padding="lg" pattern="topo">
+        <GrhTraditionShowcase
+          topic="blaufarbenwerk"
+          numeral="1687"
+          numeralLabel="Gründung Blaufarbenwerk Zschopenthal"
+          eyebrow="05 — Waldkirchen / Erzgeb. seit 1687"
+          title="Das Blau, das die Welt malte."
+          body="Im Ortsteil Zschopenthal entstand 1687 das Blaufarbenwerk — eine der ältesten Manufakturen für Kobaltblau in Europa. Über 160 Jahre lang lieferte sie das satte Blau, mit dem in Meißen, Delft und China Porzellan gemalt wurde. Heute zeugen das Ensemble alter Werksgebäude, die Neurenaissance-Kirche von 1900/01 und der Bahnhof an der Zschopautalbahn von dieser Zeit."
+          pullQuote="Aus Erzgebirgsstein wurde das Blau für Europas Porzellan."
+          image="/images/ortsteile/waldkirchen-blaufarbenwerk.jpg"
+          imageAlt="Historischer Platz im Blaufarbenwerk Zschopenthal mit Fachwerkhäusern und Kirchturm"
+          facts={[
+            { value: '1687',   label: 'Gründung der Manufaktur' },
+            { value: '162',    label: 'Jahre Kobaltblau-Tradition' },
+            { value: '1900',   label: 'Neurenaissance-Kirche errichtet' },
+          ]}
+          ctas={[
+            { label: 'Blaufarbenwerk entdecken', href: '/gemeinde/ortsteile/waldkirchen' },
+            { label: 'Zschopautalbahn',          href: '/tourismus/wandern', variant: 'ghost' },
+          ]}
+        />
+      </GrhSection>
+    </div>
+  </div>
+
+  {/* === 5) Tourismus als horizontaler Streifen ========================== */}
+  <GrhSection tone="forest-deep" padding="lg" pattern="topo" eyebrow="06 — Erleben & Entdecken" title="Sechs Wege, die Gemeinde zu entdecken." align="left">
+    <GrhTourismGrid />
+  </GrhSection>
+
+  {/* === 6) Veranstaltungen als Editorial-Liste ========================== */}
+  <GrhSection tone="cream" padding="lg" eyebrow="07 — Kalender" title="Demnächst in der Gemeinde." align="left">
+    <GrhEventsList events={events} />
+    <div slot="cta">
+      <GrhButton href="/veranstaltungen" variant="ghost">Vollständiger Kalender</GrhButton>
+    </div>
+  </GrhSection>
+
+  {/* === 7) News + Sperrungen ============================================ */}
+  <GrhSection tone="paper" padding="lg" eyebrow="08 — Aktuelles" title="Was uns gerade bewegt." align="left">
+    <div class="grh-news">
+      {/* Feature */}
+      <a class="grh-news__feature" href={`/neuigkeiten/${featuredNews.slug}`}>
+        <div class="grh-news__feature-meta">
+          <span class="grh-eyebrow">{featuredNews.data.category}</span>
+          <time>{fmtDate.format(featuredNews.data.date)}</time>
+        </div>
+        <h3 class="grh-news__feature-title">{featuredNews.data.title}</h3>
+        <p>{featuredNews.data.excerpt}</p>
+        <span class="grh-news__feature-cta">Weiterlesen <GrhIcon name="arrow-right" size={16} /></span>
+      </a>
+
+      {/* Smaller news + sperrungs-rail */}
+      <div class="grh-news__rail">
+        <ul class="grh-news__list">
+          {otherNews.map((n) => (
+            <li>
+              <a href={`/neuigkeiten/${n.slug}`}>
+                <time>{fmtDate.format(n.data.date)}</time>
+                <h4>{n.data.title}</h4>
+                <span class="grh-news__list-cat">{n.data.category}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <aside class="grh-news__sper">
+          <h4><GrhIcon name="map-pin" size={14} /> Sperrungen &amp; Verkehrsinfos</h4>
+          {sperrungen.length > 0 ? (
+            <ul>
+              {sperrungen.map((s) => (
+                <li>
+                  <a href={`/neuigkeiten/${s.slug}`}>
+                    <time>{fmtDate.format(s.data.date)}</time>
+                    <span>{s.data.title}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Aktuell keine Sperrungen gemeldet.</p>
+          )}
+          <a href="/neuigkeiten/sperrungen" class="grh-news__sper-link">Alle Verkehrsmeldungen →</a>
+        </aside>
+      </div>
+    </div>
+  </GrhSection>
+
+  {/* === 8) Vereine + Leben ============================================== */}
+  <GrhSection tone="paper" padding="lg" eyebrow="09 — Mittendrin" title="Vereinsleben und Alltag." subtitle="Was diese Gemeinde am Laufen hält — von der Feuerwehr bis zur Bücherei." align="left">
+    <div class="grh-leben">
+      {/* Stats-Reihe */}
+      <ul class="grh-leben__stats">
+        <li><strong>30+</strong><span>Vereine in allen drei Ortsteilen</span></li>
+        <li><strong>3</strong><span>Kitas &amp; Hort-Einrichtungen</span></li>
+        <li><strong>2</strong><span>Grundschulen vor Ort</span></li>
+        <li><strong>4</strong><span>Freiwillige Feuerwehren</span></li>
+      </ul>
+
+      {/* Service-Grid */}
+      <div class="grh-leben__grid">
+        <a href="/leben/kita" class="grh-leben__tile">
+          <span class="grh-leben__tile-icon"><GrhIcon name="building" size={22} /></span>
+          <span class="grh-leben__tile-label">Kita &amp; Hort</span>
+          <span class="grh-leben__tile-sub">Borstendorf · Grünhainichen</span>
+        </a>
+        <a href="/leben/grundschule" class="grh-leben__tile">
+          <span class="grh-leben__tile-icon"><GrhIcon name="document" size={22} /></span>
+          <span class="grh-leben__tile-label">Grundschule</span>
+          <span class="grh-leben__tile-sub">Zwei Standorte</span>
+        </a>
+        <a href="/leben/kirche" class="grh-leben__tile">
+          <span class="grh-leben__tile-icon"><GrhIcon name="building" size={22} /></span>
+          <span class="grh-leben__tile-label">Kirche</span>
+          <span class="grh-leben__tile-sub">Gemeinden &amp; Gottesdienste</span>
+        </a>
+        <a href="/leben/buecherei" class="grh-leben__tile">
+          <span class="grh-leben__tile-icon"><GrhIcon name="document" size={22} /></span>
+          <span class="grh-leben__tile-label">Bücherei</span>
+          <span class="grh-leben__tile-sub">Lesen &amp; Ausleihen</span>
+        </a>
+        <a href="/leben/einkaufen" class="grh-leben__tile">
+          <span class="grh-leben__tile-icon"><GrhIcon name="utensils" size={22} /></span>
+          <span class="grh-leben__tile-label">Einkaufen</span>
+          <span class="grh-leben__tile-sub">Hofläden &amp; Geschäfte</span>
+        </a>
+        <a href="/leben/heiraten" class="grh-leben__tile">
+          <span class="grh-leben__tile-icon"><GrhIcon name="map-pin" size={22} /></span>
+          <span class="grh-leben__tile-label">Heiraten</span>
+          <span class="grh-leben__tile-sub">Standesamt vor Ort</span>
+        </a>
+      </div>
+
+      <div class="grh-leben__ctas">
+        <GrhButton href="/vereine" variant="primary" size="sm">Vereinsverzeichnis</GrhButton>
+        <GrhButton href="/leben"   variant="ghost"   size="sm">Alle Service-Themen</GrhButton>
+      </div>
+    </div>
+  </GrhSection>
+
+  {/* === 10) Gewerbe-Statement =========================================== */}
+  <GrhSection tone="forest" padding="lg" align="center" pattern="topo">
+    <div class="grh-gewerbe">
+      <span class="grh-eyebrow">10 — Wirtschaftsstandort</span>
+      <p class="grh-gewerbe__claim">
+        <em>Eine prosperierende, breit aufgestellte Wirtschaft —</em>
+        mit der erzgebirgischen Holzkunst als Wahrzeichen,
+        modernen Handwerksbetrieben und einem starken Vereinsleben.
+      </p>
+      <div class="grh-gewerbe__cta">
+        <GrhButton href="/gewerbe">Gewerbeverzeichnis</GrhButton>
+        <GrhButton href="/gewerbe/stellenausschreibungen" variant="ghost">Stellenangebote</GrhButton>
+      </div>
+    </div>
+  </GrhSection>
+
+  {/* === Saisonal: Advent ================================================ */}
+  {showAdventSection && (
+    <GrhSection tone="forest-deep" padding="lg" eyebrow="Saisonal — Advent" title="Wenn die Fenster leuchten." align="left">
+      <p class="grh-advent">
+        Schwibbögen, Engel und Bergmann verwandeln Borstendorf, Grünhainichen und Waldkirchen
+        in ein Lichtermeer. Erleben Sie unseren Lebendigen Adventskalender — jeden Abend öffnet
+        sich in einem anderen Haus ein neues Türchen.
+      </p>
+      <div slot="cta">
+        <GrhButton href="/leben/lebendiger-adventskalender">Programm Adventskalender</GrhButton>
+      </div>
+    </GrhSection>
+  )}
+
+  {/* === 11) Kontakt-/Rathaus-Block ====================================== */}
+  <GrhSection tone="cream" padding="md" eyebrow="11 — Rathaus" title="So erreichen Sie uns." align="left">
+    <div class="grh-rathaus">
+      <div class="grh-rathaus__col">
+        <span class="grh-rathaus__label">Anschrift</span>
+        <p>
+          Gemeindeverwaltung Grünhainichen<br />
+          Chemnitzer Straße 41<br />
+          09579 Grünhainichen
+        </p>
+      </div>
+      <div class="grh-rathaus__col">
+        <span class="grh-rathaus__label">Kontakt</span>
+        <p>
+          <a href="tel:+4937294170-0">037294 / 170-0</a><br />
+          <a href="mailto:gemeinde@gruenhainichen.com">gemeinde@gruenhainichen.com</a>
+        </p>
+      </div>
+      <div class="grh-rathaus__col">
+        <span class="grh-rathaus__label">Sprechzeiten</span>
+        <p>
+          Di 9–12 &amp; 13–18 · Do 9–12 &amp; 13–16 · Fr 9–12
+        </p>
+      </div>
+      <div class="grh-rathaus__col">
+        <span class="grh-rathaus__label">Bürgermeister</span>
+        <p>nach Vereinbarung</p>
+        <GrhButton href="/gemeinde/buergermeister" variant="ghost" size="sm">Termin vereinbaren</GrhButton>
+      </div>
+    </div>
+  </GrhSection>
+</BaseLayout>
+
+<style>
+  /* === Manifest ============================================== */
+  .grh-manifest {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-7);
+  }
+  @media (min-width: 980px) {
+    .grh-manifest { grid-template-columns: 7fr 5fr; gap: var(--grh-space-9); }
+  }
+  .grh-manifest__head {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 5vw, 4.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin-top: var(--grh-space-3);
+  }
+  .grh-manifest__head em {
+    display: block;
+    font-style: italic;
+    font-weight: 300;
+    color: var(--grh-stone-700);
+    font-size: 0.78em;
+    margin-top: var(--grh-space-3);
+  }
+  .grh-manifest__copy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-4);
+    align-self: end;
+  }
+  .grh-manifest__copy p {
+    font-size: var(--grh-fs-md);
+    line-height: 1.7;
+    color: var(--grh-stone-700);
+  }
+  .grh-manifest__sig {
+    font-size: var(--grh-fs-sm) !important;
+    letter-spacing: 0.04em;
+    color: var(--grh-forest-800) !important;
+  }
+  .grh-manifest__sig strong { font-weight: 600; }
+
+  /* === News ================================================== */
+  .grh-news {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-7);
+  }
+  @media (min-width: 980px) { .grh-news { grid-template-columns: 1.3fr 1fr; gap: var(--grh-space-7); } }
+
+  .grh-news__feature {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-4);
+    text-decoration: none;
+    color: inherit;
+    background: var(--grh-cream-50);
+    padding: var(--grh-space-7);
+    border: 1px solid var(--grh-line);
+    border-radius: 2px;
+    box-shadow: var(--grh-shadow-md);
+    transition: transform var(--grh-dur-base);
+  }
+  .grh-news__feature:hover { transform: translateY(-3px); }
+  .grh-news__feature-meta {
+    display: flex; gap: var(--grh-space-4); align-items: center;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--grh-stone-400);
+  }
+  .grh-news__feature-title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    line-height: 1.15;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.02em;
+  }
+  .grh-news__feature p {
+    font-size: var(--grh-fs-md);
+    line-height: 1.7;
+    color: var(--grh-stone-700);
+    flex: 1;
+  }
+  .grh-news__feature-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 600; color: var(--grh-forest-800);
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 4px; width: fit-content;
+    text-transform: uppercase; font-size: 11px; letter-spacing: 0.2em;
+  }
+
+  .grh-news__rail { display: flex; flex-direction: column; gap: var(--grh-space-5); }
+
+  .grh-news__list {
+    display: flex; flex-direction: column;
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-news__list li { border-bottom: 1px solid var(--grh-line); }
+  .grh-news__list a {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: var(--grh-space-3);
+    align-items: baseline;
+    padding: var(--grh-space-3) 0;
+    text-decoration: none; color: inherit;
+    transition: padding var(--grh-dur-fast);
+  }
+  .grh-news__list a:hover { padding-left: var(--grh-space-2); color: var(--grh-forest-800); }
+  .grh-news__list time {
+    font-family: var(--grh-font-display); font-style: italic;
+    font-size: var(--grh-fs-sm); color: var(--grh-moss-600);
+  }
+  .grh-news__list h4 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    line-height: 1.25;
+    font-weight: 500;
+  }
+  .grh-news__list-cat {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
+    color: var(--grh-stone-400);
+  }
+
+  .grh-news__sper {
+    background: var(--grh-cream-50);
+    border-left: 3px solid var(--grh-alert-600);
+    padding: var(--grh-space-5);
+    border-radius: 2px;
+  }
+  .grh-news__sper h4 {
+    font-family: var(--grh-font-body);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--grh-alert-600);
+    margin-bottom: var(--grh-space-3);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .grh-news__sper ul { display: flex; flex-direction: column; gap: var(--grh-space-2); }
+  .grh-news__sper a {
+    display: flex; flex-direction: column; gap: 2px;
+    text-decoration: none; color: inherit;
+    font-size: var(--grh-fs-sm); line-height: 1.45;
+  }
+  .grh-news__sper a:hover { color: var(--grh-alert-600); }
+  .grh-news__sper time { font-size: 11px; color: var(--grh-stone-400); letter-spacing: 0.05em; }
+  .grh-news__sper-link {
+    display: inline-block; margin-top: var(--grh-space-4);
+    color: var(--grh-alert-600); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;
+  }
+
+  /* === Vereine & Leben ======================================= */
+  .grh-leben {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-7);
+  }
+
+  /* Stats-Reihe oben */
+  .grh-leben__stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--grh-line);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  @media (min-width: 720px) { .grh-leben__stats { grid-template-columns: repeat(4, 1fr); } }
+  .grh-leben__stats li {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: var(--grh-space-5) var(--grh-space-4);
+    border-right: 1px solid var(--grh-line);
+  }
+  .grh-leben__stats li:nth-child(2n) { border-right: none; }
+  @media (min-width: 720px) {
+    .grh-leben__stats li { border-right: 1px solid var(--grh-line); }
+    .grh-leben__stats li:nth-child(2n) { border-right: 1px solid var(--grh-line); }
+    .grh-leben__stats li:last-child { border-right: none; }
+  }
+  .grh-leben__stats strong {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(2.4rem, 5vw, 3.4rem);
+    line-height: 0.9;
+    color: var(--grh-forest-800);
+    letter-spacing: -0.02em;
+  }
+  .grh-leben__stats span {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--grh-stone-400);
+    line-height: 1.4;
+  }
+
+  /* Service-Grid */
+  .grh-leben__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-3);
+  }
+  @media (min-width: 540px)  { .grh-leben__grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 900px)  { .grh-leben__grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1200px) { .grh-leben__grid { grid-template-columns: repeat(6, 1fr); } }
+
+  .grh-leben__tile {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--grh-space-5) var(--grh-space-4);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--grh-dur-fast), border-color var(--grh-dur-fast), background var(--grh-dur-fast);
+  }
+  .grh-leben__tile:hover {
+    transform: translateY(-3px);
+    border-color: var(--grh-moss-500);
+    background: var(--grh-sage-100);
+  }
+  .grh-leben__tile-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-800);
+    display: grid; place-items: center;
+    margin-bottom: var(--grh-space-2);
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-leben__tile:hover .grh-leben__tile-icon {
+    background: var(--grh-forest-800);
+    color: var(--grh-candle-500);
+  }
+  .grh-leben__tile-label {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .grh-leben__tile-sub {
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+
+  .grh-leben__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--grh-space-3);
+    margin-top: var(--grh-space-2);
+  }
+
+  /* === Gewerbe Statement ===================================== */
+  .grh-gewerbe {
+    text-align: center;
+    max-width: 720px;
+    margin-inline: auto;
+  }
+  .grh-gewerbe__claim {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    line-height: 1.25;
+    color: var(--grh-cream-50);
+    margin: var(--grh-space-5) 0 var(--grh-space-7);
+    letter-spacing: -0.015em;
+  }
+  .grh-gewerbe__claim em {
+    color: var(--grh-candle-500);
+    font-style: italic;
+    font-weight: 400;
+    display: block;
+    margin-bottom: 0.4em;
+  }
+  .grh-gewerbe__cta {
+    display: flex; flex-wrap: wrap; gap: var(--grh-space-3); justify-content: center;
+  }
+
+  /* === Advent ================================================ */
+  .grh-advent {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+    line-height: 1.4;
+    max-width: 60ch;
+    color: var(--grh-cream-50);
+    opacity: 0.92;
+  }
+
+  /* === Rathaus =============================================== */
+  .grh-rathaus {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+    gap: var(--grh-space-6);
+    border-top: 1px solid var(--grh-line);
+    padding-top: var(--grh-space-6);
+  }
+  .grh-rathaus__col { display: flex; flex-direction: column; gap: var(--grh-space-2); }
+  .grh-rathaus__label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--grh-moss-600); font-weight: 600;
+  }
+  .grh-rathaus__col p { font-size: var(--grh-fs-sm); line-height: 1.7; color: var(--grh-stone-700); }
+  .grh-rathaus__col a { color: var(--grh-forest-800); border-bottom: 1px solid transparent; }
+  .grh-rathaus__col a:hover { border-color: var(--grh-candle-500); }
+
+  /* === Stacking Cards (Sektionen 02 / 03 / 04) =============== */
+  .grh-cardstack {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .grh-cardstack__card {
+    position: sticky;
+    border-radius: var(--grh-radius-xl);
+    overflow: hidden;
+    isolation: isolate;
+    box-shadow:
+      0 -10px 40px -22px rgba(14, 31, 24, 0.45),
+      0 22px 50px -28px rgba(14, 31, 24, 0.35);
+  }
+  /* Progressiver Fächer mit 4 Karten — jede breiter als die vorige.
+     Karte 1 = schmalste (unterste), Karte 4 = breiteste (oberste). */
+  .grh-cardstack__card--1 {
+    top: calc(var(--grh-space-7));
+    z-index: 1;
+    margin-inline: var(--grh-space-9);
+  }
+  .grh-cardstack__card--2 {
+    top: calc(var(--grh-space-7) + 36px);
+    z-index: 2;
+    margin-inline: var(--grh-space-7);
+  }
+  .grh-cardstack__card--3 {
+    top: calc(var(--grh-space-7) + 72px);
+    z-index: 3;
+    margin-inline: var(--grh-space-5);
+  }
+  .grh-cardstack__card--4 {
+    top: calc(var(--grh-space-7) + 108px);
+    z-index: 4;
+    margin-inline: var(--grh-space-2);
+  }
+  @media (min-width: 1100px) {
+    .grh-cardstack__card--1 { margin-inline: var(--grh-space-10); }
+    .grh-cardstack__card--2 { margin-inline: var(--grh-space-8); }
+    .grh-cardstack__card--3 { margin-inline: var(--grh-space-6); }
+    .grh-cardstack__card--4 { margin-inline: var(--grh-space-3); }
+  }
+
+  /* Abstand zwischen den Karten erzeugt den "Reise"-Scrollweg —
+     je größer, desto langsamer rutschen sie übereinander */
+  .grh-cardstack__card + .grh-cardstack__card { margin-top: var(--grh-space-9); }
+
+  /* Erzeugte Karten beziehen ihren Hintergrund jetzt aus der inneren
+     Section — nichts bleibt full-bleed, alles innerhalb der gerundeten Karte */
+  .grh-cardstack__card :global(.grh-section) { border-radius: inherit; }
+
+  /* Innen-Padding der Sections in der Karte deutlich reduzieren, damit
+     der Inhalt jeder Karte in eine Viewport-Höhe passt und nicht von der
+     nächsten Karte verdeckt wird, bevor man den Boden lesen kann. */
+  .grh-cardstack__card :global(.grh-section--pad-lg) {
+    padding-block: var(--grh-space-6);
+  }
+  @media (min-width: 1100px) {
+    .grh-cardstack__card :global(.grh-section--pad-lg) {
+      padding-block: var(--grh-space-7);
+    }
+  }
+  /* TraditionShowcase: vertikales Padding der inneren spread2-Article kürzen */
+  .grh-cardstack__card :global(.grh-spread2) {
+    padding-block: var(--grh-space-4);
+  }
+
+  /* Mobile: Stacking deaktivieren, normale Sektionen */
+  @media (max-width: 900px) {
+    .grh-cardstack__card {
+      position: relative;
+      top: auto;
+      margin-inline: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .grh-cardstack__card + .grh-cardstack__card { margin-top: 0; }
+  }
+</style>

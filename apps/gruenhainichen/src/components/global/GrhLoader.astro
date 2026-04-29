@@ -1,0 +1,465 @@
+---
+/**
+ * GrhLoader — animierter Begrüßungs-Vorhang.
+ *
+ * Beim ersten Laden pro Session wird zufällig eine von drei Animationen
+ * gespielt, die je einen Ortsteil zitieren:
+ *   - "wheel" → Waldkirchen / Blaufarbenwerk Zschopenthal (Wasserrad)
+ *   - "chess" → Borstendorf (Schachfigur)
+ *   - "angel" → Grünhainichen (Wendt-&-Kühn-Engel mit elf Punkten)
+ *
+ * Verhalten:
+ *   - Inline-Script läuft synchron, blendet den Vorhang sofort weg, falls
+ *     bereits in dieser Session gezeigt oder bei prefers-reduced-motion.
+ *   - Sonst: Variante wählen → ~1900 ms Animation → Fade-out 450 ms → entfernen.
+ *   - Ohne JavaScript greift der <noscript>-Fallback.
+ */
+---
+<noscript><style>{`.grh-loader { display: none !important; }`}</style></noscript>
+
+<div class="grh-loader" data-grh-loader aria-hidden="true">
+  <div class="grh-loader__inner">
+    <div class="grh-loader__stage" aria-hidden="true">
+
+      {/* === Variante 1: Wasserrad (Waldkirchen) =================== */}
+      <svg class="grh-loader__svg grh-loader__svg--wheel" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+        {/* Holzgerüst — Stützstreben (statisch) */}
+        <g stroke="#6B4A2A" stroke-width="3" stroke-linecap="round" fill="none">
+          <line x1="14"  y1="190" x2="76"  y2="118" />
+          <line x1="206" y1="190" x2="144" y2="118" />
+          <line x1="20"  y1="190" x2="200" y2="190" />
+        </g>
+
+        {/* Wasserstrahl von links oben auf das Rad */}
+        <g class="grh-loader__waterstream">
+          <line x1="48" y1="0"  x2="48" y2="56" stroke="#5BAE78" stroke-width="3"   stroke-linecap="round" opacity="0.6" />
+          <line x1="42" y1="6"  x2="42" y2="40" stroke="#A8CDB3" stroke-width="1.5" stroke-linecap="round" opacity="0.5" />
+          <line x1="54" y1="2"  x2="54" y2="44" stroke="#A8CDB3" stroke-width="1.5" stroke-linecap="round" opacity="0.5" />
+        </g>
+
+        {/* Rad — rotiert */}
+        <g class="grh-loader__wheel">
+          {/* Äußerer Holzring */}
+          <circle cx="110" cy="110" r="76" fill="none" stroke="#6B4A2A" stroke-width="6" />
+          {/* Innerer Ring (Felge) */}
+          <circle cx="110" cy="110" r="62" fill="none" stroke="#13301F" stroke-width="2" />
+
+          {/* 8 Schaufeln (Bretter quer) — sitzen zwischen Innen- und Außenring */}
+          <g fill="#A6794E" stroke="#13301F" stroke-width="1.2">
+            <rect x="106" y="34"  width="8"  height="14" />
+            <rect x="106" y="172" width="8"  height="14" />
+            <rect x="34"  y="106" width="14" height="8"  />
+            <rect x="172" y="106" width="14" height="8"  />
+            <rect x="56"  y="56"  width="11" height="11" transform="rotate(45 61.5 61.5)" />
+            <rect x="153" y="56"  width="11" height="11" transform="rotate(-45 158.5 61.5)" />
+            <rect x="56"  y="153" width="11" height="11" transform="rotate(-45 61.5 158.5)" />
+            <rect x="153" y="153" width="11" height="11" transform="rotate(45 158.5 158.5)" />
+          </g>
+
+          {/* 8 Speichen */}
+          <g stroke="#13301F" stroke-width="2.5" stroke-linecap="round">
+            <line x1="110" y1="48"  x2="110" y2="172" />
+            <line x1="48"  y1="110" x2="172" y2="110" />
+            <line x1="66"  y1="66"  x2="154" y2="154" />
+            <line x1="66"  y1="154" x2="154" y2="66" />
+          </g>
+
+          {/* Nabe */}
+          <circle cx="110" cy="110" r="8" fill="#13301F" />
+          <circle cx="110" cy="110" r="3" fill="#A6794E" />
+        </g>
+
+        {/* Tropfen unten */}
+        <g class="grh-loader__drops">
+          <circle cx="100" cy="200" r="2.5" fill="#5BAE78" />
+          <circle cx="118" cy="208" r="2"   fill="#A8CDB3" />
+          <circle cx="92"  cy="212" r="1.8" fill="#5BAE78" />
+        </g>
+      </svg>
+
+      {/* === Variante 2: Schachfigur (Borstendorf) ================== */}
+      <svg class="grh-loader__svg grh-loader__svg--chess" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+        {/* Schachbrett-Grundfläche */}
+        <g class="grh-loader__board">
+          <rect x="20"  y="170" width="30" height="20" fill="#13301F" />
+          <rect x="50"  y="170" width="30" height="20" fill="#FAF7F1" stroke="#13301F" />
+          <rect x="80"  y="170" width="30" height="20" fill="#13301F" />
+          <rect x="110" y="170" width="30" height="20" fill="#FAF7F1" stroke="#13301F" />
+          <rect x="140" y="170" width="30" height="20" fill="#13301F" />
+          <rect x="170" y="170" width="30" height="20" fill="#FAF7F1" stroke="#13301F" />
+        </g>
+
+        {/* Springer-Silhouette, springt */}
+        <g class="grh-loader__knight">
+          {/* Schatten */}
+          <ellipse cx="110" cy="170" rx="32" ry="6" fill="#13301F" opacity="0.25" class="grh-loader__shadow" />
+
+          {/* Springer im klassischen Staunton-Stil */}
+          <g class="grh-loader__knight-piece">
+            {/* Sockel — drei Stufen, immer schmaler nach oben */}
+            <rect x="76" y="160" width="68" height="10" rx="1" fill="#13301F" />
+            <rect x="82" y="152" width="56" height="9"  rx="1" fill="#1B4A2F" />
+            <ellipse cx="110" cy="151" rx="29" ry="3" fill="#2A6B43" />
+
+            {/* Korpus + Kopf — eine Silhouette */}
+            <path
+              fill="#13301F"
+              d="
+                M 96 150
+                L 96 138
+                C 96 126, 98 116, 102 108
+                C 92 100, 86 88, 88 76
+                C 90 62, 100 52, 116 50
+                C 130 50, 142 56, 150 66
+                C 156 74, 158 82, 156 90
+                L 152 96
+                L 156 100
+                L 152 102
+                L 150 110
+                C 150 118, 148 126, 144 132
+                L 138 140
+                L 132 148
+                C 130 150, 128 152, 124 152
+                L 96 150 Z
+              "
+            />
+
+            {/* Mähne — drei kleine Lamellen am Hinterkopf */}
+            <g fill="#1B4A2F">
+              <path d="M 94 78  L 88 88  L 96 86  Z" />
+              <path d="M 96 92  L 90 102 L 100 100 Z" />
+              <path d="M 100 108 L 94 116 L 104 114 Z" />
+            </g>
+
+            {/* Maul-Linie */}
+            <path d="M 138 100 L 154 102" stroke="#FAF7F1" stroke-width="1" stroke-linecap="round" opacity="0.7" />
+
+            {/* Nüstern */}
+            <circle cx="153" cy="98" r="1.4" fill="#FAF7F1" opacity="0.85" />
+
+            {/* Auge */}
+            <circle cx="128" cy="74" r="2.6" fill="#FAF7F1" />
+            <circle cx="128" cy="74" r="1"   fill="#13301F" />
+
+            {/* Ohr — kleine spitze Andeutung oben */}
+            <path d="M 110 50 L 108 38 L 118 48 Z" fill="#1B4A2F" />
+          </g>
+        </g>
+      </svg>
+
+      {/* === Variante 3: Engel (Grünhainichen) ===================== */}
+      <svg class="grh-loader__svg grh-loader__svg--angel" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+        {/* Schnitzwerkzeug oben rechts — bewegt sich */}
+        <g class="grh-loader__chisel">
+          <line x1="170" y1="20" x2="200" y2="50" stroke="#6B4A2A" stroke-width="6" stroke-linecap="round" />
+          <line x1="160" y1="30" x2="170" y2="20" stroke="#A6794E" stroke-width="3" stroke-linecap="round" />
+          <circle cx="155" cy="35" r="2" fill="#FAF7F1" class="grh-loader__chip" />
+        </g>
+
+        {/* Engel — wird Stück für Stück gezeichnet */}
+        <g class="grh-loader__angel">
+          {/* Kopf */}
+          <circle cx="110" cy="68" r="22" fill="#FAF7F1" stroke="#13301F" stroke-width="1.5" class="grh-loader__angel-head" />
+          {/* Wangen */}
+          <circle cx="100" cy="74" r="3" fill="#A8401E" class="grh-loader__angel-cheek" />
+          <circle cx="120" cy="74" r="3" fill="#A8401E" class="grh-loader__angel-cheek" />
+          {/* Flügel */}
+          <path
+            class="grh-loader__angel-wings"
+            d="M40 130c20-30 50-46 70-46s50 16 70 46l-4 14H44z"
+            fill="#1B4A2F"
+            stroke="#13301F"
+            stroke-width="1.5"
+            pathLength="100"
+          />
+          {/* 11 weiße Punkte — erscheinen mit Stagger */}
+          <g class="grh-loader__angel-dots" fill="#FAF7F1">
+            <circle cx="58"  cy="124" r="3" />
+            <circle cx="74"  cy="116" r="3" />
+            <circle cx="90"  cy="110" r="3" />
+            <circle cx="105" cy="106" r="3" />
+            <circle cx="115" cy="106" r="3" />
+            <circle cx="130" cy="110" r="3" />
+            <circle cx="146" cy="116" r="3" />
+            <circle cx="162" cy="124" r="3" />
+            <circle cx="80"  cy="135" r="3" />
+            <circle cx="110" cy="138" r="3" />
+            <circle cx="140" cy="135" r="3" />
+          </g>
+          {/* Körper / Hemd */}
+          <path
+            class="grh-loader__angel-body"
+            d="M82 142c8 8 20 12 28 12s20-4 28-12l-4 50H86z"
+            fill="#FAF7F1"
+            stroke="#13301F"
+            stroke-width="1.5"
+            pathLength="100"
+          />
+          {/* Hellblauer Saum */}
+          <rect class="grh-loader__angel-trim" x="86" y="186" width="48" height="6" fill="#A8CDB3" />
+        </g>
+      </svg>
+    </div>
+
+    <div class="grh-loader__caption" data-grh-loader-caption>
+      <span class="grh-loader__ortsteil"></span>
+      <span class="grh-loader__sub"></span>
+    </div>
+
+    <div class="grh-loader__progress" aria-hidden="true">
+      <span class="grh-loader__progress-bar"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .grh-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(ellipse at center, rgba(232, 182, 88, 0.08), transparent 60%),
+      var(--grh-cream-50);
+    transition: opacity 450ms var(--grh-ease-out);
+  }
+  .grh-loader.is-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .grh-loader__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--grh-space-5);
+  }
+
+  .grh-loader__stage {
+    width: 220px;
+    height: 220px;
+    color: var(--grh-forest-900);
+  }
+  .grh-loader__svg { width: 100%; height: 100%; display: none; }
+  .grh-loader[data-variant="wheel"] .grh-loader__svg--wheel { display: block; }
+  .grh-loader[data-variant="chess"] .grh-loader__svg--chess { display: block; }
+  .grh-loader[data-variant="angel"] .grh-loader__svg--angel { display: block; }
+
+  .grh-loader__caption {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    opacity: 0;
+    animation: grh-loader-cap 600ms var(--grh-ease-out) 200ms forwards;
+  }
+  .grh-loader__ortsteil {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-loader__sub {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+  }
+  @keyframes grh-loader-cap {
+    to { opacity: 1; }
+  }
+
+  .grh-loader__progress {
+    width: 140px;
+    height: 1px;
+    background: var(--grh-line);
+    overflow: hidden;
+  }
+  .grh-loader__progress-bar {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--grh-candle-500);
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation: grh-loader-progress 1900ms var(--grh-ease-out) forwards;
+  }
+  @keyframes grh-loader-progress {
+    to { transform: scaleX(1); }
+  }
+
+  /* === Variante 1: Wasserrad ================================== */
+  .grh-loader__wheel {
+    transform-origin: 110px 110px;
+    animation: grh-loader-spin 2800ms linear infinite;
+  }
+  @keyframes grh-loader-spin {
+    to { transform: rotate(-360deg); } /* Gegen den Uhrzeigersinn — Wasser fällt links auf */
+  }
+  .grh-loader__waterstream line {
+    animation: grh-loader-water 700ms ease-in infinite;
+  }
+  .grh-loader__waterstream line:nth-child(2) { animation-delay: 200ms; }
+  .grh-loader__waterstream line:nth-child(3) { animation-delay: 400ms; }
+  @keyframes grh-loader-water {
+    0%   { transform: translateY(-14px); opacity: 0; }
+    50%  { opacity: 0.7; }
+    100% { transform: translateY(10px); opacity: 0; }
+  }
+  .grh-loader__drops circle {
+    animation: grh-loader-drop 1100ms ease-in infinite;
+  }
+  .grh-loader__drops circle:nth-child(2) { animation-delay: 300ms; }
+  .grh-loader__drops circle:nth-child(3) { animation-delay: 600ms; }
+  @keyframes grh-loader-drop {
+    0%   { transform: translateY(-6px); opacity: 1; }
+    100% { transform: translateY(14px); opacity: 0; }
+  }
+
+  /* === Variante 2: Schachfigur ================================ */
+  .grh-loader__knight-piece {
+    transform-origin: 110px 170px;
+    animation: grh-loader-hop 1100ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  .grh-loader__shadow {
+    transform-origin: 110px 170px;
+    animation: grh-loader-shadow 1100ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes grh-loader-hop {
+    0%, 100% { transform: translate(0, 0)   rotate(0deg);   }
+    25%      { transform: translate(-8px, -28px) rotate(-8deg); }
+    50%      { transform: translate(-22px, -10px) rotate(0deg);  }
+    75%      { transform: translate(-32px, -28px) rotate(6deg);  }
+  }
+  @keyframes grh-loader-shadow {
+    0%, 100% { transform: scale(1)   translateX(0);   opacity: 0.25; }
+    25%      { transform: scale(0.8) translateX(-8px);  opacity: 0.15; }
+    50%      { transform: scale(1)   translateX(-22px); opacity: 0.25; }
+    75%      { transform: scale(0.8) translateX(-32px); opacity: 0.15; }
+  }
+
+  /* === Variante 3: Engel wird geschnitzt ====================== */
+  .grh-loader__chisel {
+    transform-origin: 200px 50px;
+    animation: grh-loader-chisel 700ms ease-in-out infinite;
+  }
+  @keyframes grh-loader-chisel {
+    0%, 100% { transform: rotate(0)   translate(0, 0); }
+    40%      { transform: rotate(-12deg) translate(-6px, 4px); }
+  }
+  .grh-loader__chip {
+    animation: grh-loader-chip 700ms ease-in infinite;
+  }
+  @keyframes grh-loader-chip {
+    0%   { transform: translate(0, 0); opacity: 0.9; }
+    100% { transform: translate(-30px, 60px); opacity: 0; }
+  }
+
+  .grh-loader__angel-head {
+    opacity: 0;
+    animation: grh-loader-fadein 350ms ease-out 100ms forwards;
+  }
+  .grh-loader__angel-cheek {
+    opacity: 0;
+    animation: grh-loader-fadein 200ms ease-out 350ms forwards;
+  }
+  .grh-loader__angel-wings {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    fill-opacity: 0;
+    animation:
+      grh-loader-draw 600ms ease-out 200ms forwards,
+      grh-loader-fill 400ms ease-out 700ms forwards;
+  }
+  @keyframes grh-loader-draw { to { stroke-dashoffset: 0; } }
+  @keyframes grh-loader-fill { to { fill-opacity: 1; } }
+
+  .grh-loader__angel-body {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    fill-opacity: 0;
+    animation:
+      grh-loader-draw 500ms ease-out 800ms forwards,
+      grh-loader-fill 300ms ease-out 1200ms forwards;
+  }
+
+  .grh-loader__angel-trim {
+    opacity: 0;
+    animation: grh-loader-fadein 250ms ease-out 1400ms forwards;
+  }
+
+  .grh-loader__angel-dots circle {
+    opacity: 0;
+    animation: grh-loader-pop 220ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .grh-loader__angel-dots circle:nth-child(1)  { animation-delay: 1000ms; }
+  .grh-loader__angel-dots circle:nth-child(2)  { animation-delay: 1060ms; }
+  .grh-loader__angel-dots circle:nth-child(3)  { animation-delay: 1120ms; }
+  .grh-loader__angel-dots circle:nth-child(4)  { animation-delay: 1180ms; }
+  .grh-loader__angel-dots circle:nth-child(5)  { animation-delay: 1240ms; }
+  .grh-loader__angel-dots circle:nth-child(6)  { animation-delay: 1300ms; }
+  .grh-loader__angel-dots circle:nth-child(7)  { animation-delay: 1360ms; }
+  .grh-loader__angel-dots circle:nth-child(8)  { animation-delay: 1420ms; }
+  .grh-loader__angel-dots circle:nth-child(9)  { animation-delay: 1480ms; }
+  .grh-loader__angel-dots circle:nth-child(10) { animation-delay: 1540ms; }
+  .grh-loader__angel-dots circle:nth-child(11) { animation-delay: 1600ms; }
+
+  @keyframes grh-loader-fadein { to { opacity: 1; } }
+  @keyframes grh-loader-pop {
+    0%   { opacity: 0; transform: scale(0); transform-origin: center; }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grh-loader { display: none !important; }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var loader = document.querySelector('[data-grh-loader]');
+    if (!loader) return;
+
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // URL-Override: ?loader erzwingt Anzeige (für Tests, auch auf Unterseiten)
+    var force = /[?&]loader(=|&|$)/.test(window.location.search);
+
+    // Standard: Loader nur auf der Startseite zeigen
+    var path = window.location.pathname;
+    var isHomepage = path === '/' || path === '' || path === '/index.html';
+
+    if (reduce || (!force && !isHomepage)) {
+      loader.parentNode && loader.parentNode.removeChild(loader);
+      return;
+    }
+
+    var variants = [
+      { key: 'wheel', ortsteil: 'Waldkirchen',   sub: 'Wasserrad am Blaufarbenwerk' },
+      { key: 'chess', ortsteil: 'Borstendorf',   sub: 'Schachdorf an der Flöha' },
+      { key: 'angel', ortsteil: 'Grünhainichen', sub: 'Engel mit den elf Punkten' }
+    ];
+    var v = variants[Math.floor(Math.random() * variants.length)];
+    loader.setAttribute('data-variant', v.key);
+
+    var cap = loader.querySelector('[data-grh-loader-caption]');
+    if (cap) {
+      cap.querySelector('.grh-loader__ortsteil').textContent = v.ortsteil;
+      cap.querySelector('.grh-loader__sub').textContent = v.sub;
+    }
+
+    // Body-Scroll während des Loaders sperren
+    document.documentElement.style.overflow = 'hidden';
+
+    setTimeout(function () {
+      loader.classList.add('is-out');
+      try { sessionStorage.setItem('grh-loader-shown', '1'); } catch (e) {}
+      setTimeout(function () {
+        loader.parentNode && loader.parentNode.removeChild(loader);
+        document.documentElement.style.overflow = '';
+      }, 500);
+    }, 1900);
+  })();
+</script>

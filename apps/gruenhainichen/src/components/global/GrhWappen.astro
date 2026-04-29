@@ -1,0 +1,40 @@
+---
+/**
+ * Wappen-Komposit der drei Ortsteile (Grünhainichen · Waldkirchen · Borstendorf).
+ * Quelle: bestehendes Bild der Gemeinde Grünhainichen (152.png).
+ *
+ * variant="color"      → Farb-Original
+ * variant="mono-light" → invertiert hellgefiltert für dunkle Hintergründe (Footer)
+ * variant="mono-dark"  → für sehr helle Hintergründe
+ */
+interface Props {
+  size?: number;
+  class?: string;
+  variant?: 'color' | 'mono-light' | 'mono-dark';
+}
+const { size = 56, class: extra = '', variant = 'color' } = Astro.props;
+---
+<img
+  src="/images/logos/wappen-grh.png"
+  alt="Wappen der Gemeinde Grünhainichen — Komposit der drei Ortsteile"
+  width={size}
+  height={size}
+  loading="lazy"
+  decoding="async"
+  class={`grh-wappen grh-wappen--${variant} ${extra}`}
+  style={`width:${size}px;height:auto;`}
+/>
+
+<style>
+  .grh-wappen {
+    display: inline-block;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+  .grh-wappen--mono-light {
+    filter: brightness(0) invert(1) opacity(0.92);
+  }
+  .grh-wappen--mono-dark {
+    filter: brightness(0) opacity(0.85);
+  }
+</style>

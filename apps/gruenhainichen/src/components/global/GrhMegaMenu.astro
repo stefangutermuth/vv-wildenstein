@@ -1,0 +1,665 @@
+---
+import { getCollection } from 'astro:content';
+import GrhIcon from '../primitives/GrhIcon.astro';
+import GrhWappen from './GrhWappen.astro';
+import { navigation as nav } from '../../lib/navigation';
+
+// Inhalte für die linke dunkle Spalte
+const newsAll = (await getCollection('news')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const latestNews  = newsAll.filter((n) => n.data.category !== 'sperrung').slice(0, 2);
+const sperrungen  = newsAll.filter((n) => n.data.category === 'sperrung').slice(0, 2);
+
+const upcomingEvents = (await getCollection('events'))
+  .filter((e) => e.data.startDate.valueOf() >= Date.now() - 86400000)
+  .sort((a, b) => a.data.startDate.valueOf() - b.data.startDate.valueOf())
+  .slice(0, 3);
+
+const fmtShortDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit' });
+const fmtDay   = new Intl.DateTimeFormat('de-DE', { day: '2-digit' });
+const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
+---
+<div class="grh-mega" data-grh-megamenu hidden role="dialog" aria-modal="true" aria-label="Hauptnavigation">
+  <div class="grh-mega__backdrop" data-grh-megamenu-close></div>
+
+  <div class="grh-mega__panel" role="document">
+    {/* === Linke Spalte: dunkler Wichtig-Block ============================= */}
+    <aside class="grh-mega__brief">
+      <div class="grh-mega__brief-top">
+        <a href="/" class="grh-mega__brief-brand" aria-label="Startseite">
+          <GrhWappen size={64} class="grh-mega__brief-wappen" />
+          <span class="grh-mega__brief-name">Grünhainichen</span>
+        </a>
+      </div>
+
+      <div class="grh-mega__brief-content">
+        {/* Sperrungen — falls aktuell */}
+        {sperrungen.length > 0 && (
+          <section class="grh-mega__brief-section grh-mega__brief-section--alert">
+            <h3>
+              <GrhIcon name="map-pin" size={12} />
+              Sperrungen
+            </h3>
+            <ul>
+              {sperrungen.map((s) => (
+                <li>
+                  <a href={`/neuigkeiten/${s.slug}`}>
+                    <time>{fmtShortDate.format(s.data.date)}</time>
+                    <span>{s.data.title}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* Aktuelle News */}
+        <section class="grh-mega__brief-section">
+          <h3>Aktuelles</h3>
+          <ul>
+            {latestNews.map((n) => (
+              <li>
+                <a href={`/neuigkeiten/${n.slug}`}>
+                  <time>{fmtShortDate.format(n.data.date)}</time>
+                  <span>{n.data.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <a class="grh-mega__brief-more" href="/neuigkeiten">
+            Alle Neuigkeiten <GrhIcon name="arrow-right" size={12} />
+          </a>
+        </section>
+
+        {/* Demnächst */}
+        {upcomingEvents.length > 0 && (
+          <section class="grh-mega__brief-section">
+            <h3>Demnächst</h3>
+            <ul class="grh-mega__brief-events">
+              {upcomingEvents.map((e) => (
+                <li>
+                  <a href={`/veranstaltungen/${e.slug}`}>
+                    <span class="grh-mega__brief-date">
+                      <strong>{fmtDay.format(e.data.startDate)}</strong>
+                      <em>{fmtMonth.format(e.data.startDate).replace('.', '')}</em>
+                    </span>
+                    <span class="grh-mega__brief-event-title">{e.data.title}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a class="grh-mega__brief-more" href="/veranstaltungen">
+              Vollständiger Kalender <GrhIcon name="arrow-right" size={12} />
+            </a>
+          </section>
+        )}
+      </div>
+
+      <div class="grh-mega__brief-foot">
+        <a href="tel:+4937294170-0"><GrhIcon name="phone" size={12} /> 037294 / 170-0</a>
+        <a href="mailto:gemeinde@gruenhainichen.com"><GrhIcon name="mail" size={12} /> gemeinde@gruenhainichen.com</a>
+      </div>
+    </aside>
+
+    {/* === Rechte Spalte: kompakte Navigation ============================= */}
+    <div class="grh-mega__main">
+      <header class="grh-mega__top">
+        <span class="grh-mega__top-label">Navigation</span>
+        <button class="grh-mega__close" type="button" aria-label="Menü schließen" data-grh-megamenu-close>
+          <GrhIcon name="close" size={20} />
+          <span>Schließen</span>
+        </button>
+      </header>
+
+      <nav class="grh-mega__columns" aria-label="Vollständige Navigation">
+        {nav.map((item) => (
+          <section class="grh-mega__col">
+            <a href={item.href} class="grh-mega__col-head">{item.label}</a>
+
+            {item.children && (
+              <ul class="grh-mega__sublist">
+                {item.children.map((sub) => (
+                  <li>
+                    <a href={sub.href} class="grh-mega__sublink">{sub.label}</a>
+                    {sub.children && (
+                      <ul class="grh-mega__sublist3">
+                        {sub.children.map((sub3) => (
+                          <li><a href={sub3.href}>{sub3.label}</a></li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ))}
+      </nav>
+
+      <aside class="grh-mega__feature">
+        <div class="grh-mega__feature-quote">
+          <span class="grh-mega__feature-eyebrow">Drei Orte, eine Heimat</span>
+          <p>
+            <em>Wo Holz noch riecht, der Schach­wanderweg ruft</em>
+            und im Advent jedes Fenster leuchtet.
+          </p>
+        </div>
+        <a class="grh-mega__feature-card" href="/veranstaltungen/eurorando-2026">
+          <span class="grh-mega__feature-img" aria-hidden="true">
+            <img src="/images/tourism/wandern.jpg" alt="" loading="lazy" decoding="async" />
+          </span>
+          <span class="grh-mega__feature-body">
+            <span class="grh-mega__feature-tag">Empfehlung — EURORANDO 2026</span>
+            <span class="grh-mega__feature-title">Zwei Touren auf dem Zschopautalweg</span>
+            <span class="grh-mega__feature-cta">
+              23. & 27. September · Anmelden <GrhIcon name="arrow-right" size={12} />
+            </span>
+          </span>
+        </a>
+      </aside>
+
+      <footer class="grh-mega__foot">
+        <ul>
+          <li><a href="/impressum">Impressum</a></li>
+          <li><a href="/datenschutz">Datenschutz</a></li>
+          <li><a href="/barrierefreiheit">Barrierefreiheit</a></li>
+        </ul>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<style>
+  .grh-mega {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+  }
+  .grh-mega[hidden] { display: block !important; visibility: hidden; pointer-events: none; }
+  .grh-mega[data-open] { visibility: visible; pointer-events: auto; }
+
+  .grh-mega__backdrop {
+    position: absolute; inset: 0;
+    background: rgba(14, 31, 24, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity var(--grh-dur-base) var(--grh-ease-out);
+    cursor: pointer;
+  }
+  .grh-mega[data-open] .grh-mega__backdrop { opacity: 1; }
+
+  .grh-mega__panel {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    transform: translateY(-12px);
+    opacity: 0;
+    transition:
+      transform var(--grh-dur-base) var(--grh-ease-out),
+      opacity   var(--grh-dur-base) var(--grh-ease-out);
+    overflow: hidden;
+  }
+  @media (min-width: 980px) {
+    .grh-mega__panel { grid-template-columns: 5fr 7fr; }
+  }
+  .grh-mega[data-open] .grh-mega__panel {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* === Linke dunkle Spalte ================================== */
+  .grh-mega__brief {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(91, 174, 120, 0.18), transparent 55%),
+      var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    padding: var(--grh-space-7) var(--grh-space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-6);
+    overflow-y: auto;
+  }
+
+  .grh-mega__brief-top {
+    border-bottom: 1px solid rgba(250, 247, 241, 0.12);
+    padding-bottom: var(--grh-space-5);
+  }
+  .grh-mega__brief-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--grh-space-3);
+    text-decoration: none;
+    color: inherit;
+  }
+  .grh-mega__brief-wappen {
+    filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.4));
+  }
+  .grh-mega__brief-name {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-2xl);
+    font-weight: 500;
+    color: var(--grh-cream-50);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .grh-mega__brief-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-6);
+    flex: 1;
+  }
+
+  .grh-mega__brief-section h3 {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+    color: var(--grh-candle-500);
+    margin-bottom: var(--grh-space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .grh-mega__brief-section--alert h3 { color: #F2A07F; } /* helleres Rotbraun für dunkle BG */
+  .grh-mega__brief-section ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-mega__brief-section li {
+    border-top: 1px solid rgba(250, 247, 241, 0.1);
+  }
+  .grh-mega__brief-section li:first-child { border-top: none; }
+  .grh-mega__brief-section li a {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: var(--grh-space-3);
+    align-items: baseline;
+    padding: 10px 0;
+    text-decoration: none;
+    color: var(--grh-cream-50);
+    transition: color var(--grh-dur-fast), padding-left var(--grh-dur-fast);
+  }
+  .grh-mega__brief-section li a:hover {
+    color: var(--grh-candle-300);
+    padding-left: 4px;
+  }
+  .grh-mega__brief-section time {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-candle-300);
+    opacity: 0.8;
+  }
+  .grh-mega__brief-section li a span:not(time):not(.grh-mega__brief-date):not(.grh-mega__brief-event-title) {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.4;
+  }
+  .grh-mega__brief-section li a > span {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.4;
+  }
+
+  /* Events: Datum-Block + Titel */
+  .grh-mega__brief-events li a {
+    grid-template-columns: 44px 1fr;
+    align-items: center;
+  }
+  .grh-mega__brief-date {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    color: var(--grh-candle-500);
+    border-right: 1px solid rgba(250, 247, 241, 0.15);
+    padding-right: 8px;
+    margin-right: 2px;
+  }
+  .grh-mega__brief-date strong {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-xl);
+    font-weight: 400;
+    color: var(--grh-candle-300);
+    letter-spacing: -0.02em;
+  }
+  .grh-mega__brief-date em {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--grh-candle-500);
+    font-style: normal;
+    margin-top: 2px;
+  }
+  .grh-mega__brief-event-title {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.35;
+  }
+
+  .grh-mega__brief-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: var(--grh-space-2);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-500);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .grh-mega__brief-more:hover { color: var(--grh-candle-300); }
+
+  .grh-mega__brief-foot {
+    border-top: 1px solid rgba(250, 247, 241, 0.12);
+    padding-top: var(--grh-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .grh-mega__brief-foot a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--grh-cream-50);
+    opacity: 0.78;
+    text-decoration: none;
+    font-size: 12px;
+  }
+  .grh-mega__brief-foot a:hover { color: var(--grh-candle-300); opacity: 1; }
+
+  /* === Rechte Spalte (Navigation) =========================== */
+  .grh-mega__main {
+    background: var(--grh-cream-50);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .grh-mega__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--grh-space-5) var(--grh-space-6);
+    border-bottom: 1px solid var(--grh-line);
+    position: sticky;
+    top: 0;
+    background: var(--grh-cream-50);
+    z-index: 2;
+  }
+  .grh-mega__top-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-stone-400);
+    font-weight: 600;
+  }
+  .grh-mega__close {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: var(--grh-radius-pill);
+    background: transparent;
+    border: 1px solid var(--grh-line);
+    color: var(--grh-stone-700);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast), border-color var(--grh-dur-fast);
+  }
+  .grh-mega__close:hover {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    border-color: var(--grh-forest-900);
+  }
+  @media (max-width: 480px) {
+    .grh-mega__close span { display: none; }
+    .grh-mega__close { padding: 8px; }
+  }
+
+  /* Kompakte Navigation — Multi-Column-Flow füllt Lücken automatisch */
+  .grh-mega__columns {
+    flex: 1;
+    padding: var(--grh-space-6) var(--grh-space-6) var(--grh-space-5);
+    /* min. Spaltenbreite ~18em; Browser ermittelt die optimale Spaltenanzahl */
+    columns: 18em;
+    column-gap: var(--grh-space-6);
+  }
+
+  .grh-mega__col {
+    display: block;
+    break-inside: avoid;
+    page-break-inside: avoid; /* Safari/legacy */
+    margin-bottom: var(--grh-space-5);
+  }
+  .grh-mega__col-head {
+    display: block;
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--grh-forest-900);
+    text-decoration: none;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--grh-line);
+    transition: color var(--grh-dur-fast), border-color var(--grh-dur-fast);
+  }
+  .grh-mega__col-head:hover {
+    color: var(--grh-moss-600);
+    border-color: var(--grh-moss-500);
+  }
+
+  .grh-mega__sublist {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-mega__sublink {
+    display: inline-block;
+    padding: 3px 0;
+    color: var(--grh-stone-700);
+    font-size: 13px;
+    line-height: 1.4;
+    text-decoration: none;
+    transition: color var(--grh-dur-fast), padding-left var(--grh-dur-fast);
+  }
+  .grh-mega__sublink:hover {
+    color: var(--grh-forest-900);
+    padding-left: 6px;
+  }
+
+  .grh-mega__sublist3 {
+    display: flex;
+    flex-direction: column;
+    margin: 0 0 4px var(--grh-space-3);
+    list-style: none;
+    padding: 0;
+  }
+  .grh-mega__sublist3 a {
+    display: inline-block;
+    padding: 1px 0;
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    text-decoration: none;
+  }
+  .grh-mega__sublist3 a:hover { color: var(--grh-forest-900); }
+
+  /* === Feature-Band: Quote + Card =========================== */
+  .grh-mega__feature {
+    border-top: 1px solid var(--grh-line);
+    padding: var(--grh-space-6);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+    align-items: center;
+  }
+  @media (min-width: 800px) {
+    .grh-mega__feature { grid-template-columns: 1fr 1fr; gap: var(--grh-space-7); }
+  }
+
+  .grh-mega__feature-quote {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+  }
+  .grh-mega__feature-eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 600;
+  }
+  .grh-mega__feature-quote p {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.2rem, 2vw, 1.7rem);
+    line-height: 1.3;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.015em;
+    margin: 0;
+    max-width: 30ch;
+  }
+  .grh-mega__feature-quote em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--grh-forest-800);
+  }
+
+  .grh-mega__feature-card {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: var(--grh-space-4);
+    align-items: center;
+    padding: var(--grh-space-3);
+    background: var(--grh-paper-100);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid transparent;
+    transition: border-color var(--grh-dur-fast), background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-mega__feature-card:hover {
+    border-color: var(--grh-candle-500);
+    background: var(--grh-cream-50);
+    transform: translateY(-2px);
+  }
+  .grh-mega__feature-img {
+    aspect-ratio: 1 / 1;
+    border-radius: var(--grh-radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .grh-mega__feature-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 800ms var(--grh-ease-out);
+  }
+  .grh-mega__feature-card:hover .grh-mega__feature-img img { transform: scale(1.05); }
+  .grh-mega__feature-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .grh-mega__feature-tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--grh-moss-600);
+    font-weight: 600;
+  }
+  .grh-mega__feature-title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--grh-forest-900);
+  }
+  .grh-mega__feature-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--grh-forest-800);
+    font-weight: 600;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 3px;
+    width: fit-content;
+    margin-top: 4px;
+  }
+
+  /* === Footer-Zeile ========================================= */
+  .grh-mega__foot {
+    border-top: 1px solid var(--grh-line);
+    padding: var(--grh-space-4) var(--grh-space-6);
+    background: var(--grh-cream-50);
+  }
+  .grh-mega__foot ul {
+    display: flex;
+    gap: var(--grh-space-4);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+  }
+  .grh-mega__foot a {
+    color: var(--grh-stone-400);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 10px;
+    transition: color var(--grh-dur-fast);
+  }
+  .grh-mega__foot a:hover { color: var(--grh-forest-900); }
+</style>
+
+<script>
+  const mega   = document.querySelector<HTMLElement>('[data-grh-megamenu]');
+  const opens  = document.querySelectorAll<HTMLElement>('[data-grh-megamenu-toggle]');
+  const closes = document.querySelectorAll<HTMLElement>('[data-grh-megamenu-close]');
+
+  let lastFocus: HTMLElement | null = null;
+
+  const open = () => {
+    if (!mega) return;
+    lastFocus = document.activeElement as HTMLElement;
+    mega.removeAttribute('hidden');
+    requestAnimationFrame(() => mega.setAttribute('data-open', ''));
+    document.body.style.overflow = 'hidden';
+    opens.forEach((b) => b.setAttribute('aria-expanded', 'true'));
+    const closeBtn = mega.querySelector<HTMLElement>('.grh-mega__close');
+    setTimeout(() => closeBtn?.focus(), 100);
+  };
+  const close = () => {
+    if (!mega) return;
+    mega.removeAttribute('data-open');
+    document.body.style.overflow = '';
+    opens.forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    setTimeout(() => mega.setAttribute('hidden', ''), 320);
+    lastFocus?.focus();
+  };
+
+  opens.forEach((btn) => btn.addEventListener('click', open));
+  closes.forEach((btn) => btn.addEventListener('click', close));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mega?.hasAttribute('data-open')) close();
+  });
+</script>

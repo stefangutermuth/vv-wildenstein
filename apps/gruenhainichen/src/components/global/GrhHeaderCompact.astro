@@ -1,0 +1,293 @@
+---
+import GrhWappen from './GrhWappen.astro';
+import GrhIcon from '../primitives/GrhIcon.astro';
+---
+<header class="grh-header grh-header--compact" data-grh-header>
+  <div class="grh-container grh-headerc__inner">
+    <a href="/variante" class="grh-headerc__brand" aria-label="Gemeinde Grünhainichen – Startseite">
+      <GrhWappen size={72} />
+      <span class="grh-headerc__brandtext">
+        <span class="grh-headerc__name">Grünhainichen</span>
+        <span class="grh-headerc__sub">Borstendorf · Grünhainichen · Waldkirchen</span>
+      </span>
+    </a>
+
+    <div class="grh-headerc__tools">
+      <a class="grh-headerc__weather" href="/wetter" aria-label="Aktuelles Wetter in Grünhainichen">
+        <span class="grh-headerc__weather-icon" aria-hidden="true">
+          {/* Sonne mit Wolke — Platzhalter, später per API ersetzt */}
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="10" r="3.2" />
+            <line x1="9" y1="3.5" x2="9" y2="5" />
+            <line x1="9" y1="15"  x2="9" y2="16.5" />
+            <line x1="2.5" y1="10" x2="4" y2="10" />
+            <line x1="14"  y1="10" x2="15.5" y2="10" />
+            <line x1="4.5" y1="5.5"   x2="5.5" y2="6.5" />
+            <line x1="12.5" y1="13.5" x2="13.5" y2="14.5" />
+            <line x1="4.5" y1="14.5"  x2="5.5" y2="13.5" />
+            <line x1="12.5" y1="6.5"  x2="13.5" y2="5.5" />
+            <path d="M11 18a3 3 0 0 1 5.5-1.6 3 3 0 0 1 4 4.6H13a3 3 0 0 1-2-3z" fill="currentColor" stroke="none" opacity="0.85" />
+          </svg>
+        </span>
+        <span class="grh-headerc__weather-text">
+          <span class="grh-headerc__weather-temp">8°</span>
+          <span class="grh-headerc__weather-loc">Grünhainichen</span>
+        </span>
+      </a>
+
+      <a class="grh-headerc__social" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Gemeinde Grünhainichen auf Instagram">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="5" />
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" stroke="none" />
+        </svg>
+      </a>
+      <a class="grh-headerc__social" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Gemeinde Grünhainichen auf Facebook">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 4h-2c-2 0-3 1-3 3v2H7v3h2v8h3v-8h2.5l.5-3H12V7c0-.5.4-1 1-1h1V4z" />
+        </svg>
+      </a>
+
+      <button
+        type="button"
+        class="grh-headerc__burger"
+        aria-label="Menü öffnen"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        data-grh-megamenu-toggle
+      >
+        <span class="grh-headerc__burger-bars" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+        <span class="grh-headerc__burger-label">Menü</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .grh-header--compact {
+    position: sticky;
+    top: 0;
+    z-index: var(--grh-z-sticky);
+    background: var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+    transition: backdrop-filter var(--grh-dur-base), background var(--grh-dur-base);
+  }
+  .grh-header--compact.is-scrolled {
+    background: rgba(250, 247, 241, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .grh-headerc__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--grh-space-5);
+    min-height: 130px;
+    transition: min-height var(--grh-dur-base);
+  }
+  .grh-header--compact.is-scrolled .grh-headerc__inner { min-height: 88px; }
+
+  .grh-headerc__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--grh-space-4);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+    transform-origin: left center;
+  }
+  .grh-header--compact.is-scrolled .grh-headerc__brand {
+    transform: scale(0.78);
+  }
+
+  .grh-headerc__brandtext {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    line-height: 1;
+    /* Subline definiert die Bezugsbreite — der Name skaliert darauf hin */
+    --grh-brand-width: 30ch;
+  }
+  .grh-headerc__name {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.52rem, 4.83vw, 3.36rem);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.03em;
+    line-height: 0.92;
+    /* Leichter Stretch — Wort bleibt mit der Subline bündig, ohne zu dominieren */
+    font-stretch: 115%;
+  }
+  .grh-headerc__sub {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    color: var(--grh-moss-600);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  @media (max-width: 720px) {
+    .grh-headerc__name { font-size: 2rem; font-stretch: 110%; }
+    .grh-headerc__sub  { font-size: 9px; letter-spacing: 0.2em; }
+  }
+  @media (max-width: 480px) {
+    .grh-headerc__brand { gap: var(--grh-space-3); }
+    .grh-headerc__name { font-size: var(--grh-fs-lg); font-stretch: 100%; }
+    .grh-headerc__sub { display: none; }
+  }
+
+  /* === Tools (Wetter + Social + Burger) ===================== */
+  .grh-headerc__tools {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--grh-space-2);
+  }
+
+  .grh-headerc__social {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    color: var(--grh-forest-900);
+    border: 1px solid var(--grh-line);
+    text-decoration: none;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast), border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-headerc__social:hover {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    border-color: var(--grh-forest-900);
+    transform: translateY(-1px);
+  }
+  @media (max-width: 480px) {
+    .grh-headerc__social { width: 36px; height: 36px; }
+  }
+
+  /* === Wetter-Pille ========================================= */
+  .grh-headerc__weather {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 8px;
+    border-radius: var(--grh-radius-pill);
+    border: 1px solid var(--grh-line);
+    color: var(--grh-forest-900);
+    text-decoration: none;
+    transition: border-color var(--grh-dur-fast), background var(--grh-dur-fast);
+    margin-right: var(--grh-space-2);
+  }
+  .grh-headerc__weather:hover {
+    background: var(--grh-paper-100);
+    border-color: var(--grh-candle-500);
+  }
+  .grh-headerc__weather-icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--grh-sage-100);
+    color: var(--grh-candle-500);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .grh-headerc__weather-text {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0;
+    line-height: 1;
+  }
+  .grh-headerc__weather-temp {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-headerc__weather-loc {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin-top: 2px;
+  }
+  @media (max-width: 720px) {
+    .grh-headerc__weather { padding-right: 8px; }
+    .grh-headerc__weather-text { display: none; }
+    .grh-headerc__weather-icon { width: 32px; height: 32px; }
+  }
+
+  .grh-headerc__burger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--grh-space-3);
+    padding: 10px 16px 10px 14px;
+    border-radius: var(--grh-radius-pill);
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    cursor: pointer;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+    justify-self: end;
+    /* Sehr sanftes „Atmen" — diffuser Goldschein um den Button */
+    animation: grh-burger-breathe 5.5s ease-in-out infinite;
+  }
+  .grh-headerc__burger:hover,
+  .grh-headerc__burger:focus-visible {
+    animation-play-state: paused;
+  }
+  @keyframes grh-burger-breathe {
+    0%, 100% {
+      box-shadow:
+        0 0 16px 4px  rgba(232, 182, 88, 0.04),
+        0 0 30px 10px rgba(232, 182, 88, 0.02);
+    }
+    50% {
+      box-shadow:
+        0 0 24px 6px  rgba(232, 182, 88, 0.16),
+        0 0 50px 18px rgba(232, 182, 88, 0.08);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-headerc__burger { animation: none; }
+  }
+  .grh-headerc__burger:hover {
+    background: var(--grh-forest-800);
+    transform: translateY(-1px);
+  }
+  .grh-headerc__burger-bars {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 18px;
+  }
+  .grh-headerc__burger-bars span {
+    height: 1.5px;
+    background: var(--grh-cream-50);
+    border-radius: 1px;
+    transition: transform var(--grh-dur-fast), opacity var(--grh-dur-fast);
+  }
+  .grh-headerc__burger-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+  }
+  @media (max-width: 480px) {
+    .grh-headerc__burger-label { display: none; }
+  }
+</style>
+
+<script>
+  const compactHeader = document.querySelector<HTMLElement>('.grh-header--compact[data-grh-header]');
+  if (compactHeader) {
+    let ticking = false;
+    const update = () => {
+      compactHeader.classList.toggle('is-scrolled', window.scrollY > 24);
+      ticking = false;
+    };
+    window.addEventListener('scroll', () => {
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+  }
+</script>

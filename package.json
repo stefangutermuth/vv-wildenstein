@@ -1,0 +1,19 @@
+{
+  "name": "vv-wildenstein",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Monorepo des Verwaltungsverbands Wildenstein — Frontends für Verband, Grünhainichen, Börnichen, Mängelmelder. Gemeinsames Design-System, zentrale WordPress-API als Backend.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@vv/gruenhainichen",
+    "dev:gruenhainichen": "npm run dev --workspace=@vv/gruenhainichen",
+    "build": "npm run build --workspaces --if-present",
+    "build:gruenhainichen": "npm run build --workspace=@vv/gruenhainichen"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

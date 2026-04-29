@@ -1,0 +1,498 @@
+---
+import GrhWappen from './GrhWappen.astro';
+import GrhIcon from '../primitives/GrhIcon.astro';
+import { navigation as nav } from '../../lib/navigation';
+---
+<header class="grh-header" data-grh-header>
+  <div class="grh-topbar">
+    <div class="grh-container grh-topbar__inner">
+      <span class="grh-topbar__verband">Verwaltungsverband Wildenstein · Borstendorf · Grünhainichen · Waldkirchen</span>
+      <span class="grh-topbar__contact">
+        <a href="tel:+4937294170-0"><GrhIcon name="phone" size={14} /> 037294 / 170-0</a>
+        <span aria-hidden="true">·</span>
+        <a href="/gemeinde/buergermeister"><GrhIcon name="clock" size={14} /> Sprechzeiten Bürgermeister</a>
+      </span>
+    </div>
+  </div>
+
+  <div class="grh-nav">
+    <div class="grh-container grh-nav__inner">
+      <a href="/" class="grh-brand" aria-label="Gemeinde Grünhainichen – Startseite">
+        <GrhWappen size={38} />
+        <span class="grh-brand__text">
+          <span class="grh-brand__name">Gemeinde Grünhainichen</span>
+          <span class="grh-brand__sub">Borstendorf · Grünhainichen · Waldkirchen</span>
+        </span>
+      </a>
+
+      <nav class="grh-nav__primary" aria-label="Hauptnavigation">
+        <ul class="grh-nav__list">
+          {nav.map((item) => (
+            <li class={`grh-nav__item ${item.children ? 'has-children' : ''}`}>
+              <a href={item.href} class="grh-nav__link">
+                {item.label}
+                {item.children && <span class="grh-nav__chevron" aria-hidden="true">▾</span>}
+              </a>
+              {item.children && (
+                <ul class="grh-nav__sub">
+                  {item.children.map((sub) => (
+                    <li class={`grh-nav__sub-item ${sub.children ? 'has-children' : ''}`}>
+                      <a href={sub.href} class="grh-nav__sub-link">
+                        {sub.label}
+                        {sub.children && <span class="grh-nav__sub-chevron" aria-hidden="true">›</span>}
+                      </a>
+                      {sub.children && (
+                        <ul class="grh-nav__sub3">
+                          {sub.children.map((sub3) => (
+                            <li><a href={sub3.href} class="grh-nav__sub-link">{sub3.label}</a></li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div class="grh-nav__actions">
+        <button class="grh-iconbtn" type="button" aria-label="Suche öffnen">
+          <GrhIcon name="search" size={20} />
+        </button>
+        <button class="grh-iconbtn grh-iconbtn--menu" type="button" aria-label="Menü öffnen" data-grh-menu-toggle>
+          <GrhIcon name="menu" size={22} />
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grh-mobilemenu" data-grh-mobilemenu hidden>
+    <button class="grh-iconbtn grh-mobilemenu__close" type="button" aria-label="Menü schließen" data-grh-menu-close>
+      <GrhIcon name="close" size={22} />
+    </button>
+    <nav aria-label="Mobile Navigation" class="grh-mobilemenu__nav">
+      <ul>
+        {nav.map((item) => (
+          <li class={`grh-mobile__item ${item.children ? 'has-children' : ''}`}>
+            {item.children ? (
+              <details>
+                <summary>
+                  <a href={item.href}>{item.label}</a>
+                  <span class="grh-mobile__chev" aria-hidden="true">▾</span>
+                </summary>
+                <ul>
+                  {item.children.map((sub) => (
+                    <li>
+                      {sub.children ? (
+                        <details>
+                          <summary>
+                            <a href={sub.href}>{sub.label}</a>
+                            <span class="grh-mobile__chev" aria-hidden="true">▾</span>
+                          </summary>
+                          <ul>
+                            {sub.children.map((sub3) => (
+                              <li><a href={sub3.href}>{sub3.label}</a></li>
+                            ))}
+                          </ul>
+                        </details>
+                      ) : (
+                        <a href={sub.href}>{sub.label}</a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : (
+              <a href={item.href}>{item.label}</a>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <div class="grh-mobilemenu__bg" aria-hidden="true">
+      <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+        <path d="M-10 30 C 60 15, 120 55, 210 25"  fill="none" stroke="currentColor" stroke-width="0.8" />
+        <path d="M-10 60 C 60 45, 120 95, 210 55"  fill="none" stroke="currentColor" stroke-width="0.8" />
+        <path d="M-10 90 C 60 75, 120 130, 210 90" fill="none" stroke="currentColor" stroke-width="0.8" />
+      </svg>
+    </div>
+  </div>
+</header>
+
+<style>
+  .grh-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--grh-z-sticky);
+    background: var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+    transition: backdrop-filter var(--grh-dur-base), background var(--grh-dur-base);
+  }
+  .grh-header.is-scrolled {
+    background: rgba(250, 247, 241, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .grh-topbar {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    font-size: var(--grh-fs-xs);
+    height: 32px;
+    display: flex;
+    align-items: center;
+    transition: max-height var(--grh-dur-base), opacity var(--grh-dur-base), padding var(--grh-dur-base);
+    overflow: hidden;
+  }
+  .grh-header.is-scrolled .grh-topbar {
+    max-height: 0;
+    opacity: 0;
+    height: 0;
+    padding: 0;
+  }
+  .grh-topbar__inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--grh-space-4);
+    width: 100%;
+  }
+  .grh-topbar__verband { opacity: 0.85; }
+  .grh-topbar__contact {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--grh-space-3);
+  }
+  .grh-topbar__contact a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: inherit;
+  }
+  .grh-topbar__contact a:hover { color: var(--grh-candle-300); }
+  @media (max-width: 768px) {
+    .grh-topbar__verband { display: none; }
+    .grh-topbar__contact { font-size: 11px; }
+  }
+
+  .grh-nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--grh-space-5);
+    height: 88px;
+    transition: height var(--grh-dur-base);
+  }
+  .grh-header.is-scrolled .grh-nav__inner { height: 64px; }
+
+  .grh-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--grh-space-3);
+    text-decoration: none;
+    color: inherit;
+  }
+  .grh-brand__text { display: flex; flex-direction: column; line-height: 1.15; }
+  .grh-brand__name {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    font-weight: 600;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-brand__sub {
+    font-size: var(--grh-fs-xs);
+    color: var(--grh-stone-400);
+    letter-spacing: var(--grh-tracking-label);
+  }
+  @media (max-width: 640px) {
+    .grh-brand__sub { display: none; }
+    .grh-brand__name { font-size: var(--grh-fs-md); }
+  }
+
+  /* === Desktop-Navigation mit Dropdowns ====================== */
+  .grh-nav__list {
+    display: flex;
+    gap: var(--grh-space-1);
+    align-items: center;
+  }
+  .grh-nav__item {
+    position: relative;
+  }
+  .grh-nav__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--grh-stone-700);
+    font-weight: 500;
+    font-size: var(--grh-fs-base);
+    padding: 8px 12px;
+    text-decoration: none;
+    transition: color var(--grh-dur-fast);
+    position: relative;
+  }
+  .grh-nav__link::after {
+    content: '';
+    position: absolute;
+    left: 12px; right: 12px; bottom: 4px;
+    height: 1.5px;
+    background: var(--grh-moss-500);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-nav__item:hover > .grh-nav__link,
+  .grh-nav__item:focus-within > .grh-nav__link { color: var(--grh-forest-800); }
+  .grh-nav__item:hover > .grh-nav__link::after,
+  .grh-nav__item:focus-within > .grh-nav__link::after { transform: scaleX(1); }
+
+  .grh-nav__chevron {
+    font-size: 9px;
+    color: var(--grh-stone-400);
+    transition: transform var(--grh-dur-fast);
+  }
+  .grh-nav__item:hover > .grh-nav__link .grh-nav__chevron { transform: rotate(180deg); }
+
+  /* Dropdown Level 2 */
+  .grh-nav__sub {
+    position: absolute;
+    top: calc(100% - 4px);
+    left: 0;
+    min-width: 240px;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-2);
+    box-shadow: var(--grh-shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity var(--grh-dur-fast), transform var(--grh-dur-fast), visibility 0s linear var(--grh-dur-fast);
+    list-style: none;
+    margin: 0;
+    z-index: 10;
+  }
+  .grh-nav__item:hover > .grh-nav__sub,
+  .grh-nav__item:focus-within > .grh-nav__sub {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition: opacity var(--grh-dur-fast), transform var(--grh-dur-fast), visibility 0s;
+  }
+
+  .grh-nav__sub-item { position: relative; }
+  .grh-nav__sub-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--grh-space-3);
+    padding: 8px 12px;
+    border-radius: var(--grh-radius-sm);
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-nav__sub-link:hover {
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-900);
+  }
+  .grh-nav__sub-chevron {
+    font-size: 14px;
+    color: var(--grh-stone-400);
+  }
+
+  /* Dropdown Level 3 — fly-out nach rechts */
+  .grh-nav__sub3 {
+    position: absolute;
+    top: -4px;
+    left: 100%;
+    min-width: 220px;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-2);
+    box-shadow: var(--grh-shadow-lg);
+    margin-left: 4px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-6px);
+    transition: opacity var(--grh-dur-fast), transform var(--grh-dur-fast), visibility 0s linear var(--grh-dur-fast);
+    list-style: none;
+    z-index: 11;
+  }
+  .grh-nav__sub-item:hover > .grh-nav__sub3,
+  .grh-nav__sub-item:focus-within > .grh-nav__sub3 {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition: opacity var(--grh-dur-fast), transform var(--grh-dur-fast), visibility 0s;
+  }
+
+  /* Letztes Top-Item: Dropdown rechtsbündig öffnen, damit es nicht über den Bildschirm hinausläuft */
+  .grh-nav__item:last-child .grh-nav__sub { left: auto; right: 0; }
+  .grh-nav__item:last-child .grh-nav__sub3 { left: auto; right: 100%; margin-left: 0; margin-right: 4px; transform: translateX(6px); }
+  .grh-nav__item:last-child .grh-nav__sub-item:hover > .grh-nav__sub3 { transform: translateX(0); }
+
+  @media (max-width: 1099px) { .grh-nav__primary { display: none; } }
+
+  .grh-nav__actions { display: inline-flex; gap: var(--grh-space-2); }
+  .grh-iconbtn {
+    width: 44px; height: 44px;
+    border-radius: var(--grh-radius-pill);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--grh-forest-900);
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-iconbtn:hover { background: var(--grh-paper-100); }
+  .grh-iconbtn--menu { display: none; }
+  @media (max-width: 1099px) { .grh-iconbtn--menu { display: inline-flex; } }
+
+  /* === Mobile Off-Canvas-Menü =============================== */
+  .grh-mobilemenu {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(420px, 92vw);
+    background: var(--grh-cream-50);
+    z-index: var(--grh-z-modal);
+    padding: var(--grh-space-7) 0 var(--grh-space-7);
+    overflow-y: auto;
+    box-shadow: var(--grh-shadow-lg);
+    transform: translateX(100%);
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-mobilemenu[data-open] { transform: translateX(0); }
+  .grh-mobilemenu[hidden] { display: block !important; visibility: hidden; }
+  .grh-mobilemenu[data-open] { visibility: visible; }
+  .grh-mobilemenu__close {
+    position: absolute;
+    top: var(--grh-space-4);
+    right: var(--grh-space-4);
+    z-index: 1;
+  }
+
+  .grh-mobilemenu__nav {
+    margin-top: var(--grh-space-7);
+    padding: 0 var(--grh-space-6);
+    position: relative;
+    z-index: 1;
+  }
+  .grh-mobilemenu__nav > ul { display: flex; flex-direction: column; }
+
+  .grh-mobile__item {
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-mobile__item > a,
+  .grh-mobile__item > details > summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--grh-space-4) 0;
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+  }
+  .grh-mobile__item > details > summary::-webkit-details-marker { display: none; }
+  .grh-mobile__item > details > summary > a {
+    flex: 1;
+    color: inherit;
+    text-decoration: none;
+  }
+  .grh-mobile__chev {
+    font-size: 16px;
+    color: var(--grh-stone-400);
+    transition: transform var(--grh-dur-fast);
+  }
+  .grh-mobile__item details[open] > summary > .grh-mobile__chev {
+    transform: rotate(180deg);
+  }
+
+  /* Mobile-Submenu Level 2 */
+  .grh-mobile__item details > ul {
+    padding: 0 0 var(--grh-space-3) var(--grh-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-left: 2px solid var(--grh-moss-500);
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-mobile__item details > ul > li > a,
+  .grh-mobile__item details > ul > li > details > summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px var(--grh-space-3);
+    font-family: var(--grh-font-body);
+    font-size: var(--grh-fs-base);
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+    border-radius: var(--grh-radius-sm);
+  }
+  .grh-mobile__item details > ul > li > a:hover,
+  .grh-mobile__item details > ul > li > details > summary:hover {
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-900);
+  }
+  .grh-mobile__item details > ul > li > details > summary > a { flex: 1; color: inherit; text-decoration: none; }
+  .grh-mobile__item details > ul > li > details > summary::-webkit-details-marker { display: none; }
+
+  /* Mobile-Submenu Level 3 */
+  .grh-mobile__item details > ul > li > details > ul {
+    border-left: 1px solid var(--grh-line);
+    margin-left: var(--grh-space-3);
+    padding-left: var(--grh-space-3);
+  }
+  .grh-mobile__item details > ul > li > details > ul > li > a {
+    display: block;
+    padding: 8px var(--grh-space-3);
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    border-radius: var(--grh-radius-sm);
+  }
+  .grh-mobile__item details > ul > li > details > ul > li > a:hover {
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-900);
+  }
+
+  .grh-mobilemenu__bg {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    color: var(--grh-sage-300);
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+  }
+</style>
+
+<script>
+  // Sticky-Header Scroll-Status
+  const header = document.querySelector<HTMLElement>('[data-grh-header]');
+  if (header) {
+    let ticking = false;
+    const update = () => {
+      header.classList.toggle('is-scrolled', window.scrollY > 24);
+      ticking = false;
+    };
+    window.addEventListener('scroll', () => {
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+  }
+
+  // Mobile-Menü Toggle
+  const menu = document.querySelector<HTMLElement>('[data-grh-mobilemenu]');
+  const openBtn = document.querySelector<HTMLElement>('[data-grh-menu-toggle]');
+  const closeBtn = document.querySelector<HTMLElement>('[data-grh-menu-close]');
+  const open = () => { if (menu) { menu.removeAttribute('hidden'); requestAnimationFrame(() => menu.setAttribute('data-open', '')); document.body.style.overflow = 'hidden'; } };
+  const close = () => { if (menu) { menu.removeAttribute('data-open'); document.body.style.overflow = ''; setTimeout(() => menu.setAttribute('hidden', ''), 320); } };
+  openBtn?.addEventListener('click', open);
+  closeBtn?.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+</script>

@@ -1,0 +1,109 @@
+---
+import GrhIcon from '../primitives/GrhIcon.astro';
+
+interface CTA { label: string; href: string; variant?: 'primary' | 'secondary' | 'ghost' }
+interface Props {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  ctas?: CTA[];
+  logo?: string;
+  logoAlt?: string;
+}
+const { eyebrow, title, subtitle, ctas = [], logo, logoAlt = '' } = Astro.props;
+
+// Reduce auf einen Primary-CTA — der Slot soll kein Buffet sein
+const primary = ctas[0];
+---
+<a class="grh-pin grh-reveal" href={primary?.href ?? '#'} aria-label={`${eyebrow ?? ''} — ${title}`}>
+  {logo && (
+    <span class="grh-pin__logo" aria-hidden="true">
+      <img src={logo} alt={logoAlt} loading="eager" decoding="async" />
+    </span>
+  )}
+  <span class="grh-pin__body">
+    {eyebrow && <span class="grh-pin__eyebrow">{eyebrow}</span>}
+    <span class="grh-pin__title">{title}</span>
+    {subtitle && <span class="grh-pin__sub">{subtitle}</span>}
+  </span>
+  <span class="grh-pin__arrow" aria-hidden="true">
+    <GrhIcon name="arrow-right" size={16} />
+  </span>
+</a>
+
+<style>
+  .grh-pin {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--grh-space-3);
+    align-items: center;
+    padding: 12px 16px 12px 12px;
+    background: rgba(250, 247, 241, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(250, 247, 241, 0.6);
+    border-left: 3px solid var(--grh-candle-500);
+    border-radius: 2px;
+    box-shadow: var(--grh-shadow-md);
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    transition: transform var(--grh-dur-base), box-shadow var(--grh-dur-base);
+  }
+  .grh-pin:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--grh-shadow-lg);
+  }
+
+  .grh-pin__logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--grh-forest-900);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .grh-pin__logo img {
+    width: 85%; height: 85%;
+    object-fit: contain;
+  }
+
+  .grh-pin__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+  }
+  .grh-pin__eyebrow {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .grh-pin__title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-base);
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-pin__sub {
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    line-height: 1.4;
+    margin-top: 2px;
+  }
+
+  .grh-pin__arrow {
+    color: var(--grh-forest-800);
+    transition: transform var(--grh-dur-fast), color var(--grh-dur-fast);
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
+  .grh-pin:hover .grh-pin__arrow {
+    color: var(--grh-candle-500);
+    transform: translateX(4px);
+  }
+</style>

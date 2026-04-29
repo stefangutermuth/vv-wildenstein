@@ -1,0 +1,223 @@
+---
+import GrhIcon from '../primitives/GrhIcon.astro';
+import GrhWappen from './GrhWappen.astro';
+
+const sitemap = {
+  Gemeinde: [
+    ['Bürgermeister',     '/gemeinde/buergermeister'],
+    ['Gemeinderat',       '/gemeinde/gemeinderat'],
+    ['Amtsblatt',         '/gemeinde/amtsblatt'],
+    ['Geschichte',        '/gemeinde/geschichte'],
+    ['Bauleitplanung',    '/gemeinde/bauleitplanung'],
+  ],
+  'Tourismus & Leben': [
+    ['Sehenswürdigkeiten', '/tourismus/sehenswuerdigkeiten'],
+    ['Wandern',            '/tourismus/wandern'],
+    ['Unterkünfte',        '/tourismus/unterkuenfte'],
+    ['Vereine',            '/vereine'],
+    ['Gewerbe',            '/gewerbe'],
+  ],
+};
+const year = new Date().getFullYear();
+---
+<footer class="grh-footer">
+  <div class="grh-container grh-footer__inner">
+    {/* Linker Block: Wappen + Adresse */}
+    <div class="grh-footer__brand">
+      <GrhWappen size={96} />
+
+      <address class="grh-footer__addr">
+        Gemeindeverwaltung Grünhainichen<br />
+        Chemnitzer Straße 41<br />
+        09579 Grünhainichen
+      </address>
+
+      <div class="grh-footer__contact">
+        <a href="tel:+4937294170-0"><GrhIcon name="phone" size={14} /> 037294 / 170-0</a>
+        <a href="mailto:gemeinde@gruenhainichen.com"><GrhIcon name="mail" size={14} /> gemeinde@gruenhainichen.com</a>
+      </div>
+    </div>
+
+    {/* Rechter Block: zwei Sitemap-Spalten */}
+    <div class="grh-footer__map">
+      {Object.entries(sitemap).map(([heading, items]) => (
+        <div class="grh-footer__col">
+          <h3>{heading}</h3>
+          <ul>
+            {items.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
+          </ul>
+        </div>
+      ))}
+
+      <div class="grh-footer__col">
+        <h3>Sprechzeiten</h3>
+        <p>
+          Di 9–12 &amp; 13–18<br />
+          Do 9–12 &amp; 13–16<br />
+          Fr 9–12
+        </p>
+        <p class="grh-footer__col-aux">
+          Bürgermeister: nach Vereinbarung
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grh-footer__bottom">
+    <div class="grh-container grh-footer__bottom-inner">
+      <span>© {year} Gemeinde Grünhainichen · Verwaltungsverband Wildenstein</span>
+      <ul>
+        <li><a href="/impressum">Impressum</a></li>
+        <li><a href="/datenschutz">Datenschutz</a></li>
+        <li><a href="/cookie-einstellungen">Cookies</a></li>
+        <li><a href="/barrierefreiheit">Barrierefreiheit</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .grh-footer {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    margin-top: var(--grh-space-10);
+  }
+
+  .grh-footer__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-8);
+    padding-block: var(--grh-space-9) var(--grh-space-7);
+  }
+  @media (min-width: 900px) {
+    .grh-footer__inner { grid-template-columns: 5fr 7fr; gap: var(--grh-space-9); }
+  }
+
+  /* === Brand (Wappen + Adresse) ============================ */
+  .grh-footer__brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--grh-space-5);
+  }
+  /* Wappen in Originalfarben — weicher Schein hebt es vom dunklen Untergrund ab */
+  .grh-footer__brand :global(.grh-wappen) {
+    filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.35));
+  }
+  .grh-footer__addr {
+    font-style: normal;
+    font-size: var(--grh-fs-sm);
+    line-height: 1.7;
+    color: var(--grh-cream-50);
+    opacity: 0.85;
+  }
+  .grh-footer__contact {
+    margin-top: var(--grh-space-3);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: var(--grh-fs-sm);
+  }
+  .grh-footer__contact a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--grh-cream-50);
+    opacity: 0.85;
+    text-decoration: none;
+    transition: color var(--grh-dur-fast), opacity var(--grh-dur-fast);
+  }
+  .grh-footer__contact a:hover {
+    color: var(--grh-candle-300);
+    opacity: 1;
+  }
+
+  /* === Sitemap-Block ======================================== */
+  .grh-footer__map {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+  }
+  @media (min-width: 600px) {
+    .grh-footer__map { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-7); }
+  }
+
+  .grh-footer__col h3 {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-500);
+    font-weight: 600;
+    margin-bottom: var(--grh-space-3);
+    padding-bottom: var(--grh-space-2);
+    border-bottom: 1px solid rgba(250, 247, 241, 0.18);
+  }
+  .grh-footer__col ul {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-footer__col a {
+    color: var(--grh-cream-50);
+    opacity: 0.78;
+    font-size: var(--grh-fs-sm);
+    text-decoration: none;
+    transition: opacity var(--grh-dur-fast), color var(--grh-dur-fast), padding-left var(--grh-dur-fast);
+  }
+  .grh-footer__col a:hover {
+    opacity: 1;
+    color: var(--grh-candle-300);
+    padding-left: 4px;
+  }
+  .grh-footer__col p {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.65;
+    color: var(--grh-cream-50);
+    opacity: 0.85;
+  }
+  .grh-footer__col-aux {
+    margin-top: var(--grh-space-3);
+    padding-top: var(--grh-space-3);
+    border-top: 1px solid rgba(250, 247, 241, 0.12);
+    font-size: 12px !important;
+    opacity: 0.7 !important;
+  }
+
+  /* === Bottom-Bar =========================================== */
+  .grh-footer__bottom {
+    border-top: 1px solid rgba(250, 247, 241, 0.12);
+    padding-block: var(--grh-space-4);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .grh-footer__bottom-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--grh-space-4);
+    justify-content: space-between;
+    align-items: center;
+  }
+  .grh-footer__bottom span { opacity: 0.55; }
+  .grh-footer__bottom ul {
+    display: flex;
+    gap: var(--grh-space-4);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+  }
+  .grh-footer__bottom a {
+    color: var(--grh-cream-50);
+    opacity: 0.7;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 10px;
+    transition: opacity var(--grh-dur-fast);
+  }
+  .grh-footer__bottom a:hover { opacity: 1; }
+</style>

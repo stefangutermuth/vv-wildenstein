@@ -1,0 +1,389 @@
+---
+import GrhIcon from '../primitives/GrhIcon.astro';
+
+interface Event {
+  title: string;
+  startDate: Date;
+  endDate?: Date;
+  location: string;
+  ortsteil?: 'borstendorf' | 'gruenhainichen' | 'waldkirchen';
+  teaser: string;
+  featured?: boolean;
+  href?: string;
+  image?: string;
+}
+interface Props {
+  events: Event[];
+}
+const { events } = Astro.props;
+
+const ortsteilLabel = {
+  borstendorf:    'Borstendorf',
+  gruenhainichen: 'Grünhainichen',
+  waldkirchen:    'Waldkirchen',
+} as const;
+
+const fmtDay   = new Intl.DateTimeFormat('de-DE', { day: '2-digit' });
+const fmtMon   = new Intl.DateTimeFormat('de-DE', { month: 'short' });
+const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const fmtRange = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long' });
+const fmtYear  = new Intl.DateTimeFormat('de-DE', { year: 'numeric' });
+
+const single = events.filter((e) => !e.endDate);
+const multi  = events.filter((e) => !!e.endDate);
+
+const monShort = (d: Date) => fmtMon.format(d).replace('.', '');
+---
+<div class="grh-evs">
+
+  {single.length > 0 && (
+    <section class="grh-evs__group">
+      <header class="grh-evs__group-head">
+        <span class="grh-eyebrow">Tagesveranstaltungen</span>
+        <h3>Termine zum Vormerken.</h3>
+      </header>
+
+      <ol class="grh-evs__day-grid">
+        {single.map((e) => (
+          <li class="grh-evs__day">
+            <a href={e.href ?? '#'} class="grh-evs__day-link">
+              <div class="grh-evs__poster">
+                {e.image ? (
+                  <img src={e.image} alt={`Plakat ${e.title}`} loading="lazy" decoding="async" />
+                ) : (
+                  <div class="grh-evs__poster-fallback" aria-hidden="true"></div>
+                )}
+                <div class="grh-evs__poster-overlay"></div>
+                <div class="grh-evs__poster-date">
+                  <span class="grh-evs__poster-day">{fmtDay.format(e.startDate)}</span>
+                  <span class="grh-evs__poster-mon">{monShort(e.startDate)}</span>
+                </div>
+                {e.featured && <span class="grh-evs__poster-badge">Empfehlung</span>}
+              </div>
+
+              <div class="grh-evs__day-body">
+                <h4>{e.title}</h4>
+                <p class="grh-evs__day-loc">
+                  <GrhIcon name="map-pin" size={12} />
+                  {e.ortsteil && <span>{ortsteilLabel[e.ortsteil]} ·</span>}
+                  <span>{e.location}</span>
+                </p>
+                <p class="grh-evs__day-teaser">{e.teaser}</p>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+  {multi.length > 0 && (
+    <section class="grh-evs__group grh-evs__group--multi">
+      <header class="grh-evs__group-head">
+        <span class="grh-eyebrow">Mehrtägig &amp; Dauer</span>
+        <h3>Längere Highlights.</h3>
+      </header>
+
+      <ol class="grh-evs__multi-list">
+        {multi.map((e) => (
+          <li class="grh-evs__multi">
+            <a href={e.href ?? '#'} class="grh-evs__multi-link">
+              <div class="grh-evs__poster grh-evs__poster--lg">
+                {e.image ? (
+                  <img src={e.image} alt={`Plakat ${e.title}`} loading="lazy" decoding="async" />
+                ) : (
+                  <div class="grh-evs__poster-fallback" aria-hidden="true"></div>
+                )}
+                <div class="grh-evs__poster-overlay"></div>
+                <span class="grh-evs__poster-tag">{e.endDate ? `${fmtDay.format(e.startDate)}.–${fmtDay.format(e.endDate)}.${fmtMon.format(e.endDate).replace('.', '')}` : ''}</span>
+                {e.featured && <span class="grh-evs__poster-badge grh-evs__poster-badge--lg">Empfehlung</span>}
+              </div>
+
+              <div class="grh-evs__multi-body">
+                <span class="grh-evs__multi-range">
+                  <GrhIcon name="calendar" size={12} />
+                  {e.endDate
+                    ? `${fmtRange.format(e.startDate)} – ${fmtRange.format(e.endDate)} ${fmtYear.format(e.endDate)}`
+                    : fmtFull.format(e.startDate)}
+                </span>
+                <h4>{e.title}</h4>
+                <p class="grh-evs__multi-loc">
+                  <GrhIcon name="map-pin" size={12} />
+                  {e.ortsteil && <span>{ortsteilLabel[e.ortsteil]} ·</span>}
+                  <span>{e.location}</span>
+                </p>
+                <p class="grh-evs__multi-teaser">{e.teaser}</p>
+                <span class="grh-evs__multi-cta">
+                  Programm &amp; Details <GrhIcon name="arrow-right" size={14} />
+                </span>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+</div>
+
+<style>
+  .grh-evs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-9);
+  }
+
+  .grh-evs__group-head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: var(--grh-space-6);
+    padding-bottom: var(--grh-space-3);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-evs__group-head h3 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    line-height: 1.1;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  /* === Plakat-Grundbaustein (Hochkant 3:4) ================== */
+  .grh-evs__poster {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: var(--grh-radius-md);
+    background: var(--grh-paper-100);
+    isolation: isolate;
+  }
+  .grh-evs__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1) translateZ(0);
+    transition: transform 1s var(--grh-ease-out);
+  }
+  .grh-evs__poster-fallback {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #2A6B43, #13301F);
+  }
+  .grh-evs__poster-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(14,31,24,0.05) 0%, rgba(14,31,24,0.55) 80%, rgba(14,31,24,0.85) 100%);
+    pointer-events: none;
+  }
+  .grh-evs__poster-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-900);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: var(--grh-radius-pill);
+  }
+  .grh-evs__poster-badge--lg { font-size: 10px; padding: 5px 10px; }
+
+  /* === Tagesveranstaltungen — Plakat-Grid =================== */
+  .grh-evs__day-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  @media (min-width: 540px)  { .grh-evs__day-grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 980px)  { .grh-evs__day-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1280px) { .grh-evs__day-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .grh-evs__day-link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-evs__day-link:hover { transform: translateY(-3px); }
+  .grh-evs__day-link:hover .grh-evs__poster img { transform: scale(1.05) translateZ(0); }
+
+  .grh-evs__poster-date {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    line-height: 0.9;
+  }
+  .grh-evs__poster-day {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(2.6rem, 5vw, 3.4rem);
+    color: var(--grh-cream-50);
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  }
+  .grh-evs__poster-mon {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .grh-evs__day-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 4px;
+  }
+  .grh-evs__day-body h4 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    line-height: 1.2;
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .grh-evs__day-loc {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--grh-stone-400);
+    margin: 0;
+  }
+  .grh-evs__day-teaser {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.5;
+    color: var(--grh-stone-700);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+  }
+
+  /* === Mehrtägige Veranstaltungen — Editorial-Spread ======== */
+  .grh-evs__multi-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-6);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-evs__multi-link {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+    text-decoration: none;
+    color: inherit;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-lg);
+    overflow: hidden;
+    transition: border-color var(--grh-dur-base), transform var(--grh-dur-base), box-shadow var(--grh-dur-base);
+  }
+  @media (min-width: 720px) {
+    .grh-evs__multi-link { grid-template-columns: 220px 1fr; gap: 0; }
+  }
+  @media (min-width: 1100px) {
+    .grh-evs__multi-link { grid-template-columns: 280px 1fr; }
+  }
+  .grh-evs__multi-link:hover {
+    transform: translateY(-3px);
+    border-color: var(--grh-candle-500);
+    box-shadow: var(--grh-shadow-md);
+  }
+  .grh-evs__multi-link:hover .grh-evs__poster img { transform: scale(1.04) translateZ(0); }
+
+  .grh-evs__poster--lg {
+    aspect-ratio: 3 / 4;
+    border-radius: 0;
+  }
+  @media (max-width: 719px) {
+    .grh-evs__poster--lg { aspect-ratio: 16 / 9; }
+  }
+  .grh-evs__poster-tag {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-candle-300);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.02em;
+  }
+
+  .grh-evs__multi-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    padding: var(--grh-space-6);
+  }
+  .grh-evs__multi-range {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+    font-weight: 600;
+  }
+  .grh-evs__multi-body h4 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    line-height: 1.1;
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .grh-evs__multi-loc {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--grh-stone-400);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    margin: 0;
+  }
+  .grh-evs__multi-teaser {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.6;
+    color: var(--grh-stone-700);
+    margin: 0;
+    max-width: 60ch;
+  }
+  .grh-evs__multi-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: var(--grh-space-3);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 4px;
+    width: fit-content;
+    transition: gap var(--grh-dur-base);
+  }
+  .grh-evs__multi-link:hover .grh-evs__multi-cta { gap: 14px; color: var(--grh-moss-600); }
+</style>

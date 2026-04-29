@@ -1,0 +1,703 @@
+---
+import type { Season } from '../../lib/seasons';
+import GrhFeaturedSlot from './GrhFeaturedSlot.astro';
+import GrhIcon from '../primitives/GrhIcon.astro';
+
+interface CTA { label: string; href: string; variant?: 'primary' | 'secondary' | 'ghost' }
+interface Featured {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  ctas?: CTA[];
+  logo?: string;
+  logoAlt?: string;
+}
+interface Slide {
+  src: string;
+  alt: string;
+  credit?: string;
+  caption?: string;
+}
+interface Props {
+  season?: Season;
+  preTitle?: string;
+  title?: string;
+  titleAccent?: string;
+  subline?: string;
+  featured?: Featured;
+  slides?: Slide[];
+}
+const {
+  preTitle = 'Erzgebirge',
+  title = 'Drei Orte,',
+  titleAccent = 'eine Heimat.',
+  subline = 'Zwischen Zschopau und Flöha — wo Holz noch riecht, der Schach­wanderweg ruft und im Advent jedes Fenster leuchtet.',
+  featured,
+  slides = [],
+} = Astro.props;
+---
+<section class="grh-hero" data-grh-hero>
+  <div class="grh-hero__grid">
+    {/* Linke Spalte: Forest-Wall mit Editorial-Typo */}
+    <div class="grh-hero__copy">
+      <span class="grh-hero__pre grh-text-reveal">{preTitle}</span>
+      <h1 class="grh-hero__title">
+        <span class="grh-hero__line grh-text-reveal" style="transition-delay: 80ms;">{title}</span>
+        <em class="grh-hero__line grh-hero__line--accent grh-text-reveal" style="transition-delay: 200ms;">{titleAccent}</em>
+      </h1>
+      <p class="grh-hero__subline grh-text-reveal" style="transition-delay: 360ms;">{subline}</p>
+
+      <div class="grh-hero__quick grh-text-reveal" style="transition-delay: 520ms;">
+        <a href="/neuigkeiten" class="grh-hero__quicklink">
+          <GrhIcon name="document" size={16} /><span>Aktuelles</span>
+        </a>
+        <a href="/veranstaltungen" class="grh-hero__quicklink">
+          <GrhIcon name="calendar" size={16} /><span>Veranstaltungen</span>
+        </a>
+        <a href="/neuigkeiten/sperrungen" class="grh-hero__quicklink">
+          <GrhIcon name="map-pin" size={16} /><span>Sperrungen</span>
+        </a>
+      </div>
+
+      <span class="grh-hero__sidetag" aria-hidden="true">09579 Grünhainichen — Sachsen / Erzgebirge</span>
+
+      <a class="grh-hero__scroll" href="#main" data-grh-hero-scroll aria-label="Weiter scrollen">
+        <span class="grh-hero__scroll-line" aria-hidden="true"></span>
+        <span class="grh-hero__scroll-label">Scrollen</span>
+      </a>
+    </div>
+
+    {/* Rechte Spalte: Slider */}
+    <div class="grh-hero__photo">
+      {slides.length > 0 ? (
+        <div class="grh-slider" data-grh-slider data-interval="5500" aria-label="Bildergalerie">
+          <div class="grh-slider__stage">
+            {slides.map((s, i) => (
+              <figure class={`grh-slider__slide ${i === 0 ? 'is-active' : ''}`} aria-hidden={i !== 0 ? 'true' : 'false'}>
+                <img
+                  src={s.src}
+                  alt={s.alt}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  fetchpriority={i === 0 ? 'high' : 'auto'}
+                  decoding="async"
+                />
+                {(s.credit || s.caption) && (
+                  <figcaption class="grh-slider__caption">
+                    {s.caption && <span>{s.caption}</span>}
+                    {s.credit && <span class="grh-slider__credit">Foto · {s.credit}</span>}
+                  </figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+
+          {/* Sommerliche Lichtpartikel über dem Foto */}
+          <div class="grh-particles" aria-hidden="true" data-grh-particles>
+            {[
+              /* 14 Partikel mit gemischten Richtungen — up/down/left/right */
+              { dir: 'up',    pos: '8%'  }, { dir: 'down',  pos: '24%' },
+              { dir: 'left',  pos: '32%' }, { dir: 'right', pos: '18%' },
+              { dir: 'up',    pos: '42%' }, { dir: 'down',  pos: '60%' },
+              { dir: 'right', pos: '52%' }, { dir: 'left',  pos: '68%' },
+              { dir: 'up',    pos: '78%' }, { dir: 'down',  pos: '14%' },
+              { dir: 'left',  pos: '85%' }, { dir: 'up',    pos: '56%' },
+              { dir: 'down',  pos: '38%' }, { dir: 'right', pos: '74%' },
+            ].map((p, i) => (
+              <span
+                class={`grh-particle-wrap grh-particle-wrap--${p.dir}`}
+                style={`--i:${i}; --pos:${p.pos};`}
+              >
+                <span class="grh-particle"></span>
+              </span>
+            ))}
+          </div>
+
+          <div class="grh-slider__controls">
+            <button class="grh-slider__btn grh-slider__btn--prev" type="button" data-grh-slider-prev aria-label="Vorheriges Bild">
+              <GrhIcon name="arrow-right" size={18} />
+            </button>
+            <ol class="grh-slider__dots" role="tablist" aria-label="Bilder auswählen">
+              {slides.map((_, i) => (
+                <li>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={i === 0 ? 'true' : 'false'}
+                    aria-label={`Bild ${i + 1} von ${slides.length}`}
+                    data-grh-slider-dot={i}
+                    class={i === 0 ? 'is-active' : ''}
+                  ></button>
+                </li>
+              ))}
+            </ol>
+            <button class="grh-slider__btn" type="button" data-grh-slider-next aria-label="Nächstes Bild">
+              <GrhIcon name="arrow-right" size={18} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div class="grh-hero__photo-fallback" aria-hidden="true"></div>
+      )}
+    </div>
+  </div>
+
+  {/* FeaturedSlot — sitzt sauber im Hero, ohne Überhang */}
+  {featured && (
+    <div class="grh-hero__featured-wrap">
+      <GrhFeaturedSlot
+        eyebrow={featured.eyebrow}
+        title={featured.title}
+        subtitle={featured.subtitle}
+        ctas={featured.ctas}
+        logo={featured.logo}
+        logoAlt={featured.logoAlt}
+      />
+    </div>
+  )}
+</section>
+
+<style>
+  .grh-hero {
+    position: relative;
+    background: var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    isolation: isolate;
+  }
+
+  .grh-hero__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: clamp(560px, 80vh, 820px);
+  }
+  @media (min-width: 980px) {
+    .grh-hero__grid { grid-template-columns: minmax(420px, 5fr) 7fr; }
+  }
+
+  /* --- Linke Spalte ------------------------------------------ */
+  .grh-hero__copy {
+    position: relative;
+    padding: var(--grh-space-8) var(--grh-gutter) var(--grh-space-7);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: var(--grh-space-5);
+    background:
+      radial-gradient(120% 80% at 0% 0%, rgba(91, 174, 120, 0.18), transparent 50%),
+      var(--grh-forest-950);
+  }
+  @media (min-width: 980px) {
+    .grh-hero__copy {
+      padding-top: var(--grh-space-9);
+      /* Bottom-Padding hält Abstand zum Pin frei, sodass Content + Pin gemeinsam mittig wirken */
+      padding-bottom: calc(var(--grh-space-9) + 140px);
+      padding-left: max(var(--grh-gutter), calc((100vw - var(--grh-container-max)) / 2));
+      padding-right: var(--grh-space-7);
+      justify-content: center;
+    }
+  }
+
+  .grh-hero__pre {
+    font-family: var(--grh-font-body);
+    font-size: var(--grh-fs-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 600;
+  }
+
+  .grh-hero__title {
+    font-family: var(--grh-font-display);
+    font-weight: 500;
+    font-size: clamp(2.4rem, 5vw, 4.4rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--grh-cream-50);
+    margin: 0;
+  }
+  .grh-hero__line { display: block; }
+  .grh-hero__line--accent {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--grh-candle-300);
+  }
+
+  .grh-hero__subline {
+    font-size: var(--grh-fs-md);
+    line-height: 1.55;
+    color: var(--grh-cream-50);
+    opacity: 0.78;
+    max-width: 38ch;
+  }
+
+  .grh-hero__quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--grh-space-2) var(--grh-space-4);
+    margin-top: var(--grh-space-3);
+  }
+  .grh-hero__quicklink {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-cream-50);
+    opacity: 0.78;
+    text-decoration: none;
+    padding-bottom: 4px;
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--grh-dur-fast), opacity var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-hero__quicklink:hover {
+    opacity: 1;
+    color: var(--grh-candle-300);
+    border-color: var(--grh-candle-500);
+  }
+
+  .grh-hero__sidetag {
+    position: absolute;
+    bottom: var(--grh-space-5);
+    left: var(--grh-gutter);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--grh-stone-400);
+    opacity: 0.55;
+  }
+  @media (min-width: 980px) {
+    .grh-hero__sidetag {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      bottom: auto; top: var(--grh-space-7);
+      left: auto; right: var(--grh-space-3);
+    }
+  }
+
+  /* --- Rechte Spalte (Slider) -------------------------------- */
+  .grh-hero__photo {
+    position: relative;
+    overflow: hidden;
+    background: var(--grh-forest-900);
+    min-height: clamp(320px, 42vh, 520px);
+  }
+  /* Sanfter Vignetten-Schein aus den unteren Ecken — verbessert die Lesbarkeit
+     von Caption (links) und Controls (rechts), ohne das Foto zu verdunkeln. */
+  .grh-hero__photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 60% at 0% 100%, rgba(14, 31, 24, 0.65) 0%, rgba(14, 31, 24, 0) 60%),
+      radial-gradient(ellipse 60% 55% at 100% 100%, rgba(14, 31, 24, 0.55) 0%, rgba(14, 31, 24, 0) 60%);
+  }
+  .grh-hero__photo-fallback {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 70% 30%, rgba(232,182,88,0.16), transparent 55%),
+      linear-gradient(160deg, #2A6B43, #13301F);
+  }
+
+  .grh-slider {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* === Sommerliche Lichtpartikel ============================ */
+  .grh-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+    /* Warm-goldener Schein in oberen rechten Ecke (Sonneneinfall) */
+    background: radial-gradient(
+      circle at 85% 15%,
+      rgba(246, 221, 160, 0.18) 0%,
+      rgba(246, 221, 160, 0.05) 30%,
+      transparent 55%
+    );
+  }
+  /* Wrapper: trägt die Maus-Abstoßung — JS setzt transform direkt */
+  .grh-particle-wrap {
+    position: absolute;
+    /* Sanftere, längere Transition — Partikel weichen langsam aus */
+    transition: transform 1600ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+  /* Startpositionen je nach Driftrichtung */
+  .grh-particle-wrap--up    { left:  var(--pos); bottom: -10px; }
+  .grh-particle-wrap--down  { left:  var(--pos); top:    -10px; }
+  .grh-particle-wrap--left  { right: -10px;      top:    var(--pos); }
+  .grh-particle-wrap--right { left:  -10px;      top:    var(--pos); }
+
+  /* Innerer Partikel: trägt die Drift-Animation */
+  .grh-particle {
+    display: block;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(246, 221, 160, 0.85);
+    box-shadow:
+      0 0 10px 2px  rgba(246, 221, 160, 0.45),
+      0 0 22px 6px  rgba(232, 182, 88, 0.22),
+      0 0 40px 12px rgba(232, 182, 88, 0.10);
+    filter: blur(0.6px);
+    opacity: 0;
+    animation-delay: calc(var(--i) * -2.4s);
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+  /* Pro Richtung eigenes Keyframe-Set + langsamere Dauer */
+  .grh-particle-wrap--up    .grh-particle { animation-name: grh-drift-up;    animation-duration: 32s; }
+  .grh-particle-wrap--down  .grh-particle { animation-name: grh-drift-down;  animation-duration: 36s; }
+  .grh-particle-wrap--left  .grh-particle { animation-name: grh-drift-left;  animation-duration: 30s; }
+  .grh-particle-wrap--right .grh-particle { animation-name: grh-drift-right; animation-duration: 34s; }
+
+  /* Größenvariation per nth-child */
+  .grh-particle-wrap:nth-child(3n)   .grh-particle { width: 4px; height: 4px; }
+  .grh-particle-wrap:nth-child(4n+1) .grh-particle { width: 2px; height: 2px; }
+  .grh-particle-wrap:nth-child(5n)   .grh-particle { width: 5px; height: 5px; }
+
+  @keyframes grh-drift-up {
+    0%   { transform: translate3d(0, 0, 0)             scale(0.7); opacity: 0; }
+    18%  { opacity: 0.55; }
+    50%  { transform: translate3d(20px, -55vh, 0)      scale(1);   opacity: 0.55; }
+    85%  { opacity: 0.35; }
+    100% { transform: translate3d(-16px, -110vh, 0)    scale(0.8); opacity: 0; }
+  }
+  @keyframes grh-drift-down {
+    0%   { transform: translate3d(0, 0, 0)             scale(0.7); opacity: 0; }
+    18%  { opacity: 0.5; }
+    50%  { transform: translate3d(-18px, 55vh, 0)      scale(1);   opacity: 0.5; }
+    85%  { opacity: 0.3; }
+    100% { transform: translate3d(14px, 110vh, 0)      scale(0.8); opacity: 0; }
+  }
+  @keyframes grh-drift-left {
+    0%   { transform: translate3d(0, 0, 0)             scale(0.7); opacity: 0; }
+    18%  { opacity: 0.5; }
+    50%  { transform: translate3d(-50vw, -14px, 0)     scale(1);   opacity: 0.5; }
+    85%  { opacity: 0.3; }
+    100% { transform: translate3d(-110vw, 12px, 0)     scale(0.8); opacity: 0; }
+  }
+  @keyframes grh-drift-right {
+    0%   { transform: translate3d(0, 0, 0)             scale(0.7); opacity: 0; }
+    18%  { opacity: 0.5; }
+    50%  { transform: translate3d(50vw, 16px, 0)       scale(1);   opacity: 0.5; }
+    85%  { opacity: 0.3; }
+    100% { transform: translate3d(110vw, -10px, 0)     scale(0.8); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-particle { animation: none; opacity: 0; }
+    .grh-particle-wrap { transition: none; }
+    .grh-particles { background: none; }
+  }
+  .grh-slider__stage {
+    position: absolute;
+    inset: 0;
+  }
+  .grh-slider__slide {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    transition: opacity 1200ms var(--grh-ease-out);
+    pointer-events: none;
+  }
+  .grh-slider__slide.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .grh-slider__slide img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center 60%;
+    filter: saturate(0.92) contrast(1.02);
+    /* Sehr langsamer Ken-Burns-Effekt für aktives Slide */
+    transform: scale(1);
+    transition: transform 8s linear;
+  }
+  .grh-slider__slide.is-active img {
+    transform: scale(1.06);
+  }
+
+  .grh-slider__caption {
+    position: absolute;
+    bottom: var(--grh-space-5);
+    left: var(--grh-space-5);
+    right: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--grh-cream-50);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .grh-slider__credit { opacity: 0.72; }
+
+  .grh-slider__controls {
+    position: absolute;
+    bottom: var(--grh-space-4);
+    right: var(--grh-space-4);
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(14, 31, 24, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: var(--grh-radius-pill);
+  }
+  .grh-slider__btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    color: var(--grh-cream-50);
+    display: grid; place-items: center;
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-slider__btn:hover { background: rgba(250, 247, 241, 0.18); }
+  /* Prev-Button enthält dasselbe arrow-right-Icon, der Button wird gespiegelt */
+  .grh-slider__btn--prev { transform: scaleX(-1); }
+  .grh-slider__btn--prev:hover { transform: scaleX(-1); background: rgba(250, 247, 241, 0.18); }
+
+  .grh-slider__dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    list-style: none;
+    margin: 0; padding: 0;
+  }
+  .grh-slider__dots button {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(250, 247, 241, 0.35);
+    transition: background var(--grh-dur-fast), width var(--grh-dur-base);
+  }
+  .grh-slider__dots button:hover { background: rgba(250, 247, 241, 0.6); }
+  .grh-slider__dots button.is-active {
+    background: var(--grh-candle-500);
+    width: 22px;
+    border-radius: 999px;
+  }
+
+  /* --- Scroll-Hinweis ---------------------------------------- */
+  /* Mobile: am unteren Hero-Rand mittig */
+  .grh-hero__scroll {
+    position: absolute;
+    bottom: var(--grh-space-3);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--grh-cream-50);
+    opacity: 0.65;
+    transition: opacity var(--grh-dur-fast);
+  }
+  .grh-hero__scroll:hover { opacity: 1; }
+
+  .grh-hero__scroll-line {
+    width: 1px;
+    height: 56px;
+    background: linear-gradient(180deg, transparent 0%, var(--grh-candle-500) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .grh-hero__scroll-line::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 18px;
+    background: linear-gradient(180deg, transparent, var(--grh-candle-300));
+    animation: grh-hero-scroll 1800ms ease-in-out infinite;
+  }
+  @keyframes grh-hero-scroll {
+    0%   { transform: translateY(-20px); opacity: 0; }
+    35%  { opacity: 1; }
+    100% { transform: translateY(56px); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-hero__scroll-line::after { animation: none; }
+  }
+
+  .grh-hero__scroll-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-cream-50);
+    font-weight: 600;
+  }
+
+  /* Desktop: rechts unten in der dunkelgrünen Spalte, hochkant — vertikal in einer Linie mit dem Sidetag */
+  @media (min-width: 980px) {
+    .grh-hero__scroll {
+      bottom: var(--grh-space-7);
+      left: auto;
+      right: var(--grh-space-3);
+      transform: none;
+    }
+    .grh-hero__scroll-label {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      letter-spacing: 0.32em;
+    }
+  }
+
+  /* --- FeaturedSlot — als Editorial-Randnotiz in der dunklen Spalte ----- */
+  .grh-hero__featured-wrap {
+    position: relative;
+    z-index: 4;
+    background: var(--grh-forest-950);
+    padding: 0 var(--grh-gutter) var(--grh-space-6);
+    display: flex;
+    justify-content: center;
+  }
+  @media (min-width: 980px) {
+    .grh-hero__featured-wrap {
+      position: absolute;
+      /* Bündig zur Innenkante der dunklen Spalte, unten verankert */
+      left: max(var(--grh-gutter), calc((100vw - var(--grh-container-max)) / 2));
+      bottom: var(--grh-space-7);
+      width: min(320px, calc(5 / 12 * 100vw - var(--grh-space-6)));
+      background: transparent;
+      padding: 0;
+    }
+  }
+  @media (min-width: 1280px) {
+    .grh-hero__featured-wrap { width: 340px; }
+  }
+</style>
+
+<script>
+  type SliderEl = HTMLElement & { _grhInterval?: number };
+
+  function initSlider(slider: SliderEl) {
+    const slides = Array.from(slider.querySelectorAll<HTMLElement>('.grh-slider__slide'));
+    const dots   = Array.from(slider.querySelectorAll<HTMLButtonElement>('[data-grh-slider-dot]'));
+    if (slides.length < 2) return;
+
+    let current = 0;
+    const interval = parseInt(slider.dataset.interval ?? '6000', 10);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const go = (next: number) => {
+      const n = (next + slides.length) % slides.length;
+      slides[current].classList.remove('is-active');
+      slides[current].setAttribute('aria-hidden', 'true');
+      dots[current]?.classList.remove('is-active');
+      dots[current]?.setAttribute('aria-selected', 'false');
+
+      slides[n].classList.add('is-active');
+      slides[n].setAttribute('aria-hidden', 'false');
+      dots[n]?.classList.add('is-active');
+      dots[n]?.setAttribute('aria-selected', 'true');
+      current = n;
+    };
+
+    const start = () => {
+      if (reduce) return;
+      stop();
+      slider._grhInterval = window.setInterval(() => go(current + 1), interval);
+    };
+    const stop = () => {
+      if (slider._grhInterval) {
+        clearInterval(slider._grhInterval);
+        slider._grhInterval = undefined;
+      }
+    };
+
+    slider.querySelector<HTMLElement>('[data-grh-slider-prev]')?.addEventListener('click', () => { go(current - 1); start(); });
+    slider.querySelector<HTMLElement>('[data-grh-slider-next]')?.addEventListener('click', () => { go(current + 1); start(); });
+    dots.forEach((dot, i) => dot.addEventListener('click', () => { go(i); start(); }));
+
+    /* Slider läuft endlos durch — kein Hover-Stopp.
+       Nur bei verstecktem Tab pausieren (Performance & Akku). */
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop(); else start();
+    });
+
+    start();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-grh-slider]').forEach((s) => initSlider(s as SliderEl));
+
+  /* Maus-Abstoßung: Partikel weichen aus, wenn die Maus näher kommt */
+  const particleField = document.querySelector<HTMLElement>('[data-grh-particles]');
+  const photoArea = document.querySelector<HTMLElement>('.grh-hero__photo');
+  if (particleField && photoArea && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const wraps = Array.from(particleField.querySelectorAll<HTMLElement>('.grh-particle-wrap'));
+    const RADIUS = 130;     // Wirkungsradius in Pixeln
+    const STRENGTH = 45;    // maximaler Push in Pixeln — sanft, nicht ruckartig
+
+    let rafId = 0;
+    let mouseX = -9999, mouseY = -9999;
+    const pushes = wraps.map(() => ({ x: 0, y: 0 }));
+
+    const apply = (idx: number) => {
+      const { x, y } = pushes[idx];
+      wraps[idx].style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    };
+
+    const update = () => {
+      rafId = 0;
+      const fieldRect = particleField.getBoundingClientRect();
+      wraps.forEach((w, i) => {
+        // Wichtig: nicht den Wrapper messen (sitzt fix am Boden), sondern den
+        // inneren Partikel, der via Keyframe-Animation aufsteigt.
+        const inner = w.firstElementChild as HTMLElement | null;
+        if (!inner) return;
+        const r = inner.getBoundingClientRect();
+        const px = r.left - fieldRect.left + r.width / 2;
+        const py = r.top  - fieldRect.top  + r.height / 2;
+        const dx = px - mouseX;
+        const dy = py - mouseY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < RADIUS && dist > 0 && mouseX > -9000) {
+          const f = (RADIUS - dist) / RADIUS;
+          const eased = f * f;
+          pushes[i].x = (dx / dist) * eased * STRENGTH;
+          pushes[i].y = (dy / dist) * eased * STRENGTH;
+        } else {
+          pushes[i].x = 0;
+          pushes[i].y = 0;
+        }
+        apply(i);
+      });
+    };
+    const schedule = () => { if (!rafId) rafId = requestAnimationFrame(update); };
+
+    photoArea.addEventListener('mousemove', (e) => {
+      const rect = particleField.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+      schedule();
+    });
+    photoArea.addEventListener('mouseleave', () => {
+      mouseX = -9999; mouseY = -9999;
+      schedule();
+    });
+  }
+
+  /* Scroll-Hinweis: springt zur ersten Sektion NACH dem Hero, sticky-Header berücksichtigt */
+  const scrollLink = document.querySelector<HTMLAnchorElement>('[data-grh-hero-scroll]');
+  const heroEl     = document.querySelector<HTMLElement>('.grh-hero');
+  if (scrollLink && heroEl) {
+    scrollLink.addEventListener('click', (e) => {
+      const next = heroEl.nextElementSibling as HTMLElement | null;
+      if (!next) return;
+      e.preventDefault();
+      const header = document.querySelector<HTMLElement>('.grh-header');
+      const headerOffset = header ? header.offsetHeight : 88;
+      const targetY = next.getBoundingClientRect().top + window.scrollY - headerOffset;
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    });
+  }
+</script>

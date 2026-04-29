@@ -1,0 +1,219 @@
+---
+import GrhIcon from '../primitives/GrhIcon.astro';
+
+const portals = [
+  {
+    side: 'buerger',
+    num: '01',
+    eyebrow: 'Für Bürgerinnen und Bürger',
+    title: 'Service, Verwaltung und Leben in der Gemeinde.',
+    icon: 'building',
+    quicklinks: [
+      { label: 'Aktuelle Sperrungen', href: '/neuigkeiten/sperrungen', icon: 'map-pin' },
+      { label: 'Amtsblatt',           href: '/gemeinde/amtsblatt',     icon: 'document' },
+      { label: 'Bürgermeister',       href: '/gemeinde/buergermeister', icon: 'user' },
+      { label: 'Kita & Schule',       href: '/leben/kita',             icon: 'building' },
+    ],
+    href: '/gemeinde',
+  },
+  {
+    side: 'gast',
+    num: '02',
+    eyebrow: 'Für Gäste',
+    title: 'Wandern, Holzkunst und Lichtermeer im Erzgebirge.',
+    icon: 'hiking',
+    quicklinks: [
+      { label: 'Wendt-&-Kühn-Welt', href: '/tourismus/sehenswuerdigkeiten', icon: 'angel11' },
+      { label: 'Schachwanderweg',   href: '/tourismus/wandern',             icon: 'chess-knight' },
+      { label: 'Wandern',           href: '/tourismus/wandern',             icon: 'hiking' },
+      { label: 'Unterkünfte',       href: '/tourismus/unterkuenfte',        icon: 'bed' },
+    ],
+    href: '/tourismus',
+  },
+] as const;
+---
+<div class="grh-dualportal">
+  {portals.map((p) => (
+    <a class={`grh-dualportal__card grh-dualportal__card--${p.side} grh-reveal`} href={p.href}>
+      <span class="grh-dualportal__num" aria-hidden="true">{p.num}</span>
+
+      <div class="grh-dualportal__head">
+        <div class="grh-dualportal__icon-wrap">
+          <GrhIcon name={p.icon as any} size={32} />
+        </div>
+        <div>
+          <span class="grh-eyebrow">{p.eyebrow}</span>
+          <h3 class="grh-dualportal__title">{p.title}</h3>
+        </div>
+      </div>
+
+      <ul class="grh-dualportal__links">
+        {p.quicklinks.map((q) => (
+          <li>
+            <span class="grh-dualportal__link-icon"><GrhIcon name={q.icon as any} size={16} /></span>
+            <span class="grh-dualportal__link-label">{q.label}</span>
+            <GrhIcon name="arrow-right" size={14} class="grh-dualportal__link-arrow" />
+          </li>
+        ))}
+      </ul>
+
+      <span class="grh-dualportal__cta">
+        <span>Alles für {p.side === 'buerger' ? 'Bürger' : 'Gäste'}</span>
+        <GrhIcon name="arrow-right" size={16} />
+      </span>
+    </a>
+  ))}
+</div>
+
+<style>
+  .grh-dualportal {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 768px) { .grh-dualportal { grid-template-columns: 1fr 1fr; } }
+
+  .grh-dualportal__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-5);
+    padding: var(--grh-space-6) var(--grh-space-6) var(--grh-space-7);
+    border-radius: 2px;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid var(--grh-line);
+    transition: transform var(--grh-dur-base) var(--grh-ease-out),
+                box-shadow var(--grh-dur-base) var(--grh-ease-out),
+                border-color var(--grh-dur-base) var(--grh-ease-out);
+    min-height: 360px;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .grh-dualportal__card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--grh-shadow-lg);
+    border-color: var(--grh-forest-700);
+  }
+
+  .grh-dualportal__card--buerger {
+    background:
+      radial-gradient(140% 90% at 100% 0%, rgba(217, 196, 163, 0.55), transparent 60%),
+      var(--grh-paper-100);
+  }
+  .grh-dualportal__card--gast {
+    background:
+      radial-gradient(140% 90% at 0% 100%, rgba(168, 205, 179, 0.7), transparent 60%),
+      var(--grh-sage-100);
+  }
+
+  .grh-dualportal__num {
+    position: absolute;
+    top: var(--grh-space-4);
+    right: var(--grh-space-5);
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(3rem, 5vw, 4rem);
+    line-height: 0.9;
+    color: var(--grh-forest-700);
+    opacity: 0.18;
+    letter-spacing: -0.04em;
+    pointer-events: none;
+    transition: opacity var(--grh-dur-base);
+  }
+  .grh-dualportal__card:hover .grh-dualportal__num { opacity: 0.28; }
+
+  .grh-dualportal__head {
+    display: flex;
+    gap: var(--grh-space-4);
+    align-items: flex-start;
+  }
+  .grh-dualportal__icon-wrap {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-800);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    box-shadow: var(--grh-shadow-sm);
+    border: 1px solid var(--grh-line);
+  }
+  .grh-dualportal__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+    color: var(--grh-forest-900);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    margin-top: 6px;
+    text-wrap: balance;
+    max-width: 22ch;
+  }
+
+  .grh-dualportal__links {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-2);
+    margin-top: var(--grh-space-3);
+  }
+  @media (min-width: 480px) {
+    .grh-dualportal__links { grid-template-columns: 1fr 1fr; }
+  }
+  .grh-dualportal__links li {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--grh-space-3);
+    align-items: center;
+    padding: 12px 14px;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    background: rgba(250, 247, 241, 0.7);
+    border: 1px solid transparent;
+    border-radius: var(--grh-radius-md);
+    transition: transform var(--grh-dur-fast), border-color var(--grh-dur-fast),
+                background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-dualportal__links li:hover {
+    transform: translateX(2px);
+    background: var(--grh-cream-50);
+    border-color: var(--grh-moss-500);
+    color: var(--grh-forest-900);
+  }
+  .grh-dualportal__link-icon {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    color: var(--grh-moss-600);
+    background: var(--grh-cream-50);
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-dualportal__links li:hover .grh-dualportal__link-icon {
+    background: var(--grh-forest-800);
+    color: var(--grh-candle-500);
+  }
+  .grh-dualportal__link-label { font-weight: 500; line-height: 1.3; }
+  .grh-dualportal__link-arrow { color: var(--grh-stone-400); }
+  .grh-dualportal__links li:hover .grh-dualportal__link-arrow { color: var(--grh-candle-500); }
+
+  .grh-dualportal__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: var(--grh-space-3);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+    color: var(--grh-forest-800);
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 6px;
+    width: fit-content;
+    transition: gap var(--grh-dur-base), color var(--grh-dur-base);
+  }
+  .grh-dualportal__card:hover .grh-dualportal__cta {
+    gap: 16px;
+    color: var(--grh-moss-600);
+  }
+</style>

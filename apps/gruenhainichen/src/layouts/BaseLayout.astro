@@ -1,0 +1,100 @@
+---
+import '@fontsource-variable/fraunces';
+import '@fontsource-variable/inter';
+import '../styles/tokens.css';
+import '../styles/reset.css';
+import '../styles/typography.css';
+import '../styles/utilities.css';
+import '../styles/animations.css';
+
+import GrhHeader from '../components/global/GrhHeader.astro';
+import GrhHeaderCompact from '../components/global/GrhHeaderCompact.astro';
+import GrhMegaMenu from '../components/global/GrhMegaMenu.astro';
+import GrhFooter from '../components/global/GrhFooter.astro';
+import GrhLoader from '../components/global/GrhLoader.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  header?: 'full' | 'compact';
+}
+
+const {
+  title = 'Gemeinde Grünhainichen · Borstendorf · Waldkirchen',
+  description = 'Offizielle Website der Gemeinde Grünhainichen im sächsischen Erzgebirge. Drei Ortsteile, eine Heimat zwischen Zschopau und Flöha.',
+  ogImage = '/og-default.jpg',
+  header = 'full',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+
+const orgJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'GovernmentOrganization',
+  name: 'Gemeinde Grünhainichen',
+  url: 'https://www.gruenhainichen.com',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Chemnitzer Straße 41',
+    postalCode: '09579',
+    addressLocality: 'Grünhainichen',
+    addressRegion: 'Sachsen',
+    addressCountry: 'DE',
+  },
+  telephone: '+49 37294 170-0',
+  areaServed: ['Borstendorf', 'Grünhainichen', 'Waldkirchen/Erzgeb.'],
+};
+---
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#13301F" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="de_DE" />
+
+    <title>{title}</title>
+
+    <script type="application/ld+json" set:html={JSON.stringify(orgJsonLd)} />
+  </head>
+  <body>
+    <GrhLoader />
+    <a href="#main" class="grh-skip-link">Zum Hauptinhalt springen</a>
+    {header === 'compact' ? <GrhHeaderCompact /> : <GrhHeader />}
+    <main id="main">
+      <slot />
+    </main>
+    <GrhFooter />
+    {header === 'compact' && <GrhMegaMenu />}
+
+    <script>
+      // Reveal-Beobachter für .grh-reveal Elemente.
+      // Reine Vanilla-JS-Lösung – kein GSAP nötig (siehe docs/animation-recipes.md).
+      const reveals = document.querySelectorAll('.grh-reveal, .grh-text-reveal, .grh-numeral');
+      if (reveals.length && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              io.unobserve(entry.target);
+            }
+          }
+        }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+        reveals.forEach((el) => io.observe(el));
+      } else {
+        reveals.forEach((el) => el.classList.add('is-visible'));
+      }
+    </script>
+  </body>
+</html>
