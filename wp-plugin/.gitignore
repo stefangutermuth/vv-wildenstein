@@ -1,0 +1,5 @@
+# Built artifact — wird bei jedem Release neu erzeugt
+vw-events.zip
+
+# Versehentliche Duplikate aus Extraktion
+vw-events */

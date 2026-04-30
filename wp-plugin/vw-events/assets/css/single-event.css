@@ -1,0 +1,231 @@
+.vw-event-header {
+    margin: 0 0 1.5rem;
+}
+.vw-event-header.has-image {
+    display: grid;
+    grid-template-columns: minmax(0, 280px) 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+.vw-event-image {
+    margin: 0;
+}
+.vw-event-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+.vw-event-meta {
+    background: #f4f7fa;
+    border-left: 4px solid #2a6f3f;
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    font-size: .95rem;
+    line-height: 1.5;
+}
+.vw-event-meta-row {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
+    gap: .75rem;
+    padding: .35rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, .06);
+}
+.vw-event-meta-row:last-child {
+    border-bottom: none;
+}
+.vw-event-meta-label {
+    font-weight: 600;
+    color: #2a6f3f;
+}
+.vw-event-meta-value strong {
+    font-weight: 600;
+}
+.vw-event-meta-value a {
+    word-break: break-all;
+}
+.vw-event-back {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+}
+
+/* ---- Archive ---- */
+.vw-events-archive-main { padding: 2rem 1rem; }
+.vw-events-archive { max-width: 960px; margin: 0 auto; }
+.vw-events-archive-header h1 { margin: 0 0 1.5rem; }
+.vw-events-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+.vw-event-card {
+    background: #fff;
+    border: 1px solid #e3e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+.vw-event-card:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .08);
+    transform: translateY(-2px);
+}
+.vw-event-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+.vw-event-card-image {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #f4f7fa;
+}
+.vw-event-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.vw-event-card-image-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    opacity: .35;
+}
+.vw-event-card-body { padding: 1rem 1.25rem; }
+.vw-event-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 .5rem;
+    line-height: 1.3;
+}
+.vw-event-card-when {
+    font-size: .9rem;
+    margin: 0 0 .25rem;
+    color: #2a6f3f;
+    font-weight: 500;
+}
+.vw-event-card-where {
+    font-size: .9rem;
+    margin: 0 0 .25rem;
+    color: #555;
+}
+.vw-event-card-tags {
+    font-size: .8rem;
+    margin: .5rem 0 0;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.vw-events-empty {
+    padding: 2rem;
+    text-align: center;
+    color: #666;
+    background: #f4f7fa;
+    border-radius: 6px;
+}
+.vw-events-pagination {
+    margin-top: 2rem;
+    text-align: center;
+}
+.vw-events-pagination .page-numbers {
+    display: inline-block;
+    padding: .35rem .7rem;
+    margin: 0 .15rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #2a6f3f;
+}
+.vw-events-pagination .page-numbers.current {
+    background: #2a6f3f;
+    color: #fff;
+    border-color: #2a6f3f;
+}
+
+/* ---- Upcoming (compact) ---- */
+.vw-events-upcoming {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+.vw-event-up {
+    background: #fff;
+    border: 1px solid #e3e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+.vw-event-up:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .08);
+    transform: translateY(-2px);
+}
+.vw-event-up-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+.vw-event-up-image {
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+    background: #f4f7fa;
+}
+.vw-event-up-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.vw-event-up-image-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    opacity: .35;
+}
+.vw-event-up-body {
+    padding: .6rem .75rem .75rem;
+}
+.vw-event-up-title {
+    font-size: .95rem;
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 0 0 .25rem;
+}
+.vw-event-up-when {
+    font-size: .8rem;
+    margin: 0 0 .15rem;
+    color: #2a6f3f;
+    font-weight: 500;
+}
+.vw-event-up-where {
+    font-size: .8rem;
+    margin: 0;
+    color: #666;
+}
+@media (max-width: 700px) {
+    .vw-event-header.has-image {
+        grid-template-columns: 1fr;
+    }
+    .vw-event-image img {
+        max-height: 480px;
+        object-fit: contain;
+        background: #f4f7fa;
+    }
+    .vw-event-meta-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .vw-event-meta-label {
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+}
