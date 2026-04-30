@@ -12,7 +12,7 @@
  * Default ist die Live-Installation.
  */
 
-import type { NewsItem, NewsCategory, Ortsteil } from './cms';
+import type { NewsItem, NewsCategory, Ortsteil, EventItem } from './cms';
 
 const WP_BASE =
   (import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
@@ -212,6 +212,93 @@ function stripHtml(html: string): string {
     .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ');
+}
+
+/* ----------------------------------------------------------------
+ * Events — vw-events Plugin (eigener Namespace vw-events/v1)
+ * Liefert nur zukünftige + aktuell laufende Events.
+ * ---------------------------------------------------------------- */
+
+const VW_EVENTS_BASE =
+  (import.meta.env.PUBLIC_VW_EVENTS_BASE as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env.PUBLIC_VW_EVENTS_BASE : undefined) ??
+  'https://vv-wildenstein.com/wp-json/vw-events/v1';
+
+interface VWEvent {
+  id: number;
+  slug: string;
+  title: string;
+  description_html: string;
+  start: string | null;
+  end: string | null;
+  all_day: boolean;
+  location: { name: string; address: string };
+  organizer: { name: string };
+  url: string;
+  image: { url: string; alt: string } | null;
+  standort: string[];
+  category: string[];
+  permalink: string;
+}
+
+export async function fetchWordPressEvents(): Promise<EventItem[]> {
+  const url = new URL(`${VW_EVENTS_BASE}/events`);
+  url.searchParams.set('per_page', '100');
+  // from = heute 00:00 — Plugin filtert auf start >= from. Wir filtern danach
+  // nochmal client-seitig auf "end >= now ODER start >= now", damit aktuell
+  // laufende mehrtägige Events sichtbar bleiben, auch wenn ihr Start in der
+  // Vergangenheit liegt.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // Wir setzen from bewusst NICHT, damit aktuell laufende mehrtägige Events
+  // (deren start vor heute liegt) auch zurückkommen. Filter erfolgt im Map.
+
+  const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+  if (!res.ok) {
+    throw new Error(`vw-events ${res.status} ${res.statusText} (${url.pathname})`);
+  }
+  const events = (await res.json()) as VWEvent[];
+
+  const now = new Date();
+  return events
+    .map(mapVWEvent)
+    .filter((e): e is EventItem => e !== null)
+    .filter((e) => {
+      const endRef = e.endDate ?? e.startDate;
+      return endRef.valueOf() >= now.valueOf();
+    })
+    .sort((a, b) => a.startDate.valueOf() - b.startDate.valueOf());
+}
+
+function mapVWEvent(ev: VWEvent): EventItem | null {
+  if (!ev.start) return null;
+  const startDate = new Date(ev.start);
+  if (Number.isNaN(startDate.valueOf())) return null;
+  const endDate = ev.end ? new Date(ev.end) : undefined;
+
+  const ortsteil = pickOrtsteilFromSlugs(ev.standort);
+  const location = ev.location?.name || ev.location?.address || '';
+
+  return {
+    slug: ev.slug,
+    title: decodeEntities(ev.title),
+    startDate,
+    endDate: endDate && !Number.isNaN(endDate.valueOf()) ? endDate : undefined,
+    location,
+    ortsteil,
+    teaser: stripHtml(ev.description_html).trim().slice(0, 180),
+    featured: false,
+    image: ev.image?.url,
+    href: ev.permalink,
+  };
+}
+
+function pickOrtsteilFromSlugs(slugs: string[]): Ortsteil | undefined {
+  for (const s of slugs) {
+    if (ORTSTEIL_SLUGS[s]) return ORTSTEIL_SLUGS[s];
+    if (s.startsWith('waldkirchen')) return 'waldkirchen';
+  }
+  return undefined;
 }
 
 function decodeEntities(html: string): string {
