@@ -244,14 +244,13 @@ interface VWEvent {
 export async function fetchWordPressEvents(): Promise<EventItem[]> {
   const url = new URL(`${VW_EVENTS_BASE}/events`);
   url.searchParams.set('per_page', '100');
-  // from = heute 00:00 — Plugin filtert auf start >= from. Wir filtern danach
-  // nochmal client-seitig auf "end >= now ODER start >= now", damit aktuell
-  // laufende mehrtägige Events sichtbar bleiben, auch wenn ihr Start in der
-  // Vergangenheit liegt.
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  // Wir setzen from bewusst NICHT, damit aktuell laufende mehrtägige Events
-  // (deren start vor heute liegt) auch zurückkommen. Filter erfolgt im Map.
+  // Plugin filtert nur auf start >= from. Wir setzen from = heute - 14 Tage,
+  // damit aktuell laufende mehrtägige Events (Start in jüngster Vergangenheit,
+  // Ende noch in der Zukunft) noch zurückkommen. Final filtert dann unser
+  // map-Schritt unten auf "end >= now ODER start >= now".
+  const fromDate = new Date();
+  fromDate.setDate(fromDate.getDate() - 14);
+  url.searchParams.set('from', fromDate.toISOString().slice(0, 19));
 
   const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
   if (!res.ok) {
