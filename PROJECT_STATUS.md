@@ -1,7 +1,7 @@
 # Project Status — VV-Wildenstein Web-Monorepo
 
-> **Letztes Update:** 29. April 2026 (abends)
-> **Aktuelle Phase:** Phase 2 — Astro-Master live, Headless-WordPress angebunden, Bilder + News + Sperrungen aus WP
+> **Letztes Update:** 30. April 2026
+> **Aktuelle Phase:** Phase 2.5 — eigenes `vw-events` Plugin produktiv, Astro pullt Events via REST, automatischer Build-Trigger steht
 
 Diese Datei dokumentiert den Stand, alle getroffenen Entscheidungen, Zugänge (ohne Geheimnisse) und die offenen Aufgaben — damit die Arbeit nahtlos weitergehen kann, auch wenn es eine Pause gibt oder die Konversation neu gestartet wird.
 
@@ -77,6 +77,9 @@ vv-wildenstein/                    ← npm-Workspace-Root
 │       └── package.json
 ├── packages/                       ← (geplant) Design-System extrahieren
 ├── docs/                           ← Briefings, Spec-Sheets
+├── wp-plugin/
+│   ├── vw-events/                  ← Source des WordPress-Plugins
+│   └── vw-events.zip               ← installierbar in WP via Plugin-Upload
 ├── wrangler.jsonc                  ← Cloudflare-Asset-Config
 ├── package.json                    ← Workspace-Root
 └── PROJECT_STATUS.md               ← diese Datei
@@ -139,8 +142,83 @@ Die Media-API von vv-wildenstein.com gibt für anonyme Aufrufer 401 zurück. Lö
 ✅ Mega-Menü zieht Live-News + Live-Sperrungen
 ⏳ Detailseiten `/neuigkeiten/[slug]` — aktuell springt Klick zur Original-WP-URL
 ⏳ Sperrungs-Felder (Straße, Umleitung, Gültig-bis, Severity) — Schema vorbereitet, in WP noch nicht als ACF-Felder gepflegt
-⏳ Events kommen weiterhin aus lokalen Astro-Content-Collections (per iCal-Import vorbefüllt). User plant ein eigenes WP-Event-Plugin für später.
-⏳ Build-Webhook (WP veröffentlicht → Cloudflare baut neu) — noch nicht eingerichtet
+✅ Events: eigenes `vw-events`-Plugin produktiv (siehe §4a)
+✅ Build-Webhook (WP veröffentlicht → Cloudflare baut neu) — eingerichtet (siehe §4a)
+
+---
+
+## 4a. Eigenes Events-Plugin `vw-events` (Phase 2.5 — live, 30.04.2026)
+
+### Warum
+
+Der vorherige Stand nutzte „Events Manager" (Free-Version), das keine REST-API für Events lieferte. Die 46 Astro-Events kamen daher aus einem einmaligen iCal-Import und wurden lokal als Markdown gehalten. Für saubere Headless-Integration bauten wir ein eigenes WP-Plugin.
+
+### Was das Plugin liefert
+
+- **Custom Post Type** `vw_event` mit allen redaktionellen Feldern (Start/Ende, Ganztägig, Wiederholung, Ort-Name + Adresse, Veranstalter, externer Link)
+- **Taxonomien** `vw_standort` (`gruenhainichen`, `borstendorf`, `waldkirchen`, `boernichen`, `verband-weit`) + `vw_event_category` (`kultur`, `sport`, `kirche`, `verein`, `markt`, `bildung`, `sonstige`)
+- **REST-Namespace** `vw-events/v1` mit:
+  - `GET /events?standort=…&from=…&to=…&category=…&per_page=…`
+  - `GET /events/{id}`
+  - `GET /ical?standort=…` (iCal-Feed mit RRULE für simple Wiederholungen)
+  - `POST /submissions` — öffentliches Frontend-Formular (Bild bis 10 MB, Cloudflare Turnstile, Honeypot, Rate-Limit)
+- **Frontend-Shortcodes:**
+  - `[vw_events_list standort="…" past="false" limit="20"]` — Karten-Grid (gleiches Layout wie Archive)
+  - `[vw_events_upcoming count="3"]` — kompakte Vorschau (9:16-Plakat oben, Fakten kompakt darunter)
+  - `[vw_event_submit]` — Submission-Formular (auf Subsites: nur CTA-Block zur Master-URL)
+- **Detailseite:** Plakat links, Meta-Block rechts (Wann, Wo, Veranstalter, Ortsteil, Kategorie, Link); Mobile stapelt
+- **Admin-UI:** Metabox, Listenspalten mit formatiertem Datum (`30. April 2026 / 18:00 – 20:00`), Filter, Dashboard-Widget für ausstehende Submissions
+- **E-Mails:** vier Vorlagen (Admin-Neuanmeldung, Submitter-Bestätigung, Veröffentlichung, Ablehnung); Mehrere Empfänger pro Komma/Semikolon/Zeilenumbruch trennbar
+- **Build-Hook:** auf `transition_post_status → publish` triggert das Plugin per `wp_remote_post` einen Cloudflare-Deploy-Hook (60s-Throttle gegen Build-Storm)
+
+### Multisite-Brücke (Mirror)
+
+WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhainichen Blog-ID 2 etc.). Plugin **netzwerkweit aktiviert**. Auf Subsites ist in den Settings die **Master-Blog-ID** eingetragen → Shortcodes, REST und iCal nutzen `switch_to_blog()` und liefern damit Master-Events auch auf Subsites aus. Detail-Klicks auf Subsite-Karten landen auf der Master-Detailseite (cross-domain, akzeptiert als Übergangslösung).
+
+### Migration aus Events Manager
+
+`includes/class-importer.php` ist eine Admin-Page unter *Veranstaltungen → Import*:
+- Liest `wp_em_events` JOIN `wp_em_locations`
+- Standort-Mapping: einmalige Tabelle „EM-Ort → vw_standort-Slug"
+- Batch-Import 50/Klick, idempotent via `_vw_event_em_id`
+- Übernimmt Featured Image (Attachment-ID), `post_content`, Status (`publish` oder `draft`)
+- 531 Events erfolgreich migriert
+
+### Astro-Anbindung
+
+- `src/lib/cms-wordpress.ts` → neues `fetchWordPressEvents()` ruft `https://vv-wildenstein.com/wp-json/vw-events/v1/events?from=heute-14d&per_page=100` auf, mappt auf `EventItem`, filtert client-seitig auf zukünftige + aktuell laufende Events (`endDate ?? startDate >= now`)
+- `src/lib/cms.ts` → `getEvents()` analog zu `getNews()` mit Quell-Switch via `PUBLIC_CMS_SOURCE` und Local-Fallback (die 46 Markdowns bleiben als Backup)
+- `src/pages/index.astro` nutzt jetzt `getEvents()`
+- ENV-Variable `PUBLIC_VW_EVENTS_BASE` (optional, Default `https://vv-wildenstein.com/wp-json/vw-events/v1`)
+
+**Wichtiger Bug-Fix während Setup:** Plugin liefert ohne `from`-Parameter ab dem ältesten Event. Bei 531 EM-Events sind die ersten 100 fast alle 2022er → Future-Filter eliminierte alles → Local-Fallback griff. Fix: `from = heute - 14 Tage`, deckt aktuell laufende mehrtägige Events ab.
+
+### Cloudflare-Build-Hook
+
+- In CF *Workers → vv-wildenstein-gruenhainichen → Einstellungen → Bereitstellungs-Hooks*: Hook `wp-vw-events` für Branch `main`
+- Hook-URL eingetragen in WP unter *Veranstaltungen → Einstellungen → Cloudflare Deploy-Hooks pro Standort → Grünhainichen*
+- Verifikation: Manueller `curl POST` triggerte `build_uuid: 7d9178cd-…` mit `success: true`
+- Live-Test bestätigt: zukünftige Events („Hexenfeuer OT … am 30.04.2026", „Maifest in Börnichen am 09.05.2026" usw.) erscheinen in der Astro-Site
+
+### Settings (auf Master)
+
+- **Admin-Benachrichtigungs-E-Mail:** Mehrfach-Adressen via Komma/Semikolon/Newline
+- **Cloudflare Turnstile Site-Key + Secret-Key**
+- **Master-Blog-ID** (Multisite): leer oder eigene ID
+- **Übersichtsseite (URL):** `/leben-freizeit/veranstaltungen/`
+- **Einreichungs-Seite (URL):** Master-Seite mit `[vw_event_submit]`
+- **Cloudflare Deploy-Hooks pro Standort**
+
+### Plugin-Quelle im Repo
+
+`wp-plugin/vw-events/` (Source) + `wp-plugin/vw-events.zip` (installierbar). Plugin-Anzeigename in WP: „Events im VV Wildenstein". Slug, REST-Namespace, CPT bleiben `vw-events` / `vw_event` (unverändert).
+
+### Bekannte offene Punkte
+
+- Turnstile Site-Key auf Master ist aktuell `mrmek` (Username) statt des korrekten `0x4AAAAAA…` — Frontend-Submission ist deshalb noch nicht funktional
+- HTML-Entities (`&#8222;` „) im Astro-Output — kosmetischer Bug in `decodeEntities()`, nicht funktional
+- Detail-Klicks auf Subsites führen cross-domain zur Master-Detailseite (per Design)
+- Gutenberg-Block, Action-Scheduler, Admin-Calendar-View → v1.1 / v1.2 lt. Spec
 
 ---
 
@@ -292,6 +370,17 @@ Die Media-API von vv-wildenstein.com gibt für anonyme Aufrufer 401 zurück. Lö
 - ✅ Live: News + Sperrungen + Bilder kommen aus WP
 - ✅ 46 zukünftige Events aus iCal-Feed (`/events/?ical=1`) als Markdown importiert (Skript: `/tmp/import-events.py`)
 
+### Phase 2.5 — Eigenes Events-Plugin (abgeschlossen 30.04.2026)
+- ✅ Plugin `vw-events` gebaut: CPT, Taxonomien, REST-Namespace, Submission-Form mit Turnstile, iCal, Mails, Webhook-Trigger
+- ✅ Multisite-Brücke: Plugin netzwerkweit aktiv, Subsites lesen via `switch_to_blog()` vom Master (Blog-ID 1)
+- ✅ Detailseite (Plakat links + Meta-Block rechts), Archive-Template (Karten-Grid), Shortcodes `[vw_events_list]` + `[vw_events_upcoming]`
+- ✅ Importer: 531 Events aus Events Manager (`wp_em_events`/`em_locations`) idempotent migriert via Batch-Import (50/Klick)
+- ✅ Mehrere Empfänger-E-Mails möglich (Komma/Semikolon/Newline)
+- ✅ Übersichtsseiten-URL + Einreichungs-Seiten-URL als Settings → Subsites zeigen CTA zur Master-Submission statt eigenem Form
+- ✅ Astro-Adapter: `fetchWordPressEvents()` + `getEvents()` mit Local-Fallback (46 Markdowns)
+- ✅ Cloudflare-Deploy-Hook `wp-vw-events` für Branch `main` angelegt + in WP eingetragen
+- ✅ End-to-End-Test bestätigt: zukünftige Events („Hexenfeuer am 30.04.2026" etc.) erscheinen live auf gruenhainichen.com
+
 ---
 
 ## 9. Offene Aufgaben
@@ -299,17 +388,15 @@ Die Media-API von vv-wildenstein.com gibt für anonyme Aufrufer 401 zurück. Lö
 ### Bald — niedriger Aufwand, hoher Nutzen
 - [ ] **Detailseiten `/neuigkeiten/[slug].astro`** — aktuell springt Klick auf eine News-Karte zur Original-WP-URL, gewünscht: eigene Seite im Grünhainichen-Design mit WP-Inhalt embeddet
 - [ ] **Archiv-Seite `/neuigkeiten`** — vollständiges News-Archiv mit Filter pro Ortsteil
-- [ ] **Build-Webhook** in WP einrichten → Cloudflare-Deploy-Hook → Auto-Sync nach Veröffentlichung (~1 Min Latenz)
 - [ ] **`/wetter`-Route** anlegen (aktuell zeigt der Header-Wetter-Link auf 404)
+- [ ] **Turnstile Site-Key korrigieren** auf Master (`mrmek` → korrekter `0x4AAAAAA…`-Key) — sonst Frontend-Submission deaktiviert
+- [ ] **HTML-Entity-Decoder** in `cms-wordpress.ts` um `&#8222;`, `&#8230;` etc. erweitern (kosmetisch)
 
 ### Mittel — kosmetisch / inhaltlich
 - [ ] **Sperrungs-Felder in WP** als ACF-Custom-Fields pflegen: `affectedStreet`, `detour`, `validUntil`, `severity` — Adapter liest sie schon
 - [ ] **Restliche Unterseiten** als Astro-Routen anlegen — derzeit zeigen alle Menülinks auf 404
 - [ ] **Original-Wappen-SVG** in Vektorform anfragen (statt PNG) — bessere Skalierbarkeit
-
-### Phase 2.5 — Custom Plugin
-- [ ] User plant **eigenes WordPress-Plugin** für Events (statt Events-Manager-Plugin), das eine REST-API anbietet
-- [ ] Sobald das steht: `getEvents()` im CMS-Adapter analog `getNews()`
+- [ ] **vw-events Plugin v1.1**: Gutenberg-Block für Submission-Form, „Ablehnen mit Begründung"-Button, Action-Scheduler für asynchrone Mails
 
 ### Phase 3 — Multi-Site-Ausbau
 - [ ] **Design-System extrahieren** in `packages/design-system/`
