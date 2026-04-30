@@ -11,7 +11,7 @@
 
 import type { CollectionEntry } from 'astro:content';
 import { getCollection } from 'astro:content';
-import { fetchWordPressNews } from './cms-wordpress';
+import { fetchWordPressNews, fetchWordPressEvents } from './cms-wordpress';
 
 export type Ortsteil = 'borstendorf' | 'gruenhainichen' | 'waldkirchen';
 export type NewsCategory = 'verwaltung' | 'veranstaltung' | 'sperrung' | 'tourismus';
@@ -71,6 +71,53 @@ async function getLocalNews(): Promise<NewsItem[]> {
     validUntil: e.data.validUntil,
     severity: e.data.severity,
   }));
+}
+
+/** Normalisiertes Event-Item — gleiche Form wie das alte Content-Schema. */
+export interface EventItem {
+  slug: string;
+  title: string;
+  startDate: Date;
+  endDate?: Date;
+  location: string;
+  ortsteil?: Ortsteil;
+  teaser: string;
+  featured: boolean;
+  image?: string;
+  href: string;
+}
+
+export async function getEvents(): Promise<EventItem[]> {
+  if (SOURCE === 'wordpress') {
+    try {
+      const items = await fetchWordPressEvents();
+      if (items.length > 0) return items;
+      console.warn('[cms] vw-events lieferte 0 Events — fallback zu local');
+    } catch (err) {
+      console.warn('[cms] vw-events-Fetch fehlgeschlagen — fallback zu local:', err);
+    }
+  }
+  return getLocalEvents();
+}
+
+async function getLocalEvents(): Promise<EventItem[]> {
+  const entries = await getCollection('events');
+  const now = new Date();
+  return entries
+    .map((e: CollectionEntry<'events'>) => ({
+      slug: e.slug,
+      title: e.data.title,
+      startDate: e.data.startDate,
+      endDate: e.data.endDate,
+      location: e.data.location,
+      ortsteil: e.data.ortsteil,
+      teaser: e.data.teaser,
+      featured: e.data.featured ?? false,
+      image: e.data.image,
+      href: `/veranstaltungen/${e.slug}`,
+    }))
+    .filter((e) => (e.endDate ?? e.startDate).valueOf() >= now.valueOf())
+    .sort((a, b) => a.startDate.valueOf() - b.startDate.valueOf());
 }
 
 function sortByDateDesc(items: NewsItem[]): NewsItem[] {

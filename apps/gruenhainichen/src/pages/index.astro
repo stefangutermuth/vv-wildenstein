@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { getEvents } from '../lib/cms';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 import GrhHero from '../components/hero/GrhHero.astro';
@@ -39,19 +40,18 @@ const severityLabel: Record<string, string> = {
 };
 const fmtUntil = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long' });
 
-const events = (await getCollection('events'))
-  .sort((a, b) => a.data.startDate.valueOf() - b.data.startDate.valueOf())
+const events = (await getEvents())
   .slice(0, 8)
   .map((e) => ({
-    title: e.data.title,
-    startDate: e.data.startDate,
-    endDate: e.data.endDate,
-    location: e.data.location,
-    ortsteil: e.data.ortsteil,
-    teaser: e.data.teaser,
-    featured: e.data.featured,
-    image: e.data.image,
-    href: `/veranstaltungen/${e.slug}`,
+    title: e.title,
+    startDate: e.startDate,
+    endDate: e.endDate,
+    location: e.location,
+    ortsteil: e.ortsteil,
+    teaser: e.teaser,
+    featured: e.featured,
+    image: e.image,
+    href: e.href,
   }));
 
 const ortsteile = (await getCollection('ortsteile')).sort((a, b) => a.data.order - b.data.order);
