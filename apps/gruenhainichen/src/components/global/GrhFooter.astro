@@ -57,7 +57,10 @@ const year = new Date().getFullYear();
           Fr 9–12
         </p>
         <p class="grh-footer__col-aux">
-          Bürgermeister: nach Vereinbarung
+          Bürgermeister: nach Vereinbarung<br />
+          <a class="grh-footer__col-cta" href="/gemeinde/buergermeister">
+            Termin vereinbaren <GrhIcon name="arrow-right" size={11} />
+          </a>
         </p>
       </div>
     </div>
@@ -80,7 +83,6 @@ const year = new Date().getFullYear();
   .grh-footer {
     background: var(--grh-forest-900);
     color: var(--grh-cream-50);
-    margin-top: var(--grh-space-10);
   }
 
   .grh-footer__inner {
@@ -186,6 +188,20 @@ const year = new Date().getFullYear();
     font-size: 12px !important;
     opacity: 0.7 !important;
   }
+  .grh-footer__col-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    color: var(--grh-candle-500) !important;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-weight: 600;
+    opacity: 1 !important;
+    transition: gap var(--grh-dur-base);
+  }
+  .grh-footer__col-cta:hover { gap: 12px; }
 
   /* === Bottom-Bar =========================================== */
   .grh-footer__bottom {

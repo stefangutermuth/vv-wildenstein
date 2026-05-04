@@ -20,11 +20,7 @@ import { getCurrentSeason } from '../lib/seasons';
 import { getNews } from '../lib/cms';
 
 const newsAll = await getNews();
-const featuredNews =
-  newsAll.find((n) => n.featured && n.category !== 'sperrung') ??
-  newsAll.find((n) => n.category !== 'sperrung') ??
-  newsAll[0];
-const otherNews = newsAll.filter((n) => n.slug !== featuredNews.slug && n.category !== 'sperrung').slice(0, 3);
+const newsCards = newsAll.filter((n) => n.category !== 'sperrung').slice(0, 10);
 const sperrungen = newsAll.filter((n) => n.category === 'sperrung').slice(0, 3);
 
 const categoryLabel: Record<string, string> = {
@@ -40,19 +36,17 @@ const severityLabel: Record<string, string> = {
 };
 const fmtUntil = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long' });
 
-const events = (await getEvents())
-  .slice(0, 8)
-  .map((e) => ({
-    title: e.title,
-    startDate: e.startDate,
-    endDate: e.endDate,
-    location: e.location,
-    ortsteil: e.ortsteil,
-    teaser: e.teaser,
-    featured: e.featured,
-    image: e.image,
-    href: e.href,
-  }));
+const events = (await getEvents()).map((e) => ({
+  title: e.title,
+  startDate: e.startDate,
+  endDate: e.endDate,
+  location: e.location,
+  ortsteil: e.ortsteil,
+  teaser: e.teaser,
+  featured: e.featured,
+  image: e.image,
+  href: e.href,
+}));
 
 const ortsteile = (await getCollection('ortsteile')).sort((a, b) => a.data.order - b.data.order);
 const ortsteilSpread = ortsteile.map((o, i) => ({
@@ -250,62 +244,35 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
   {/* === 6) Veranstaltungen als Editorial-Liste ========================== */}
   <GrhSection tone="cream" padding="lg" eyebrow="Kalender" title="Demnächst in der Gemeinde." align="left">
     <GrhEventsList events={events} />
-    <div slot="cta">
-      <GrhButton href="/veranstaltungen" variant="ghost">Vollständiger Kalender</GrhButton>
-    </div>
   </GrhSection>
 
   {/* === 7) News + Sperrungen ============================================ */}
   <GrhSection tone="paper" padding="lg" eyebrow="Aktuelles" title="Was uns gerade bewegt." align="left">
     <div class="grh-news2">
-      {/* === Linke Hälfte: Editorial-News ============================ */}
+      {/* === Linke Hälfte: Editorial-Liste ========================= */}
       <div class="grh-news2__main">
-        <a class="grh-news2__feature" href={featuredNews.href}>
-          <div class="grh-news2__feature-media" data-cat={featuredNews.category}>
-            {featuredNews.image ? (
-              <>
-                <img class="grh-news2__media-bg" src={featuredNews.image} alt="" loading="lazy" decoding="async" aria-hidden="true" />
-                <img class="grh-news2__media-fg" src={featuredNews.image} alt={featuredNews.title} loading="lazy" decoding="async" />
-              </>
-            ) : (
-              <div class="grh-news2__feature-fallback" aria-hidden="true"></div>
-            )}
-            <span class="grh-news2__badge grh-news2__badge--lg">
-              {categoryLabel[featuredNews.category]}
-            </span>
-          </div>
-          <div class="grh-news2__feature-body">
-            <time class="grh-news2__date">{fmtDate.format(featuredNews.date)}</time>
-            <h3 class="grh-news2__feature-title">{featuredNews.title}</h3>
-            <p class="grh-news2__feature-excerpt">{featuredNews.excerpt}</p>
-            <span class="grh-news2__feature-cta">
-              Weiterlesen <GrhIcon name="arrow-right" size={16} />
-            </span>
-          </div>
-        </a>
-
-        {otherNews.length > 0 && (
-          <div class="grh-news2__grid">
-            {otherNews.map((n) => (
-              <a class="grh-news2__card" href={n.href}>
-                <div class="grh-news2__card-media" data-cat={n.category}>
-                  {n.image ? (
-                    <>
-                      <img class="grh-news2__media-bg" src={n.image} alt="" loading="lazy" decoding="async" aria-hidden="true" />
-                      <img class="grh-news2__media-fg" src={n.image} alt={n.title} loading="lazy" decoding="async" />
-                    </>
-                  ) : (
-                    <div class="grh-news2__card-fallback" aria-hidden="true"></div>
-                  )}
-                  <span class="grh-news2__badge">{categoryLabel[n.category]}</span>
-                </div>
-                <div class="grh-news2__card-body">
-                  <time class="grh-news2__date">{fmtDate.format(n.date)}</time>
-                  <h4 class="grh-news2__card-title">{n.title}</h4>
-                </div>
-              </a>
+        {newsCards.length > 0 && (
+          <ul class="grh-newslist">
+            {newsCards.map((n) => (
+              <li>
+                <a class="grh-newslist__item" href={n.href}>
+                  <span class="grh-newslist__media" data-cat={n.category} style={n.image ? `--news-img: url('${n.image}')` : undefined}>
+                    {n.image
+                      ? <img src={n.image} alt={n.title} loading="lazy" decoding="async" />
+                      : <span class="grh-newslist__fallback" aria-hidden="true"></span>}
+                  </span>
+                  <span class="grh-newslist__body">
+                    <span class="grh-newslist__meta">
+                      <span class="grh-newslist__cat">{categoryLabel[n.category]}</span>
+                      <time>{fmtDate.format(n.date)}</time>
+                    </span>
+                    <span class="grh-newslist__title">{n.title}</span>
+                  </span>
+                  <GrhIcon name="arrow-right" size={16} class="grh-newslist__arrow" />
+                </a>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </div>
 
@@ -402,7 +369,37 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
     </div>
   </GrhSection>
 
-  {/* === 8) Vereine + Leben ============================================== */}
+  {/* === Wirtschaftsstandort ============================================= */}
+  <GrhSection tone="forest" padding="lg" align="center" pattern="topo">
+    <div class="grh-gewerbe">
+      <span class="grh-eyebrow">Wirtschaftsstandort</span>
+      <p class="grh-gewerbe__claim">
+        <em>Eine prosperierende, breit aufgestellte Wirtschaft —</em>
+        mit der erzgebirgischen Holzkunst als Wahrzeichen,
+        modernen Handwerksbetrieben und einem starken Vereinsleben.
+      </p>
+      <div class="grh-gewerbe__cta">
+        <GrhButton href="/gewerbe">Gewerbeverzeichnis</GrhButton>
+        <GrhButton href="/gewerbe/stellenausschreibungen" variant="ghost">Stellenangebote</GrhButton>
+      </div>
+    </div>
+  </GrhSection>
+
+  {/* === Saisonal: Advent ================================================ */}
+  {showAdventSection && (
+    <GrhSection tone="forest-deep" padding="lg" eyebrow="Saisonal — Advent" title="Wenn die Fenster leuchten." align="left">
+      <p class="grh-advent">
+        Schwibbögen, Engel und Bergmann verwandeln Borstendorf, Grünhainichen und Waldkirchen
+        in ein Lichtermeer. Erleben Sie unseren Lebendigen Adventskalender — jeden Abend öffnet
+        sich in einem anderen Haus ein neues Türchen.
+      </p>
+      <div slot="cta">
+        <GrhButton href="/leben/lebendiger-adventskalender">Programm Adventskalender</GrhButton>
+      </div>
+    </GrhSection>
+  )}
+
+  {/* === Vereinsleben + Alltag (heller Trenner zum Footer) =============== */}
   <GrhSection tone="paper" padding="lg" eyebrow="Mittendrin" title="Vereinsleben und Alltag." subtitle="Was diese Gemeinde am Laufen hält — von der Feuerwehr bis zur Bücherei." align="left">
     <div class="grh-leben">
       {/* Stats-Reihe */}
@@ -450,68 +447,6 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
       <div class="grh-leben__ctas">
         <GrhButton href="/vereine" variant="primary" size="sm">Vereinsverzeichnis</GrhButton>
         <GrhButton href="/leben"   variant="ghost"   size="sm">Alle Service-Themen</GrhButton>
-      </div>
-    </div>
-  </GrhSection>
-
-  {/* === 10) Gewerbe-Statement =========================================== */}
-  <GrhSection tone="forest" padding="lg" align="center" pattern="topo">
-    <div class="grh-gewerbe">
-      <span class="grh-eyebrow">Wirtschaftsstandort</span>
-      <p class="grh-gewerbe__claim">
-        <em>Eine prosperierende, breit aufgestellte Wirtschaft —</em>
-        mit der erzgebirgischen Holzkunst als Wahrzeichen,
-        modernen Handwerksbetrieben und einem starken Vereinsleben.
-      </p>
-      <div class="grh-gewerbe__cta">
-        <GrhButton href="/gewerbe">Gewerbeverzeichnis</GrhButton>
-        <GrhButton href="/gewerbe/stellenausschreibungen" variant="ghost">Stellenangebote</GrhButton>
-      </div>
-    </div>
-  </GrhSection>
-
-  {/* === Saisonal: Advent ================================================ */}
-  {showAdventSection && (
-    <GrhSection tone="forest-deep" padding="lg" eyebrow="Saisonal — Advent" title="Wenn die Fenster leuchten." align="left">
-      <p class="grh-advent">
-        Schwibbögen, Engel und Bergmann verwandeln Borstendorf, Grünhainichen und Waldkirchen
-        in ein Lichtermeer. Erleben Sie unseren Lebendigen Adventskalender — jeden Abend öffnet
-        sich in einem anderen Haus ein neues Türchen.
-      </p>
-      <div slot="cta">
-        <GrhButton href="/leben/lebendiger-adventskalender">Programm Adventskalender</GrhButton>
-      </div>
-    </GrhSection>
-  )}
-
-  {/* === 11) Kontakt-/Rathaus-Block ====================================== */}
-  <GrhSection tone="cream" padding="md" eyebrow="Rathaus" title="So erreichen Sie uns." align="left">
-    <div class="grh-rathaus">
-      <div class="grh-rathaus__col">
-        <span class="grh-rathaus__label">Anschrift</span>
-        <p>
-          Gemeindeverwaltung Grünhainichen<br />
-          Chemnitzer Straße 41<br />
-          09579 Grünhainichen
-        </p>
-      </div>
-      <div class="grh-rathaus__col">
-        <span class="grh-rathaus__label">Kontakt</span>
-        <p>
-          <a href="tel:+4937294170-0">037294 / 170-0</a><br />
-          <a href="mailto:gemeinde@gruenhainichen.com">gemeinde@gruenhainichen.com</a>
-        </p>
-      </div>
-      <div class="grh-rathaus__col">
-        <span class="grh-rathaus__label">Sprechzeiten</span>
-        <p>
-          Di 9–12 &amp; 13–18 · Do 9–12 &amp; 13–16 · Fr 9–12
-        </p>
-      </div>
-      <div class="grh-rathaus__col">
-        <span class="grh-rathaus__label">Bürgermeister</span>
-        <p>nach Vereinbarung</p>
-        <GrhButton href="/gemeinde/buergermeister" variant="ghost" size="sm">Termin vereinbaren</GrhButton>
       </div>
     </div>
   </GrhSection>
@@ -609,9 +544,6 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
     overflow: hidden;
     background: var(--grh-paper-100);
     isolation: isolate;
-  }
-  @media (min-width: 720px) {
-    .grh-news2__feature-media { aspect-ratio: auto; min-height: 280px; }
   }
   /* Hintergrund: dasselbe Bild aufgeblasen + geblurrt füllt die Ränder
      atmosphärisch — kein Crop von Hoch-/Quer-/Quadrat-Mix. */
@@ -1141,23 +1073,6 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
     opacity: 0.92;
   }
 
-  /* === Rathaus =============================================== */
-  .grh-rathaus {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
-    gap: var(--grh-space-6);
-    border-top: 1px solid var(--grh-line);
-    padding-top: var(--grh-space-6);
-  }
-  .grh-rathaus__col { display: flex; flex-direction: column; gap: var(--grh-space-2); }
-  .grh-rathaus__label {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em;
-    color: var(--grh-moss-600); font-weight: 600;
-  }
-  .grh-rathaus__col p { font-size: var(--grh-fs-sm); line-height: 1.7; color: var(--grh-stone-700); }
-  .grh-rathaus__col a { color: var(--grh-forest-800); border-bottom: 1px solid transparent; }
-  .grh-rathaus__col a:hover { border-color: var(--grh-candle-500); }
-
   /* === Stacking Cards (Sektionen 02 / 03 / 04) =============== */
   .grh-cardstack {
     display: flex;
@@ -1237,5 +1152,78 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
     }
     .grh-cardstack__card + .grh-cardstack__card { margin-top: 0; }
   }
+
+  /* === Editorial-Liste für Aktuelles =========================== */
+  .grh-newslist {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-newslist li { border-bottom: 1px solid var(--grh-line); }
+  .grh-newslist__item {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: var(--grh-space-4);
+    align-items: center;
+    padding: var(--grh-space-4) var(--grh-space-2);
+    text-decoration: none;
+    color: inherit;
+    transition: background var(--grh-dur-fast), padding var(--grh-dur-fast);
+  }
+  .grh-newslist__item:hover {
+    background: var(--grh-cream-50);
+    padding-left: var(--grh-space-4);
+  }
+  /* Smart-Cover: Bild wird IMMER vollständig gezeigt (object-fit:contain).
+     Hintergrund ist eine unscharfe + abgedunkelte Version desselben Bildes,
+     sodass leere Flächen bei Hoch-/Querformaten nicht weiß aussehen. */
+  .grh-newslist__media {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: var(--grh-radius-sm, 6px);
+    background: var(--grh-paper-100);
+    isolation: isolate;
+  }
+  .grh-newslist__media::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    background-image: var(--news-img);
+    background-size: cover;
+    background-position: center;
+    filter: blur(14px) brightness(0.85) saturate(1.1);
+    transform: scale(1.05);
+    z-index: 0;
+  }
+  .grh-newslist__media img {
+    position: relative;
+    z-index: 1;
+    width: 100%; height: 100%;
+    object-fit: contain;
+  }
+  .grh-newslist__fallback { position: absolute; inset: 0; background: linear-gradient(160deg, #2A6B43, #13301F); }
+  [data-cat="tourismus"] .grh-newslist__fallback     { background: linear-gradient(160deg, #5BAE78, #2A6B43); }
+  [data-cat="verwaltung"] .grh-newslist__fallback    { background: linear-gradient(160deg, #4A6B7A, #2C4250); }
+  [data-cat="veranstaltung"] .grh-newslist__fallback { background: linear-gradient(160deg, #C9974A, #8C6224); }
+  .grh-newslist__body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .grh-newslist__meta {
+    display: inline-flex; gap: var(--grh-space-3); align-items: center;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
+    color: var(--grh-stone-400); font-weight: 700;
+  }
+  .grh-newslist__cat { color: var(--grh-moss-600); }
+  .grh-newslist__title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    line-height: 1.25;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-newslist__arrow { color: var(--grh-stone-400); transition: transform var(--grh-dur-fast), color var(--grh-dur-fast); }
+  .grh-newslist__item:hover .grh-newslist__arrow { color: var(--grh-candle-500); transform: translateX(4px); }
 
 </style>
