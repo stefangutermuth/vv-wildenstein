@@ -71,13 +71,13 @@ const tiles = [
         <span class="grh-strip__label">{t.label}</span>
         <span class="grh-strip__sub">{t.sub}</span>
         <span class="grh-strip__arrow" aria-hidden="true">
-          <GrhIcon name="arrow-right" size={20} />
+          <GrhIcon name="arrow-right" size={18} />
         </span>
       </a>
     ))}
   </div>
 
-  {/* Custom Drag-Cursor — Wrapper steuert Position (GPU), Inner steuert Scale */}
+  {/* Custom Drag-Cursor — folgt der Maus über dem Strip */}
   <div class="grh-strip__cursor-pos" data-grh-strip-cursor-pos aria-hidden="true">
     <div class="grh-strip__cursor" data-grh-strip-cursor>
       <svg class="grh-strip__cursor-arrow grh-strip__cursor-arrow--prev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -92,13 +92,13 @@ const tiles = [
 
   <div class="grh-strip__nav" aria-hidden="true">
     <button type="button" class="grh-strip__navbtn grh-strip__navbtn--prev" data-grh-strip-prev aria-label="Vorherige Tiles">
-      <GrhIcon name="arrow-right" size={18} />
+      <GrhIcon name="arrow-right" size={14} />
     </button>
     <div class="grh-strip__progress" data-grh-strip-progress>
       <span class="grh-strip__progress-bar" data-grh-strip-progressbar></span>
     </div>
     <button type="button" class="grh-strip__navbtn" data-grh-strip-next aria-label="Nächste Tiles">
-      <GrhIcon name="arrow-right" size={18} />
+      <GrhIcon name="arrow-right" size={14} />
     </button>
   </div>
 </div>
@@ -106,191 +106,42 @@ const tiles = [
 <style>
   .grh-strip {
     position: relative;
-    width: 100vw;
-    margin-inline: calc(50% - 50vw);
   }
   .grh-strip__track {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: clamp(260px, 32vw, 360px);
+    grid-auto-columns: clamp(240px, 28vw, 320px);
     gap: var(--grh-space-3);
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-inline: max(var(--grh-gutter), calc((100vw - var(--grh-container-max)) / 2));
+    overscroll-behavior-x: contain;
+    /* Kein Scroll-Snap — gibt komplett freies, weiches Scrollen */
     padding-block: var(--grh-space-2) var(--grh-space-5);
-    scrollbar-width: none;     /* Firefox: nativen Scrollbar verstecken */
-    scroll-behavior: smooth;
+    scrollbar-width: none;
+    /* auto = direkter 1:1 Drag, kein Browser-Animations-Override */
+    scroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  .grh-strip__track::-webkit-scrollbar { display: none; } /* WebKit: nativen Scrollbar verstecken */
+  .grh-strip__track::-webkit-scrollbar { display: none; }
 
-  .grh-strip__tile {
-    scroll-snap-align: start;
-    aspect-ratio: 3 / 4;
-    padding: var(--grh-space-6);
-    display: grid;
-    /* Top-Row: Number; Mid: flex-Spacer; Bottom: Label + verstecktes Sub + Arrow */
-    grid-template-rows: auto 1fr auto;
-    gap: var(--grh-space-3);
-    color: var(--grh-cream-50);
-    text-decoration: none;
-    border-radius: var(--grh-radius-lg);
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-    transform: translateZ(0);
-    will-change: transform, box-shadow;
-    transition:
-      transform var(--grh-dur-base) var(--grh-ease-out),
-      box-shadow var(--grh-dur-base) var(--grh-ease-out);
-  }
-  .grh-strip__tile:hover {
-    transform: translateY(-6px) translateZ(0);
-    box-shadow:
-      0 12px 30px -10px rgba(232, 182, 88, 0.5),
-      0 0 22px rgba(232, 182, 88, 0.35),
-      0 0 50px rgba(232, 182, 88, 0.2);
-  }
-
-  /* Hintergrund-Bild */
-  .grh-strip__bg {
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-    background-size: cover;
-    background-position: center;
-    transform: translateZ(0) scale(1);
-    will-change: transform;
-    backface-visibility: hidden;
-    transition: transform 1s var(--grh-ease-out);
-    filter: saturate(0.85) contrast(1.05);
-  }
-  .grh-strip__tile:hover .grh-strip__bg { transform: translateZ(0) scale(1.08); }
-
-  /* Farbiger Verlauf darüber — bewahrt die Tone-Palette */
-  .grh-strip__overlay {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    mix-blend-mode: multiply;
-  }
-  .grh-strip__overlay--forest      { background: linear-gradient(160deg, rgba(42, 107, 67, 0.92) 0%, rgba(19, 48, 31, 0.95) 100%); }
-  .grh-strip__overlay--wood        { background: linear-gradient(160deg, rgba(166, 121, 78, 0.85) 0%, rgba(107, 74, 42, 0.92) 100%); }
-  .grh-strip__overlay--sage        { background: linear-gradient(160deg, rgba(91, 174, 120, 0.85) 0%, rgba(42, 107, 67, 0.92) 100%); }
-  .grh-strip__overlay--moss        { background: linear-gradient(160deg, rgba(62, 140, 90, 0.85) 0%, rgba(27, 74, 47, 0.94) 100%); }
-  .grh-strip__overlay--sandstone   { background: linear-gradient(160deg, rgba(217, 196, 163, 0.78) 0%, rgba(166, 121, 78, 0.92) 100%); }
-  .grh-strip__overlay--forest-deep { background: linear-gradient(160deg, rgba(27, 74, 47, 0.92) 0%, rgba(14, 31, 24, 0.95) 100%); }
-
-  /* Zusätzlicher Bottom-Gradient für Lesbarkeit; verdunkelt sich beim Hover stark */
-  .grh-strip__tile::after {
-    content: '';
-    position: absolute;
-    inset: auto 0 0 0;
-    height: 60%;
-    z-index: -1;
-    background: linear-gradient(180deg, transparent 0%, rgba(14, 31, 24, 0.45) 100%);
-    pointer-events: none;
-    transition: background 600ms var(--grh-ease-out), height 600ms var(--grh-ease-out);
-  }
-  .grh-strip__tile:hover::after {
-    height: 100%;
-    background: linear-gradient(180deg, transparent 0%, rgba(14, 31, 24, 0.85) 70%, rgba(14, 31, 24, 0.92) 100%);
-  }
-
-  .grh-strip__num {
-    font-family: var(--grh-font-display);
-    font-style: italic;
-    font-size: 13px;
-    letter-spacing: 0.3em;
-    color: var(--grh-candle-500);
-    align-self: start;
-  }
-  /* Icon: in der Top-Reihe rechts neben der Nummer, verblasst beim Hover */
-  .grh-strip__icon {
-    align-self: start;
-    justify-self: end;
-    grid-row: 1;
-    grid-column: 1;
-    color: var(--grh-cream-50);
-    opacity: 0.85;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
-    transition: opacity var(--grh-dur-base), transform var(--grh-dur-base);
-  }
-  .grh-strip__tile:hover .grh-strip__icon {
-    opacity: 0.45;
-    transform: scale(0.92);
-  }
-
-  /* Label: bewegt sich beim Hover sanft nach oben, um Platz für Sub zu machen */
-  .grh-strip__label {
-    font-family: var(--grh-font-display);
-    font-size: clamp(2rem, 3vw, 2.6rem);
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.35);
-    transition: transform var(--grh-dur-base) var(--grh-ease-out);
-  }
-  .grh-strip__tile:hover .grh-strip__label {
-    transform: translateY(-4px);
-  }
-
-  /* Sub: standardmäßig versteckt, gleitet beim Hover deutlich ein */
-  .grh-strip__sub {
-    font-size: var(--grh-fs-sm);
-    line-height: 1.55;
-    max-width: 28ch;
-    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
-    max-height: 0;
-    opacity: 0;
-    transform: translateY(20px);
-    overflow: hidden;
-    transition:
-      max-height 600ms var(--grh-ease-out),
-      opacity   400ms var(--grh-ease-out) 100ms,
-      transform 600ms var(--grh-ease-out) 100ms;
-  }
-  .grh-strip__tile:hover .grh-strip__sub {
-    max-height: 10em;
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* Arrow: erst beim Hover sichtbar */
-  .grh-strip__arrow {
-    position: absolute;
-    bottom: var(--grh-space-5);
-    right: var(--grh-space-5);
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    border: 1px solid rgba(250, 247, 241, 0.4);
-    display: grid; place-items: center;
-    opacity: 0;
-    transform: translateX(-6px);
-    transition: opacity var(--grh-dur-base), transform var(--grh-dur-base), background var(--grh-dur-base), border-color var(--grh-dur-base);
-  }
-  .grh-strip__tile:hover .grh-strip__arrow {
-    opacity: 1;
-    transform: translateX(0);
-    background: var(--grh-candle-500);
-    border-color: var(--grh-candle-500);
-    color: var(--grh-forest-900);
-  }
+  /* Drag-to-Scroll Cursor-Affordance (Fallback ohne JS) */
+  .grh-strip__track.is-grabbable { cursor: grab; }
+  .grh-strip__track.is-grabbing  { cursor: grabbing; }
+  .grh-strip__track.is-grabbing a { pointer-events: none; }
+  /* Wenn der Custom-Cursor aktiv ist, nativen Cursor verstecken */
+  .grh-strip__track.is-cursor-active,
+  .grh-strip__track.is-cursor-active * { cursor: none !important; }
 
   /* === Custom Drag-Cursor (à la Salient) ==================== */
-  /* Wrapper: nur Position (transform3d via JS — keine Layout-Properties) */
   .grh-strip__cursor-pos {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0; left: 0;
     pointer-events: none;
     z-index: 9000;
     transform: translate3d(-9999px, -9999px, 0);
     will-change: transform;
   }
-  /* Inner: alle visuellen Eigenschaften, gemittet um den Wrapper-Anker */
   .grh-strip__cursor {
-    width: 96px;
-    height: 96px;
+    width: 96px; height: 96px;
     border-radius: 50%;
     background: var(--grh-candle-500);
     color: var(--grh-forest-900);
@@ -322,62 +173,189 @@ const tiles = [
     letter-spacing: 0.22em;
     font-weight: 700;
   }
-  .grh-strip__cursor-arrow {
-    color: var(--grh-forest-900);
-  }
+  .grh-strip__cursor-arrow { color: var(--grh-forest-900); }
   .grh-strip__cursor-arrow--prev { transform: scaleX(-1); }
 
-  /* Browser-Cursor unter dem Track ausblenden */
-  .grh-strip__track.is-cursor-active,
-  .grh-strip__track.is-cursor-active * {
-    cursor: none !important;
-  }
-
   @media (prefers-reduced-motion: reduce), (hover: none) {
-    .grh-strip__cursor { display: none; }
+    .grh-strip__cursor-pos { display: none; }
   }
 
-  /* === Scroll-Steuerung ===================================== */
-  .grh-strip__nav {
-    margin: var(--grh-space-5) auto 0;
-    max-width: var(--grh-container-max);
-    padding-inline: var(--grh-gutter);
-    display: flex;
-    align-items: center;
-    gap: var(--grh-space-4);
+  /* === Tiles ============================================== */
+  .grh-strip__tile {
+    aspect-ratio: 3 / 4;
+    padding: var(--grh-space-6);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--grh-space-3);
+    color: var(--grh-cream-50);
+    text-decoration: none;
+    border-radius: var(--grh-radius-lg);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    transition:
+      transform var(--grh-dur-base) var(--grh-ease-out),
+      box-shadow var(--grh-dur-base) var(--grh-ease-out);
+    user-select: none;
+  }
+  .grh-strip__tile:hover {
+    transform: translateY(-6px);
+    box-shadow:
+      0 12px 30px -10px rgba(232, 182, 88, 0.5),
+      0 0 22px rgba(232, 182, 88, 0.35);
   }
 
-  .grh-strip__navbtn {
-    width: 48px; height: 48px;
+  .grh-strip__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1);
+    transition: transform 1s var(--grh-ease-out);
+    filter: saturate(0.85) contrast(1.05);
+  }
+  .grh-strip__tile:hover .grh-strip__bg { transform: scale(1.08); }
+
+  .grh-strip__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    mix-blend-mode: multiply;
+  }
+  .grh-strip__overlay--forest      { background: linear-gradient(160deg, rgba(42, 107, 67, 0.92) 0%, rgba(19, 48, 31, 0.95) 100%); }
+  .grh-strip__overlay--wood        { background: linear-gradient(160deg, rgba(166, 121, 78, 0.85) 0%, rgba(107, 74, 42, 0.92) 100%); }
+  .grh-strip__overlay--sage        { background: linear-gradient(160deg, rgba(91, 174, 120, 0.85) 0%, rgba(42, 107, 67, 0.92) 100%); }
+  .grh-strip__overlay--moss        { background: linear-gradient(160deg, rgba(62, 140, 90, 0.85) 0%, rgba(27, 74, 47, 0.94) 100%); }
+  .grh-strip__overlay--sandstone   { background: linear-gradient(160deg, rgba(217, 196, 163, 0.78) 0%, rgba(166, 121, 78, 0.92) 100%); }
+  .grh-strip__overlay--forest-deep { background: linear-gradient(160deg, rgba(27, 74, 47, 0.92) 0%, rgba(14, 31, 24, 0.95) 100%); }
+
+  .grh-strip__tile::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 60%;
+    z-index: -1;
+    background: linear-gradient(180deg, transparent 0%, rgba(14, 31, 24, 0.45) 100%);
+    pointer-events: none;
+    transition: background 600ms var(--grh-ease-out), height 600ms var(--grh-ease-out);
+  }
+  .grh-strip__tile:hover::after {
+    height: 100%;
+    background: linear-gradient(180deg, transparent 0%, rgba(14, 31, 24, 0.85) 70%, rgba(14, 31, 24, 0.92) 100%);
+  }
+
+  .grh-strip__num {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--grh-candle-500);
+    align-self: start;
+  }
+  .grh-strip__icon {
+    align-self: start;
+    justify-self: end;
+    grid-row: 1;
+    grid-column: 1;
+    color: var(--grh-cream-50);
+    opacity: 0.85;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+    transition: opacity var(--grh-dur-base), transform var(--grh-dur-base);
+  }
+  .grh-strip__tile:hover .grh-strip__icon {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+
+  .grh-strip__label {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2rem, 3vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-strip__tile:hover .grh-strip__label { transform: translateY(-4px); }
+
+  .grh-strip__sub {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.55;
+    max-width: 28ch;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(20px);
+    overflow: hidden;
+    transition:
+      max-height 600ms var(--grh-ease-out),
+      opacity   400ms var(--grh-ease-out) 100ms,
+      transform 600ms var(--grh-ease-out) 100ms;
+  }
+  .grh-strip__tile:hover .grh-strip__sub {
+    max-height: 10em;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .grh-strip__arrow {
+    position: absolute;
+    bottom: var(--grh-space-5);
+    right: var(--grh-space-5);
+    width: 36px; height: 36px;
     border-radius: 50%;
-    background: var(--grh-cream-50);
-    border: 1.5px solid var(--grh-cream-50);
-    color: var(--grh-forest-900);
+    border: 1px solid rgba(250, 247, 241, 0.4);
     display: grid; place-items: center;
-    cursor: pointer;
-    transition: background var(--grh-dur-fast), color var(--grh-dur-fast), transform var(--grh-dur-fast), opacity var(--grh-dur-fast);
-    flex-shrink: 0;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity var(--grh-dur-base), transform var(--grh-dur-base), background var(--grh-dur-base), border-color var(--grh-dur-base);
   }
-  .grh-strip__navbtn:hover {
+  .grh-strip__tile:hover .grh-strip__arrow {
+    opacity: 1;
+    transform: translateX(0);
     background: var(--grh-candle-500);
     border-color: var(--grh-candle-500);
     color: var(--grh-forest-900);
-    transform: translateY(-1px);
   }
-  .grh-strip__navbtn--prev { transform: scaleX(-1); }
-  .grh-strip__navbtn--prev:hover { transform: scaleX(-1) translateY(-1px); }
+
+  /* === Scroll-Steuerung — schmaler Bar + kleinere Buttons ====== */
+  .grh-strip__nav {
+    margin-top: var(--grh-space-5);
+    display: flex;
+    align-items: center;
+    gap: var(--grh-space-3);
+  }
+
+  .grh-strip__navbtn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    color: var(--grh-forest-900);
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast), border-color var(--grh-dur-fast), opacity var(--grh-dur-fast);
+    flex-shrink: 0;
+  }
+  .grh-strip__navbtn:hover {
+    background: var(--grh-forest-900);
+    border-color: var(--grh-forest-900);
+    color: var(--grh-candle-500);
+  }
+  .grh-strip__navbtn--prev :global(svg) { transform: scaleX(-1); }
   .grh-strip__navbtn[aria-disabled="true"] {
-    opacity: 0.35;
+    opacity: 0.3;
     cursor: not-allowed;
     pointer-events: none;
   }
 
-  /* Goldener Progress-Strich mit kräftigem Schein */
+  /* Schmalerer goldener Progress-Strich */
   .grh-strip__progress {
     flex: 1;
-    height: 4px;
+    height: 2px;
     background: rgba(250, 247, 241, 0.18);
-    border-radius: 2px;
+    border-radius: 1px;
     position: relative;
     overflow: visible;
   }
@@ -387,27 +365,30 @@ const tiles = [
     height: 100%;
     width: 30%;
     background: linear-gradient(90deg, var(--grh-candle-300), var(--grh-candle-500));
-    border-radius: 2px;
+    border-radius: 1px;
     transition: width var(--grh-dur-base) var(--grh-ease-out), left var(--grh-dur-base) var(--grh-ease-out);
-    /* Kräftiger Glow */
     box-shadow:
-      0 0 8px var(--grh-candle-500),
-      0 0 16px rgba(232, 182, 88, 0.7),
-      0 0 28px rgba(232, 182, 88, 0.45);
+      0 0 6px var(--grh-candle-500),
+      0 0 14px rgba(232, 182, 88, 0.55);
   }
 </style>
 
 <script>
-  const track    = document.querySelector<HTMLElement>('[data-grh-strip-track]');
-  const prevBtn  = document.querySelector<HTMLButtonElement>('[data-grh-strip-prev]');
-  const nextBtn  = document.querySelector<HTMLButtonElement>('[data-grh-strip-next]');
-  const progress = document.querySelector<HTMLElement>('[data-grh-strip-progressbar]');
+  // Sauberer, robuster Strip — Pfeil-Buttons, Progress-Bar, Drag-to-Scroll für Maus
+  (function () {
+    const root = document.querySelector<HTMLElement>('[data-grh-strip]');
+    if (!root) return;
+    const track    = root.querySelector<HTMLElement>('[data-grh-strip-track]');
+    const prevBtn  = root.querySelector<HTMLButtonElement>('[data-grh-strip-prev]');
+    const nextBtn  = root.querySelector<HTMLButtonElement>('[data-grh-strip-next]');
+    const progress = root.querySelector<HTMLElement>('[data-grh-strip-progressbar]');
+    if (!track || !prevBtn || !nextBtn || !progress) return;
 
-  if (track && prevBtn && nextBtn && progress) {
-    const tileWidth = () => {
+    /* Pfeil-Schritt = ungefähr 1.5 Kacheln pro Klick */
+    const step = () => {
       const tile = track.querySelector<HTMLElement>('a');
-      const gap = parseFloat(getComputedStyle(track).columnGap || '12');
-      return tile ? tile.offsetWidth + gap : 300;
+      const gap  = parseFloat(getComputedStyle(track).columnGap || '12');
+      return tile ? (tile.offsetWidth + gap) * 1.5 : 320;
     };
 
     const updateState = () => {
@@ -417,50 +398,136 @@ const tiles = [
       const widthPct = Math.max(visibleRatio * 100, 14);
       progress.style.width = `${widthPct}%`;
       progress.style.left  = `${pct * (100 - widthPct)}%`;
-
       prevBtn.toggleAttribute('aria-disabled', track.scrollLeft <= 4);
       nextBtn.toggleAttribute('aria-disabled', track.scrollLeft >= max - 4);
     };
 
-    prevBtn.addEventListener('click', () => track.scrollBy({ left: -tileWidth() * 1.5, behavior: 'smooth' }));
-    nextBtn.addEventListener('click', () => track.scrollBy({ left:  tileWidth() * 1.5, behavior: 'smooth' }));
+    prevBtn.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+    nextBtn.addEventListener('click', () => track.scrollBy({ left:  step(), behavior: 'smooth' }));
     track.addEventListener('scroll', updateState, { passive: true });
     window.addEventListener('resize', updateState);
     updateState();
-  }
 
-  /* Custom Drag-Cursor — Wrapper-Position via transform3d, Inner-Scale via CSS-Klasse */
-  const cursorPos = document.querySelector<HTMLElement>('[data-grh-strip-cursor-pos]');
-  const cursorEl  = document.querySelector<HTMLElement>('[data-grh-strip-cursor]');
-  if (track && cursorPos && cursorEl && window.matchMedia('(hover: hover)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    let mouseX = 0, mouseY = 0;
+    /* === Drag-to-Scroll für Maus mit physikalischer Inertia ============= */
+    if (!window.matchMedia('(hover: hover)').matches) return;
+    track.classList.add('is-grabbable');
+
+    const THRESHOLD = 5;
+    let pointerId: number | null = null;
+    let startX = 0;
+    let startScroll = 0;
+    let dragging = false;
+    let lastX = 0;
+    let lastT = 0;
+    let velocity = 0;       // Pixel pro Millisekunde
+    let inertiaRaf = 0;
+
+    const stopInertia = () => {
+      if (inertiaRaf) {
+        cancelAnimationFrame(inertiaRaf);
+        inertiaRaf = 0;
+      }
+    };
+
+    const startInertia = () => {
+      stopInertia();
+      let v = velocity;
+      let last = performance.now();
+      const FRICTION = 0.94;   // 6 % pro 16 ms ≈ weiches Austrudeln
+      const STOP_AT = 0.02;    // px/ms — darunter beenden
+      const tick = () => {
+        const now = performance.now();
+        const dt = now - last;
+        last = now;
+        track.scrollLeft -= v * dt;
+        v *= Math.pow(FRICTION, dt / 16);
+        if (Math.abs(v) > STOP_AT) {
+          inertiaRaf = requestAnimationFrame(tick);
+        } else {
+          inertiaRaf = 0;
+        }
+      };
+      inertiaRaf = requestAnimationFrame(tick);
+    };
+
+    track.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      if (e.button !== 0) return;
+      stopInertia();
+      pointerId = e.pointerId;
+      startX = e.clientX;
+      startScroll = track.scrollLeft;
+      lastX = e.clientX;
+      lastT = performance.now();
+      velocity = 0;
+      dragging = false;
+    });
+
+    track.addEventListener('pointermove', (e) => {
+      if (pointerId !== e.pointerId) return;
+      const dx = e.clientX - startX;
+      if (!dragging && Math.abs(dx) > THRESHOLD) {
+        dragging = true;
+        track.classList.add('is-grabbing');
+        track.setPointerCapture(pointerId);
+      }
+      if (dragging) {
+        track.scrollLeft = startScroll - dx;
+        const now = performance.now();
+        const dt = now - lastT;
+        if (dt > 0) {
+          /* Glättung mit altem Wert für natürlicheres Gefühl */
+          const instant = (e.clientX - lastX) / dt;
+          velocity = velocity * 0.6 + instant * 0.4;
+        }
+        lastX = e.clientX;
+        lastT = now;
+      }
+    });
+
+    const endDrag = (e: PointerEvent) => {
+      if (pointerId !== e.pointerId) return;
+      if (dragging) {
+        track.classList.remove('is-grabbing');
+        try { track.releasePointerCapture(pointerId); } catch {}
+        const swallow = (ev: Event) => { ev.preventDefault(); ev.stopPropagation(); };
+        track.addEventListener('click', swallow, { capture: true, once: true });
+        startInertia();
+      }
+      pointerId = null;
+      dragging = false;
+    };
+    track.addEventListener('pointerup', endDrag);
+    track.addEventListener('pointercancel', endDrag);
+
+    /* Wenn der User normales Scrollen oder die Pfeile nutzt, Inertia abbrechen */
+    track.addEventListener('wheel', stopInertia, { passive: true });
+    prevBtn.addEventListener('click', stopInertia);
+    nextBtn.addEventListener('click', stopInertia);
+
+    /* === Custom Drag-Cursor (rein visuell, folgt der Maus mit Easing) ==== */
+    const cursorPos = root.querySelector<HTMLElement>('[data-grh-strip-cursor-pos]');
+    const cursorEl  = root.querySelector<HTMLElement>('[data-grh-strip-cursor]');
+    if (!cursorPos || !cursorEl) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let mx = 0, my = 0;
     let cx = 0, cy = 0;
-    let isDragging = false;
-    let dragStartX = 0;
-    let scrollStartX = 0;
-    let started = false;
-
-    const EASE = 0.12;
-    const animate = () => {
-      cx += (mouseX - cx) * EASE;
-      cy += (mouseY - cy) * EASE;
-      /* Reines transform3d — bleibt auf der GPU, kein Layout-Reflow, sub-pixel-genau */
+    let cursorRaf = 0;
+    const EASE = 0.18;
+    const animateCursor = () => {
+      cx += (mx - cx) * EASE;
+      cy += (my - cy) * EASE;
       cursorPos.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
-      requestAnimationFrame(animate);
+      cursorRaf = requestAnimationFrame(animateCursor);
     };
 
     document.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      if (!started) {
-        // Beim ersten Move auch die smooth-Position direkt setzen, damit kein Flash entsteht
-        cx = mouseX; cy = mouseY;
-        started = true;
-        animate();
-      }
-      if (isDragging) {
-        const dx = e.clientX - dragStartX;
-        track.scrollLeft = scrollStartX - dx;
+      mx = e.clientX;
+      my = e.clientY;
+      if (!cursorRaf) {
+        cx = mx; cy = my;
+        animateCursor();
       }
     });
 
@@ -472,21 +539,13 @@ const tiles = [
       cursorEl.classList.remove('is-active');
       cursorEl.classList.remove('is-grabbing');
       track.classList.remove('is-cursor-active');
-      isDragging = false;
     });
-
-    track.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      isDragging = true;
-      dragStartX = e.clientX;
-      scrollStartX = track.scrollLeft;
-      cursorEl.classList.add('is-grabbing');
+    /* Synchron zur Pointer-Drag-Logik: shrink wenn aktiv gezogen wird */
+    track.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') cursorEl.classList.add('is-grabbing');
     });
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        cursorEl.classList.remove('is-grabbing');
-      }
-    });
-  }
+    const releaseCursor = () => cursorEl.classList.remove('is-grabbing');
+    track.addEventListener('pointerup', releaseCursor);
+    track.addEventListener('pointercancel', releaseCursor);
+  })();
 </script>

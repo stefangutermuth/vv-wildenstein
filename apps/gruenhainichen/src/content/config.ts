@@ -31,6 +31,7 @@ const events = defineCollection({
     featured: z.boolean().default(false),
     teaser: z.string(),
     image: z.string().optional(),
+    category: z.string().optional(),
     ctaUrl: z.string().url().optional(),
     ctaLabel: z.string().optional(),
   }),
