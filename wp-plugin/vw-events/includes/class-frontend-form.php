@@ -150,13 +150,25 @@ final class VW_Events_Frontend_Form {
                     $loc_name  = (string) get_post_meta( $post_id, '_vw_event_location_name', true );
                     $standorte = wp_get_post_terms( $post_id, 'vw_standort', [ 'fields' => 'names' ] );
                     ?>
+                    [ $cal_day, $cal_month ] = vw_events_calendar_leaf( $post_id );
+                    $thumb_url = has_post_thumbnail() ? get_the_post_thumbnail_url( $post_id, 'large' ) : '';
+                    ?>
                     <li class="vw-event-card"<?php echo vw_events_card_data_attrs( $post_id ); ?>>
                         <a class="vw-event-card-link" href="<?php the_permalink(); ?>">
-                            <?php if ( has_post_thumbnail() ) : ?>
-                                <div class="vw-event-card-image"><?php the_post_thumbnail( 'medium' ); ?></div>
-                            <?php else : ?>
-                                <div class="vw-event-card-image vw-event-card-image-empty">📅</div>
-                            <?php endif; ?>
+                            <div class="vw-event-card-image<?php echo $thumb_url ? '' : ' vw-event-card-image-empty'; ?>">
+                                <?php if ( $thumb_url ) : ?>
+                                    <img class="vw-event-card-image-bg" src="<?php echo esc_url( $thumb_url ); ?>" alt="" loading="lazy" aria-hidden="true">
+                                    <img class="vw-event-card-image-fg" src="<?php echo esc_url( $thumb_url ); ?>" alt="" loading="lazy">
+                                <?php else : ?>
+                                    <span class="vw-event-card-image-placeholder">📅</span>
+                                <?php endif; ?>
+                                <?php if ( $cal_day !== null ) : ?>
+                                    <span class="vw-event-leaf" aria-hidden="true">
+                                        <span class="vw-event-leaf-month"><?php echo esc_html( $cal_month ); ?></span>
+                                        <span class="vw-event-leaf-day"><?php echo esc_html( $cal_day ); ?></span>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                             <div class="vw-event-card-body">
                                 <h2 class="vw-event-card-title"><?php the_title(); ?></h2>
                                 <?php if ( $when !== '—' ) : ?><p class="vw-event-card-when"><?php echo esc_html( $when ); ?></p><?php endif; ?>

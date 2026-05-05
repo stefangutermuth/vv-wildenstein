@@ -120,6 +120,25 @@ final class VW_Events_Helpers {
 }
 
 /**
+ * Liefert ein Array [day, month_abbr] für ein Event-Start-Date.
+ * Beispiele: ['15', 'Mai'], ['09', 'Dez']. Bei Recurring/leerem Start: [null, null].
+ */
+function vw_events_calendar_leaf( int $post_id ): array {
+    $repeat = (string) get_post_meta( $post_id, '_vw_event_repeat', true );
+    if ( $repeat && $repeat !== 'none' ) {
+        return [ '∞', strtoupper( substr( $repeat, 0, 3 ) ) ];
+    }
+    $start = (string) get_post_meta( $post_id, '_vw_event_start', true );
+    if ( ! $start ) { return [ null, null ]; }
+    $ts = strtotime( $start );
+    if ( ! $ts ) { return [ null, null ]; }
+    return [
+        date( 'j', $ts ),
+        ucfirst( strtolower( substr( date_i18n( 'M', $ts ), 0, 3 ) ) ),
+    ];
+}
+
+/**
  * meta_query-Klausel für „relevante" Events:
  *   1) Start liegt in der Zukunft, ODER
  *   2) Ende liegt in der Zukunft (aktuell laufende mehrtägige Events), ODER
