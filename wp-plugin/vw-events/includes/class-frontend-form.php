@@ -27,14 +27,7 @@ final class VW_Events_Frontend_Form {
             'orderby'        => 'meta_value',
             'order'          => 'ASC',
             'tax_query'      => [],
-            'meta_query'     => [
-                [
-                    'key'     => '_vw_event_start',
-                    'value'   => current_time( 'Y-m-d\TH:i:s' ),
-                    'compare' => '>=',
-                    'type'    => 'DATETIME',
-                ],
-            ],
+            'meta_query'     => [ vw_events_meta_query_relevant() ],
         ];
         if ( $atts['standort'] !== '' ) {
             $slugs   = array_map( 'sanitize_key', array_filter( array_map( 'trim', explode( ',', $atts['standort'] ) ) ) );
@@ -135,12 +128,7 @@ final class VW_Events_Frontend_Form {
             ];
         }
         if ( strtolower( (string) $atts['past'] ) !== 'true' ) {
-            $args['meta_query'][] = [
-                'key'     => '_vw_event_start',
-                'value'   => current_time( 'Y-m-d\TH:i:s' ),
-                'compare' => '>=',
-                'type'    => 'DATETIME',
-            ];
+            $args['meta_query'][] = vw_events_meta_query_relevant();
         }
 
         return VW_Events_Multisite::with_master( static function () use ( $args, $with_filter ) {

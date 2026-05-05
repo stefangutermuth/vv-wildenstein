@@ -120,6 +120,36 @@ final class VW_Events_Helpers {
 }
 
 /**
+ * meta_query-Klausel für „relevante" Events:
+ *   1) Start liegt in der Zukunft, ODER
+ *   2) Ende liegt in der Zukunft (aktuell laufende mehrtägige Events), ODER
+ *   3) Event ist eine Dauerveranstaltung (_vw_event_repeat != 'none')
+ */
+function vw_events_meta_query_relevant(): array {
+    $now = current_time( 'Y-m-d\TH:i:s' );
+    return [
+        'relation' => 'OR',
+        [
+            'key'     => '_vw_event_start',
+            'value'   => $now,
+            'compare' => '>=',
+            'type'    => 'DATETIME',
+        ],
+        [
+            'key'     => '_vw_event_end',
+            'value'   => $now,
+            'compare' => '>=',
+            'type'    => 'DATETIME',
+        ],
+        [
+            'key'     => '_vw_event_repeat',
+            'value'   => 'none',
+            'compare' => '!=',
+        ],
+    ];
+}
+
+/**
  * Render the JS filter bar (month dropdown, standort buttons, category pills,
  * quick-tabs). The actual filtering is done by assets/js/filter.js, which
  * looks for `.vw-events-filterbar` and `.vw-events-list` siblings.
