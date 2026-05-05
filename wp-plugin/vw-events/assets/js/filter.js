@@ -13,18 +13,27 @@
         const list = next;
         const status = bar.querySelector('.vw-events-filter-status');
 
-        const state = { quick: 'all', month: '', standort: '', category: '' };
+        const state = { quick: 'all', month: '', search: '' };
 
-        // Quick-Tabs (Heute / Diese Woche / Diesen Monat / Alle)
+        // Pre-cache durchsuchbaren Text pro Card (Title + Where + Tags), kleingeschrieben
+        const cards = Array.from(list.querySelectorAll('.vw-event-card, .vw-event-up'));
+        cards.forEach((card) => {
+            const parts = [];
+            card.querySelectorAll('.vw-event-card-title, .vw-event-up-title, .vw-event-card-where, .vw-event-up-where, .vw-event-card-tags').forEach((el) => {
+                if (el.textContent) parts.push(el.textContent);
+            });
+            card.dataset.searchText = parts.join(' ').toLowerCase();
+        });
+
+        // Quick-Tabs
         bar.querySelectorAll('.vw-events-quicktabs button').forEach((btn) => {
             btn.addEventListener('click', () => {
                 bar.querySelectorAll('.vw-events-quicktabs button').forEach((b) => b.classList.remove('is-active'));
                 btn.classList.add('is-active');
                 state.quick = btn.dataset.quick;
                 if (state.quick !== 'all') {
-                    // Quicktabs überschreiben Monatsdropdown
                     const sel = bar.querySelector('select[data-filter="month"]');
-                    if (sel) { sel.value = ''; }
+                    if (sel) sel.value = '';
                     state.month = '';
                 }
                 apply();
@@ -37,7 +46,6 @@
             monthSel.addEventListener('change', () => {
                 state.month = monthSel.value;
                 if (state.month) {
-                    // Monat überschreibt Quicktabs
                     bar.querySelectorAll('.vw-events-quicktabs button').forEach((b) => b.classList.remove('is-active'));
                     const allBtn = bar.querySelector('.vw-events-quicktabs button[data-quick="all"]');
                     if (allBtn) allBtn.classList.add('is-active');
@@ -47,18 +55,31 @@
             });
         }
 
-        // Standort + Kategorie Pills
-        bar.querySelectorAll('.vw-events-pills').forEach((group) => {
-            group.querySelectorAll('button').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const key = btn.dataset.filter;
-                    group.querySelectorAll('button').forEach((b) => b.classList.remove('is-active'));
-                    btn.classList.add('is-active');
-                    state[key] = btn.dataset.value || '';
+        // Live-Suche (debounced)
+        const searchInput = bar.querySelector('input[data-filter="search"]');
+        const clearBtn = bar.querySelector('[data-search-clear]');
+        if (searchInput) {
+            let timer = null;
+            searchInput.addEventListener('input', () => {
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(() => {
+                    state.search = searchInput.value.trim().toLowerCase();
+                    if (clearBtn) clearBtn.hidden = state.search === '';
                     apply();
-                });
+                }, 80);
             });
-        });
+        }
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.focus();
+                }
+                state.search = '';
+                clearBtn.hidden = true;
+                apply();
+            });
+        }
 
         function inRange(card, mode) {
             const start = card.dataset.start;
@@ -83,22 +104,16 @@
         }
 
         function apply() {
-            const cards = list.querySelectorAll('.vw-event-card, .vw-event-up');
             let visible = 0;
 
             cards.forEach((card) => {
                 let show = true;
 
                 if (state.quick !== 'all' && !inRange(card, state.quick)) show = false;
-                if (state.month && card.dataset.month !== state.month) show = false;
-                if (state.standort) {
-                    const slugs = (card.dataset.standort || '').split(' ');
-                    // verband-weit zählt überall
-                    if (!slugs.includes(state.standort) && !slugs.includes('verband-weit')) show = false;
-                }
-                if (state.category) {
-                    const cats = (card.dataset.category || '').split(' ');
-                    if (!cats.includes(state.category)) show = false;
+                if (show && state.month && card.dataset.month !== state.month) show = false;
+                if (show && state.search) {
+                    const text = card.dataset.searchText || '';
+                    if (!text.includes(state.search)) show = false;
                 }
 
                 card.classList.toggle('is-hidden', !show);
@@ -106,12 +121,12 @@
             });
 
             if (status) {
-                if (visible === cards.length) {
+                if (visible === cards.length && state.quick === 'all' && !state.month && !state.search) {
                     status.hidden = true;
                     status.textContent = '';
                 } else if (visible === 0) {
                     status.hidden = false;
-                    status.textContent = 'Keine Veranstaltungen passen zu deinen Filtern.';
+                    status.textContent = 'Keine Veranstaltungen passen zu deiner Auswahl.';
                 } else {
                     status.hidden = false;
                     status.textContent = visible + ' von ' + cards.length + ' Veranstaltungen angezeigt.';

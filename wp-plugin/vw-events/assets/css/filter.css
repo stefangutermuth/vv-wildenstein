@@ -15,14 +15,12 @@
     align-items: center;
     justify-content: space-between;
 }
-.vw-events-quicktabs,
-.vw-events-pills {
+.vw-events-quicktabs {
     display: flex;
     flex-wrap: wrap;
     gap: .35rem;
 }
-.vw-events-quicktabs button,
-.vw-events-pills button {
+.vw-events-quicktabs button {
     padding: .35rem .85rem;
     border: 1px solid #d1d9df;
     border-radius: 999px;
@@ -33,21 +31,16 @@
     cursor: pointer;
     transition: background .12s ease, border-color .12s ease, color .12s ease;
 }
-.vw-events-quicktabs button:hover,
-.vw-events-pills button:hover {
+.vw-events-quicktabs button:hover {
     background: #eaf1ec;
     border-color: #2a6f3f;
 }
-.vw-events-quicktabs button.is-active,
-.vw-events-pills button.is-active {
+.vw-events-quicktabs button.is-active {
     background: #2a6f3f;
     color: #fff;
     border-color: #2a6f3f;
 }
-.vw-events-pills--cat button.is-active {
-    background: #4a90e2;
-    border-color: #4a90e2;
-}
+
 .vw-events-month {
     display: inline-flex;
     align-items: center;
@@ -69,6 +62,61 @@
     font-size: .9rem;
     cursor: pointer;
 }
+
+/* ---- Live-Suche ---- */
+.vw-events-search {
+    position: relative;
+    display: block;
+}
+.vw-events-search-icon {
+    position: absolute;
+    left: .85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    opacity: .55;
+    font-size: 1rem;
+}
+.vw-events-search input[type="search"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: .55rem 2.4rem .55rem 2.4rem;
+    border: 1px solid #d1d9df;
+    border-radius: 8px;
+    background: #fff;
+    font: inherit;
+    font-size: .95rem;
+    transition: border-color .12s ease, box-shadow .12s ease;
+}
+.vw-events-search input[type="search"]:focus {
+    outline: none;
+    border-color: #2a6f3f;
+    box-shadow: 0 0 0 3px rgba(42, 111, 63, .15);
+}
+.vw-events-search input[type="search"]::-webkit-search-cancel-button { display: none; }
+.vw-events-search-clear {
+    position: absolute;
+    right: .55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #d1d9df;
+    color: #2a3540;
+    font-size: 1.05rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.vw-events-search-clear:hover {
+    background: #b1bcc4;
+}
+
 .vw-events-filter-status {
     font-size: .85rem;
     color: #666;
@@ -86,6 +134,5 @@
     .vw-events-filterbar { padding: .75rem 1rem; }
     .vw-events-filterbar-row { flex-direction: column; align-items: stretch; }
     .vw-events-month { justify-content: space-between; }
-    .vw-events-quicktabs button,
-    .vw-events-pills button { font-size: .8rem; padding: .3rem .7rem; }
+    .vw-events-quicktabs button { font-size: .8rem; padding: .3rem .7rem; }
 }

@@ -141,9 +141,6 @@ function vw_events_render_filter_bar( WP_Query $q ): string {
     }
     ksort( $months );
 
-    $standorte  = get_terms( [ 'taxonomy' => 'vw_standort', 'hide_empty' => false ] );
-    $categories = get_terms( [ 'taxonomy' => 'vw_event_category', 'hide_empty' => false ] );
-
     ob_start();
     ?>
     <div class="vw-events-filterbar" data-vw-filter>
@@ -165,23 +162,17 @@ function vw_events_render_filter_bar( WP_Query $q ): string {
             </label>
         </div>
 
-        <?php if ( is_array( $standorte ) && count( $standorte ) > 1 ) : ?>
-            <div class="vw-events-pills" role="group" aria-label="<?php esc_attr_e( 'Standorte', 'vw-events' ); ?>">
-                <button type="button" data-filter="standort" data-value="" class="is-active"><?php esc_html_e( 'Alle Standorte', 'vw-events' ); ?></button>
-                <?php foreach ( $standorte as $term ) : ?>
-                    <button type="button" data-filter="standort" data-value="<?php echo esc_attr( $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></button>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if ( is_array( $categories ) && count( $categories ) > 1 ) : ?>
-            <div class="vw-events-pills vw-events-pills--cat" role="group" aria-label="<?php esc_attr_e( 'Kategorien', 'vw-events' ); ?>">
-                <button type="button" data-filter="category" data-value="" class="is-active"><?php esc_html_e( 'Alle Kategorien', 'vw-events' ); ?></button>
-                <?php foreach ( $categories as $term ) : ?>
-                    <button type="button" data-filter="category" data-value="<?php echo esc_attr( $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></button>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
+        <label class="vw-events-search">
+            <span class="vw-events-search-icon" aria-hidden="true">🔎</span>
+            <input
+                type="search"
+                data-filter="search"
+                placeholder="<?php esc_attr_e( 'Veranstaltung, Ort oder Veranstalter suchen …', 'vw-events' ); ?>"
+                aria-label="<?php esc_attr_e( 'Veranstaltungen durchsuchen', 'vw-events' ); ?>"
+                autocomplete="off"
+            />
+            <button type="button" class="vw-events-search-clear" data-search-clear hidden aria-label="<?php esc_attr_e( 'Suche zurücksetzen', 'vw-events' ); ?>">×</button>
+        </label>
 
         <div class="vw-events-filter-status" hidden></div>
     </div>
