@@ -1,0 +1,91 @@
+.vw-events-filterbar {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    padding: 1rem 1.25rem;
+    background: #f4f7fa;
+    border-radius: 8px;
+    margin: 0 0 1.5rem;
+    font-size: .95rem;
+}
+.vw-events-filterbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
+.vw-events-quicktabs,
+.vw-events-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+.vw-events-quicktabs button,
+.vw-events-pills button {
+    padding: .35rem .85rem;
+    border: 1px solid #d1d9df;
+    border-radius: 999px;
+    background: #fff;
+    color: #2a3540;
+    font: inherit;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+.vw-events-quicktabs button:hover,
+.vw-events-pills button:hover {
+    background: #eaf1ec;
+    border-color: #2a6f3f;
+}
+.vw-events-quicktabs button.is-active,
+.vw-events-pills button.is-active {
+    background: #2a6f3f;
+    color: #fff;
+    border-color: #2a6f3f;
+}
+.vw-events-pills--cat button.is-active {
+    background: #4a90e2;
+    border-color: #4a90e2;
+}
+.vw-events-month {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+.vw-events-month-label {
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #555;
+    font-weight: 600;
+}
+.vw-events-month select {
+    padding: .35rem .75rem;
+    border: 1px solid #d1d9df;
+    border-radius: 6px;
+    background: #fff;
+    font: inherit;
+    font-size: .9rem;
+    cursor: pointer;
+}
+.vw-events-filter-status {
+    font-size: .85rem;
+    color: #666;
+    padding-top: .25rem;
+}
+.vw-events-filter-status[hidden] { display: none; }
+
+/* Filter aktiv: gefilterte Karten ausblenden, ohne Layout-Sprung */
+.vw-event-card.is-hidden,
+.vw-event-up.is-hidden {
+    display: none !important;
+}
+
+@media (max-width: 600px) {
+    .vw-events-filterbar { padding: .75rem 1rem; }
+    .vw-events-filterbar-row { flex-direction: column; align-items: stretch; }
+    .vw-events-month { justify-content: space-between; }
+    .vw-events-quicktabs button,
+    .vw-events-pills button { font-size: .8rem; padding: .3rem .7rem; }
+}

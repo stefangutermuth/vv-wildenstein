@@ -97,9 +97,15 @@ final class VW_Events_Frontend_Form {
             'category' => '',
             'limit'    => 20,
             'past'     => 'false',
+            'filter'   => 'true',
         ], $atts, 'vw_events_list' );
 
         wp_enqueue_style( 'vw-events-single', VW_EVENTS_URL . 'assets/css/single-event.css', [], VW_EVENTS_VERSION );
+        $with_filter = strtolower( (string) $atts['filter'] ) !== 'false';
+        if ( $with_filter ) {
+            wp_enqueue_style( 'vw-events-filter' );
+            wp_enqueue_script( 'vw-events-filter' );
+        }
 
         $args = [
             'post_type'      => 'vw_event',
@@ -137,12 +143,15 @@ final class VW_Events_Frontend_Form {
             ];
         }
 
-        return VW_Events_Multisite::with_master( static function () use ( $args ) {
+        return VW_Events_Multisite::with_master( static function () use ( $args, $with_filter ) {
             $q = new WP_Query( $args );
             ob_start();
             if ( ! $q->have_posts() ) {
                 echo '<p class="vw-events-empty">' . esc_html__( 'Aktuell sind keine Veranstaltungen eingetragen.', 'vw-events' ) . '</p>';
             } else {
+                if ( $with_filter ) {
+                    echo vw_events_render_filter_bar( $q );
+                }
                 echo '<ul class="vw-events-list">';
                 while ( $q->have_posts() ) : $q->the_post();
                     $post_id   = get_the_ID();
@@ -153,7 +162,7 @@ final class VW_Events_Frontend_Form {
                     $loc_name  = (string) get_post_meta( $post_id, '_vw_event_location_name', true );
                     $standorte = wp_get_post_terms( $post_id, 'vw_standort', [ 'fields' => 'names' ] );
                     ?>
-                    <li class="vw-event-card">
+                    <li class="vw-event-card"<?php echo vw_events_card_data_attrs( $post_id ); ?>>
                         <a class="vw-event-card-link" href="<?php the_permalink(); ?>">
                             <?php if ( has_post_thumbnail() ) : ?>
                                 <div class="vw-event-card-image"><?php the_post_thumbnail( 'medium' ); ?></div>
@@ -180,6 +189,8 @@ final class VW_Events_Frontend_Form {
     public static function register_assets(): void {
         wp_register_style( 'vw-events-form', VW_EVENTS_URL . 'assets/css/frontend-form.css', [], VW_EVENTS_VERSION );
         wp_register_script( 'vw-events-form', VW_EVENTS_URL . 'assets/js/frontend-form.js', [], VW_EVENTS_VERSION, true );
+        wp_register_style( 'vw-events-filter', VW_EVENTS_URL . 'assets/css/filter.css', [], VW_EVENTS_VERSION );
+        wp_register_script( 'vw-events-filter', VW_EVENTS_URL . 'assets/js/filter.js', [], VW_EVENTS_VERSION, true );
 
         $settings = VW_Events_Admin_UI::get_settings();
         wp_localize_script( 'vw-events-form', 'VW_EVENTS', [

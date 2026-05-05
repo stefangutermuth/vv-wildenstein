@@ -120,6 +120,107 @@ final class VW_Events_Helpers {
 }
 
 /**
+ * Render the JS filter bar (month dropdown, standort buttons, category pills,
+ * quick-tabs). The actual filtering is done by assets/js/filter.js, which
+ * looks for `.vw-events-filterbar` and `.vw-events-list` siblings.
+ */
+function vw_events_render_filter_bar( WP_Query $q ): string {
+    if ( ! $q->have_posts() ) { return ''; }
+
+    // Distinct months represented in the result set.
+    $months = [];
+    foreach ( $q->posts as $post ) {
+        $start = (string) get_post_meta( $post->ID, '_vw_event_start', true );
+        if ( $start === '' ) { continue; }
+        $ts = strtotime( $start );
+        if ( ! $ts ) { continue; }
+        $key = date( 'Y-m', $ts );
+        if ( ! isset( $months[ $key ] ) ) {
+            $months[ $key ] = date_i18n( 'F Y', $ts );
+        }
+    }
+    ksort( $months );
+
+    $standorte  = get_terms( [ 'taxonomy' => 'vw_standort', 'hide_empty' => false ] );
+    $categories = get_terms( [ 'taxonomy' => 'vw_event_category', 'hide_empty' => false ] );
+
+    ob_start();
+    ?>
+    <div class="vw-events-filterbar" data-vw-filter>
+        <div class="vw-events-filterbar-row">
+            <div class="vw-events-quicktabs" role="group" aria-label="<?php esc_attr_e( 'Schnellfilter', 'vw-events' ); ?>">
+                <button type="button" data-quick="all" class="is-active"><?php esc_html_e( 'Alle', 'vw-events' ); ?></button>
+                <button type="button" data-quick="today"><?php esc_html_e( 'Heute', 'vw-events' ); ?></button>
+                <button type="button" data-quick="week"><?php esc_html_e( 'Diese Woche', 'vw-events' ); ?></button>
+                <button type="button" data-quick="month"><?php esc_html_e( 'Diesen Monat', 'vw-events' ); ?></button>
+            </div>
+            <label class="vw-events-month">
+                <span class="vw-events-month-label"><?php esc_html_e( 'Monat', 'vw-events' ); ?></span>
+                <select data-filter="month">
+                    <option value=""><?php esc_html_e( 'Alle', 'vw-events' ); ?></option>
+                    <?php foreach ( $months as $key => $label ) : ?>
+                        <option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+        </div>
+
+        <?php if ( is_array( $standorte ) && count( $standorte ) > 1 ) : ?>
+            <div class="vw-events-pills" role="group" aria-label="<?php esc_attr_e( 'Standorte', 'vw-events' ); ?>">
+                <button type="button" data-filter="standort" data-value="" class="is-active"><?php esc_html_e( 'Alle Standorte', 'vw-events' ); ?></button>
+                <?php foreach ( $standorte as $term ) : ?>
+                    <button type="button" data-filter="standort" data-value="<?php echo esc_attr( $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></button>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ( is_array( $categories ) && count( $categories ) > 1 ) : ?>
+            <div class="vw-events-pills vw-events-pills--cat" role="group" aria-label="<?php esc_attr_e( 'Kategorien', 'vw-events' ); ?>">
+                <button type="button" data-filter="category" data-value="" class="is-active"><?php esc_html_e( 'Alle Kategorien', 'vw-events' ); ?></button>
+                <?php foreach ( $categories as $term ) : ?>
+                    <button type="button" data-filter="category" data-value="<?php echo esc_attr( $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></button>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="vw-events-filter-status" hidden></div>
+    </div>
+    <?php
+    return (string) ob_get_clean();
+}
+
+/**
+ * Build data-attributes string for an event card (used by the filter JS).
+ */
+function vw_events_card_data_attrs( int $post_id ): string {
+    $start = (string) get_post_meta( $post_id, '_vw_event_start', true );
+    $end   = (string) get_post_meta( $post_id, '_vw_event_end', true );
+    $month = '';
+    $start_iso = '';
+    $end_iso   = '';
+    if ( $start !== '' && ( $ts = strtotime( $start ) ) ) {
+        $month     = date( 'Y-m', $ts );
+        $start_iso = date( 'Y-m-d', $ts );
+    }
+    if ( $end !== '' && ( $te = strtotime( $end ) ) ) {
+        $end_iso = date( 'Y-m-d', $te );
+    } else {
+        $end_iso = $start_iso;
+    }
+    $standorte  = wp_get_post_terms( $post_id, 'vw_standort', [ 'fields' => 'slugs' ] );
+    $categories = wp_get_post_terms( $post_id, 'vw_event_category', [ 'fields' => 'slugs' ] );
+
+    return sprintf(
+        ' data-month="%s" data-start="%s" data-end="%s" data-standort="%s" data-category="%s"',
+        esc_attr( $month ),
+        esc_attr( $start_iso ),
+        esc_attr( $end_iso ),
+        esc_attr( implode( ' ', is_array( $standorte ) ? $standorte : [] ) ),
+        esc_attr( implode( ' ', is_array( $categories ) ? $categories : [] ) )
+    );
+}
+
+/**
  * Format an event date range for display.
  * Output: "30. April 2026<sep>18:00 – 20:00" (single day)
  *         "30. April 2026" (all-day, single day)

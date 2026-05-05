@@ -1,5 +1,7 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) { exit; }
+wp_enqueue_style( 'vw-events-filter' );
+wp_enqueue_script( 'vw-events-filter' );
 get_header();
 
 $is_tax_standort = is_tax( 'vw_standort' );
@@ -42,6 +44,7 @@ VW_Events_Multisite::with_master( static function () use ( $query_args, $is_tax_
             </header>
 
             <?php if ( $q->have_posts() ) : ?>
+                <?php echo vw_events_render_filter_bar( $q ); ?>
                 <ul class="vw-events-list">
                     <?php while ( $q->have_posts() ) : $q->the_post();
                         $post_id   = get_the_ID();
@@ -52,7 +55,7 @@ VW_Events_Multisite::with_master( static function () use ( $query_args, $is_tax_
                         $loc_name  = (string) get_post_meta( $post_id, '_vw_event_location_name', true );
                         $standorte = wp_get_post_terms( $post_id, 'vw_standort', [ 'fields' => 'names' ] );
                     ?>
-                        <li class="vw-event-card">
+                        <li class="vw-event-card"<?php echo vw_events_card_data_attrs( $post_id ); ?>>
                             <a class="vw-event-card-link" href="<?php the_permalink(); ?>">
                                 <?php if ( has_post_thumbnail() ) : ?>
                                     <div class="vw-event-card-image"><?php the_post_thumbnail( 'medium' ); ?></div>
