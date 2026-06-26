@@ -1,9 +1,31 @@
 # Project Status — VV-Wildenstein Web-Monorepo
 
-> **Letztes Update:** 4. Mai 2026
-> **Aktuelle Phase:** Phase 2.6 — UX-Feinschliff der Listen-/Carousel-Elemente, GitHub-Auth umgestellt auf `gh`-OAuth (kein PAT mehr)
+> **Letztes Update:** 26. Juni 2026
+> **Aktuelle Phase:** Phase 2.7 — All-Inkl-Staging-Pipeline, Live-Wetter, Floating Contact Button, hellere Forest-Tokens. Bereit für parallele Multi-App-Arbeit (Verband, Börnichen, Mängelmelder)
 
 Diese Datei dokumentiert den Stand, alle getroffenen Entscheidungen, Zugänge (ohne Geheimnisse) und die offenen Aufgaben — damit die Arbeit nahtlos weitergehen kann, auch wenn es eine Pause gibt oder die Konversation neu gestartet wird.
+
+---
+
+## 0. Schnellstart für neue Chats
+
+Wenn Du als neue Konversation an **Verband / Börnichen / Mängelmelder** arbeiten sollst:
+
+1. **Repo öffnen:** `/Users/stefan/Claude/Website/gruenhainichen/` (alle vier Apps liegen hier als Monorepo)
+2. **Diese Datei zuerst lesen** (`PROJECT_STATUS.md`) — sie ist das gemeinsame Gedächtnis aller Chats
+3. **App-Skelett anlegen** unter `apps/<name>/` per Copy von `apps/gruenhainichen/` als Basis. Anpassen:
+   - `package.json` Name: `@vv/<name>`
+   - `astro.config.mjs` Site-URL auf Staging-Subdomain
+   - `src/styles/tokens.css` für app-eigene Farbpalette (siehe §10 Multi-App-Theming)
+   - `src/components/global/GrhWappen.astro` durch eigenes Wappen ersetzen
+   - `public/images/` mit eigenen Bildern befüllen
+4. **Build-Script** im Workspace-Root (`package.json`) ergänzen: `"build:<name>": "npm run build --workspace=@vv/<name>"`
+5. **GitHub-Action** (`.github/workflows/deploy-allinkl.yml`) um neuen Deploy-Job erweitern (Vorlage = Grünhainichen-Job)
+6. **Push** → Auto-Deploy auf entsprechende Staging-Subdomain
+
+**Wichtig:** Die WordPress-Anbindung und der CMS-Adapter (`src/lib/cms.ts`) sind identisch für alle Apps — sie ziehen aus demselben WP-Backend, filtern nur per Category-Slug auf den jeweiligen Standort.
+
+Bevor Du Code änderst: gib Dem Konversations-Owner einen **Stand-Bericht** wie in §13 dokumentiert.
 
 ---
 
@@ -11,12 +33,24 @@ Diese Datei dokumentiert den Stand, alle getroffenen Entscheidungen, Zugänge (o
 
 | Was                          | URL                                                                       | Status        |
 |------------------------------|---------------------------------------------------------------------------|---------------|
-| Production-Site Grünhainichen| https://vv-wildenstein-gruenhainichen.stefan-0ea.workers.dev               | **live** ✓    |
-| WordPress-Backend            | https://vv-wildenstein.com (REST + iCal-Feed)                              | **live** ✓    |
+| **Staging Grünhainichen**    | https://grh.vv-wildenstein.com (All-Inkl)                                  | **live** ✓ (Vorschau für Verband, noindex)  |
+| Production-Site Cloudflare   | https://vv-wildenstein-gruenhainichen.stefan-0ea.workers.dev               | **live** ✓ (läuft parallel als Backup)      |
+| WordPress-Backend            | https://vv-wildenstein.com (REST + Plugin-API)                             | **live** ✓    |
 | GitHub-Repo                  | https://github.com/stefangutermuth/vv-wildenstein                          | live          |
 | Cloudflare-Projekt           | `vv-wildenstein-gruenhainichen` im Account `f0ea2c6b50485053bbacc2c5963a6eb6` | live   |
+| All-Inkl-Hosting             | `w01f6038.kasserver.com`, User `ssh-w01f6038`, Web-Root `/www/htdocs/w01f6038/` | live  |
 | Lokaler Dev-Server           | http://localhost:4321 (Astro-Default; fällt auf 4322 zurück, falls belegt) | nach `npm run dev` |
-| Spätere Production-Domain    | gruenhainichen.com (DNS-Setup steht aus)                                   | offen         |
+| Spätere Production-Domain    | gruenhainichen.com (DNS-Setup steht aus, Day X)                            | offen         |
+
+### Staging-Subdomains (parallel im Aufbau)
+
+| Subdomain | App im Repo | Web-Root auf All-Inkl | Status |
+|---|---|---|---|
+| **grh.vv-wildenstein.com**       | `apps/gruenhainichen/`       | `/www/htdocs/w01f6038/grh.vv-wildenstein.com/`        | **live** ✓ |
+| 2026.vv-wildenstein.com          | `apps/verband/` (geplant)    | `/www/htdocs/w01f6038/2026.vv-wildenstein.com/`       | Subdomain steht, App-Skelett offen |
+| boernichen.vv-wildenstein.com    | `apps/boernichen/` (geplant) | `/www/htdocs/w01f6038/boernichen.vv-wildenstein.com/` | Subdomain steht, App-Skelett offen |
+| melder2026.vv-wildenstein.com    | `apps/maengelmelder/` (geplant) | `/www/htdocs/w01f6038/melder2026.vv-wildenstein.com/` | Subdomain steht, App-Skelett offen |
+| melder.vv-wildenstein.com        | (Production-Slot Mängelmelder, später Day X) | bestehend | reserviert |
 
 ---
 
@@ -397,6 +431,27 @@ WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhain
 - ✅ **Vereinsleben** nach unten verschoben (heller Trenner direkt vor dem dunklen Footer).
 - ✅ **GitHub-Auth umgestellt** von Fine-grained PAT auf `gh auth login` (OAuth, kein Ablauf). Lokaler `osxkeychain`-Helper entfernt, globaler `gh auth git-credential` aktiv.
 
+### Phase 2.7 — Live-Wetter, FAB, Farb-Politur, All-Inkl-Staging (abgeschlossen 26.06.2026)
+- ✅ **Forest-Tokens heller**: `--grh-forest-900` von `#13301F` → `#1A3D27`, `--grh-forest-950` von `#0E1F18` → `#142B1F`. Alle hardcoded Vorkommen (auch `rgba(19,48,31)` und `rgba(14,31,24)`) konsistent ersetzt.
+- ✅ **Live-Wetter im Header**: Open-Meteo (kein API-Key, kein Tracking), Koordinaten Grünhainichen 50.7718/13.1578, Icon wechselt nach Wetter-Code, sessionStorage-Cache 30 Min, Widget bleibt hidden bei Fehler statt Lüge zu zeigen.
+- ✅ **Floating Contact Button (FAB)** — neue Komponente `GrhFloatingContact.astro`:
+  - Position fixed bottom-right
+  - Drei Arms radial (90°/135°/180°): Kontakt · Mängelmelder · Suche
+  - Goldene Verbindungs-Fäden vom Trigger zu jedem Arm („Netz"-Optik)
+  - Kontakt-Panel: Department-Dropdown (Einwohnermeldeamt, Standesamt, Bauamt, Tourismus, Ordnungsamt, Bürgermeister, Sonstige) + Anliegen-Textarea + Name + E-Mail (untereinander, nicht in Spalten)
+  - Suche-Panel: Input + Hinweis „Live-Suche kommt"
+  - Mängel-Panel: CTA zu `/maengelmelder` (Foto + Standort später via Plugin)
+  - Goldener Glow auf grünen Submit-Buttons (sichtbar auch auf grünem Hintergrund)
+  - Eingebunden in `BaseLayout.astro` → erscheint auf jeder Seite
+- ✅ **Mega-Menü Demo-Varianten**: Vier Layouts zum Vergleichen im Footer-Demo-Block (Original · A Live-Zeile zwischen Nav und Feature · B Ticker oben · C Floating Card). Variant-Switcher per `data-grh-mega-variant`.
+- ✅ **All-Inkl-Staging-Pipeline** unter `.github/workflows/deploy-allinkl.yml`:
+  - Trigger: Push auf `main` + manueller Workflow-Dispatch
+  - Build mit `PUBLIC_CMS_SOURCE=wordpress` + `PUBLIC_STAGING=true` (Letzteres setzt `<meta robots=noindex>`)
+  - rsync via SSH auf vollen Pfad `/www/htdocs/w01f6038/grh.vv-wildenstein.com/`
+  - Cloudflare-Build läuft parallel weiter (Backup-Sicherheit), wird nach 2–3 Wochen abgeschaltet
+- ✅ **`.htaccess` im Build** (`apps/gruenhainichen/public/.htaccess`): PHP aus, HTTPS-Redirect, `.html`-Endung aus URLs, Gzip, Caching-Header, Security-Header
+- ✅ **GitHub-Secrets gesetzt**: `ALLINKL_SSH_HOST`, `ALLINKL_SSH_USER`, `ALLINKL_SSH_KEY`, `WP_AUTH_USER`, `WP_AUTH_PASS`
+
 ---
 
 ## 9. Offene Aufgaben
@@ -414,13 +469,14 @@ WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhain
 - [ ] **Original-Wappen-SVG** in Vektorform anfragen (statt PNG) — bessere Skalierbarkeit
 - [ ] **vw-events Plugin v1.1**: Gutenberg-Block für Submission-Form, „Ablehnen mit Begründung"-Button, Action-Scheduler für asynchrone Mails
 
-### Phase 3 — Multi-Site-Ausbau
-- [ ] **Design-System extrahieren** in `packages/design-system/`
-- [ ] **`apps/verband/`** anlegen (vv-wildenstein.com), eigenes Wappen, eigene Foto-Bibliothek
-- [ ] **`apps/boernichen/`** anlegen, eigenes Wappen, Foto-Bibliothek
-- [ ] **`apps/maengelmelder/`** als PWA mit Schreibzugriff zur WP-API
-- [ ] **Cloudflare-Projekte pro App** anlegen (4 Stück)
-- [ ] **DNS-Setup** für alle vier Domains
+### Phase 3 — Multi-App-Ausbau (parallel in eigenen Chats)
+- [ ] **`apps/verband/`** für `2026.vv-wildenstein.com` — eigenes Wappen, eigene Foto-Bibliothek, optisch eigenständige Farbpalette, Inhalte vom Verband (siehe §10 Multi-App-Theming)
+- [ ] **`apps/boernichen/`** für `boernichen.vv-wildenstein.com` — analog, eigenes Wappen
+- [ ] **`apps/maengelmelder/`** für `melder2026.vv-wildenstein.com` — PWA, Submission-Form, Standort-Pin, Foto-Upload
+- [ ] **`vw-melder` WP-Plugin** spezifizieren + bauen (analog `vw-events`): CPT für Submissions, REST, Admin-Status-Pipeline, Mail-Benachrichtigungen
+- [ ] **Design-System extrahieren** in `packages/design-system/` (nachdem Verband+Börnichen stehen, dann sehen wir genau welche Komponenten geteilt werden müssen)
+- [ ] **GitHub-Action erweitern** um Deploy-Jobs für die drei zusätzlichen Apps (`.github/workflows/deploy-allinkl.yml`)
+- [ ] **DNS-Switch (Day X):** `gruenhainichen.com`, `vv-wildenstein.com`, `boernichen.de`, `melder.vv-wildenstein.com` von alten WP-Themes auf die fertigen Astro-Builds umstellen
 
 ### Optional / Nice-to-have
 - [ ] Sitemap.xml wieder aktivieren (`@astrojs/sitemap`)
@@ -457,6 +513,63 @@ WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhain
 
 ---
 
+## 10a. Multi-App-Theming (für neue Apps in Phase 3)
+
+Drei optisch **eigenständige** Frontends, die alle aus dem **gleichen Backend** lesen. Das Repo ist ein npm-Workspace-Monorepo, jede App ist autark.
+
+### So legst Du eine neue App an
+
+```bash
+cd apps/
+cp -R gruenhainichen verband        # vollständige Kopie als Startpunkt
+cd verband/
+```
+
+Dann **in der Reihenfolge** anpassen:
+
+1. **`package.json`** — Name auf `@vv/verband`, Version 0.1.0
+2. **`astro.config.mjs`** — `site` auf Staging-URL: `https://2026.vv-wildenstein.com`
+3. **`src/styles/tokens.css`** — eigene Farbpalette (Forest-Werte können bleiben oder app-spezifisch sein), eigene Display-Font wenn anders
+4. **`public/images/logos/wappen-*.png`** — eigenes Wappen, dann in `GrhWappen.astro` referenzieren
+5. **`public/images/`** — alle Fotos durch app-eigene ersetzen (Hero-Slides, Ortsteile, Tradition)
+6. **`src/lib/navigation.ts`** — Mega-Menü-Struktur an die andere Site anpassen
+7. **`src/pages/index.astro`** — Sektions-Texte (Manifest, Tradition-Showcases, Ortsteile) inhaltlich umschreiben
+8. **`src/content/`** — lokale Fallback-Inhalte austauschen (oder leer lassen wenn WP-Source funktioniert)
+9. **`.env.example`** — `PUBLIC_CMS_SOURCE=wordpress` (sollte schon stehen)
+
+### CMS-Filter pro App
+
+Der CMS-Adapter (`src/lib/cms.ts` + `cms-wordpress.ts`) ist in JEDER App identisch. Die App-Spezifik kommt **rein über die Category-Filter** im WP:
+
+| App | filtert in WP nach Categories |
+|---|---|
+| `apps/gruenhainichen/` | `gruenhainichen`, `borstendorf`, `waldkirchen-*`, plus alles ohne Ortsteil-Cat |
+| `apps/verband/`        | `verband-weit` plus alles ohne Ortsteil-Cat |
+| `apps/boernichen/`     | `boernichen` plus alles ohne Ortsteil-Cat |
+
+→ Den Filter im `cms-wordpress.ts` jeder App pro Bedarf anpassen. Die WP-REST liefert dasselbe Datenmodell.
+
+### Workspace-Scripts (Root-`package.json`)
+
+Pro neuer App ergänzen:
+```json
+"build:verband":     "npm run build --workspace=@vv/verband",
+"build:boernichen":  "npm run build --workspace=@vv/boernichen",
+"build:maengelmelder": "npm run build --workspace=@vv/maengelmelder",
+"dev:verband":       "npm run dev --workspace=@vv/verband"
+```
+
+### Deploy-Job pro App
+
+In `.github/workflows/deploy-allinkl.yml` einen neuen Job nach der Vorlage `deploy-gruenhainichen` hinzufügen, nur:
+- Build-Script: `npm run build:<name>`
+- rsync-Quelle: `apps/<name>/dist/`
+- rsync-Ziel: `/www/htdocs/w01f6038/<subdomain>/`
+
+Jeder App-Build deployt **unabhängig** — eine kaputte Verband-App blockiert nicht das Grünhainichen-Deploy.
+
+---
+
 ## 11. Stiel-Stolpersteine (Lessons learned)
 
 - **CSS-Variablen in `transform`** ohne `@property`-Deklaration werden nicht interpoliert
@@ -471,6 +584,9 @@ WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhain
 - **CSS-Source-Order matters** — Mobile-Override-Regeln müssen NACH den Default-Regeln stehen, sonst werden sie überschrieben
 - **Cloudflare-CDN-Cache** überlebt Re-Deploys — nach kritischen Änderungen ggf. „Cache löschen" in den Settings
 - **Astro-Loaders mit Random** zeigen ihre Variante zufällig — `?loader=angel|chess|wheel` zum gezielten Testen einbauen
+- **All-Inkl SSH-Chroot ≠ Web-Root**: SSH landet im chrooted Home, das anders aussieht als der echte Web-Pfad. Subdomains lesen aus `/www/htdocs/<account>/<subdomain>/`, nicht aus `~/<subdomain>/`. → rsync immer mit **vollem Pfad** als Ziel
+- **PUBLIC_STAGING als Build-Flag**: setzt `<meta name="robots" content="noindex,nofollow">`, damit Staging-Subdomains nicht in Google landen. Vor dem DNS-Switch auf `false` setzen
+- **Cloudflare-Build + All-Inkl-Build parallel**: beide laufen unabhängig, jeder Push triggert beide. Nach 2–3 Wochen stabilen All-Inkl-Betriebs Cloudflare deaktivieren
 
 ---
 
