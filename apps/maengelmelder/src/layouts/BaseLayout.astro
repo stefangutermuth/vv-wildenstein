@@ -1,0 +1,40 @@
+---
+import '@fontsource-variable/rubik';
+import '~/styles/tokens.css';
+import Header from '~/components/Header.astro';
+import Footer from '~/components/Footer.astro';
+import BottomNav from '~/components/BottomNav.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = 'Mängelmelder Verwaltungsverband Wildenstein',
+  description = 'Melden Sie Mängel im Verwaltungsverband Wildenstein — Straßen, Beleuchtung, Müll, Grünflächen und Wege.',
+} = Astro.props;
+
+// Staging-Subdomain (melder2026) nicht indexieren lassen.
+const isStaging = import.meta.env.PUBLIC_STAGING === 'true';
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    {isStaging && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="theme-color" content="#0a5f2b" />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/images/wappen.svg" />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    <BottomNav />
+  </body>
+</html>

@@ -1,0 +1,226 @@
+---
+import 'leaflet/dist/leaflet.css';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import { ANLIEGEN_LABELS } from '~/lib/melder';
+
+const anliegen = Object.entries(ANLIEGEN_LABELS); // [slug, label]
+---
+
+<BaseLayout title="Mangel einreichen – Mängelmelder VV Wildenstein">
+  <section class="submit container">
+    <h1 class="submit__title">Mangel einreichen</h1>
+    <p class="submit__intro">
+      Beschreiben Sie den Mangel, setzen Sie den Standort auf der Karte und senden Sie die
+      Meldung ab. Ihre Angaben werden vom Verwaltungsverband geprüft, bevor sie veröffentlicht werden.
+    </p>
+
+    <form id="melder-form" class="form" novalidate>
+      <div class="field">
+        <label for="title">Name der Meldung <span class="req">*</span></label>
+        <input type="text" id="title" name="title" required maxlength="120"
+          placeholder="z. B. Schlagloch in der Hauptstraße" />
+      </div>
+
+      <fieldset class="field">
+        <legend>Kategorie <span class="req">*</span></legend>
+        <div class="radios">
+          {anliegen.map(([slug, label]) => (
+            <label class="radio">
+              <input type="radio" name="anliegen" value={slug} required />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label for="description">Beschreiben Sie bitte Ihre Meldung</label>
+        <textarea id="description" name="description" rows="5"
+          placeholder="Was ist wo das Problem?"></textarea>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="reporter_name">Ihr Name</label>
+          <input type="text" id="reporter_name" name="reporter_name" maxlength="120" />
+        </div>
+        <div class="field">
+          <label for="reporter_email">Ihre E-Mail-Adresse für Rückfragen</label>
+          <input type="email" id="reporter_email" name="reporter_email" maxlength="180" />
+        </div>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" name="notify" value="1" />
+        <span>Ich möchte über den Bearbeitungsstand per E-Mail informiert werden.</span>
+      </label>
+
+      <div class="field">
+        <label for="photo">Bild</label>
+        <p class="hint">Machen Sie ein Foto vom Mangel (optional, max. 8 MB).</p>
+        <input type="file" id="photo" name="photo" accept="image/*" capture="environment" />
+      </div>
+
+      <div class="field">
+        <label>Standort <span class="req">*</span></label>
+        <p class="hint">Adresse suchen oder direkt auf die Karte tippen, um den Pin zu setzen.</p>
+        <div class="geocode">
+          <input type="text" id="addr-search" placeholder="Nach Adresse suchen …" autocomplete="off" />
+          <button type="button" id="addr-btn" class="btn btn--green">Suchen</button>
+        </div>
+        <div id="pick-map" class="pick-map"></div>
+        <p id="picked" class="picked" aria-live="polite"></p>
+        <input type="hidden" name="lat" id="lat" />
+        <input type="hidden" name="lng" id="lng" />
+        <input type="hidden" name="address" id="address" />
+      </div>
+
+      <!-- Honeypot gegen Bots: für Menschen unsichtbar, muss leer bleiben -->
+      <div class="hp" aria-hidden="true">
+        <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+      </div>
+
+      <p id="form-error" class="form-error" role="alert" hidden></p>
+
+      <button type="submit" id="submit-btn" class="btn btn--primary submit__btn">
+        Meldung einreichen
+      </button>
+    </form>
+  </section>
+
+  <script>
+    import L from 'leaflet';
+
+    const map = L.map('pick-map').setView([50.773, 13.172], 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap-Mitwirkende',
+      maxZoom: 19,
+    }).addTo(map);
+    setTimeout(() => map.invalidateSize(), 200);
+
+    const pinIcon = L.icon({
+      iconUrl: '/images/marker-neu.png',
+      iconSize: [38, 38],
+      iconAnchor: [19, 36],
+    });
+    let marker: L.Marker | null = null;
+
+    const latEl = document.getElementById('lat') as HTMLInputElement;
+    const lngEl = document.getElementById('lng') as HTMLInputElement;
+    const addrEl = document.getElementById('address') as HTMLInputElement;
+    const pickedEl = document.getElementById('picked')!;
+
+    const setPin = (lat: number, lng: number, label?: string) => {
+      if (marker) marker.setLatLng([lat, lng]);
+      else marker = L.marker([lat, lng], { icon: pinIcon, draggable: true }).addTo(map);
+      latEl.value = lat.toFixed(6);
+      lngEl.value = lng.toFixed(6);
+      if (label) { addrEl.value = label; pickedEl.textContent = '📍 ' + label; }
+      else pickedEl.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      marker.off('dragend').on('dragend', () => {
+        const p = marker!.getLatLng();
+        setPin(p.lat, p.lng);
+      });
+    };
+
+    map.on('click', (e: L.LeafletMouseEvent) => setPin(e.latlng.lat, e.latlng.lng));
+
+    // Adresssuche via OSM Nominatim (kein Key, kein Tracking)
+    const search = async () => {
+      const q = (document.getElementById('addr-search') as HTMLInputElement).value.trim();
+      if (!q) return;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de&q=${encodeURIComponent(q)}`;
+      try {
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        const data = await res.json();
+        if (data[0]) {
+          const lat = parseFloat(data[0].lat), lng = parseFloat(data[0].lon);
+          map.setView([lat, lng], 17);
+          setPin(lat, lng, data[0].display_name);
+        } else {
+          pickedEl.textContent = 'Adresse nicht gefunden — bitte direkt auf die Karte tippen.';
+        }
+      } catch {
+        pickedEl.textContent = 'Suche nicht möglich — bitte direkt auf die Karte tippen.';
+      }
+    };
+    document.getElementById('addr-btn')!.addEventListener('click', search);
+    document.getElementById('addr-search')!.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Enter') { e.preventDefault(); search(); }
+    });
+
+    // Absenden
+    const form = document.getElementById('melder-form') as HTMLFormElement;
+    const errEl = document.getElementById('form-error')!;
+    const btn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const API_BASE =
+      (import.meta.env.PUBLIC_MELDER_API_BASE as string | undefined) ??
+      'https://vv-wildenstein.com/wp-json/vw-melder/v1';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.hidden = true;
+      if (!form.title.value.trim() || !form.anliegen.value) {
+        errEl.textContent = 'Bitte Titel und Kategorie ausfüllen.';
+        errEl.hidden = false;
+        return;
+      }
+      if (!latEl.value || !lngEl.value) {
+        errEl.textContent = 'Bitte setzen Sie den Standort auf der Karte.';
+        errEl.hidden = false;
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Wird gesendet …';
+      try {
+        const fd = new FormData(form);
+        const res = await fetch(`${API_BASE}/submit`, { method: 'POST', body: fd });
+        if (!res.ok) throw new Error('Server antwortete mit ' + res.status);
+        window.location.href = '/vielen-dank';
+      } catch (err) {
+        errEl.textContent = 'Die Meldung konnte nicht gesendet werden. Bitte später erneut versuchen.';
+        errEl.hidden = false;
+        btn.disabled = false;
+        btn.textContent = 'Meldung einreichen';
+      }
+    });
+  </script>
+
+  <style>
+    .submit { max-width: 760px; padding-block: 1.75rem 3rem; }
+    .submit__title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 0.5rem; }
+    .submit__intro { color: var(--text-soft); margin: 0 0 2rem; }
+
+    .form { display: flex; flex-direction: column; gap: 1.5rem; }
+    .field { display: flex; flex-direction: column; gap: 0.4rem; border: 0; padding: 0; margin: 0; }
+    .field > label, .field > legend { font-weight: 600; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 600px) { .field-row { grid-template-columns: 1fr; } }
+    .req { color: var(--vv-orange); }
+    .hint { margin: 0; font-size: 0.85rem; color: var(--text-soft); }
+
+    input[type='text'], input[type='email'], textarea, input[type='file'] {
+      font: inherit; padding: 0.7rem 0.85rem; border: 1px solid var(--border);
+      border-radius: var(--radius); background: var(--bg); width: 100%;
+    }
+    input:focus, textarea:focus { outline: 2px solid var(--vv-green); border-color: var(--vv-green); }
+
+    .radios { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .radio { display: flex; align-items: center; gap: 0.5rem; font-weight: 400;
+      background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 0.6rem 0.8rem; cursor: pointer; }
+    .radio:has(input:checked) { border-color: var(--vv-green); background: #eef6f0; }
+
+    .check { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.95rem; }
+
+    .geocode { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .geocode input { flex: 1; }
+    .pick-map { height: 360px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); z-index: 1; }
+    .picked { margin: 0.5rem 0 0; font-weight: 500; color: var(--vv-green); }
+
+    .hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+    .form-error { background: #fdecea; color: #b3261e; border: 1px solid #f5c6c2;
+      padding: 0.75rem 1rem; border-radius: var(--radius); margin: 0; }
+    .submit__btn { align-self: flex-start; font-size: 1.05rem; }
+  </style>
+</BaseLayout>

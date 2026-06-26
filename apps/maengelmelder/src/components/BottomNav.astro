@@ -1,0 +1,90 @@
+---
+// Untere Tab-Leiste — nur auf dem Smartphone sichtbar (ersetzt das obere Menü).
+const icons: Record<string, string> = {
+  map: '<svg viewBox="0 0 24 24"><path d="M15 19l-6-2.11V5l6 2.11V19zM20.5 3c-.05 0-.1 0-.15.02L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5.05 0 .1 0 .15-.02L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5z"/></svg>',
+  list: '<svg viewBox="0 0 24 24"><path d="M3 5h2v2H3V5zm4 0h14v2H7V5zM3 11h2v2H3v-2zm4 0h14v2H7v-2zM3 17h2v2H3v-2zm4 0h14v2H7v-2z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>',
+  info: '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>',
+  more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+};
+
+const items = [
+  { label: 'Karte', href: '/', icon: 'map' },
+  { label: 'Meldungen', href: '/meldungen', icon: 'list' },
+  { label: 'Melden', href: '/mangel-einreichen', icon: 'plus', primary: true },
+  { label: 'Info', href: '/willkommen', icon: 'info' },
+  { label: 'Mehr', href: '/mehr', icon: 'more' },
+];
+
+const path = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === '/' ? path === '/' : path.startsWith(href);
+---
+
+<nav class="bnav" aria-label="Hauptnavigation">
+  {items.map((item) => (
+    <a
+      href={item.href}
+      class:list={['bnav__item', { 'is-active': isActive(item.href), 'bnav__item--primary': item.primary }]}
+    >
+      <span class="bnav__icon" set:html={icons[item.icon]} />
+      <span class="bnav__label">{item.label}</span>
+    </a>
+  ))}
+</nav>
+
+<style>
+  .bnav { display: none; }
+
+  @media (max-width: 960px) {
+    /* Platz für die fixe Leiste, damit Footer/Inhalt nicht verdeckt werden */
+    :global(body) { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+    .bnav {
+      display: flex;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1100;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.1);
+      justify-content: space-around;
+      padding: 6px 4px;
+      padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  .bnav__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    text-decoration: none;
+    color: var(--text-soft);
+    font-size: 0.66rem;
+    font-weight: 600;
+    padding: 4px 0;
+    white-space: nowrap;
+  }
+  .bnav__item.is-active { color: var(--vv-green); }
+
+  .bnav__icon :global(svg) { width: 24px; height: 24px; fill: currentColor; display: block; }
+
+  /* „Melden" als hervorgehobener Knopf (FAB-Stil) */
+  .bnav__item--primary { color: var(--vv-blue); }
+  .bnav__item--primary .bnav__icon {
+    width: 46px;
+    height: 46px;
+    margin-top: -20px;
+    border-radius: 50%;
+    background: var(--vv-blue);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 3px 10px rgba(42, 49, 150, 0.45);
+    border: 3px solid #fff;
+  }
+  .bnav__item--primary.is-active { color: var(--vv-blue); }
+</style>

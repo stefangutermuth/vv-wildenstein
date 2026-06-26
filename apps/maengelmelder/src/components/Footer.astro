@@ -1,0 +1,62 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="ft">
+  <div class="container ft__inner">
+    <p class="ft__org">
+      <strong>Verwaltungsverband Wildenstein</strong><br />
+      Mängelmelder im Freistaat Sachsen
+    </p>
+    <nav class="ft__links">
+      <a href="/impressum">Impressum</a>
+      <a href="/datenschutz">Datenschutzerklärung</a>
+    </nav>
+  </div>
+  <div class="ft__base container">© {year} Verwaltungsverband Wildenstein</div>
+  <div class="ft__partners container">
+    <img src="/images/asskomm-reihe.svg" alt="Partner des Verwaltungsverbands Wildenstein" loading="lazy" />
+  </div>
+</footer>
+
+<style>
+  .ft {
+    background: var(--bg-soft);
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+    color: var(--text-soft);
+    font-size: 0.9rem;
+  }
+  /* Smartphone: Footer raus — Inhalt steckt im „Mehr"-Tab, Karte bleibt fullscreen. */
+  @media (max-width: 960px) {
+    .ft { display: none; }
+  }
+  .ft__inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    justify-content: space-between;
+    align-items: center;
+    padding-block: 2rem;
+  }
+  .ft__org { margin: 0; }
+  .ft__org strong { color: var(--text); }
+  .ft__links { display: flex; gap: 1.5rem; }
+  .ft__links a { color: var(--text-soft); text-decoration: none; }
+  .ft__links a:hover { color: var(--vv-blue); text-decoration: underline; }
+  .ft__base {
+    padding-block: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+  .ft__partners {
+    padding-block: 1.5rem 2rem;
+    text-align: center;
+  }
+  .ft__partners img {
+    width: 100%;
+    max-width: 920px;
+    height: auto;
+    margin-inline: auto;
+  }
+</style>

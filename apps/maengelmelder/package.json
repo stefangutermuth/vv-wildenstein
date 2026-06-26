@@ -1,0 +1,19 @@
+{
+  "name": "@vv/maengelmelder",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mängelmelder des Verwaltungsverbands Wildenstein — Astro-PWA, gespeist über die zentrale WordPress-API (vw-melder).",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^4.16.0",
+    "@fontsource-variable/rubik": "^5.1.0",
+    "leaflet": "^1.9.4"
+  }
+}
