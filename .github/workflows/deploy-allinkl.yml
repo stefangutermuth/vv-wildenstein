@@ -53,7 +53,7 @@ jobs:
           rsync -avz --delete --human-readable \
             --exclude='.htaccess.local' \
             apps/gruenhainichen/dist/ \
-            ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:grh.vv-wildenstein.com/
+            ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/grh.vv-wildenstein.com/
 
       - name: Erfolg
         run: |
