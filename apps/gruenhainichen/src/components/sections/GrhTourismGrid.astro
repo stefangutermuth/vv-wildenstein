@@ -223,12 +223,12 @@ const tiles = [
     z-index: -1;
     mix-blend-mode: multiply;
   }
-  .grh-strip__overlay--forest      { background: linear-gradient(160deg, rgba(42, 107, 67, 0.92) 0%, rgba(19, 48, 31, 0.95) 100%); }
+  .grh-strip__overlay--forest      { background: linear-gradient(160deg, rgba(42, 107, 67, 0.92) 0%, rgba(26, 61, 39, 0.95) 100%); }
   .grh-strip__overlay--wood        { background: linear-gradient(160deg, rgba(166, 121, 78, 0.85) 0%, rgba(107, 74, 42, 0.92) 100%); }
   .grh-strip__overlay--sage        { background: linear-gradient(160deg, rgba(91, 174, 120, 0.85) 0%, rgba(42, 107, 67, 0.92) 100%); }
   .grh-strip__overlay--moss        { background: linear-gradient(160deg, rgba(62, 140, 90, 0.85) 0%, rgba(27, 74, 47, 0.94) 100%); }
   .grh-strip__overlay--sandstone   { background: linear-gradient(160deg, rgba(217, 196, 163, 0.78) 0%, rgba(166, 121, 78, 0.92) 100%); }
-  .grh-strip__overlay--forest-deep { background: linear-gradient(160deg, rgba(27, 74, 47, 0.92) 0%, rgba(14, 31, 24, 0.95) 100%); }
+  .grh-strip__overlay--forest-deep { background: linear-gradient(160deg, rgba(27, 74, 47, 0.92) 0%, rgba(20, 43, 31, 0.95) 100%); }
 
   .grh-strip__tile::after {
     content: '';
@@ -236,13 +236,13 @@ const tiles = [
     inset: auto 0 0 0;
     height: 60%;
     z-index: -1;
-    background: linear-gradient(180deg, transparent 0%, rgba(14, 31, 24, 0.45) 100%);
+    background: linear-gradient(180deg, transparent 0%, rgba(20, 43, 31, 0.45) 100%);
     pointer-events: none;
     transition: background 600ms var(--grh-ease-out), height 600ms var(--grh-ease-out);
   }
   .grh-strip__tile:hover::after {
     height: 100%;
-    background: linear-gradient(180deg, transparent 0%, rgba(14, 31, 24, 0.85) 70%, rgba(14, 31, 24, 0.92) 100%);
+    background: linear-gradient(180deg, transparent 0%, rgba(20, 43, 31, 0.85) 70%, rgba(20, 43, 31, 0.92) 100%);
   }
 
   .grh-strip__num {

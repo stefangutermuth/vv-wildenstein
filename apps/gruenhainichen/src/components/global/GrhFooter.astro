@@ -66,6 +66,31 @@ const year = new Date().getFullYear();
     </div>
   </div>
 
+  {/* === DEMO-BLOCK: Mega-Menü-Varianten zum Aussuchen (temporär) ======== */}
+  <div class="grh-footer__demos">
+    <div class="grh-container">
+      <span class="grh-footer__demos-label">Mega-Menü-Demos · zum Vergleichen</span>
+      <div class="grh-footer__demos-grid">
+        <button class="grh-footer__demo" data-grh-mega-demo="default" type="button">
+          <strong>Original</strong>
+          <em>Wie aktuell: volle Live-Spalte links, gleichwertig zur Navigation</em>
+        </button>
+        <button class="grh-footer__demo" data-grh-mega-demo="ticker-bottom" type="button">
+          <strong>A · Live-Zeile unten</strong>
+          <em>Wie B, aber die Live-Pillen liegen als Streifen <strong>unter</strong> der Navigation statt darüber</em>
+        </button>
+        <button class="grh-footer__demo" data-grh-mega-demo="ticker" type="button">
+          <strong>B · Ticker oben</strong>
+          <em>Live-Pille-Streifen quer über die Navigation, kein eigener Block</em>
+        </button>
+        <button class="grh-footer__demo" data-grh-mega-demo="floating" type="button">
+          <strong>C · Floating Card</strong>
+          <em>Kleine Live-Karte schwebt unten rechts, Navigation volle Breite</em>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="grh-footer__bottom">
     <div class="grh-container grh-footer__bottom-inner">
       <span>© {year} Gemeinde Grünhainichen · Verwaltungsverband Wildenstein</span>
@@ -236,4 +261,59 @@ const year = new Date().getFullYear();
     transition: opacity var(--grh-dur-fast);
   }
   .grh-footer__bottom a:hover { opacity: 1; }
+
+  /* === Demo-Block (temporär, für Variant-Auswahl) ============== */
+  .grh-footer__demos {
+    border-top: 1px solid rgba(250, 247, 241, 0.12);
+    padding-block: var(--grh-space-6);
+  }
+  .grh-footer__demos-label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-candle-500);
+    margin-bottom: var(--grh-space-3);
+    font-weight: 700;
+  }
+  .grh-footer__demos-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-3);
+  }
+  @media (min-width: 720px) {
+    .grh-footer__demos-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  .grh-footer__demo {
+    text-align: left;
+    background: rgba(250, 247, 241, 0.06);
+    border: 1px solid rgba(250, 247, 241, 0.18);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-4);
+    color: var(--grh-cream-50);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: background var(--grh-dur-fast), border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-footer__demo:hover {
+    background: rgba(250, 247, 241, 0.12);
+    border-color: var(--grh-candle-500);
+    transform: translateY(-2px);
+  }
+  .grh-footer__demo strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-candle-300);
+    letter-spacing: -0.01em;
+  }
+  .grh-footer__demo em {
+    font-style: normal;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--grh-cream-50);
+    opacity: 0.75;
+  }
 </style>

@@ -13,9 +13,9 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     </a>
 
     <div class="grh-headerc__tools">
-      <a class="grh-headerc__weather" href="/wetter" aria-label="Aktuelles Wetter in Grünhainichen">
-        <span class="grh-headerc__weather-icon" aria-hidden="true">
-          {/* Sonne mit Wolke — Platzhalter, später per API ersetzt */}
+      <a class="grh-headerc__weather" href="/wetter" data-grh-weather aria-label="Aktuelles Wetter in Grünhainichen" hidden>
+        <span class="grh-headerc__weather-icon" data-grh-weather-icon aria-hidden="true">
+          {/* Default-Icon Sonne/Wolke — wird per JS gegen Wettercode getauscht */}
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="9" cy="10" r="3.2" />
             <line x1="9" y1="3.5" x2="9" y2="5" />
@@ -30,7 +30,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
           </svg>
         </span>
         <span class="grh-headerc__weather-text">
-          <span class="grh-headerc__weather-temp">8°</span>
+          <span class="grh-headerc__weather-temp" data-grh-weather-temp>—°</span>
           <span class="grh-headerc__weather-loc">Grünhainichen</span>
         </span>
       </a>
@@ -289,4 +289,65 @@ import GrhIcon from '../primitives/GrhIcon.astro';
       if (!ticking) { requestAnimationFrame(update); ticking = true; }
     }, { passive: true });
   }
+
+  /* === Live-Wetter via Open-Meteo (kein API-Key, kein Tracking) ===========
+     Grünhainichen-Koordinaten 50.7718 / 13.1578.
+     Browser-Cache (sessionStorage) hält die Daten 30 Min vor.            */
+  (() => {
+    const widget = document.querySelector<HTMLElement>('[data-grh-weather]');
+    const tempEl = document.querySelector<HTMLElement>('[data-grh-weather-temp]');
+    const iconEl = document.querySelector<HTMLElement>('[data-grh-weather-icon]');
+    if (!widget || !tempEl || !iconEl) return;
+
+    const CACHE_KEY = 'grh-weather-v1';
+    const CACHE_MAX_AGE = 30 * 60 * 1000;
+
+    /* WMO-Code → SVG-Icon. Linien sind monochrom currentColor.            */
+    const ICONS: Record<string, string> = {
+      sun:    `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="3"   x2="12" y2="5"/><line x1="12" y1="19"  x2="12" y2="21"/><line x1="3"  y1="12"  x2="5"  y2="12"/><line x1="19" y1="12"  x2="21" y2="12"/><line x1="5.6" y1="5.6" x2="7" y2="7"/><line x1="17" y1="17" x2="18.4" y2="18.4"/><line x1="5.6" y1="18.4" x2="7" y2="17"/><line x1="17" y1="7" x2="18.4" y2="5.6"/></svg>`,
+      cloud:  `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1-1-7.9 6 6 0 0 1 11.5 1.4A4.5 4.5 0 0 1 17.5 18z"/></svg>`,
+      partly: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="10" r="3.2"/><line x1="9" y1="3.5" x2="9" y2="5"/><line x1="2.5" y1="10" x2="4" y2="10"/><line x1="4.5" y1="5.5" x2="5.5" y2="6.5"/><line x1="4.5" y1="14.5" x2="5.5" y2="13.5"/><line x1="12.5" y1="6.5" x2="13.5" y2="5.5"/><path d="M11 18a3 3 0 0 1 5.5-1.6 3 3 0 0 1 4 4.6H13a3 3 0 0 1-2-3z" fill="currentColor" stroke="none" opacity="0.85"/></svg>`,
+      fog:    `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="8"  x2="21" y2="8"/><line x1="5" y1="12" x2="19" y2="12"/><line x1="3" y1="16" x2="21" y2="16"/></svg>`,
+      rain:   `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 0 1-1-7.9 6 6 0 0 1 11.5 1.4A4.5 4.5 0 0 1 17.5 14z"/><line x1="9" y1="17" x2="8" y2="20"/><line x1="13" y1="17" x2="12" y2="20"/><line x1="17" y1="17" x2="16" y2="20"/></svg>`,
+      snow:   `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 0 1-1-7.9 6 6 0 0 1 11.5 1.4A4.5 4.5 0 0 1 17.5 14z"/><circle cx="9"  cy="19" r="0.8" fill="currentColor"/><circle cx="13" cy="19" r="0.8" fill="currentColor"/><circle cx="17" cy="19" r="0.8" fill="currentColor"/></svg>`,
+      storm:  `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 0 1-1-7.9 6 6 0 0 1 11.5 1.4A4.5 4.5 0 0 1 17.5 14z"/><polyline points="12 16 10 19 13 19 11 22"/></svg>`,
+    };
+
+    const codeToIcon = (code: number): string => {
+      if (code === 0)                          return 'sun';
+      if (code === 1 || code === 2)            return 'partly';
+      if (code === 3)                          return 'cloud';
+      if (code === 45 || code === 48)          return 'fog';
+      if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+      if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+      if (code >= 95)                          return 'storm';
+      return 'partly';
+    };
+
+    const render = (tempC: number, code: number) => {
+      tempEl.textContent = `${Math.round(tempC)}°`;
+      iconEl.innerHTML = ICONS[codeToIcon(code)] ?? ICONS.partly;
+      widget.removeAttribute('hidden');
+    };
+
+    /* Cache zuerst, dann frisch holen */
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { temp, code, ts } = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_MAX_AGE) render(temp, code);
+      }
+    } catch {}
+
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=50.7718&longitude=13.1578&current=temperature_2m,weather_code&timezone=Europe%2FBerlin')
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((d) => {
+        const temp = d?.current?.temperature_2m;
+        const code = d?.current?.weather_code;
+        if (typeof temp !== 'number' || typeof code !== 'number') return;
+        render(temp, code);
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ temp, code, ts: Date.now() })); } catch {}
+      })
+      .catch(() => { /* Bei Fehler bleibt das Widget einfach hidden — niemand sieht 8° Lüge */ });
+  })();
 </script>

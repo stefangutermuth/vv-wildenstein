@@ -1,0 +1,735 @@
+---
+/**
+ * GrhFloatingContact — Floating-Action-Button mit radialer Auffächerung.
+ *
+ * Verhalten:
+ *   - Standardmäßig schwebt der Trigger unten rechts (position: fixed).
+ *   - Klick auf den Trigger fächert drei Arms auf: Kontakt · Mängelmelder · Suche.
+ *   - Klick auf einen Arm öffnet ein schwebendes Mini-Panel mit Formular,
+ *     ohne Seitenwechsel.
+ *   - Escape oder Klick auf Backdrop schließt alles wieder.
+ *   - Bei prefers-reduced-motion entfallen die Animations-Stufen.
+ */
+---
+<div class="grh-fab" data-grh-fab data-state="closed">
+  <!-- Backdrop für offene Panels (klickbar, schließt das Panel) -->
+  <div class="grh-fab__backdrop" data-grh-fab-close></div>
+
+  <!-- ===================== Panels ===================== -->
+
+  <!-- Kontakt-Panel -->
+  <section class="grh-fab__panel" data-grh-fab-panel="kontakt" role="dialog" aria-label="Kontakt zur Gemeinde" hidden>
+    <header class="grh-fab__panel-head">
+      <span class="grh-fab__panel-eyebrow">Kontakt</span>
+      <h3>Wie können wir helfen?</h3>
+      <button type="button" class="grh-fab__panel-close" data-grh-fab-close aria-label="Schließen">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />
+        </svg>
+      </button>
+    </header>
+    <form class="grh-fab__form" data-grh-fab-form>
+      <label class="grh-fab__field">
+        <span>An welche Stelle?</span>
+        <select name="abteilung" required>
+          <option value="">Bitte auswählen…</option>
+          <option value="einwohnermeldeamt">Einwohnermeldeamt</option>
+          <option value="standesamt">Standesamt</option>
+          <option value="bauamt">Bauamt</option>
+          <option value="tourismus">Tourismus & Kultur</option>
+          <option value="ordnungsamt">Ordnungsamt</option>
+          <option value="buergermeister">Bürgermeister</option>
+          <option value="sonstige">Sonstige Anfrage</option>
+        </select>
+      </label>
+
+      <label class="grh-fab__field">
+        <span>Ihr Anliegen</span>
+        <textarea name="nachricht" rows="4" required placeholder="Beschreiben Sie kurz, worum es geht…"></textarea>
+      </label>
+
+      <label class="grh-fab__field">
+        <span>Ihr Name</span>
+        <input type="text" name="name" required autocomplete="name" />
+      </label>
+      <label class="grh-fab__field">
+        <span>E-Mail</span>
+        <input type="email" name="email" required autocomplete="email" />
+      </label>
+
+      <p class="grh-fab__notice">
+        Ihre Daten werden vertraulich behandelt und nur zur Beantwortung Ihrer Anfrage verwendet.
+      </p>
+
+      <button type="submit" class="grh-fab__submit">
+        Anfrage senden
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="12" x2="20" y2="12" /><polyline points="14 6 20 12 14 18" />
+        </svg>
+      </button>
+    </form>
+  </section>
+
+  <!-- Suche-Panel -->
+  <section class="grh-fab__panel grh-fab__panel--search" data-grh-fab-panel="suche" role="dialog" aria-label="Seite durchsuchen" hidden>
+    <header class="grh-fab__panel-head">
+      <span class="grh-fab__panel-eyebrow">Suche</span>
+      <h3>Was suchen Sie?</h3>
+      <button type="button" class="grh-fab__panel-close" data-grh-fab-close aria-label="Schließen">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />
+        </svg>
+      </button>
+    </header>
+    <div class="grh-fab__search">
+      <span class="grh-fab__search-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
+        </svg>
+      </span>
+      <input type="search" placeholder="Sehenswürdigkeit, Termin, Ortsteil…" autocomplete="off" data-grh-fab-search />
+    </div>
+    <p class="grh-fab__hint">Live-Suche in News, Veranstaltungen und Seiten — wird im nächsten Schritt freigeschaltet.</p>
+  </section>
+
+  <!-- Mängelmelder-Panel (kurz, nur Hinweis + CTA) -->
+  <section class="grh-fab__panel grh-fab__panel--melder" data-grh-fab-panel="melder" role="dialog" aria-label="Mängelmelder" hidden>
+    <header class="grh-fab__panel-head">
+      <span class="grh-fab__panel-eyebrow">Mängelmelder</span>
+      <h3>Schaden oder Mangel melden</h3>
+      <button type="button" class="grh-fab__panel-close" data-grh-fab-close aria-label="Schließen">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />
+        </svg>
+      </button>
+    </header>
+    <p class="grh-fab__lead">
+      Defekte Straßenlampen, Schlaglöcher, wilder Müll oder beschädigte Schilder —
+      lass es uns wissen, wir kümmern uns.
+    </p>
+    <a class="grh-fab__cta" href="/maengelmelder">
+      Zum Mängelmelder
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="12" x2="20" y2="12" /><polyline points="14 6 20 12 14 18" />
+      </svg>
+    </a>
+    <p class="grh-fab__hint">
+      Foto-Upload und Standort-Pin werden mit dem eigenen Mängelmelder-Tool ergänzt.
+    </p>
+  </section>
+
+  <!-- ===================== Verbindungs-Fäden (Netz) ===================== -->
+  <div class="grh-fab__web" aria-hidden="true">
+    <span class="grh-fab__thread" style="--rot: 0deg;   --len: 110px; --i: 0"></span>
+    <span class="grh-fab__thread" style="--rot: -45deg; --len: 110px; --i: 1"></span>
+    <span class="grh-fab__thread" style="--rot: -90deg; --len: 110px; --i: 2"></span>
+  </div>
+
+  <!-- ===================== Arms (radial) ===================== -->
+  <div class="grh-fab__arms" aria-hidden="true">
+    {/* nach oben (90°): direkt über dem Trigger */}
+    <button type="button" class="grh-fab__arm" data-grh-fab-action="melder" style="--tx: 0px; --ty: -120px; --i: 0">
+      <span class="grh-fab__arm-icon">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3L2 21h20L12 3z" /><line x1="12" y1="10" x2="12" y2="14" /><circle cx="12" cy="17" r="0.6" fill="currentColor" />
+        </svg>
+      </span>
+      <span class="grh-fab__arm-label">Mängel melden</span>
+    </button>
+    {/* oben-links (135°) */}
+    <button type="button" class="grh-fab__arm" data-grh-fab-action="suche" style="--tx: -85px; --ty: -85px; --i: 1">
+      <span class="grh-fab__arm-icon">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
+        </svg>
+      </span>
+      <span class="grh-fab__arm-label">Suche</span>
+    </button>
+    {/* links (180°) */}
+    <button type="button" class="grh-fab__arm" data-grh-fab-action="kontakt" style="--tx: -120px; --ty: 0px; --i: 2">
+      <span class="grh-fab__arm-icon">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="2" /><polyline points="3 7 12 13 21 7" />
+        </svg>
+      </span>
+      <span class="grh-fab__arm-label">Kontakt</span>
+    </button>
+  </div>
+
+  <!-- ===================== Trigger ===================== -->
+  <button type="button" class="grh-fab__trigger" data-grh-fab-toggle aria-label="Kontakt & Service" aria-expanded="false">
+    <span class="grh-fab__trigger-icon" data-grh-fab-trigger-icon>
+      <!-- Brief-Icon (Standard) -->
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="grh-fab__icon-mail">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <polyline points="3 7 12 13 21 7" />
+      </svg>
+      <!-- X-Icon (offen) -->
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="grh-fab__icon-close">
+        <line x1="6" y1="6" x2="18" y2="18" />
+        <line x1="18" y1="6" x2="6" y2="18" />
+      </svg>
+    </span>
+  </button>
+</div>
+
+<style>
+  .grh-fab {
+    position: fixed;
+    right: var(--grh-space-5);
+    bottom: var(--grh-space-5);
+    z-index: 8500;
+    font-family: var(--grh-font-body);
+  }
+  @media (max-width: 540px) {
+    .grh-fab { right: var(--grh-space-4); bottom: var(--grh-space-4); }
+  }
+
+  /* === Backdrop (nur bei offenem Panel) ============================= */
+  .grh-fab__backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 43, 31, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+    transition: opacity var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-fab[data-state="panel"] .grh-fab__backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* === Trigger-Button =============================================== */
+  .grh-fab__trigger {
+    position: relative;
+    z-index: 2;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    background: var(--grh-forest-900);
+    color: var(--grh-candle-500);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    box-shadow:
+      0 12px 30px -8px rgba(26, 61, 39, 0.5),
+      0 0 0 0 rgba(232, 182, 88, 0.4);
+    transition:
+      background var(--grh-dur-base) var(--grh-ease-out),
+      transform var(--grh-dur-base) var(--grh-ease-out),
+      box-shadow var(--grh-dur-base) var(--grh-ease-out);
+    /* sanftes Atmen, wenn geschlossen */
+    animation: grh-fab-breathe 4.5s ease-in-out infinite;
+  }
+  .grh-fab__trigger:hover {
+    background: var(--grh-forest-800);
+    transform: translateY(-2px);
+  }
+  .grh-fab[data-state="open"] .grh-fab__trigger,
+  .grh-fab[data-state="panel"] .grh-fab__trigger {
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-900);
+    animation: none;
+    transform: rotate(90deg);
+  }
+  @keyframes grh-fab-breathe {
+    0%, 100% { box-shadow: 0 12px 30px -8px rgba(26, 61, 39, 0.5), 0 0 0 0 rgba(232, 182, 88, 0.0); }
+    50%      { box-shadow: 0 12px 30px -8px rgba(26, 61, 39, 0.5), 0 0 0 12px rgba(232, 182, 88, 0.0); transform: scale(1.02); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-fab__trigger { animation: none; }
+  }
+
+  /* Icon-Wechsel (Brief ↔ X) */
+  .grh-fab__trigger-icon { position: relative; width: 22px; height: 22px; }
+  .grh-fab__icon-mail,
+  .grh-fab__icon-close {
+    position: absolute;
+    inset: 0;
+    transition: opacity var(--grh-dur-base) var(--grh-ease-out), transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-fab__icon-close { opacity: 0; transform: scale(0.5); }
+  .grh-fab[data-state="open"] .grh-fab__icon-mail,
+  .grh-fab[data-state="panel"] .grh-fab__icon-mail { opacity: 0; transform: scale(0.5); }
+  .grh-fab[data-state="open"] .grh-fab__icon-close,
+  .grh-fab[data-state="panel"] .grh-fab__icon-close { opacity: 1; transform: scale(1); }
+
+  /* === Verbindungs-Fäden (Netz) ===================================== */
+  .grh-fab__web {
+    position: absolute;
+    right: 30px;   /* Trigger-Mittelpunkt X (60/2) */
+    bottom: 30px;  /* Trigger-Mittelpunkt Y */
+    pointer-events: none;
+    width: 0;
+    height: 0;
+  }
+  .grh-fab__thread {
+    position: absolute;
+    left: -0.75px;     /* 1.5px Breite zentriert über Anker */
+    bottom: 0;
+    width: 1.5px;
+    height: var(--len);
+    background: linear-gradient(to top,
+      rgba(232, 182, 88, 0.0) 0%,
+      rgba(232, 182, 88, 0.9) 25%,
+      rgba(232, 182, 88, 0.9) 85%,
+      rgba(232, 182, 88, 0.0) 100%);
+    transform-origin: bottom center;
+    transform: rotate(var(--rot)) scaleY(0);
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: 0ms;
+  }
+  .grh-fab__thread::before {
+    /* kleiner glühender Punkt am äußeren Ende */
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--grh-candle-500);
+    transform: translate(-50%, 0) scale(0);
+    transition: transform 240ms var(--grh-ease-out);
+    box-shadow: 0 0 8px rgba(232, 182, 88, 0.6);
+  }
+  .grh-fab[data-state="open"] .grh-fab__thread {
+    transform: rotate(var(--rot)) scaleY(1);
+    transition-delay: calc(var(--i, 0) * 80ms);
+  }
+  .grh-fab[data-state="open"] .grh-fab__thread::before {
+    transform: translate(-50%, 0) scale(1);
+    transition-delay: calc(var(--i, 0) * 80ms + 300ms);
+  }
+
+  /* === Arms (radial um den Trigger gestaffelt) ====================== */
+  .grh-fab__arms {
+    position: absolute;
+    right: 30px;   /* Anker = Trigger-Mittelpunkt */
+    bottom: 30px;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+  .grh-fab__arm {
+    position: absolute;
+    /* Vor dem Öffnen sitzt jeder Arm im Trigger-Zentrum, transparent */
+    left: -26px;     /* halbe Arm-Breite */
+    bottom: -26px;   /* halbe Arm-Höhe (sitzt damit bei Trigger-Mitte) */
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid var(--grh-line);
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    box-shadow: var(--grh-shadow-md);
+    transform: translate(0, 0) scale(0.4);
+    opacity: 0;
+    transition:
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity   260ms ease-out,
+      background var(--grh-dur-fast),
+      border-color var(--grh-dur-fast),
+      color var(--grh-dur-fast);
+  }
+  .grh-fab__arm:hover {
+    background: var(--grh-forest-900);
+    color: var(--grh-candle-500);
+    border-color: var(--grh-forest-900);
+  }
+  .grh-fab__arm-icon { display: grid; place-items: center; }
+
+  /* Label als Tooltip — taucht beim Hover/Focus auf */
+  .grh-fab__arm-label {
+    position: absolute;
+    right: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--grh-forest-900);
+    color: var(--grh-candle-500);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    padding: 5px 11px;
+    border-radius: var(--grh-radius-pill);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--grh-dur-fast);
+  }
+  .grh-fab__arm:hover .grh-fab__arm-label,
+  .grh-fab__arm:focus-visible .grh-fab__arm-label { opacity: 1; }
+  /* Arm „kontakt" sitzt direkt links vom Trigger → Label kann nicht links davon
+     liegen, sonst läuft es aus dem Bildschirm. Stattdessen Label nach UNTEN. */
+  .grh-fab__arm[data-grh-fab-action="kontakt"] .grh-fab__arm-label {
+    right: auto;
+    left: 50%;
+    top: calc(100% + 8px);
+    transform: translateX(-50%);
+  }
+
+  .grh-fab[data-state="open"] .grh-fab__arms,
+  .grh-fab[data-state="panel"] .grh-fab__arms { pointer-events: auto; }
+  .grh-fab[data-state="open"] .grh-fab__arm {
+    transform: translate(var(--tx), var(--ty)) scale(1);
+    opacity: 1;
+    /* Stagger nach dem zugehörigen Faden — Arm erscheint, wenn der Faden fertig ist */
+    transition-delay: calc(var(--i, 0) * 80ms + 220ms);
+  }
+  .grh-fab[data-state="panel"] .grh-fab__arm {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+    transition-delay: 0ms;
+    pointer-events: none;
+  }
+  .grh-fab[data-state="panel"] .grh-fab__thread {
+    transform: rotate(var(--rot)) scaleY(0);
+    transition-delay: 0ms;
+  }
+  .grh-fab[data-state="panel"] .grh-fab__thread::before {
+    transform: translate(-50%, 0) scale(0);
+    transition-delay: 0ms;
+  }
+
+  /* === Panels (Floating Cards) ====================================== */
+  .grh-fab__panel {
+    position: absolute;
+    bottom: 72px;
+    right: 0;
+    width: min(380px, calc(100vw - var(--grh-space-5) * 2));
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-lg);
+    box-shadow: var(--grh-shadow-lg);
+    border: 1px solid var(--grh-line);
+    padding: var(--grh-space-5);
+    transform: translateY(20px) scale(0.96);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity   220ms ease-out;
+  }
+  .grh-fab[data-state="panel"] .grh-fab__panel[hidden="false"],
+  .grh-fab[data-state="panel"] .grh-fab__panel:not([hidden]) {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  @media (max-width: 540px) {
+    .grh-fab__panel { width: calc(100vw - var(--grh-space-3) * 2); right: calc(var(--grh-space-3) - var(--grh-space-5)); }
+  }
+
+  .grh-fab__panel-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+    align-items: start;
+    margin-bottom: var(--grh-space-4);
+    padding-bottom: var(--grh-space-3);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-fab__panel-eyebrow {
+    grid-column: 1;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+  }
+  .grh-fab__panel-head h3 {
+    grid-column: 1;
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    line-height: 1.15;
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .grh-fab__panel-close {
+    grid-row: 1 / span 2;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--grh-line);
+    background: transparent;
+    color: var(--grh-forest-900);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-fab__panel-close:hover {
+    background: var(--grh-forest-900);
+    color: var(--grh-candle-500);
+  }
+
+  /* === Form-Felder ================================================== */
+  .grh-fab__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+  }
+  .grh-fab__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--grh-space-3);
+  }
+  @media (max-width: 540px) {
+    .grh-fab__row { grid-template-columns: 1fr; }
+  }
+  .grh-fab__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--grh-stone-700);
+  }
+  .grh-fab__field > span {
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+    font-size: 10px;
+    color: var(--grh-moss-600);
+  }
+  .grh-fab__field input,
+  .grh-fab__field select,
+  .grh-fab__field textarea {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm, 6px);
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-900);
+    line-height: 1.4;
+    transition: border-color var(--grh-dur-fast), background var(--grh-dur-fast);
+  }
+  .grh-fab__field input:focus,
+  .grh-fab__field select:focus,
+  .grh-fab__field textarea:focus {
+    outline: none;
+    border-color: var(--grh-candle-500);
+    background: var(--grh-cream-50);
+  }
+  .grh-fab__field textarea { resize: vertical; min-height: 80px; }
+
+  .grh-fab__notice {
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--grh-stone-400);
+    margin: 0;
+  }
+  .grh-fab__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 12px 18px;
+    background: var(--grh-forest-900);
+    color: var(--grh-candle-500);
+    border: 1px solid var(--grh-candle-500);
+    border-radius: var(--grh-radius-pill);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    cursor: pointer;
+    /* Goldener Schein, damit der Button auch auf grünem Hintergrund auffällt */
+    box-shadow:
+      0 0 0 1px rgba(232, 182, 88, 0.18),
+      0 0 18px rgba(232, 182, 88, 0.35),
+      0 0 36px rgba(232, 182, 88, 0.18),
+      0 8px 20px -8px rgba(26, 61, 39, 0.45);
+    transition:
+      background var(--grh-dur-fast),
+      box-shadow var(--grh-dur-base),
+      transform var(--grh-dur-fast),
+      gap var(--grh-dur-base);
+    animation: grh-fab-submit-glow 3.6s ease-in-out infinite;
+  }
+  .grh-fab__submit:hover {
+    background: var(--grh-forest-800);
+    gap: 12px;
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(232, 182, 88, 0.6),
+      0 0 28px rgba(232, 182, 88, 0.55),
+      0 0 50px rgba(232, 182, 88, 0.3),
+      0 12px 24px -8px rgba(26, 61, 39, 0.55);
+    animation: none;
+  }
+  @keyframes grh-fab-submit-glow {
+    0%, 100% {
+      box-shadow:
+        0 0 0 1px rgba(232, 182, 88, 0.18),
+        0 0 18px rgba(232, 182, 88, 0.35),
+        0 0 36px rgba(232, 182, 88, 0.18),
+        0 8px 20px -8px rgba(26, 61, 39, 0.45);
+    }
+    50% {
+      box-shadow:
+        0 0 0 1px rgba(232, 182, 88, 0.35),
+        0 0 24px rgba(232, 182, 88, 0.5),
+        0 0 48px rgba(232, 182, 88, 0.28),
+        0 8px 20px -8px rgba(26, 61, 39, 0.45);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-fab__submit { animation: none; }
+  }
+
+  /* === Suche ======================================================== */
+  .grh-fab__search {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    background: var(--grh-paper-100);
+  }
+  .grh-fab__search:focus-within {
+    border-color: var(--grh-candle-500);
+    background: var(--grh-cream-50);
+  }
+  .grh-fab__search-icon { color: var(--grh-moss-600); }
+  .grh-fab__search input {
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--grh-forest-900);
+    outline: none;
+    width: 100%;
+  }
+
+  /* === Mängelmelder-Panel =========================================== */
+  .grh-fab__lead {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--grh-stone-700);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-fab__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    background: var(--grh-forest-900);
+    color: var(--grh-candle-500);
+    border: 1px solid var(--grh-candle-500);
+    border-radius: var(--grh-radius-pill);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow:
+      0 0 0 1px rgba(232, 182, 88, 0.18),
+      0 0 18px rgba(232, 182, 88, 0.35),
+      0 0 36px rgba(232, 182, 88, 0.18),
+      0 8px 20px -8px rgba(26, 61, 39, 0.45);
+    transition:
+      background var(--grh-dur-fast),
+      box-shadow var(--grh-dur-base),
+      transform var(--grh-dur-fast),
+      gap var(--grh-dur-base);
+    animation: grh-fab-submit-glow 3.6s ease-in-out infinite;
+  }
+  .grh-fab__cta:hover {
+    background: var(--grh-forest-800);
+    gap: 12px;
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(232, 182, 88, 0.6),
+      0 0 28px rgba(232, 182, 88, 0.55),
+      0 0 50px rgba(232, 182, 88, 0.3),
+      0 12px 24px -8px rgba(26, 61, 39, 0.55);
+    animation: none;
+  }
+  .grh-fab__hint {
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--grh-stone-400);
+    margin: var(--grh-space-3) 0 0;
+    font-style: italic;
+  }
+</style>
+
+<script>
+  (() => {
+    const fab     = document.querySelector<HTMLElement>('[data-grh-fab]');
+    if (!fab) return;
+    const trigger = fab.querySelector<HTMLButtonElement>('[data-grh-fab-toggle]');
+    const arms    = fab.querySelectorAll<HTMLButtonElement>('[data-grh-fab-action]');
+    const panels  = fab.querySelectorAll<HTMLElement>('[data-grh-fab-panel]');
+    const closes  = fab.querySelectorAll<HTMLElement>('[data-grh-fab-close]');
+
+    const setState = (state: 'closed' | 'open' | 'panel') => {
+      fab.dataset.state = state;
+      trigger?.setAttribute('aria-expanded', state === 'closed' ? 'false' : 'true');
+    };
+
+    const showPanel = (key: string) => {
+      panels.forEach((p) => {
+        if (p.dataset.grhFabPanel === key) p.removeAttribute('hidden');
+        else p.setAttribute('hidden', '');
+      });
+      setState('panel');
+    };
+
+    const closeAll = () => {
+      panels.forEach((p) => p.setAttribute('hidden', ''));
+      setState('closed');
+    };
+
+    /* Trigger: closed → open, open/panel → closed */
+    trigger?.addEventListener('click', () => {
+      if (fab.dataset.state === 'closed') setState('open');
+      else closeAll();
+    });
+
+    /* Arm-Klick: passenden Panel öffnen */
+    arms.forEach((arm) => {
+      arm.addEventListener('click', () => {
+        const action = arm.dataset.grhFabAction;
+        if (action) showPanel(action);
+      });
+    });
+
+    /* Schließ-Buttons + Backdrop */
+    closes.forEach((c) => c.addEventListener('click', closeAll));
+
+    /* Escape schließt */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && fab.dataset.state !== 'closed') closeAll();
+    });
+
+    /* Form-Submit: vorerst nur Demo-Feedback */
+    const form = fab.querySelector<HTMLFormElement>('[data-grh-fab-form]');
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = form.querySelector<HTMLButtonElement>('.grh-fab__submit');
+      if (btn) {
+        const original = btn.textContent;
+        btn.textContent = 'Vielen Dank — wir melden uns!';
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.disabled = false;
+          closeAll();
+          form.reset();
+        }, 2000);
+      }
+    });
+  })();
+</script>

@@ -7,8 +7,8 @@
 
 :root {
   /* --- Primärgrüns (8 Stufen) ----------------------------- */
-  --grh-forest-950: #0E1F18;
-  --grh-forest-900: #13301F;
+  --grh-forest-950: #142B1F;
+  --grh-forest-900: #1A3D27;
   --grh-forest-800: #1B4A2F;
   --grh-forest-700: #2A6B43;
   --grh-moss-600:   #3E8C5A;
@@ -92,9 +92,9 @@
   --grh-radius-pill: 999px;
 
   /* --- Schatten (grünlich getönt, nie reines Schwarz) ----- */
-  --grh-shadow-sm: 0 1px 2px rgba(19, 48, 31, 0.06);
-  --grh-shadow-md: 0 6px 18px -8px rgba(19, 48, 31, 0.18);
-  --grh-shadow-lg: 0 22px 45px -20px rgba(19, 48, 31, 0.28);
+  --grh-shadow-sm: 0 1px 2px rgba(26, 61, 39, 0.06);
+  --grh-shadow-md: 0 6px 18px -8px rgba(26, 61, 39, 0.18);
+  --grh-shadow-lg: 0 22px 45px -20px rgba(26, 61, 39, 0.28);
   --grh-shadow-glow-candle: 0 0 24px rgba(232, 182, 88, 0.55);
 
   /* --- Layout-Container ----------------------------------- */
