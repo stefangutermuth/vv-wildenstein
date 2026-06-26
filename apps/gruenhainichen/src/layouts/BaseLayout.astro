@@ -12,6 +12,7 @@ import GrhHeaderCompact from '../components/global/GrhHeaderCompact.astro';
 import GrhMegaMenu from '../components/global/GrhMegaMenu.astro';
 import GrhFooter from '../components/global/GrhFooter.astro';
 import GrhLoader from '../components/global/GrhLoader.astro';
+import GrhFloatingContact from '../components/global/GrhFloatingContact.astro';
 
 interface Props {
   title?: string;
@@ -53,10 +54,12 @@ const orgJsonLd = {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
+    {/* Staging-Schutz: kein Index für Vorschau-Subdomain (grh.vv-wildenstein.com) */}
+    {import.meta.env.PUBLIC_STAGING === 'true' && <meta name="robots" content="noindex,nofollow" />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/png" href="/images/logos/wappen-grh.png" />
     <link rel="apple-touch-icon" href="/images/logos/wappen-grh.png" />
-    <meta name="theme-color" content="#13301F" />
+    <meta name="theme-color" content="#1A3D27" />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
@@ -78,6 +81,7 @@ const orgJsonLd = {
     </main>
     <GrhFooter />
     {header === 'compact' && <GrhMegaMenu />}
+    <GrhFloatingContact />
 
     <script>
       // Reveal-Beobachter für .grh-reveal Elemente.

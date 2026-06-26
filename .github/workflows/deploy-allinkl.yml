@@ -1,0 +1,60 @@
+name: Deploy zu All-Inkl
+
+# Wird bei jedem Push auf main automatisch ausgeführt
+# (Cloudflare-Build läuft parallel weiter).
+#
+# Manueller Trigger über GitHub → Actions → „Deploy zu All-Inkl" → Run workflow.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────
+  # Grünhainichen → grh.vv-wildenstein.com
+  # ───────────────────────────────────────────────────────────────────
+  deploy-gruenhainichen:
+    name: Grünhainichen → grh.vv-wildenstein.com
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Astro bauen (mit Live-Inhalten aus vv-wildenstein.com)
+        run: npm run build:gruenhainichen
+        env:
+          PUBLIC_CMS_SOURCE: wordpress
+          PUBLIC_STAGING: 'true'
+          WP_AUTH_USER: ${{ secrets.WP_AUTH_USER }}
+          WP_AUTH_PASS: ${{ secrets.WP_AUTH_PASS }}
+
+      - name: SSH-Schlüssel laden
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ALLINKL_SSH_KEY }}
+
+      - name: All-Inkl-Host bekannt machen
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.ALLINKL_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Per rsync zu grh.vv-wildenstein.com hochladen
+        run: |
+          rsync -avz --delete --human-readable \
+            --exclude='.htaccess.local' \
+            apps/gruenhainichen/dist/ \
+            ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:grh.vv-wildenstein.com/
+
+      - name: Erfolg
+        run: |
+          echo "✅ Deploy fertig: https://grh.vv-wildenstein.com"
