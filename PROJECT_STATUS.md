@@ -1,7 +1,7 @@
 # Project Status — VV-Wildenstein Web-Monorepo
 
-> **Letztes Update:** 30. April 2026
-> **Aktuelle Phase:** Phase 2.5 — eigenes `vw-events` Plugin produktiv, Astro pullt Events via REST, automatischer Build-Trigger steht
+> **Letztes Update:** 4. Mai 2026
+> **Aktuelle Phase:** Phase 2.6 — UX-Feinschliff der Listen-/Carousel-Elemente, GitHub-Auth umgestellt auf `gh`-OAuth (kein PAT mehr)
 
 Diese Datei dokumentiert den Stand, alle getroffenen Entscheidungen, Zugänge (ohne Geheimnisse) und die offenen Aufgaben — damit die Arbeit nahtlos weitergehen kann, auch wenn es eine Pause gibt oder die Konversation neu gestartet wird.
 
@@ -260,7 +260,7 @@ WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhain
 - **Globaler Button-Hover:** Pfeil-Reveal in Candle-Gold
 - **Saison-Schaltung** (`src/lib/seasons.ts`)
 
-### Komplette Sektions-Liste der Startseite
+### Komplette Sektions-Liste der Startseite (Phase 2.6 — Stand 04.05.2026)
 
 | Nr. | Eyebrow                     | Layout                                          |
 |-----|-----------------------------|-------------------------------------------------|
@@ -271,12 +271,12 @@ WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhain
 | 02  | Holzkunst seit 1915         | **Stacking-Card** (Wendt & Kühn)                |
 | 03  | Schachdorf seit 1871        | **Stacking-Card** (Borstendorf)                 |
 | 04  | Waldkirchen seit 1687       | **Stacking-Card** (Blaufarbenwerk Zschopenthal) |
-| —   | Erleben & Entdecken         | Drag-Cursor-Streifen mit 6 Tiles                |
-| —   | Kalender                    | Tagesveranstaltungen-Carousel + Mehrtägig (Editorial) |
-| —   | Aktuelles                   | Feature-News + 3-Card-Grid + Sperrungen-Spalte + Service-Box |
-| —   | Mittendrin                  | Stats-Reihe + 6-Tile-Service-Grid + 2 CTAs      |
+| —   | Erleben & Entdecken         | Tourismus-Strip mit Inertia-Drag + Goldcursor   |
+| —   | Kalender                    | Tagesveranstaltungs-Carousel (Filter Ort + Kategorie, Inertia-Drag, alle Events) · Mehrtägige Events als **stack-aufklappbare Streifen** (`<details>`) · 2 gleichwertige CTAs: „Vollständiger Kalender" + „Termin einreichen" |
+| —   | Aktuelles                   | **Editorial-Liste (10 News)** mit Smart-Cover-Mini-Plakaten · Sperrungen-Spalte rechts + Service-Box |
 | —   | Wirtschaftsstandort         | Forest-Sektion mit italic Claim                 |
-| —   | Rathaus                     | 4-Spalten-Kontaktblock                          |
+| —   | Mittendrin                  | Stats-Reihe + 6-Tile-Service-Grid + 2 CTAs (**heller Trenner direkt vor dem dunklen Footer**) |
+| —   | ~~Rathaus~~                 | ~~Eigene Sektion entfernt — Inhalte komplett in den Footer integriert~~ |
 
 ---
 
@@ -320,7 +320,7 @@ WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhain
 - **Owner:** stefangutermuth
 - **Repo:** vv-wildenstein
 - **Default-Branch:** main
-- **Aktiver PAT:** „vv-wildenstein deploy" (Fine-grained), Ablauf **29. Mai 2026**
+- **Authentifizierung:** seit 04.05.2026 via **`gh auth login`** (OAuth-Token im Keychain, kein Ablaufdatum). Der alte Fine-grained PAT „vv-wildenstein deploy" wird nicht mehr verwendet — läuft am 29. Mai 2026 einfach harmlos aus. Git-Credential-Helper global: `credential.https://github.com.helper = !gh auth git-credential`
 
 ### WordPress-Zugang
 
@@ -380,6 +380,22 @@ WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhain
 - ✅ Astro-Adapter: `fetchWordPressEvents()` + `getEvents()` mit Local-Fallback (46 Markdowns)
 - ✅ Cloudflare-Deploy-Hook `wp-vw-events` für Branch `main` angelegt + in WP eingetragen
 - ✅ End-to-End-Test bestätigt: zukünftige Events („Hexenfeuer am 30.04.2026" etc.) erscheinen live auf gruenhainichen.com
+
+### Phase 2.6 — UX-Feinschliff Listen + Carousels + Auth (abgeschlossen 04.05.2026)
+- ✅ **News-Sektion komplett umgebaut:** aus dem 6-Card-Grid mit Feature wurde eine **Editorial-Liste mit 10 News** (kleines Plakat-Thumbnail links, Kategorie + Datum oben, Titel rechts, Pfeil ganz rechts). Sperrungen-Spalte rechts unverändert.
+- ✅ **Smart-Cover-Pattern überall**: Bild zeigt sich immer komplett (`object-fit: contain`), eigener unscharf-abgedunkelter Hintergrund desselben Bildes füllt die Lücken bei gemischten Aspect-Ratios. Angewendet auf News-Thumbnails, Tagesveranstaltungs-Plakate UND mehrtägige Event-Cards.
+- ✅ **Tourismus-Strip + Tagesveranstaltungs-Carousel neu gebaut:** Pointer-Events mit Inertia-Physik (Velocity-Tracking, Reibung 0.94 pro 16 ms), `scroll-snap` raus, `scroll-behavior: auto` — fühlt sich an wie Apple-Carousels.
+- ✅ **5-px-Drag-Threshold + Klick-Swallow**: Klicks auf Kacheln/Cards bleiben sauber erhalten, kein versehentliches Öffnen nach Drag.
+- ✅ **Goldener „Ziehen"-Cursor** wieder eingebaut (rein visuell, folgt der Maus mit Easing, schrumpft beim aktiven Ziehen) — sowohl im Tourismus-Strip als auch im Tagesveranstaltungs-Carousel.
+- ✅ **Tourismus-Strip nicht mehr full-bleed**, liegt jetzt in der normalen Container-Breite. Progress-Bar von 4 px auf 2 px verschmälert, Nav-Buttons von 48 px auf 32 px verkleinert.
+- ✅ **Live-Filter (Ort + Kategorie)** bei den Tagesveranstaltungen — Chips-Reihe, klick filtert sofort, Empty-State falls nichts passt. Kategorie aktuell aus Titel-Heuristik (`brauchtum` / `musik` / `natur` / `markt` / `gemeinschaft` / `leben`); wird ersetzt sobald `vw-events` echte Kategorien liefert.
+- ✅ **Alle Events im Carousel** (kein `slice(0, 8)` mehr).
+- ✅ **Mehrtägige Events als Stack:** `<details>`/`<summary>` mit kompaktem Streifen (Mini-Plakat + Datum-Block + Titel + Toggle), Klick klappt das volle Plakat (3:4 mit Smart-Cover) + Teaser + CTA inline auf.
+- ✅ **Datum im Stack zweizeilig** (z.B. `24.–28.` über `SEP`) für ruhigere Optik.
+- ✅ **Zwei gleichwertige CTAs unter den Events:** „Vollständiger Kalender" + „Termin einreichen" (Pill-Buttons identisch gestylt). Der Submit-Link zeigt auf `/veranstaltungen/einreichen` — wird durch `[vw_event_submit]` bedient sobald die Seite existiert.
+- ✅ **„So erreichen Sie uns"-Sektion entfernt**, alle Inhalte sitzen im Footer; „Termin vereinbaren"-Link in der Sprechzeiten-Spalte ergänzt. `margin-top` am Footer raus → kein weißer Streifen mehr.
+- ✅ **Vereinsleben** nach unten verschoben (heller Trenner direkt vor dem dunklen Footer).
+- ✅ **GitHub-Auth umgestellt** von Fine-grained PAT auf `gh auth login` (OAuth, kein Ablauf). Lokaler `osxkeychain`-Helper entfernt, globaler `gh auth git-credential` aktiv.
 
 ---
 
