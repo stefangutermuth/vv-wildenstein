@@ -4,6 +4,7 @@ import '~/styles/tokens.css';
 import Header from '~/components/Header.astro';
 import Footer from '~/components/Footer.astro';
 import BottomNav from '~/components/BottomNav.astro';
+import InstallHint from '~/components/InstallHint.astro';
 
 interface Props {
   title?: string;
@@ -54,5 +55,6 @@ const isStaging = import.meta.env.PUBLIC_STAGING === 'true';
     </main>
     <Footer />
     <BottomNav />
+    <InstallHint />
   </body>
 </html>

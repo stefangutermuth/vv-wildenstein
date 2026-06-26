@@ -1,0 +1,102 @@
+---
+// Hinweis-Karte „App installieren" — nur auf dem Smartphone, nur wenn noch
+// nicht als PWA installiert und nicht weggeklickt. Android: System-Dialog,
+// iOS: Anleitung „Teilen → Zum Home-Bildschirm".
+---
+<div id="install-hint" class="ih" hidden>
+  <img class="ih__icon" src="/appicons/icon-192.png" alt="" width="46" height="46" />
+  <div class="ih__body">
+    <strong>Mängelmelder als App</strong>
+    <span id="ih-text">Zum Startbildschirm hinzufügen für schnellen Zugriff.</span>
+  </div>
+  <button id="ih-action" class="btn btn--primary ih__action" type="button" hidden>Installieren</button>
+  <button id="ih-close" class="ih__close" type="button" aria-label="Hinweis schließen">&times;</button>
+</div>
+
+<script>
+  const hint = document.getElementById('install-hint');
+  const text = document.getElementById('ih-text');
+  const action = document.getElementById('ih-action') as HTMLButtonElement | null;
+  const closeBtn = document.getElementById('ih-close');
+
+  if (hint && text && action && closeBtn) {
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true;
+    const mobile = window.matchMedia('(max-width: 960px)').matches;
+    const dismissed = localStorage.getItem('vv-install-hint') === 'off';
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+    const eligible = !standalone && mobile && !dismissed;
+    let deferred: any = null;
+
+    const show = () => { if (eligible) hint.hidden = false; };
+    const hide = (remember: boolean) => {
+      hint.hidden = true;
+      if (remember) localStorage.setItem('vv-install-hint', 'off');
+    };
+
+    closeBtn.addEventListener('click', () => hide(true));
+
+    if (eligible && isIOS) {
+      // iOS: keine Auto-Installation → Anleitung mit Teilen-Symbol
+      text.innerHTML =
+        'Tippe unten auf <svg class="ih__share" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l3.5 3.5-1.4 1.4L13 6.8V15h-2V6.8L9.9 7.9 8.5 6.5 12 3zM6 11h2v7h8v-7h2v7a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-7z"/></svg> und dann „Zum Home-Bildschirm".';
+      setTimeout(show, 1500);
+    }
+
+    // Android/Chrome: System-Installationsdialog
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferred = e;
+      action.hidden = false;
+      text.textContent = 'Zum Startbildschirm hinzufügen für schnellen Zugriff.';
+      show();
+    });
+
+    action.addEventListener('click', async () => {
+      if (!deferred) return;
+      deferred.prompt();
+      const choice = await deferred.userChoice;
+      deferred = null;
+      hide(choice.outcome === 'accepted');
+    });
+
+    window.addEventListener('appinstalled', () => hide(true));
+  }
+</script>
+
+<style>
+  .ih {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    z-index: 1090;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem 0.75rem;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 0.75rem 0.85rem;
+  }
+  .ih[hidden] { display: none; }
+  .ih__icon { flex: none; border-radius: 10px; }
+  .ih__body { flex: 1; display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+  .ih__body strong { font-size: 0.95rem; }
+  .ih__body span { font-size: 0.82rem; color: var(--text-soft); }
+  .ih__share { width: 1em; height: 1em; vertical-align: -0.15em; fill: var(--vv-blue); }
+  /* Installieren-Button bricht auf eigene, volle Zeile um (passt auch auf schmale Handys) */
+  .ih__action { order: 4; flex: 1 0 100%; justify-content: center; padding: 0.6em 1.1em; font-size: 0.92rem; }
+  .ih__close {
+    flex: none; width: 30px; height: 30px; border: 0; background: var(--bg-soft);
+    border-radius: 50%; font-size: 1.2rem; line-height: 1; color: var(--text-soft); cursor: pointer;
+  }
+  .ih__close:hover { background: var(--bg-muted); }
+
+  /* Nur auf dem Smartphone relevant (Sicherheitsnetz zusätzlich zum JS-Gate) */
+  @media (min-width: 961px) { .ih { display: none !important; } }
+</style>
