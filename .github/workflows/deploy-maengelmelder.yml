@@ -55,4 +55,5 @@ jobs:
             ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/melder.vv-wildenstein.com/
 
       - name: Erfolg
-        run: echo "✅ Deploy fertig: https://melder.vv-wildenstein.com"
+        run: |
+          echo "Deploy fertig -> https://melder.vv-wildenstein.com"
