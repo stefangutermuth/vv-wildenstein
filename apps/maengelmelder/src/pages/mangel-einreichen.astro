@@ -68,6 +68,7 @@ const anliegen = Object.entries(ANLIEGEN_LABELS); // [slug, label]
           <input type="text" id="addr-search" placeholder="Nach Adresse suchen …" autocomplete="off" />
           <button type="button" id="addr-btn" class="btn btn--green">Suchen</button>
         </div>
+        <button type="button" id="locate-self" class="locate-self">📍 Mein Standort verwenden</button>
         <div id="pick-map" class="pick-map"></div>
         <p id="picked" class="picked" aria-live="polite"></p>
         <input type="hidden" name="lat" id="lat" />
@@ -149,6 +150,45 @@ const anliegen = Object.entries(ANLIEGEN_LABELS); // [slug, label]
       if ((e as KeyboardEvent).key === 'Enter') { e.preventDefault(); search(); }
     });
 
+    // „Mein Standort verwenden" — Browser fragt um Erlaubnis
+    const locateSelf = document.getElementById('locate-self') as HTMLButtonElement;
+    locateSelf?.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        pickedEl.textContent = 'Standort wird von Ihrem Browser nicht unterstützt.';
+        return;
+      }
+      const orig = locateSelf.textContent;
+      locateSelf.disabled = true;
+      locateSelf.textContent = 'Standort wird ermittelt …';
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          map.setView([lat, lng], 17);
+          setPin(lat, lng);
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+              { headers: { Accept: 'application/json' } }
+            );
+            const data = await res.json();
+            if (data && data.display_name) {
+              addrEl.value = data.display_name;
+              pickedEl.textContent = '📍 ' + data.display_name;
+            }
+          } catch {}
+          locateSelf.disabled = false;
+          locateSelf.textContent = orig;
+        },
+        () => {
+          locateSelf.disabled = false;
+          locateSelf.textContent = orig;
+          pickedEl.textContent = 'Standort konnte nicht ermittelt werden. Bitte Freigabe erlauben oder Adresse suchen.';
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+
     // Absenden
     const form = document.getElementById('melder-form') as HTMLFormElement;
     const errEl = document.getElementById('form-error')!;
@@ -215,6 +255,14 @@ const anliegen = Object.entries(ANLIEGEN_LABELS); // [slug, label]
 
     .geocode { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; }
     .geocode input { flex: 1; }
+    .locate-self {
+      font: inherit; font-weight: 600; font-size: 0.9rem;
+      background: #eef0fb; color: var(--vv-blue);
+      border: 1px solid #c9cdf0; border-radius: var(--radius);
+      padding: 0.6rem 0.9rem; cursor: pointer; margin-bottom: 0.6rem;
+    }
+    .locate-self:hover { background: #e3e6f8; }
+    .locate-self:disabled { opacity: 0.6; cursor: default; }
     .pick-map { height: 360px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); z-index: 1; }
     .picked { margin: 0.5rem 0 0; font-weight: 500; color: var(--vv-green); }
 

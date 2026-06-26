@@ -28,6 +28,17 @@ const isStaging = import.meta.env.PUBLIC_STAGING === 'true';
     <meta name="theme-color" content="#0a5f2b" />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/images/wappen.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/appicons/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Mängelmelder" />
+    <script is:inline>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </head>
   <body>
     <Header />

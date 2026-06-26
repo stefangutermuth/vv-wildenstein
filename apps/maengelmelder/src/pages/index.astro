@@ -42,6 +42,11 @@ const STATUS_TEXT: Record<string, string> = {
       </ul>
     </div>
 
+    <button id="locate-btn" class="map-locate-btn" type="button" aria-label="Mein Standort anzeigen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+      <span>Mein Standort</span>
+    </button>
+
     <a href="/mangel-einreichen" class="btn btn--primary mapwrap__cta">＋ Mangel melden</a>
   </section>
 
@@ -143,6 +148,28 @@ const STATUS_TEXT: Record<string, string> = {
       })
     );
 
+    // „Mein Standort" — Browser fragt um Erlaubnis
+    const locateBtn = document.getElementById('locate-btn');
+    let userMarker: L.CircleMarker | null = null;
+    let accCircle: L.Circle | null = null;
+    if (locateBtn) {
+      locateBtn.addEventListener('click', () => {
+        locateBtn.classList.add('is-loading');
+        map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
+      });
+      map.on('locationfound', (e) => {
+        locateBtn.classList.remove('is-loading');
+        if (userMarker) userMarker.setLatLng(e.latlng);
+        else userMarker = L.circleMarker(e.latlng, { radius: 8, color: '#fff', weight: 3, fillColor: '#1a73e8', fillOpacity: 1 }).addTo(map);
+        if (accCircle) accCircle.setLatLng(e.latlng).setRadius(e.accuracy);
+        else accCircle = L.circle(e.latlng, { radius: e.accuracy, color: '#1a73e8', weight: 1, fillColor: '#1a73e8', fillOpacity: 0.12 }).addTo(map);
+      });
+      map.on('locationerror', () => {
+        locateBtn.classList.remove('is-loading');
+        alert('Ihr Standort konnte nicht ermittelt werden. Bitte erlauben Sie die Standortfreigabe im Browser.');
+      });
+    }
+
     // Legende-Panel in der Karte
     const legendToggle = document.getElementById('legend-toggle');
     const legendPanel = document.getElementById('legend-panel');
@@ -228,6 +255,29 @@ const STATUS_TEXT: Record<string, string> = {
     .map-legend img { width: 24px; height: 24px; }
     .map-legend strong { display: block; }
     .map-legend span { color: var(--text-soft); font-size: 0.88rem; }
+
+    /* Flächenbündig an der unteren linken Kante der Karte „eingebunden" */
+    .map-locate-btn {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      border: 0;
+      border-radius: 0 12px 0 0;
+      background: #fff;
+      color: var(--vv-blue);
+      padding: 0.6rem 1rem 0.6rem 0.85rem;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.85rem;
+      box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+    }
+    .map-locate-btn svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+    .map-locate-btn.is-loading { opacity: 0.5; }
 
     .filterbar { display: flex; flex-wrap: wrap; gap: 0.4rem; }
     .filterbar__btn {

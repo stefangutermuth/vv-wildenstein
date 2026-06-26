@@ -54,7 +54,14 @@ ErrorDocument 404 /404.html
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "SAMEORIGIN"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
-  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=(self)"
+</IfModule>
+
+# Service Worker + Manifest nicht hart cachen (Updates sollen schnell greifen)
+<IfModule mod_headers.c>
+  <FilesMatch "(sw\.js|manifest\.webmanifest)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
 </IfModule>
 
 # Versteckte Dateien blocken
