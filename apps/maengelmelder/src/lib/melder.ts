@@ -58,6 +58,40 @@ export const ANLIEGEN_LABELS: Record<string, string> = {
   'wander-radwege': 'Wander- und Radwege',
 };
 
+/** Pro Anliegen: Farbe + Icon (SVG-Path) — für die „Kein Foto"-Kachel und Filter. */
+export const ANLIEGEN_META: Record<string, { label: string; color: string; icon: string }> = {
+  'strassen-gehwege-plaetze': {
+    label: 'Straßen, Gehwege und Plätze',
+    color: '#5b6b8c',
+    icon: 'M19 15.18V7a4 4 0 0 0-8 0v10a2 2 0 0 1-4 0V8.82A3 3 0 0 0 6 3a3 3 0 0 0-1 5.82V17a4 4 0 0 0 8 0V7a2 2 0 0 1 4 0v8.18A3 3 0 0 0 20 21a3 3 0 0 0 1-5.82z',
+  },
+  strassenbeleuchtung: {
+    label: 'Straßenbeleuchtung',
+    color: '#d99a2b',
+    icon: 'M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z',
+  },
+  'muell-verschmutzung': {
+    label: 'Müllablagerung und Verschmutzung',
+    color: '#8a6d3b',
+    icon: 'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z',
+  },
+  'gruenflaechen-baeume': {
+    label: 'Grünflächen und Bäume',
+    color: '#3a7d44',
+    icon: 'M6.05 8.05c-2.73 2.73-2.73 7.15-.02 9.88 1.47-3.4 4.09-6.24 7.36-7.93-2.77 2.34-4.71 5.61-5.39 9.32 2.6 1.23 5.8.78 7.95-1.37C19.43 14.47 20 4 20 4S9.53 4.57 6.05 8.05z',
+  },
+  'wander-radwege': {
+    label: 'Wander- und Radwege',
+    color: '#2a6f97',
+    icon: 'M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.7.1L6 8.3V13h2V9.6l1.8-.7z',
+  },
+};
+
+/** Link, der die Position in einer Karten-App / Route öffnet. */
+export function mapsLink(lat: number, lng: number): string {
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
+
 export const STATUS_LABELS: Record<StatusSlug, string> = {
   neu: 'Neue Meldung',
   'in-bearbeitung': 'In Bearbeitung',

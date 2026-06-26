@@ -1,7 +1,7 @@
 ---
 import 'leaflet/dist/leaflet.css';
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import { getMeldungen, ANLIEGEN_LABELS, formatDate, relativeTime } from '~/lib/melder';
+import { getMeldungen, ANLIEGEN_LABELS, formatDate, relativeTime, mapsLink } from '~/lib/melder';
 import type { Meldung } from '~/lib/melder';
 
 export async function getStaticPaths() {
@@ -16,6 +16,14 @@ const statusLabel = meldung.status?.label ?? 'Neue Meldung';
 const hasGeo = meldung.location.lat != null && meldung.location.lng != null;
 const kategorie = meldung.anliegen.map((a) => ANLIEGEN_LABELS[a] ?? a).join(', ');
 const lastUpdate = meldung.public_notes[0]?.date ?? '';
+
+// Status-Fortschritt (Stepper)
+const steps = [
+  { slug: 'neu', label: 'Neue Meldung' },
+  { slug: 'in-bearbeitung', label: 'In Bearbeitung' },
+  { slug: 'erledigt', label: 'Erledigt' },
+];
+const currentStep = steps.findIndex((s) => s.slug === status);
 ---
 
 <BaseLayout title={`${meldung.title} – Mängelmelder VV Wildenstein`}>
@@ -31,6 +39,19 @@ const lastUpdate = meldung.public_notes[0]?.date ?? '';
       </span>
       {kategorie && <span class="meta__item">Kategorie: {kategorie}</span>}
     </div>
+
+    <!-- Status-Fortschritt -->
+    <ol class="stepper" aria-label="Bearbeitungsstand">
+      {steps.map((step, i) => (
+        <li
+          class:list={['stepper__step', { 'is-done': i < currentStep, 'is-current': i === currentStep }]}
+          data-status={step.slug}
+        >
+          <span class="stepper__dot"></span>
+          <span class="stepper__label">{step.label}</span>
+        </li>
+      ))}
+    </ol>
 
     <div class="cols">
       <!-- LINKS: Beschreibung + Updates -->
@@ -77,12 +98,23 @@ const lastUpdate = meldung.public_notes[0]?.date ?? '';
           <div class="placeholder">Kein Standort hinterlegt.</div>
         )}
         {meldung.location.address && <p class="detail__addr">{meldung.location.address}</p>}
+        {hasGeo && (
+          <a
+            class="maplink"
+            href={mapsLink(meldung.location.lat as number, meldung.location.lng as number)}
+            target="_blank"
+            rel="noopener"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+            In Karten öffnen / Route
+          </a>
+        )}
 
-        <div class="imgbox">
-          {meldung.image
-            ? <img src={meldung.image.url} alt={meldung.image.alt || meldung.title} />
-            : <p class="muted">Es wurden keine Bilder hinzugefügt.</p>}
-        </div>
+        {meldung.image && (
+          <div class="imgbox">
+            <img src={meldung.image.url} alt={meldung.image.alt || meldung.title} />
+          </div>
+        )}
       </div>
     </div>
   </article>
@@ -156,12 +188,41 @@ const lastUpdate = meldung.public_notes[0]?.date ?? '';
     .update__date { display: block; font-size: 0.8rem; color: var(--text-soft); margin-bottom: 0.2rem; }
     .update__text { margin: 0; white-space: pre-line; }
 
-    .detail__map { height: 360px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); z-index: 1; }
+    .detail__map { height: 460px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); z-index: 1; }
     .detail__addr { margin: 0.6rem 0 0; color: var(--text-soft); font-size: 0.9rem; }
     .placeholder { height: 200px; display: grid; place-items: center; background: var(--bg-soft); border-radius: var(--radius-lg); color: var(--text-soft); }
 
+    .maplink {
+      display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem;
+      font-weight: 600; font-size: 0.9rem; color: var(--vv-blue); text-decoration: none;
+    }
+    .maplink svg { width: 1.05em; height: 1.05em; fill: currentColor; }
+    .maplink:hover { text-decoration: underline; }
+
     .imgbox { margin-top: 1.25rem; background: var(--bg-soft); border-radius: var(--radius-lg); overflow: hidden; }
     .imgbox img { width: 100%; display: block; }
-    .imgbox .muted { margin: 0; padding: 2.5rem 1rem; text-align: center; }
+
+    /* Status-Fortschritt (Stepper) */
+    .stepper { display: flex; list-style: none; margin: 0 0 1.75rem; padding: 0; counter-reset: step; }
+    .stepper__step { flex: 1; position: relative; text-align: center; color: var(--text-soft); font-size: 0.85rem; }
+    .stepper__dot {
+      display: block; width: 18px; height: 18px; margin: 0 auto 0.4rem; border-radius: 50%;
+      background: #fff; border: 2px solid var(--border); position: relative; z-index: 1;
+    }
+    /* Verbindungslinie */
+    .stepper__step::before {
+      content: ''; position: absolute; top: 8px; left: -50%; width: 100%; height: 2px;
+      background: var(--border); z-index: 0;
+    }
+    .stepper__step:first-child::before { display: none; }
+    .stepper__step.is-done .stepper__dot,
+    .stepper__step.is-current .stepper__dot { border-color: var(--vv-green); background: var(--vv-green); }
+    .stepper__step.is-done::before,
+    .stepper__step.is-current::before { background: var(--vv-green); }
+    .stepper__step.is-current .stepper__label { color: var(--vv-green); font-weight: 700; }
+    .stepper__step.is-done .stepper__label { color: var(--text); }
+    /* „Erledigt" grün, falls aktuell */
+    .stepper__step.is-current[data-status='erledigt'] .stepper__dot { border-color: var(--status-erledigt); background: var(--status-erledigt); }
+    .stepper__step.is-current[data-status='in-bearbeitung'] .stepper__dot { border-color: var(--status-bearbeitung); background: var(--status-bearbeitung); }
   </style>
 </BaseLayout>

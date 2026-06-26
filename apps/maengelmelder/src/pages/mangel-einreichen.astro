@@ -58,7 +58,18 @@ const anliegen = Object.entries(ANLIEGEN_LABELS); // [slug, label]
       <div class="field">
         <label for="photo">Bild</label>
         <p class="hint">Machen Sie ein Foto vom Mangel (optional, max. 8 MB).</p>
-        <input type="file" id="photo" name="photo" accept="image/*" capture="environment" />
+        <label class="dropzone" id="dropzone" for="photo">
+          <input type="file" id="photo" name="photo" accept="image/*" capture="environment" class="dropzone__input" />
+          <div class="dropzone__empty" id="dz-empty">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7h-3.17l-1.24-1.35A2 2 0 0 0 13.12 5h-2.24a2 2 0 0 0-1.47.65L8.17 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zm-7 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-6.5A2.5 2.5 0 1 0 12 16.5 2.5 2.5 0 0 0 12 11.5z"/></svg>
+            <span><strong>Foto auswählen</strong> oder hierher ziehen</span>
+          </div>
+          <div class="dropzone__preview" id="dz-preview" hidden>
+            <img id="dz-img" alt="Vorschau des gewählten Fotos" />
+            <span class="dropzone__name" id="dz-name"></span>
+            <button type="button" class="dropzone__remove" id="dz-remove" aria-label="Bild entfernen">Entfernen</button>
+          </div>
+        </label>
       </div>
 
       <div class="field">
@@ -189,6 +200,52 @@ const anliegen = Object.entries(ANLIEGEN_LABELS); // [slug, label]
       );
     });
 
+    // Foto-Dropzone mit Vorschau
+    const photo = document.getElementById('photo') as HTMLInputElement;
+    const dz = document.getElementById('dropzone')!;
+    const dzEmpty = document.getElementById('dz-empty')!;
+    const dzPreview = document.getElementById('dz-preview')!;
+    const dzImg = document.getElementById('dz-img') as HTMLImageElement;
+    const dzName = document.getElementById('dz-name')!;
+    const dzRemove = document.getElementById('dz-remove')!;
+    let previewUrl = '';
+
+    const showPreview = (file: File) => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = URL.createObjectURL(file);
+      dzImg.src = previewUrl;
+      dzName.textContent = file.name;
+      dzEmpty.hidden = true;
+      dzPreview.hidden = false;
+    };
+    const clearPreview = () => {
+      if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ''; }
+      photo.value = '';
+      dzEmpty.hidden = false;
+      dzPreview.hidden = true;
+    };
+
+    photo.addEventListener('change', () => {
+      const f = photo.files?.[0];
+      if (f && f.type.startsWith('image/')) showPreview(f);
+    });
+    dzRemove.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); clearPreview(); });
+
+    ['dragenter', 'dragover'].forEach((ev) =>
+      dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('is-drag'); })
+    );
+    ['dragleave', 'drop'].forEach((ev) =>
+      dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('is-drag'); })
+    );
+    dz.addEventListener('drop', (e) => {
+      const dt = (e as DragEvent).dataTransfer;
+      const f = dt?.files?.[0];
+      if (f && f.type.startsWith('image/')) {
+        photo.files = dt!.files;
+        showPreview(f);
+      }
+    });
+
     // Absenden
     const form = document.getElementById('melder-form') as HTMLFormElement;
     const errEl = document.getElementById('form-error')!;
@@ -238,6 +295,29 @@ const anliegen = Object.entries(ANLIEGEN_LABELS); // [slug, label]
     @media (max-width: 600px) { .field-row { grid-template-columns: 1fr; } }
     .req { color: var(--vv-orange); }
     .hint { margin: 0; font-size: 0.85rem; color: var(--text-soft); }
+
+    /* Foto-Dropzone */
+    .dropzone {
+      display: block; cursor: pointer;
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      background: var(--bg-soft); padding: 1.25rem; text-align: center;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .dropzone:hover, .dropzone.is-drag { border-color: var(--vv-blue); background: #eef0fb; }
+    .dropzone__input { display: none; }
+    .dropzone__empty[hidden], .dropzone__preview[hidden] { display: none; }
+    .dropzone__empty { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--text-soft); }
+    .dropzone__empty svg { width: 36px; height: 36px; fill: var(--vv-blue); }
+    .dropzone__empty strong { color: var(--vv-blue); }
+    .dropzone__preview { display: flex; align-items: center; gap: 0.8rem; text-align: left; }
+    .dropzone__preview img { width: 84px; height: 84px; object-fit: cover; border-radius: var(--radius); flex: none; }
+    .dropzone__name { flex: 1; font-size: 0.9rem; word-break: break-all; }
+    .dropzone__remove {
+      font: inherit; font-size: 0.85rem; font-weight: 600; color: #b3261e;
+      background: none; border: 1px solid #f5c6c2; border-radius: var(--radius);
+      padding: 0.35rem 0.7rem; cursor: pointer;
+    }
+    .dropzone__remove:hover { background: #fdecea; }
 
     input[type='text'], input[type='email'], textarea, input[type='file'] {
       font: inherit; padding: 0.7rem 0.85rem; border: 1px solid var(--border);

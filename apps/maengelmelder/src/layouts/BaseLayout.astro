@@ -32,11 +32,18 @@ const isStaging = import.meta.env.PUBLIC_STAGING === 'true';
     <link rel="apple-touch-icon" href="/appicons/icon-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Mängelmelder" />
-    <script is:inline>
+    <script>
+      // Service Worker NUR in Produktion. Im Dev-Modus vorhandene SW entfernen
+      // und Caches leeren (sonst liefert ein alter SW veraltete Assets aus).
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
-        });
+        if (import.meta.env.PROD) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+          });
+        } else {
+          navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()));
+          if (window.caches) caches.keys().then((ks) => ks.forEach((k) => caches.delete(k)));
+        }
       }
     </script>
   </head>

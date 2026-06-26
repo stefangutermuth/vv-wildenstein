@@ -2,7 +2,7 @@
 import 'leaflet/dist/leaflet.css';
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import MeldungCard from '~/components/MeldungCard.astro';
-import { getMeldungen, getGeoJSON, STATUS_LABELS } from '~/lib/melder';
+import { getMeldungen, getGeoJSON, STATUS_LABELS, ANLIEGEN_META } from '~/lib/melder';
 
 const meldungen = await getMeldungen();
 const geo = await getGeoJSON();
@@ -13,6 +13,11 @@ const counts = {
   erledigt: meldungen.filter((m) => m.status?.slug === 'erledigt').length,
 };
 const statusOrder = ['neu', 'in-bearbeitung', 'erledigt'] as const;
+
+const anliegenSlugs = Object.keys(ANLIEGEN_META);
+const anliegenCounts = Object.fromEntries(
+  anliegenSlugs.map((s) => [s, meldungen.filter((m) => m.anliegen.includes(s)).length])
+);
 
 const STATUS_TEXT: Record<string, string> = {
   neu: 'Diese Mängel wurden uns gemeldet.',
@@ -40,6 +45,10 @@ const STATUS_TEXT: Record<string, string> = {
           </li>
         ))}
       </ul>
+      <p class="map-legend__area">
+        <span class="map-legend__swatch" aria-hidden="true"></span>
+        Abgedeckt: Gemeinde <strong>Grünhainichen</strong> &amp; Gemeinde <strong>Börnichen</strong>
+      </p>
     </div>
 
     <button id="locate-btn" class="map-locate-btn" type="button" aria-label="Mein Standort anzeigen">
@@ -52,12 +61,16 @@ const STATUS_TEXT: Record<string, string> = {
 
   <!-- Filter (auf dem Smartphone ausgeblendet — dort ist die Karte für sich) -->
   <section class="container toolbar desktop-only">
-    <div class="filterbar" role="group" aria-label="Nach Status filtern">
+    <div class="filterbar" data-group="status" role="group" aria-label="Nach Status filtern">
       <button class="filterbar__btn is-active" data-filter="all">Alle ({meldungen.length})</button>
       {statusOrder.map((s) => (
-        <button class="filterbar__btn" data-filter={s}>
-          {STATUS_LABELS[s]} ({counts[s]})
-        </button>
+        <button class="filterbar__btn" data-filter={s}>{STATUS_LABELS[s]} ({counts[s]})</button>
+      ))}
+    </div>
+    <div class="filterbar filterbar--anliegen" data-group="anliegen" role="group" aria-label="Nach Anliegen filtern">
+      <button class="filterbar__btn is-active" data-filter="all">Alle Anliegen</button>
+      {anliegenSlugs.filter((s) => anliegenCounts[s] > 0).map((s) => (
+        <button class="filterbar__btn" data-filter={s}>{ANLIEGEN_META[s].label} ({anliegenCounts[s]})</button>
       ))}
     </div>
   </section>
@@ -77,12 +90,14 @@ const STATUS_TEXT: Record<string, string> = {
 
   <script>
     import L from 'leaflet';
+    import 'leaflet.markercluster';
+    import 'leaflet.markercluster/dist/MarkerCluster.css';
+    import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+    import gebiet from '~/data/gebiet.json';
 
     const geoEl = document.getElementById('melder-geo');
     const geo = geoEl ? JSON.parse(geoEl.textContent || '{"features":[]}') : { features: [] };
 
-    // Original-Marker sind 42×42 (quadratisch) — Größe quadratisch halten,
-    // sonst verzerrt der Tropfen-Pin. Anker an der Pin-Spitze unten-mitte.
     const icon = (status: string) =>
       L.icon({
         iconUrl: `/images/marker-${status}.png`,
@@ -97,56 +112,95 @@ const STATUS_TEXT: Record<string, string> = {
       maxZoom: 19,
     }).addTo(map);
 
-    const markers: { marker: L.Marker; status: string }[] = [];
+    // Abdeckungsgebiet: Umriss der beiden Gemeinden + Abdunkeln außerhalb (Spotlight).
+    const coverage = L.geoJSON(gebiet as any, {
+      style: { color: '#0a5f2b', weight: 1.5, fillColor: '#0a5f2b', fillOpacity: 0.04 },
+      interactive: false,
+    }).addTo(map);
+
+    const world: [number, number][] = [[-85, -180], [-85, 180], [85, 180], [85, -180]];
+    const holes: [number, number][][] = [];
+    for (const f of (gebiet as any).features) {
+      const g = f.geometry;
+      const polys = g.type === 'MultiPolygon' ? g.coordinates : [g.coordinates];
+      for (const poly of polys) holes.push(poly[0].map((c: number[]) => [c[1], c[0]]));
+    }
+    L.polygon([world, ...holes], {
+      stroke: false, fillColor: '#0a1f12', fillOpacity: 0.42, interactive: false,
+    }).addTo(map);
+    const coverageBounds = coverage.getBounds();
+
+    // Cluster-Gruppe fasst dicht beieinanderliegende Marker zusammen.
+    const clusters = (L as any).markerClusterGroup({ maxClusterRadius: 45, showCoverageOnHover: false });
+    map.addLayer(clusters);
+
+    type MarkerEntry = { marker: L.Marker; status: string; anliegen: string[] };
+    const markers: MarkerEntry[] = [];
     const bounds = L.latLngBounds([]);
 
     for (const f of geo.features) {
       const [lng, lat] = f.geometry.coordinates;
       const status = f.properties.status || 'neu';
-      const marker = L.marker([lat, lng], { icon: icon(status) }).addTo(map);
+      const anliegen = Array.isArray(f.properties.anliegen) ? f.properties.anliegen : [];
+      const marker = L.marker([lat, lng], { icon: icon(status) });
       marker.bindPopup(
         `<strong>${f.properties.title}</strong><br><a href="/meldung/${f.properties.id}">Zur Meldung</a>`
       );
-      markers.push({ marker, status });
+      markers.push({ marker, status, anliegen });
       bounds.extend([lat, lng]);
     }
+
+    const state = { status: 'all', anliegen: 'all' };
+    const matches = (e: MarkerEntry) =>
+      (state.status === 'all' || e.status === state.status) &&
+      (state.anliegen === 'all' || e.anliegen.includes(state.anliegen));
+
+    const renderMarkers = () => {
+      clusters.clearLayers();
+      clusters.addLayers(markers.filter(matches).map((e) => e.marker));
+    };
+    renderMarkers();
+
     // Alle Marker einpassen. invalidateSize stellt sicher, dass der Container
     // seine echte Höhe hat (sonst rechnet fitBounds mit 0px → falscher Zoom).
+    // Fester, naher Start-Zoom (gleich auf allen Bildschirmgrößen), zentriert aufs Gebiet.
+    const START_ZOOM = 13;
     const fit = () => {
-      if (!markers.length) return;
       map.invalidateSize();
-      // Zoom, der alle Marker einpasst …
-      const z = map.getBoundsZoom(bounds, false, L.point(30, 30));
-      // … eine Stufe weiter raus (Desktop); auf dem Smartphone eine Stufe näher dran.
-      const isMobile = window.matchMedia('(max-width: 960px)').matches;
-      map.setView(bounds.getCenter(), Math.min(16, z) - 1 + (isMobile ? 1 : 0), { animate: false });
+      const center = bounds.isValid()
+        ? bounds.getCenter()
+        : coverageBounds.isValid()
+          ? coverageBounds.getCenter()
+          : map.getCenter();
+      map.setView(center, START_ZOOM, { animate: false });
     };
     fit();
     setTimeout(fit, 250);
     window.addEventListener('resize', fit);
 
-    // Status-Filter (Karte + Raster gemeinsam)
+    // Filter (Status + Anliegen) — wirkt auf Karte UND Raster
     const grid = document.getElementById('melder-grid');
     const cards = grid ? Array.from(grid.querySelectorAll<HTMLElement>('.card')) : [];
-    const btns = Array.from(document.querySelectorAll<HTMLButtonElement>('.filterbar__btn'));
-
-    const apply = (filter: string) => {
+    const applyCards = () => {
       cards.forEach((c) => {
-        c.style.display = filter === 'all' || c.dataset.status === filter ? '' : 'none';
-      });
-      markers.forEach(({ marker, status }) => {
-        if (filter === 'all' || status === filter) marker.addTo(map);
-        else map.removeLayer(marker);
+        const okS = state.status === 'all' || c.dataset.status === state.status;
+        const okA = state.anliegen === 'all' || (c.dataset.anliegen || '').split(' ').includes(state.anliegen);
+        c.style.display = okS && okA ? '' : 'none';
       });
     };
-
-    btns.forEach((btn) =>
-      btn.addEventListener('click', () => {
-        btns.forEach((b) => b.classList.remove('is-active'));
-        btn.classList.add('is-active');
-        apply(btn.dataset.filter || 'all');
-      })
-    );
+    document.querySelectorAll<HTMLElement>('.filterbar[data-group]').forEach((bar) => {
+      const group = bar.dataset.group as 'status' | 'anliegen';
+      const gbtns = Array.from(bar.querySelectorAll<HTMLButtonElement>('.filterbar__btn'));
+      gbtns.forEach((btn) =>
+        btn.addEventListener('click', () => {
+          gbtns.forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          state[group] = btn.dataset.filter || 'all';
+          applyCards();
+          renderMarkers();
+        })
+      );
+    });
 
     // „Mein Standort" — Browser fragt um Erlaubnis
     const locateBtn = document.getElementById('locate-btn');
@@ -211,10 +265,9 @@ const STATUS_TEXT: Record<string, string> = {
 
     .toolbar {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.6rem;
       padding-block: 1.25rem;
     }
     /* Legende-Button + Panel in der Karte */
@@ -234,8 +287,11 @@ const STATUS_TEXT: Record<string, string> = {
       font-weight: 700;
       font-size: 0.85rem;
       color: var(--vv-green);
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+      box-shadow: 0 4px 16px rgba(16, 24, 40, 0.16);
       cursor: pointer;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .map-legend-btn svg { width: 1.05em; height: 1.05em; fill: currentColor; }
     .map-legend {
@@ -244,9 +300,11 @@ const STATUS_TEXT: Record<string, string> = {
       right: 12px;
       z-index: 600;
       width: min(300px, calc(100% - 24px));
-      background: #fff;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-radius: var(--radius-lg);
-      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.22);
+      box-shadow: var(--shadow-lg);
       padding: 1rem 1.1rem;
     }
     .map-legend h3 { margin: 0 0 0.8rem; font-size: 1rem; color: var(--vv-green); }
@@ -255,6 +313,15 @@ const STATUS_TEXT: Record<string, string> = {
     .map-legend img { width: 24px; height: 24px; }
     .map-legend strong { display: block; }
     .map-legend span { color: var(--text-soft); font-size: 0.88rem; }
+    .map-legend__area {
+      margin: 0.9rem 0 0; padding-top: 0.8rem; border-top: 1px solid var(--border);
+      font-size: 0.82rem; color: var(--text); display: flex; align-items: flex-start; gap: 0.45rem; line-height: 1.35;
+    }
+    .map-legend__area strong { color: var(--vv-green); }
+    .map-legend__swatch {
+      flex: none; width: 14px; height: 14px; margin-top: 1px; border-radius: 3px;
+      background: rgba(10, 95, 43, 0.12); border: 2px solid var(--vv-green);
+    }
 
     /* Flächenbündig an der unteren linken Kante der Karte „eingebunden" */
     .map-locate-btn {
@@ -266,14 +333,16 @@ const STATUS_TEXT: Record<string, string> = {
       align-items: center;
       gap: 0.45rem;
       border: 0;
-      border-radius: 0 12px 0 0;
-      background: #fff;
+      border-radius: 0 14px 0 0;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       color: var(--vv-blue);
       padding: 0.6rem 1rem 0.6rem 0.85rem;
       font: inherit;
       font-weight: 700;
       font-size: 0.85rem;
-      box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.18);
+      box-shadow: 0 -1px 10px rgba(16, 24, 40, 0.14);
       cursor: pointer;
     }
     .map-locate-btn svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
@@ -294,6 +363,7 @@ const STATUS_TEXT: Record<string, string> = {
     }
     .filterbar__btn:hover { border-color: var(--vv-green); }
     .filterbar__btn.is-active { background: var(--vv-green); border-color: var(--vv-green); color: #fff; }
+    .filterbar--anliegen .filterbar__btn.is-active { background: var(--vv-blue); border-color: var(--vv-blue); }
 
     .grid {
       display: grid;
