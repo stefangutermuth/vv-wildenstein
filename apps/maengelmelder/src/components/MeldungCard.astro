@@ -1,0 +1,59 @@
+---
+import type { Meldung } from '~/lib/melder';
+import { formatDate } from '~/lib/melder';
+
+interface Props { meldung: Meldung; }
+const { meldung } = Astro.props;
+const status = meldung.status?.slug ?? 'neu';
+const statusLabel = meldung.status?.label ?? 'Neue Meldung';
+---
+
+<article class="card" data-status={status}>
+  <a class="card__media" href={`/meldung/${meldung.id}`}>
+    {meldung.image ? (
+      <img src={meldung.image.url} alt={meldung.image.alt || meldung.title} loading="lazy" />
+    ) : (
+      <span class="card__placeholder" aria-hidden="true">⚠</span>
+    )}
+  </a>
+  <div class="card__body">
+    <h3 class="card__title">
+      <a href={`/meldung/${meldung.id}`}>{meldung.title}</a>
+    </h3>
+    <div class="card__meta">
+      <span class:list={['badge', `badge--${status}`]}>{statusLabel}</span>
+      <time datetime={meldung.created}>{formatDate(meldung.created)}</time>
+    </div>
+  </div>
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1); }
+  .card__media {
+    display: block;
+    aspect-ratio: 16 / 10;
+    background: var(--bg-muted);
+    overflow: hidden;
+  }
+  .card__media img { width: 100%; height: 100%; object-fit: cover; }
+  .card__placeholder {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%; font-size: 2.5rem; color: var(--vv-green); opacity: 0.5;
+  }
+  .card__body { padding: 0.85rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .card__title { margin: 0; font-size: 1rem; }
+  .card__title a { color: var(--text); text-decoration: none; }
+  .card__title a:hover { color: var(--vv-blue); }
+  .card__meta { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .card__meta time { font-size: 0.8rem; color: var(--text-soft); }
+</style>

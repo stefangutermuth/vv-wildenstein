@@ -29,3 +29,7 @@ pnpm-debug.log*
 
 # Misc
 .claude/
+
+# Melder-Bestand: Datenexporte (personenbezogene Daten!) und Fremd-Plugin-Referenz nicht versionieren
+docs/melder-bestand/*-export.json
+docs/melder-bestand/wu_vvmeldungen_map.*

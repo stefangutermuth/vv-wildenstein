@@ -11,7 +11,9 @@
     "dev": "npm run dev --workspace=@vv/gruenhainichen",
     "dev:gruenhainichen": "npm run dev --workspace=@vv/gruenhainichen",
     "build": "npm run build --workspaces --if-present",
-    "build:gruenhainichen": "npm run build --workspace=@vv/gruenhainichen"
+    "build:gruenhainichen": "npm run build --workspace=@vv/gruenhainichen",
+    "dev:maengelmelder": "npm run dev --workspace=@vv/maengelmelder",
+    "build:maengelmelder": "npm run build --workspace=@vv/maengelmelder"
   },
   "engines": {
     "node": ">=20"

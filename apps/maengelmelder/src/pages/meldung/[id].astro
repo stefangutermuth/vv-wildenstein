@@ -1,0 +1,167 @@
+---
+import 'leaflet/dist/leaflet.css';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import { getMeldungen, ANLIEGEN_LABELS, formatDate, relativeTime } from '~/lib/melder';
+import type { Meldung } from '~/lib/melder';
+
+export async function getStaticPaths() {
+  const meldungen = await getMeldungen();
+  return meldungen.map((m) => ({ params: { id: String(m.id) }, props: { meldung: m } }));
+}
+
+interface Props { meldung: Meldung; }
+const { meldung } = Astro.props;
+const status = meldung.status?.slug ?? 'neu';
+const statusLabel = meldung.status?.label ?? 'Neue Meldung';
+const hasGeo = meldung.location.lat != null && meldung.location.lng != null;
+const kategorie = meldung.anliegen.map((a) => ANLIEGEN_LABELS[a] ?? a).join(', ');
+const lastUpdate = meldung.public_notes[0]?.date ?? '';
+---
+
+<BaseLayout title={`${meldung.title} – Mängelmelder VV Wildenstein`}>
+  <article class="detail container">
+    <a class="detail__back" href="/">← Zur Karte</a>
+    <h1 class="detail__title">{meldung.title}</h1>
+
+    <div class="detail__meta">
+      <span class:list={['badge', `badge--${status}`]}>{statusLabel}</span>
+      <span class="meta__item">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zM5 9h14v10H5V9z"/></svg>
+        Eingereicht <time data-rel datetime={meldung.created}>am {formatDate(meldung.created)}</time>
+      </span>
+      {kategorie && <span class="meta__item">Kategorie: {kategorie}</span>}
+    </div>
+
+    <div class="cols">
+      <!-- LINKS: Beschreibung + Updates -->
+      <div class="cols__left">
+        <section class="panel">
+          <h2 class="panel__title">Beschreibung</h2>
+          {meldung.description_html
+            ? <div class="panel__body" set:html={meldung.description_html} />
+            : <p class="panel__body muted">Keine Beschreibung angegeben.</p>}
+        </section>
+
+        <section class="panel">
+          <h2 class="panel__title">Updates</h2>
+          {meldung.public_notes.length > 0 ? (
+            <>
+              <p class="panel__sub">
+                <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zM5 9h14v10H5V9z"/></svg>
+                Letztes Update <time data-rel datetime={lastUpdate}>am {formatDate(lastUpdate)}</time>
+              </p>
+              {meldung.public_notes.map((note) => (
+                <article class="update">
+                  {note.date && <time class="update__date" datetime={note.date}>{formatDate(note.date)}</time>}
+                  <p class="update__text">{note.text}</p>
+                </article>
+              ))}
+            </>
+          ) : (
+            <p class="panel__body muted">Noch keine Updates der Verwaltung.</p>
+          )}
+        </section>
+      </div>
+
+      <!-- RECHTS: Karte + Bild -->
+      <div class="cols__right">
+        {hasGeo ? (
+          <div
+            id="detail-map"
+            class="detail__map"
+            data-lat={meldung.location.lat}
+            data-lng={meldung.location.lng}
+            data-status={status}
+          ></div>
+        ) : (
+          <div class="placeholder">Kein Standort hinterlegt.</div>
+        )}
+        {meldung.location.address && <p class="detail__addr">{meldung.location.address}</p>}
+
+        <div class="imgbox">
+          {meldung.image
+            ? <img src={meldung.image.url} alt={meldung.image.alt || meldung.title} />
+            : <p class="muted">Es wurden keine Bilder hinzugefügt.</p>}
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <script>
+    // Relative Zeitangaben clientseitig (bleiben im statischen Build aktuell)
+    const rel = (iso: string): string => {
+      const then = new Date(iso).getTime();
+      if (isNaN(then)) return '';
+      const sec = Math.round((Date.now() - then) / 1000);
+      if (sec < 60) return 'gerade eben';
+      const min = Math.round(sec / 60);
+      if (min < 60) return `vor ${min} Minute${min === 1 ? '' : 'n'}`;
+      const hr = Math.round(min / 60);
+      if (hr < 24) return `vor ${hr} Stunde${hr === 1 ? '' : 'n'}`;
+      const day = Math.round(hr / 24);
+      if (day < 31) return `vor ${day} Tag${day === 1 ? '' : 'en'}`;
+      const mon = Math.round(day / 30);
+      if (mon < 12) return `vor ${mon} Monat${mon === 1 ? '' : 'en'}`;
+      const yr = Math.round(day / 365);
+      return `vor ${yr} Jahr${yr === 1 ? '' : 'en'}`;
+    };
+    document.querySelectorAll<HTMLTimeElement>('time[data-rel]').forEach((t) => {
+      const r = rel(t.getAttribute('datetime') || '');
+      if (r) t.textContent = r;
+    });
+  </script>
+
+  <script>
+    import L from 'leaflet';
+    // Script auf oberster Ebene (NICHT in {hasGeo && …}), damit Astro es bündelt
+    // und das Leaflet-Import auflöst. Karte wird nur gebaut, wenn der Container da ist.
+    const el = document.getElementById('detail-map');
+    if (el) {
+      const lat = parseFloat(el.dataset.lat || '0');
+      const lng = parseFloat(el.dataset.lng || '0');
+      const status = el.dataset.status || 'neu';
+      const map = L.map(el, { scrollWheelZoom: false }).setView([lat, lng], 16);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap-Mitwirkende',
+        maxZoom: 19,
+      }).addTo(map);
+      L.marker([lat, lng], {
+        icon: L.icon({ iconUrl: `/images/marker-${status}.png`, iconSize: [38, 38], iconAnchor: [19, 36] }),
+      }).addTo(map);
+      setTimeout(() => map.invalidateSize(), 200);
+    }
+  </script>
+
+  <style>
+    .detail { padding-block: 1.5rem 2.5rem; }
+    .detail__back { display: inline-block; margin-bottom: 0.75rem; text-decoration: none; font-weight: 500; }
+    .detail__back:hover { text-decoration: underline; }
+    .detail__title { margin: 0 0 0.85rem; font-size: clamp(1.6rem, 4vw, 2.3rem); color: var(--vv-green); }
+
+    .detail__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.25rem; margin-bottom: 1.5rem; }
+    .meta__item { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-soft); font-size: 0.95rem; }
+    .ic { width: 1.05em; height: 1.05em; fill: currentColor; flex: none; }
+
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 820px) { .cols { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--bg-soft); border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; margin-bottom: 1.25rem; }
+    .panel__title { margin: 0 0 0.6rem; font-size: 1.2rem; color: var(--vv-green); }
+    .panel__body { margin: 0; }
+    .panel__sub { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.85rem; color: var(--text-soft); font-size: 0.9rem; }
+    .muted { color: var(--text-soft); }
+
+    .update { padding-top: 0.85rem; margin-top: 0.85rem; border-top: 1px solid var(--border); }
+    .update:first-of-type { padding-top: 0; margin-top: 0; border-top: 0; }
+    .update__date { display: block; font-size: 0.8rem; color: var(--text-soft); margin-bottom: 0.2rem; }
+    .update__text { margin: 0; white-space: pre-line; }
+
+    .detail__map { height: 360px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); z-index: 1; }
+    .detail__addr { margin: 0.6rem 0 0; color: var(--text-soft); font-size: 0.9rem; }
+    .placeholder { height: 200px; display: grid; place-items: center; background: var(--bg-soft); border-radius: var(--radius-lg); color: var(--text-soft); }
+
+    .imgbox { margin-top: 1.25rem; background: var(--bg-soft); border-radius: var(--radius-lg); overflow: hidden; }
+    .imgbox img { width: 100%; display: block; }
+    .imgbox .muted { margin: 0; padding: 2.5rem 1rem; text-align: center; }
+  </style>
+</BaseLayout>

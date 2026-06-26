@@ -1,0 +1,99 @@
+---
+const nav = [
+  { label: 'Willkommen', href: '/willkommen' },
+  { label: 'Karte', href: '/' },
+  { label: 'Meldungen', href: '/meldungen' },
+  { label: 'Impressum', href: '/impressum' },
+  { label: 'Datenschutz', href: '/datenschutz' },
+];
+const path = Astro.url.pathname;
+---
+
+<header class="hdr">
+  <div class="hdr__inner container">
+    <a class="hdr__brand" href="/">
+      <span class="hdr__pill">
+        <img class="hdr__melderlogo" src="/images/melder-logo.svg" alt="" />
+        <span class="hdr__divider" aria-hidden="true"></span>
+        <img class="hdr__wappen" src="/images/wappen.svg" alt="Verwaltungsverband Wildenstein" />
+      </span>
+      <span class="hdr__brand-text">
+        <strong>Mängelmelder</strong>
+      </span>
+    </a>
+
+    <nav class="hdr__nav">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          class:list={['hdr__link', { 'is-active': path === item.href }]}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  </div>
+</header>
+
+<style>
+  .hdr {
+    background: var(--vv-green);
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+  }
+  .hdr__inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: var(--header-h);
+  }
+  .hdr__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: #fff;
+    text-decoration: none;
+    margin-right: auto;
+  }
+  .hdr__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 5px 12px;
+  }
+  .hdr__melderlogo { width: 42px; height: 42px; flex: none; display: block; }
+  .hdr__divider {
+    width: 2px;
+    align-self: stretch;
+    margin: 4px 0;
+    background: var(--vv-blue);
+    border-radius: 1px;
+  }
+  .hdr__wappen { height: 46px; width: auto; flex: none; display: block; }
+  .hdr__brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+  .hdr__brand-text strong { font-size: 1.15rem; }
+  .hdr__brand-text small { font-size: 0.72rem; opacity: 0.85; }
+
+  .hdr__nav { display: flex; gap: 0.3rem; }
+  .hdr__link {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: var(--radius);
+    transition: background-color 0.15s ease;
+  }
+  .hdr__link:hover { background: rgba(255, 255, 255, 0.12); }
+  .hdr__link.is-active { background: rgba(255, 255, 255, 0.18); }
+
+  /* Smartphone: obere Navigation raus — die untere Tab-Leiste (BottomNav) übernimmt. */
+  @media (max-width: 960px) {
+    .hdr__nav { display: none; }
+  }
+</style>

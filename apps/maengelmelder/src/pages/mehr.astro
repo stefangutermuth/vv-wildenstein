@@ -1,0 +1,62 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+
+const links = [
+  { label: 'Willkommen', href: '/willkommen' },
+  { label: 'Mängelmelder Karte', href: '/' },
+  { label: 'Alle Meldungen', href: '/meldungen' },
+  { label: 'Mangel einreichen', href: '/mangel-einreichen' },
+  { label: 'Impressum', href: '/impressum' },
+  { label: 'Datenschutzerklärung', href: '/datenschutz' },
+];
+const year = new Date().getFullYear();
+---
+
+<BaseLayout title="Mehr – Mängelmelder VV Wildenstein">
+  <section class="container mehr">
+    <h1 class="mehr__title">Mehr</h1>
+
+    <nav class="mehr__links" aria-label="Weitere Seiten">
+      {links.map((l) => (
+        <a class="mehr__link" href={l.href}>
+          <span>{l.label}</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        </a>
+      ))}
+    </nav>
+
+    <p class="mehr__org">
+      <strong>Verwaltungsverband Wildenstein</strong><br />
+      Mängelmelder im Freistaat Sachsen
+    </p>
+
+    <div class="mehr__partners">
+      <img src="/images/asskomm-reihe.svg" alt="Partner des Verwaltungsverbands Wildenstein" loading="lazy" />
+    </div>
+
+    <p class="mehr__copy">© {year} Verwaltungsverband Wildenstein</p>
+  </section>
+
+  <style>
+    .mehr { padding-block: 1.5rem 2rem; max-width: 640px; }
+    .mehr__title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 1.25rem; color: var(--vv-green); }
+
+    .mehr__links { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .mehr__link {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.95rem 1.1rem; text-decoration: none; color: var(--text);
+      font-weight: 600; border-top: 1px solid var(--border); background: var(--bg);
+    }
+    .mehr__link:first-child { border-top: 0; }
+    .mehr__link:hover { background: var(--bg-soft); color: var(--vv-blue); }
+    .mehr__link svg { width: 18px; height: 18px; fill: none; stroke: var(--text-soft); stroke-width: 2.5; }
+
+    .mehr__org { margin: 1.75rem 0 0; color: var(--text-soft); }
+    .mehr__org strong { color: var(--text); }
+
+    .mehr__partners { margin: 1.5rem 0; text-align: center; }
+    .mehr__partners img { width: 100%; max-width: 460px; height: auto; margin-inline: auto; }
+
+    .mehr__copy { color: var(--text-soft); font-size: 0.85rem; margin: 0; }
+  </style>
+</BaseLayout>

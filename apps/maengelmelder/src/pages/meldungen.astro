@@ -1,0 +1,76 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import MeldungCard from '~/components/MeldungCard.astro';
+import { getMeldungen, STATUS_LABELS } from '~/lib/melder';
+
+const meldungen = await getMeldungen();
+const counts = {
+  neu: meldungen.filter((m) => m.status?.slug === 'neu').length,
+  'in-bearbeitung': meldungen.filter((m) => m.status?.slug === 'in-bearbeitung').length,
+  erledigt: meldungen.filter((m) => m.status?.slug === 'erledigt').length,
+};
+const statusOrder = ['neu', 'in-bearbeitung', 'erledigt'] as const;
+---
+
+<BaseLayout title="Meldungen – Mängelmelder VV Wildenstein">
+  <section class="container list">
+    <h1 class="list__title">Meldungen</h1>
+
+    <div class="filterbar" role="group" aria-label="Nach Status filtern">
+      <button class="filterbar__btn is-active" data-filter="all">Alle ({meldungen.length})</button>
+      {statusOrder.map((s) => (
+        <button class="filterbar__btn" data-filter={s}>
+          {STATUS_LABELS[s]} ({counts[s]})
+        </button>
+      ))}
+    </div>
+
+    {meldungen.length === 0 ? (
+      <p class="empty">Aktuell sind keine Meldungen vorhanden.</p>
+    ) : (
+      <div class="grid" id="melder-grid">
+        {meldungen.map((m) => <MeldungCard meldung={m} />)}
+      </div>
+    )}
+  </section>
+
+  <script>
+    const grid = document.getElementById('melder-grid');
+    const cards = grid ? Array.from(grid.querySelectorAll<HTMLElement>('.card')) : [];
+    const btns = Array.from(document.querySelectorAll<HTMLButtonElement>('.filterbar__btn'));
+    const apply = (filter: string) => {
+      cards.forEach((c) => {
+        c.style.display = filter === 'all' || c.dataset.status === filter ? '' : 'none';
+      });
+    };
+    btns.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        btns.forEach((b) => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        apply(btn.dataset.filter || 'all');
+      })
+    );
+  </script>
+
+  <style>
+    .list { padding-block: 1.5rem 2rem; }
+    .list__title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 1.25rem; color: var(--vv-green); }
+
+    .filterbar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.5rem; }
+    .filterbar__btn {
+      font: inherit; font-size: 0.85rem; font-weight: 500;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+      padding: 0.4rem 0.85rem; border-radius: 999px; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .filterbar__btn:hover { border-color: var(--vv-green); }
+    .filterbar__btn.is-active { background: var(--vv-green); border-color: var(--vv-green); color: #fff; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 1.25rem;
+    }
+    .empty { padding: 2rem 0; color: var(--text-soft); }
+  </style>
+</BaseLayout>

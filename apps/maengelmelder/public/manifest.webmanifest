@@ -1,0 +1,19 @@
+{
+  "name": "Mängelmelder Verwaltungsverband Wildenstein",
+  "short_name": "Mängelmelder",
+  "description": "Melden Sie Mängel im Verwaltungsverband Wildenstein – Straßen, Beleuchtung, Müll, Grünflächen und Wege.",
+  "lang": "de",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0a5f2b",
+  "categories": ["government", "utilities"],
+  "icons": [
+    { "src": "/appicons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/appicons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/appicons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

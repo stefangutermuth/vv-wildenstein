@@ -1,0 +1,306 @@
+---
+import 'leaflet/dist/leaflet.css';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import MeldungCard from '~/components/MeldungCard.astro';
+import { getMeldungen, getGeoJSON, STATUS_LABELS } from '~/lib/melder';
+
+const meldungen = await getMeldungen();
+const geo = await getGeoJSON();
+
+const counts = {
+  neu: meldungen.filter((m) => m.status?.slug === 'neu').length,
+  'in-bearbeitung': meldungen.filter((m) => m.status?.slug === 'in-bearbeitung').length,
+  erledigt: meldungen.filter((m) => m.status?.slug === 'erledigt').length,
+};
+const statusOrder = ['neu', 'in-bearbeitung', 'erledigt'] as const;
+
+const STATUS_TEXT: Record<string, string> = {
+  neu: 'Diese Mängel wurden uns gemeldet.',
+  'in-bearbeitung': 'Hier wird schon fleißig an der Behebung gearbeitet.',
+  erledigt: 'Dank Ihrer Hilfe konnten wir den Mangel beheben.',
+};
+---
+
+<BaseLayout title="Mängelmelder Karte – Verwaltungsverband Wildenstein">
+  <!-- Karte -->
+  <section class="mapwrap">
+    <div id="melder-map" class="mapwrap__map"></div>
+
+    <button id="legend-toggle" class="map-legend-btn" type="button" aria-expanded="false" aria-controls="legend-panel">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      Legende
+    </button>
+    <div id="legend-panel" class="map-legend" hidden>
+      <h3>Was bedeuten die Pins?</h3>
+      <ul>
+        {statusOrder.map((s) => (
+          <li>
+            <img src={`/images/marker-${s}.png`} alt="" width="24" height="24" />
+            <span><strong>{STATUS_LABELS[s]}</strong>{STATUS_TEXT[s]}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <button id="locate-btn" class="map-locate-btn" type="button" aria-label="Mein Standort anzeigen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+      <span>Mein Standort</span>
+    </button>
+
+    <a href="/mangel-einreichen" class="btn btn--primary mapwrap__cta">＋ Mangel melden</a>
+  </section>
+
+  <!-- Filter (auf dem Smartphone ausgeblendet — dort ist die Karte für sich) -->
+  <section class="container toolbar desktop-only">
+    <div class="filterbar" role="group" aria-label="Nach Status filtern">
+      <button class="filterbar__btn is-active" data-filter="all">Alle ({meldungen.length})</button>
+      {statusOrder.map((s) => (
+        <button class="filterbar__btn" data-filter={s}>
+          {STATUS_LABELS[s]} ({counts[s]})
+        </button>
+      ))}
+    </div>
+  </section>
+
+  <!-- Meldungen-Raster (Smartphone: eigene Seite /meldungen) -->
+  <section class="container desktop-only">
+    {meldungen.length === 0 ? (
+      <p class="empty">Aktuell sind keine Meldungen vorhanden.</p>
+    ) : (
+      <div class="grid" id="melder-grid">
+        {meldungen.map((m) => <MeldungCard meldung={m} />)}
+      </div>
+    )}
+  </section>
+
+  <script type="application/json" id="melder-geo" set:html={JSON.stringify(geo)}></script>
+
+  <script>
+    import L from 'leaflet';
+
+    const geoEl = document.getElementById('melder-geo');
+    const geo = geoEl ? JSON.parse(geoEl.textContent || '{"features":[]}') : { features: [] };
+
+    // Original-Marker sind 42×42 (quadratisch) — Größe quadratisch halten,
+    // sonst verzerrt der Tropfen-Pin. Anker an der Pin-Spitze unten-mitte.
+    const icon = (status: string) =>
+      L.icon({
+        iconUrl: `/images/marker-${status}.png`,
+        iconSize: [38, 38],
+        iconAnchor: [19, 36],
+        popupAnchor: [0, -32],
+      });
+
+    const map = L.map('melder-map', { scrollWheelZoom: false }).setView([50.78, 13.18], 12);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap-Mitwirkende',
+      maxZoom: 19,
+    }).addTo(map);
+
+    const markers: { marker: L.Marker; status: string }[] = [];
+    const bounds = L.latLngBounds([]);
+
+    for (const f of geo.features) {
+      const [lng, lat] = f.geometry.coordinates;
+      const status = f.properties.status || 'neu';
+      const marker = L.marker([lat, lng], { icon: icon(status) }).addTo(map);
+      marker.bindPopup(
+        `<strong>${f.properties.title}</strong><br><a href="/meldung/${f.properties.id}">Zur Meldung</a>`
+      );
+      markers.push({ marker, status });
+      bounds.extend([lat, lng]);
+    }
+    // Alle Marker einpassen. invalidateSize stellt sicher, dass der Container
+    // seine echte Höhe hat (sonst rechnet fitBounds mit 0px → falscher Zoom).
+    const fit = () => {
+      if (!markers.length) return;
+      map.invalidateSize();
+      // Zoom, der alle Marker einpasst …
+      const z = map.getBoundsZoom(bounds, false, L.point(30, 30));
+      // … eine Stufe weiter raus (Desktop); auf dem Smartphone eine Stufe näher dran.
+      const isMobile = window.matchMedia('(max-width: 960px)').matches;
+      map.setView(bounds.getCenter(), Math.min(16, z) - 1 + (isMobile ? 1 : 0), { animate: false });
+    };
+    fit();
+    setTimeout(fit, 250);
+    window.addEventListener('resize', fit);
+
+    // Status-Filter (Karte + Raster gemeinsam)
+    const grid = document.getElementById('melder-grid');
+    const cards = grid ? Array.from(grid.querySelectorAll<HTMLElement>('.card')) : [];
+    const btns = Array.from(document.querySelectorAll<HTMLButtonElement>('.filterbar__btn'));
+
+    const apply = (filter: string) => {
+      cards.forEach((c) => {
+        c.style.display = filter === 'all' || c.dataset.status === filter ? '' : 'none';
+      });
+      markers.forEach(({ marker, status }) => {
+        if (filter === 'all' || status === filter) marker.addTo(map);
+        else map.removeLayer(marker);
+      });
+    };
+
+    btns.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        btns.forEach((b) => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        apply(btn.dataset.filter || 'all');
+      })
+    );
+
+    // „Mein Standort" — Browser fragt um Erlaubnis
+    const locateBtn = document.getElementById('locate-btn');
+    let userMarker: L.CircleMarker | null = null;
+    let accCircle: L.Circle | null = null;
+    if (locateBtn) {
+      locateBtn.addEventListener('click', () => {
+        locateBtn.classList.add('is-loading');
+        map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
+      });
+      map.on('locationfound', (e) => {
+        locateBtn.classList.remove('is-loading');
+        if (userMarker) userMarker.setLatLng(e.latlng);
+        else userMarker = L.circleMarker(e.latlng, { radius: 8, color: '#fff', weight: 3, fillColor: '#1a73e8', fillOpacity: 1 }).addTo(map);
+        if (accCircle) accCircle.setLatLng(e.latlng).setRadius(e.accuracy);
+        else accCircle = L.circle(e.latlng, { radius: e.accuracy, color: '#1a73e8', weight: 1, fillColor: '#1a73e8', fillOpacity: 0.12 }).addTo(map);
+      });
+      map.on('locationerror', () => {
+        locateBtn.classList.remove('is-loading');
+        alert('Ihr Standort konnte nicht ermittelt werden. Bitte erlauben Sie die Standortfreigabe im Browser.');
+      });
+    }
+
+    // Legende-Panel in der Karte
+    const legendToggle = document.getElementById('legend-toggle');
+    const legendPanel = document.getElementById('legend-panel');
+    if (legendToggle && legendPanel) {
+      legendToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const willOpen = legendPanel.hidden;
+        legendPanel.hidden = !willOpen;
+        legendToggle.setAttribute('aria-expanded', String(willOpen));
+      });
+      document.addEventListener('click', (e) => {
+        const t = e.target as Node;
+        if (!legendPanel.hidden && !legendPanel.contains(t) && t !== legendToggle) {
+          legendPanel.hidden = true;
+          legendToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+  </script>
+
+  <style>
+    .mapwrap { position: relative; }
+    .mapwrap__map { height: clamp(320px, 52vh, 560px); width: 100%; z-index: 1; }
+
+    /* Smartphone: Liste/Filter aus, blauer CTA aus (steckt im Menü), Karte füllt den Bildschirm */
+    @media (max-width: 960px) {
+      .desktop-only { display: none !important; }
+      .mapwrap__cta { display: none; }
+      .mapwrap__map { height: calc(100svh - var(--header-h) - 72px); }
+    }
+    .mapwrap__cta {
+      position: absolute;
+      left: 50%;
+      bottom: 1.1rem;
+      transform: translateX(-50%);
+      z-index: 500;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding-block: 1.25rem;
+    }
+    /* Legende-Button + Panel in der Karte */
+    .map-legend-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #fff;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0.5rem 0.85rem;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--vv-green);
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+      cursor: pointer;
+    }
+    .map-legend-btn svg { width: 1.05em; height: 1.05em; fill: currentColor; }
+    .map-legend {
+      position: absolute;
+      top: 54px;
+      right: 12px;
+      z-index: 600;
+      width: min(300px, calc(100% - 24px));
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.22);
+      padding: 1rem 1.1rem;
+    }
+    .map-legend h3 { margin: 0 0 0.8rem; font-size: 1rem; color: var(--vv-green); }
+    .map-legend ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.85rem; }
+    .map-legend li { display: grid; grid-template-columns: 28px 1fr; gap: 0.6rem; align-items: start; }
+    .map-legend img { width: 24px; height: 24px; }
+    .map-legend strong { display: block; }
+    .map-legend span { color: var(--text-soft); font-size: 0.88rem; }
+
+    /* Flächenbündig an der unteren linken Kante der Karte „eingebunden" */
+    .map-locate-btn {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      border: 0;
+      border-radius: 0 12px 0 0;
+      background: #fff;
+      color: var(--vv-blue);
+      padding: 0.6rem 1rem 0.6rem 0.85rem;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.85rem;
+      box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+    }
+    .map-locate-btn svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+    .map-locate-btn.is-loading { opacity: 0.5; }
+
+    .filterbar { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .filterbar__btn {
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      padding: 0.4rem 0.85rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .filterbar__btn:hover { border-color: var(--vv-green); }
+    .filterbar__btn.is-active { background: var(--vv-green); border-color: var(--vv-green); color: #fff; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 1.25rem;
+      padding-bottom: 1rem;
+    }
+    .empty { padding: 2rem 0; color: var(--text-soft); }
+  </style>
+</BaseLayout>
