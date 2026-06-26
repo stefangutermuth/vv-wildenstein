@@ -1,5 +1,5 @@
 /* Mängelmelder – einfacher Service Worker (App-Shell-Cache + Offline-Fallback). */
-const CACHE = 'melder-v1';
+const CACHE = 'melder-v2';
 const SHELL = [
   '/',
   '/meldungen',

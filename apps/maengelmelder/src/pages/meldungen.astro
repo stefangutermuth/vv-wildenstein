@@ -1,27 +1,36 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro';
 import MeldungCard from '~/components/MeldungCard.astro';
-import { getMeldungen, STATUS_LABELS } from '~/lib/melder';
+import { getMeldungen, STATUS_LABELS, ANLIEGEN_META } from '~/lib/melder';
 
 const meldungen = await getMeldungen();
-const counts = {
+const statusOrder = ['neu', 'in-bearbeitung', 'erledigt'] as const;
+const statusCounts = {
   neu: meldungen.filter((m) => m.status?.slug === 'neu').length,
   'in-bearbeitung': meldungen.filter((m) => m.status?.slug === 'in-bearbeitung').length,
   erledigt: meldungen.filter((m) => m.status?.slug === 'erledigt').length,
 };
-const statusOrder = ['neu', 'in-bearbeitung', 'erledigt'] as const;
+const anliegenSlugs = Object.keys(ANLIEGEN_META);
+const anliegenCounts = Object.fromEntries(
+  anliegenSlugs.map((s) => [s, meldungen.filter((m) => m.anliegen.includes(s)).length])
+);
 ---
 
 <BaseLayout title="Meldungen – Mängelmelder VV Wildenstein">
   <section class="container list">
     <h1 class="list__title">Meldungen</h1>
 
-    <div class="filterbar" role="group" aria-label="Nach Status filtern">
+    <div class="filterbar" data-group="status" role="group" aria-label="Nach Status filtern">
       <button class="filterbar__btn is-active" data-filter="all">Alle ({meldungen.length})</button>
       {statusOrder.map((s) => (
-        <button class="filterbar__btn" data-filter={s}>
-          {STATUS_LABELS[s]} ({counts[s]})
-        </button>
+        <button class="filterbar__btn" data-filter={s}>{STATUS_LABELS[s]} ({statusCounts[s]})</button>
+      ))}
+    </div>
+
+    <div class="filterbar filterbar--anliegen" data-group="anliegen" role="group" aria-label="Nach Anliegen filtern">
+      <button class="filterbar__btn is-active" data-filter="all">Alle Anliegen</button>
+      {anliegenSlugs.filter((s) => anliegenCounts[s] > 0).map((s) => (
+        <button class="filterbar__btn" data-filter={s}>{ANLIEGEN_META[s].label} ({anliegenCounts[s]})</button>
       ))}
     </div>
 
@@ -32,31 +41,47 @@ const statusOrder = ['neu', 'in-bearbeitung', 'erledigt'] as const;
         {meldungen.map((m) => <MeldungCard meldung={m} />)}
       </div>
     )}
+    <p class="noresult" id="noresult" hidden>Keine Meldungen für diese Auswahl.</p>
   </section>
 
   <script>
     const grid = document.getElementById('melder-grid');
     const cards = grid ? Array.from(grid.querySelectorAll<HTMLElement>('.card')) : [];
-    const btns = Array.from(document.querySelectorAll<HTMLButtonElement>('.filterbar__btn'));
-    const apply = (filter: string) => {
+    const noresult = document.getElementById('noresult');
+    const state = { status: 'all', anliegen: 'all' };
+
+    const apply = () => {
+      let visible = 0;
       cards.forEach((c) => {
-        c.style.display = filter === 'all' || c.dataset.status === filter ? '' : 'none';
+        const okStatus = state.status === 'all' || c.dataset.status === state.status;
+        const okAnliegen = state.anliegen === 'all' || (c.dataset.anliegen || '').split(' ').includes(state.anliegen);
+        const show = okStatus && okAnliegen;
+        c.style.display = show ? '' : 'none';
+        if (show) visible++;
       });
+      if (noresult) noresult.hidden = visible !== 0;
     };
-    btns.forEach((btn) =>
-      btn.addEventListener('click', () => {
-        btns.forEach((b) => b.classList.remove('is-active'));
-        btn.classList.add('is-active');
-        apply(btn.dataset.filter || 'all');
-      })
-    );
+
+    document.querySelectorAll<HTMLElement>('.filterbar[data-group]').forEach((bar) => {
+      const group = bar.dataset.group as 'status' | 'anliegen';
+      const btns = Array.from(bar.querySelectorAll<HTMLButtonElement>('.filterbar__btn'));
+      btns.forEach((btn) =>
+        btn.addEventListener('click', () => {
+          btns.forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          state[group] = btn.dataset.filter || 'all';
+          apply();
+        })
+      );
+    });
   </script>
 
   <style>
     .list { padding-block: 1.5rem 2rem; }
     .list__title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 1.25rem; color: var(--vv-green); }
 
-    .filterbar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.5rem; }
+    .filterbar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
+    .filterbar--anliegen { margin-bottom: 1.5rem; }
     .filterbar__btn {
       font: inherit; font-size: 0.85rem; font-weight: 500;
       border: 1px solid var(--border); background: var(--bg); color: var(--text);
@@ -65,12 +90,9 @@ const statusOrder = ['neu', 'in-bearbeitung', 'erledigt'] as const;
     }
     .filterbar__btn:hover { border-color: var(--vv-green); }
     .filterbar__btn.is-active { background: var(--vv-green); border-color: var(--vv-green); color: #fff; }
+    .filterbar--anliegen .filterbar__btn.is-active { background: var(--vv-blue); border-color: var(--vv-blue); }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: 1.25rem;
-    }
-    .empty { padding: 2rem 0; color: var(--text-soft); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.25rem; }
+    .empty, .noresult { padding: 2rem 0; color: var(--text-soft); }
   </style>
 </BaseLayout>

@@ -1,25 +1,36 @@
 ---
 import type { Meldung } from '~/lib/melder';
-import { formatDate } from '~/lib/melder';
+import { formatDate, ANLIEGEN_META } from '~/lib/melder';
 
 interface Props { meldung: Meldung; }
 const { meldung } = Astro.props;
 const status = meldung.status?.slug ?? 'neu';
 const statusLabel = meldung.status?.label ?? 'Neue Meldung';
+
+const anliegenSlug = meldung.anliegen[0] ?? '';
+const meta = ANLIEGEN_META[anliegenSlug];
+const kategorie = meta?.label ?? '';
+const ort = meldung.location.city;
+const contextParts = [kategorie, ort].filter(Boolean);
 ---
 
-<article class="card" data-status={status}>
+<article class="card" data-status={status} data-anliegen={meldung.anliegen.join(' ')}>
   <a class="card__media" href={`/meldung/${meldung.id}`}>
     {meldung.image ? (
       <img src={meldung.image.url} alt={meldung.image.alt || meldung.title} loading="lazy" />
     ) : (
-      <span class="card__placeholder" aria-hidden="true">⚠</span>
+      <span class="card__placeholder" aria-hidden="true" style={meta ? `--tile:${meta.color}` : undefined}>
+        <svg viewBox="0 0 24 24"><path d={meta?.icon ?? 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'} /></svg>
+      </span>
     )}
   </a>
   <div class="card__body">
     <h3 class="card__title">
       <a href={`/meldung/${meldung.id}`}>{meldung.title}</a>
     </h3>
+    {contextParts.length > 0 && (
+      <p class="card__context">{contextParts.join(' · ')}</p>
+    )}
     <div class="card__meta">
       <span class:list={['badge', `badge--${status}`]}>{statusLabel}</span>
       <time datetime={meldung.created}>{formatDate(meldung.created)}</time>
@@ -38,22 +49,27 @@ const statusLabel = meldung.status?.label ?? 'Neue Meldung';
     box-shadow: var(--shadow);
     transition: transform 0.12s ease, box-shadow 0.12s ease;
   }
-  .card:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.1); }
+  .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
   .card__media {
     display: block;
     aspect-ratio: 16 / 10;
     background: var(--bg-muted);
     overflow: hidden;
   }
-  .card__media img { width: 100%; height: 100%; object-fit: cover; }
+  .card__media img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+  .card:hover .card__media img { transform: scale(1.06); }
+  /* Kein-Foto-Kachel: farbiger Verlauf je Anliegen + weißes Icon */
   .card__placeholder {
     display: flex; align-items: center; justify-content: center;
-    width: 100%; height: 100%; font-size: 2.5rem; color: var(--vv-green); opacity: 0.5;
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--tile, var(--vv-green)), color-mix(in srgb, var(--tile, var(--vv-green)) 72%, #000));
   }
-  .card__body { padding: 0.85rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .card__placeholder svg { width: 40%; max-width: 64px; height: auto; fill: rgba(255, 255, 255, 0.92); }
+  .card__body { padding: 0.85rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.45rem; }
   .card__title { margin: 0; font-size: 1rem; }
   .card__title a { color: var(--text); text-decoration: none; }
   .card__title a:hover { color: var(--vv-blue); }
-  .card__meta { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .card__context { margin: 0; font-size: 0.8rem; color: var(--text-soft); line-height: 1.3; }
+  .card__meta { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.15rem; }
   .card__meta time { font-size: 0.8rem; color: var(--text-soft); }
 </style>
