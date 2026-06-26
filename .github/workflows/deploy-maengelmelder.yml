@@ -1,0 +1,58 @@
+name: Deploy Mängelmelder
+
+# Deployt das Astro-Frontend nach melder.vv-wildenstein.com.
+#
+# Auslöser:
+#  - Push auf main, wenn sich apps/maengelmelder/ ändert (Code-Änderungen)
+#  - alle 30 Minuten (holt neue/freigegebene Meldungen + Statusänderungen aus WP)
+#  - manuell über GitHub → Actions → „Deploy Mängelmelder" → Run workflow
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/maengelmelder/**'
+      - '.github/workflows/deploy-maengelmelder.yml'
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  deploy-maengelmelder:
+    name: Mängelmelder → melder.vv-wildenstein.com
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Astro bauen (Live-Daten aus vv-wildenstein.com, Produktion = indexierbar)
+        run: npm run build:maengelmelder
+
+      - name: SSH-Schlüssel laden
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ALLINKL_SSH_KEY }}
+
+      - name: All-Inkl-Host bekannt machen
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.ALLINKL_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Per rsync zu melder.vv-wildenstein.com hochladen
+        run: |
+          rsync -avz --delete --human-readable \
+            --exclude='.well-known' \
+            apps/maengelmelder/dist/ \
+            ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/melder.vv-wildenstein.com/
+
+      - name: Erfolg
+        run: echo "✅ Deploy fertig: https://melder.vv-wildenstein.com"
