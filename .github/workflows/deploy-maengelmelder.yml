@@ -45,14 +45,29 @@ jobs:
       - name: All-Inkl-Host bekannt machen
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.ALLINKL_SSH_HOST }} >> ~/.ssh/known_hosts
+          # Mit Wiederholung gegen kurze Netzwerk-Aussetzer
+          for i in 1 2 3 4 5; do
+            if ssh-keyscan -T 20 -H "${{ secrets.ALLINKL_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null && [ -s ~/.ssh/known_hosts ]; then
+              echo "Host-Key erhalten (Versuch $i)"; exit 0
+            fi
+            echo "ssh-keyscan Versuch $i fehlgeschlagen — neuer Versuch in 10s…"; sleep 10
+          done
+          echo "ssh-keyscan nach 5 Versuchen fehlgeschlagen"; exit 1
 
       - name: Per rsync zu melder.vv-wildenstein.com hochladen
         run: |
-          rsync -avz --delete --human-readable \
-            --exclude='.well-known' \
-            apps/maengelmelder/dist/ \
-            ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/melder.vv-wildenstein.com/
+          # Bis zu 3 Versuche gegen vorübergehende Verbindungsprobleme
+          for i in 1 2 3; do
+            if rsync -avz --delete --human-readable \
+              --exclude='.well-known' \
+              -e "ssh -o ConnectTimeout=30" \
+              apps/maengelmelder/dist/ \
+              ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/melder.vv-wildenstein.com/; then
+              echo "Upload erfolgreich (Versuch $i)"; exit 0
+            fi
+            echo "rsync Versuch $i fehlgeschlagen — neuer Versuch in 15s…"; sleep 15
+          done
+          echo "rsync nach 3 Versuchen fehlgeschlagen"; exit 1
 
       - name: Erfolg
         run: |
