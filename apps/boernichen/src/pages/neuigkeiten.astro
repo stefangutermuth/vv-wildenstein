@@ -1,0 +1,16 @@
+---
+import GrhPage from '../layouts/GrhPage.astro';
+import GrhNewsGrid from '../components/sections/GrhNewsGrid.astro';
+import { getNews } from '../lib/cms';
+
+// Alle Neuigkeiten (ohne reine Sperrungsmeldungen)
+const news = (await getNews()).filter((n) => n.category !== 'sperrung');
+---
+<GrhPage
+  title="Neuigkeiten"
+  eyebrow="Aktuelles"
+  description="Aktuelle Mitteilungen, Bekanntmachungen und Nachrichten aus Börnichen/Erzgeb."
+  wide
+>
+  <GrhNewsGrid news={news} columns={3} />
+</GrhPage>

@@ -1,0 +1,551 @@
+---
+import GrhIcon from '../primitives/GrhIcon.astro';
+
+const tiles = [
+  {
+    num: '01',
+    icon: 'hiking',
+    label: 'Wandern',
+    sub: 'Schachwanderweg, Zschopautalweg, EURORANDO 2026',
+    href: '/tourismus/wandern',
+    tone: 'forest',
+    image: '/images/tourism/wandern.jpg',
+  },
+  {
+    num: '02',
+    icon: 'angel11',
+    label: 'Holzkunst',
+    sub: 'Wendt-&-Kühn-Welt, Schauwerkstatt, Galerien',
+    href: '/tourismus/sehenswuerdigkeiten',
+    tone: 'wood',
+    image: '/images/tradition/wendt-kuehn-freilandspieldose.jpg',
+  },
+  {
+    num: '03',
+    icon: 'bike',
+    label: 'Radfahren',
+    sub: 'Flöhatal, Erzgebirgskamm, Mountainbike-Touren',
+    href: '/tourismus/radfahren',
+    tone: 'sage',
+    image: '/images/ortsteile/borstendorf-schachwanderweg.jpg',
+  },
+  {
+    num: '04',
+    icon: 'tree',
+    label: 'Natur & Baden',
+    sub: 'Wälder, Waldbäder, ruhige Picknickplätze',
+    href: '/tourismus/baden',
+    tone: 'moss',
+    image: '/images/hero/floeha-antje-wolfeil.jpeg',
+  },
+  {
+    num: '05',
+    icon: 'utensils',
+    label: 'Gastronomie',
+    sub: 'Erzgebirgische Küche, Cafés, Hofläden',
+    href: '/tourismus/gastronomie',
+    tone: 'sandstone',
+    image: '/images/tradition/hiehnelmacherhaus.jpg',
+  },
+  {
+    num: '06',
+    icon: 'bed',
+    label: 'Unterkünfte',
+    sub: 'Pensionen, Ferienwohnungen, Privatvermieter',
+    href: '/tourismus/unterkuenfte',
+    tone: 'forest-deep',
+    image: '/images/ortsteile/waldkirchen-blaufarbenwerk.jpg',
+  },
+] as const;
+---
+<div class="grh-strip" data-grh-strip>
+  <div class="grh-strip__track" data-grh-strip-track>
+    {tiles.map((t) => (
+      <a class={`grh-strip__tile grh-strip__tile--${t.tone}`} href={t.href}>
+        <span class="grh-strip__bg" style={`background-image: url('${t.image}')`} aria-hidden="true"></span>
+        <span class={`grh-strip__overlay grh-strip__overlay--${t.tone}`} aria-hidden="true"></span>
+        <span class="grh-strip__num" aria-hidden="true">{t.num}</span>
+        <span class="grh-strip__icon" aria-hidden="true">
+          <GrhIcon name={t.icon as any} size={36} />
+        </span>
+        <span class="grh-strip__label">{t.label}</span>
+        <span class="grh-strip__sub">{t.sub}</span>
+        <span class="grh-strip__arrow" aria-hidden="true">
+          <GrhIcon name="arrow-right" size={18} />
+        </span>
+      </a>
+    ))}
+  </div>
+
+  {/* Custom Drag-Cursor — folgt der Maus über dem Strip */}
+  <div class="grh-strip__cursor-pos" data-grh-strip-cursor-pos aria-hidden="true">
+    <div class="grh-strip__cursor" data-grh-strip-cursor>
+      <svg class="grh-strip__cursor-arrow grh-strip__cursor-arrow--prev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12" /><polyline points="13 6 19 12 13 18" />
+      </svg>
+      <span class="grh-strip__cursor-label">Ziehen</span>
+      <svg class="grh-strip__cursor-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12" /><polyline points="13 6 19 12 13 18" />
+      </svg>
+    </div>
+  </div>
+
+  <div class="grh-strip__nav" aria-hidden="true">
+    <button type="button" class="grh-strip__navbtn grh-strip__navbtn--prev" data-grh-strip-prev aria-label="Vorherige Tiles">
+      <GrhIcon name="arrow-right" size={14} />
+    </button>
+    <div class="grh-strip__progress" data-grh-strip-progress>
+      <span class="grh-strip__progress-bar" data-grh-strip-progressbar></span>
+    </div>
+    <button type="button" class="grh-strip__navbtn" data-grh-strip-next aria-label="Nächste Tiles">
+      <GrhIcon name="arrow-right" size={14} />
+    </button>
+  </div>
+</div>
+
+<style>
+  .grh-strip {
+    position: relative;
+  }
+  .grh-strip__track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(240px, 28vw, 320px);
+    gap: var(--grh-space-3);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    /* Kein Scroll-Snap — gibt komplett freies, weiches Scrollen */
+    padding-block: var(--grh-space-2) var(--grh-space-5);
+    scrollbar-width: none;
+    /* auto = direkter 1:1 Drag, kein Browser-Animations-Override */
+    scroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .grh-strip__track::-webkit-scrollbar { display: none; }
+
+  /* Drag-to-Scroll Cursor-Affordance (Fallback ohne JS) */
+  .grh-strip__track.is-grabbable { cursor: grab; }
+  .grh-strip__track.is-grabbing  { cursor: grabbing; }
+  .grh-strip__track.is-grabbing a { pointer-events: none; }
+  /* Wenn der Custom-Cursor aktiv ist, nativen Cursor verstecken */
+  .grh-strip__track.is-cursor-active,
+  .grh-strip__track.is-cursor-active * { cursor: none !important; }
+
+  /* === Custom Drag-Cursor (à la Salient) ==================== */
+  .grh-strip__cursor-pos {
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9000;
+    transform: translate3d(-9999px, -9999px, 0);
+    will-change: transform;
+  }
+  .grh-strip__cursor {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-900);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+    transition:
+      opacity 500ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow:
+      0 14px 36px -12px rgba(232, 182, 88, 0.55),
+      0 0 32px 4px    rgba(232, 182, 88, 0.32),
+      0 0 60px 12px   rgba(232, 182, 88, 0.18);
+    will-change: transform, opacity;
+  }
+  .grh-strip__cursor.is-active {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .grh-strip__cursor.is-grabbing {
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  .grh-strip__cursor-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+  }
+  .grh-strip__cursor-arrow { color: var(--grh-forest-900); }
+  .grh-strip__cursor-arrow--prev { transform: scaleX(-1); }
+
+  @media (prefers-reduced-motion: reduce), (hover: none) {
+    .grh-strip__cursor-pos { display: none; }
+  }
+
+  /* === Tiles ============================================== */
+  .grh-strip__tile {
+    aspect-ratio: 3 / 4;
+    padding: var(--grh-space-6);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--grh-space-3);
+    color: var(--grh-cream-50);
+    text-decoration: none;
+    border-radius: var(--grh-radius-lg);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    transition:
+      transform var(--grh-dur-base) var(--grh-ease-out),
+      box-shadow var(--grh-dur-base) var(--grh-ease-out);
+    user-select: none;
+  }
+  .grh-strip__tile:hover {
+    transform: translateY(-6px);
+    box-shadow:
+      0 12px 30px -10px rgba(232, 182, 88, 0.5),
+      0 0 22px rgba(232, 182, 88, 0.35);
+  }
+
+  .grh-strip__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1);
+    transition: transform 1s var(--grh-ease-out);
+    filter: saturate(0.85) contrast(1.05);
+  }
+  .grh-strip__tile:hover .grh-strip__bg { transform: scale(1.08); }
+
+  .grh-strip__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    mix-blend-mode: multiply;
+  }
+  .grh-strip__overlay--forest      { background: linear-gradient(160deg, rgba(42, 107, 67, 0.92) 0%, rgba(26, 61, 39, 0.95) 100%); }
+  .grh-strip__overlay--wood        { background: linear-gradient(160deg, rgba(166, 121, 78, 0.85) 0%, rgba(107, 74, 42, 0.92) 100%); }
+  .grh-strip__overlay--sage        { background: linear-gradient(160deg, rgba(91, 174, 120, 0.85) 0%, rgba(42, 107, 67, 0.92) 100%); }
+  .grh-strip__overlay--moss        { background: linear-gradient(160deg, rgba(62, 140, 90, 0.85) 0%, rgba(27, 74, 47, 0.94) 100%); }
+  .grh-strip__overlay--sandstone   { background: linear-gradient(160deg, rgba(217, 196, 163, 0.78) 0%, rgba(166, 121, 78, 0.92) 100%); }
+  .grh-strip__overlay--forest-deep { background: linear-gradient(160deg, rgba(27, 74, 47, 0.92) 0%, rgba(20, 43, 31, 0.95) 100%); }
+
+  .grh-strip__tile::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 60%;
+    z-index: -1;
+    background: linear-gradient(180deg, transparent 0%, rgba(20, 43, 31, 0.45) 100%);
+    pointer-events: none;
+    transition: background 600ms var(--grh-ease-out), height 600ms var(--grh-ease-out);
+  }
+  .grh-strip__tile:hover::after {
+    height: 100%;
+    background: linear-gradient(180deg, transparent 0%, rgba(20, 43, 31, 0.85) 70%, rgba(20, 43, 31, 0.92) 100%);
+  }
+
+  .grh-strip__num {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--grh-candle-500);
+    align-self: start;
+  }
+  .grh-strip__icon {
+    align-self: start;
+    justify-self: end;
+    grid-row: 1;
+    grid-column: 1;
+    color: var(--grh-cream-50);
+    opacity: 0.85;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+    transition: opacity var(--grh-dur-base), transform var(--grh-dur-base);
+  }
+  .grh-strip__tile:hover .grh-strip__icon {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+
+  .grh-strip__label {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2rem, 3vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-strip__tile:hover .grh-strip__label { transform: translateY(-4px); }
+
+  .grh-strip__sub {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.55;
+    max-width: 28ch;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(20px);
+    overflow: hidden;
+    transition:
+      max-height 600ms var(--grh-ease-out),
+      opacity   400ms var(--grh-ease-out) 100ms,
+      transform 600ms var(--grh-ease-out) 100ms;
+  }
+  .grh-strip__tile:hover .grh-strip__sub {
+    max-height: 10em;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .grh-strip__arrow {
+    position: absolute;
+    bottom: var(--grh-space-5);
+    right: var(--grh-space-5);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(250, 247, 241, 0.4);
+    display: grid; place-items: center;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity var(--grh-dur-base), transform var(--grh-dur-base), background var(--grh-dur-base), border-color var(--grh-dur-base);
+  }
+  .grh-strip__tile:hover .grh-strip__arrow {
+    opacity: 1;
+    transform: translateX(0);
+    background: var(--grh-candle-500);
+    border-color: var(--grh-candle-500);
+    color: var(--grh-forest-900);
+  }
+
+  /* === Scroll-Steuerung — schmaler Bar + kleinere Buttons ====== */
+  .grh-strip__nav {
+    margin-top: var(--grh-space-5);
+    display: flex;
+    align-items: center;
+    gap: var(--grh-space-3);
+  }
+
+  .grh-strip__navbtn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    color: var(--grh-forest-900);
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast), border-color var(--grh-dur-fast), opacity var(--grh-dur-fast);
+    flex-shrink: 0;
+  }
+  .grh-strip__navbtn:hover {
+    background: var(--grh-forest-900);
+    border-color: var(--grh-forest-900);
+    color: var(--grh-candle-500);
+  }
+  .grh-strip__navbtn--prev :global(svg) { transform: scaleX(-1); }
+  .grh-strip__navbtn[aria-disabled="true"] {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Schmalerer goldener Progress-Strich */
+  .grh-strip__progress {
+    flex: 1;
+    height: 2px;
+    background: rgba(250, 247, 241, 0.18);
+    border-radius: 1px;
+    position: relative;
+    overflow: visible;
+  }
+  .grh-strip__progress-bar {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: 30%;
+    background: linear-gradient(90deg, var(--grh-candle-300), var(--grh-candle-500));
+    border-radius: 1px;
+    transition: width var(--grh-dur-base) var(--grh-ease-out), left var(--grh-dur-base) var(--grh-ease-out);
+    box-shadow:
+      0 0 6px var(--grh-candle-500),
+      0 0 14px rgba(232, 182, 88, 0.55);
+  }
+</style>
+
+<script>
+  // Sauberer, robuster Strip — Pfeil-Buttons, Progress-Bar, Drag-to-Scroll für Maus
+  (function () {
+    const root = document.querySelector<HTMLElement>('[data-grh-strip]');
+    if (!root) return;
+    const track    = root.querySelector<HTMLElement>('[data-grh-strip-track]');
+    const prevBtn  = root.querySelector<HTMLButtonElement>('[data-grh-strip-prev]');
+    const nextBtn  = root.querySelector<HTMLButtonElement>('[data-grh-strip-next]');
+    const progress = root.querySelector<HTMLElement>('[data-grh-strip-progressbar]');
+    if (!track || !prevBtn || !nextBtn || !progress) return;
+
+    /* Pfeil-Schritt = ungefähr 1.5 Kacheln pro Klick */
+    const step = () => {
+      const tile = track.querySelector<HTMLElement>('a');
+      const gap  = parseFloat(getComputedStyle(track).columnGap || '12');
+      return tile ? (tile.offsetWidth + gap) * 1.5 : 320;
+    };
+
+    const updateState = () => {
+      const max = track.scrollWidth - track.clientWidth;
+      const pct = max > 0 ? track.scrollLeft / max : 0;
+      const visibleRatio = track.clientWidth / track.scrollWidth;
+      const widthPct = Math.max(visibleRatio * 100, 14);
+      progress.style.width = `${widthPct}%`;
+      progress.style.left  = `${pct * (100 - widthPct)}%`;
+      prevBtn.toggleAttribute('aria-disabled', track.scrollLeft <= 4);
+      nextBtn.toggleAttribute('aria-disabled', track.scrollLeft >= max - 4);
+    };
+
+    prevBtn.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+    nextBtn.addEventListener('click', () => track.scrollBy({ left:  step(), behavior: 'smooth' }));
+    track.addEventListener('scroll', updateState, { passive: true });
+    window.addEventListener('resize', updateState);
+    updateState();
+
+    /* === Drag-to-Scroll für Maus mit physikalischer Inertia ============= */
+    if (!window.matchMedia('(hover: hover)').matches) return;
+    track.classList.add('is-grabbable');
+
+    const THRESHOLD = 5;
+    let pointerId: number | null = null;
+    let startX = 0;
+    let startScroll = 0;
+    let dragging = false;
+    let lastX = 0;
+    let lastT = 0;
+    let velocity = 0;       // Pixel pro Millisekunde
+    let inertiaRaf = 0;
+
+    const stopInertia = () => {
+      if (inertiaRaf) {
+        cancelAnimationFrame(inertiaRaf);
+        inertiaRaf = 0;
+      }
+    };
+
+    const startInertia = () => {
+      stopInertia();
+      let v = velocity;
+      let last = performance.now();
+      const FRICTION = 0.94;   // 6 % pro 16 ms ≈ weiches Austrudeln
+      const STOP_AT = 0.02;    // px/ms — darunter beenden
+      const tick = () => {
+        const now = performance.now();
+        const dt = now - last;
+        last = now;
+        track.scrollLeft -= v * dt;
+        v *= Math.pow(FRICTION, dt / 16);
+        if (Math.abs(v) > STOP_AT) {
+          inertiaRaf = requestAnimationFrame(tick);
+        } else {
+          inertiaRaf = 0;
+        }
+      };
+      inertiaRaf = requestAnimationFrame(tick);
+    };
+
+    track.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      if (e.button !== 0) return;
+      stopInertia();
+      pointerId = e.pointerId;
+      startX = e.clientX;
+      startScroll = track.scrollLeft;
+      lastX = e.clientX;
+      lastT = performance.now();
+      velocity = 0;
+      dragging = false;
+    });
+
+    track.addEventListener('pointermove', (e) => {
+      if (pointerId !== e.pointerId) return;
+      const dx = e.clientX - startX;
+      if (!dragging && Math.abs(dx) > THRESHOLD) {
+        dragging = true;
+        track.classList.add('is-grabbing');
+        track.setPointerCapture(pointerId);
+      }
+      if (dragging) {
+        track.scrollLeft = startScroll - dx;
+        const now = performance.now();
+        const dt = now - lastT;
+        if (dt > 0) {
+          /* Glättung mit altem Wert für natürlicheres Gefühl */
+          const instant = (e.clientX - lastX) / dt;
+          velocity = velocity * 0.6 + instant * 0.4;
+        }
+        lastX = e.clientX;
+        lastT = now;
+      }
+    });
+
+    const endDrag = (e: PointerEvent) => {
+      if (pointerId !== e.pointerId) return;
+      if (dragging) {
+        track.classList.remove('is-grabbing');
+        try { track.releasePointerCapture(pointerId); } catch {}
+        const swallow = (ev: Event) => { ev.preventDefault(); ev.stopPropagation(); };
+        track.addEventListener('click', swallow, { capture: true, once: true });
+        startInertia();
+      }
+      pointerId = null;
+      dragging = false;
+    };
+    track.addEventListener('pointerup', endDrag);
+    track.addEventListener('pointercancel', endDrag);
+
+    /* Wenn der User normales Scrollen oder die Pfeile nutzt, Inertia abbrechen */
+    track.addEventListener('wheel', stopInertia, { passive: true });
+    prevBtn.addEventListener('click', stopInertia);
+    nextBtn.addEventListener('click', stopInertia);
+
+    /* === Custom Drag-Cursor (rein visuell, folgt der Maus mit Easing) ==== */
+    const cursorPos = root.querySelector<HTMLElement>('[data-grh-strip-cursor-pos]');
+    const cursorEl  = root.querySelector<HTMLElement>('[data-grh-strip-cursor]');
+    if (!cursorPos || !cursorEl) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let mx = 0, my = 0;
+    let cx = 0, cy = 0;
+    let cursorRaf = 0;
+    const EASE = 0.18;
+    const animateCursor = () => {
+      cx += (mx - cx) * EASE;
+      cy += (my - cy) * EASE;
+      cursorPos.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+      cursorRaf = requestAnimationFrame(animateCursor);
+    };
+
+    document.addEventListener('mousemove', (e) => {
+      mx = e.clientX;
+      my = e.clientY;
+      if (!cursorRaf) {
+        cx = mx; cy = my;
+        animateCursor();
+      }
+    });
+
+    track.addEventListener('mouseenter', () => {
+      cursorEl.classList.add('is-active');
+      track.classList.add('is-cursor-active');
+    });
+    track.addEventListener('mouseleave', () => {
+      cursorEl.classList.remove('is-active');
+      cursorEl.classList.remove('is-grabbing');
+      track.classList.remove('is-cursor-active');
+    });
+    /* Synchron zur Pointer-Drag-Logik: shrink wenn aktiv gezogen wird */
+    track.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') cursorEl.classList.add('is-grabbing');
+    });
+    const releaseCursor = () => cursorEl.classList.remove('is-grabbing');
+    track.addEventListener('pointerup', releaseCursor);
+    track.addEventListener('pointercancel', releaseCursor);
+  })();
+</script>

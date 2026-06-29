@@ -1,0 +1,135 @@
+---
+import GrhPage from '../layouts/GrhPage.astro';
+import GrhIcon from '../components/primitives/GrhIcon.astro';
+
+interface Item { title: string; image: string; href: string; text: string }
+const items: Item[] = [
+  {
+    title: 'Freibad Borstendorf',
+    image: '/images/tourism/teaser-freibad.jpg',
+    href: '/tourismus/freibad-borstendorf',
+    text: 'Erfrischung im Sommer – das beliebte Freibad in der Nachbargemeinde.',
+  },
+  {
+    title: 'Gaststätte & Pension Waldhof',
+    image: '/images/tourism/teaser-waldhof.jpg',
+    href: '/tourismus/gaststaette-pension-waldhof',
+    text: 'Einkehren und übernachten am Waldrand – regionale Küche und Zimmer.',
+  },
+  {
+    title: 'Ferienwohnung Schwarzmühle',
+    image: '/images/tourism/teaser-schwarzmuehle.jpg',
+    href: '/tourismus/ferienwohnung-schwarzmuehle',
+    text: 'Sehr ruhig gelegene 56-m²-Ferienwohnung für bis zu 4 Personen.',
+  },
+  {
+    title: 'Ferienwohnung Familie Gleß',
+    image: '/images/tourism/teaser-gless.jpg',
+    href: '/tourismus/ferienwohnung-familie-gless',
+    text: 'Komfortable 75-m²-Wohnung für bis zu 5 Personen – Hunde willkommen.',
+  },
+];
+---
+<GrhPage
+  title="Tourismus"
+  eyebrow="Erleben & Entdecken"
+  description="Wandern, Natur und Unterkünfte in und um Börnichen/Erzgeb."
+  wide
+>
+  <p class="grh-toup__intro">
+    Ob Wanderung durch den Bornwald, ein Ausflug zu den Neunzehnhainer Talsperren oder
+    eine erholsame Auszeit in einer unserer Ferienunterkünfte – in Börnichen finden Sie
+    Natur, Ruhe und Gastfreundschaft auf kleinstem Raum.
+  </p>
+
+  <div class="grh-toup__grid">
+    {items.map((i) => (
+      <a class="grh-toup__card" href={i.href}>
+        <span class="grh-toup__img">
+          <img src={i.image} alt={i.title} loading="lazy" decoding="async" />
+        </span>
+        <span class="grh-toup__cap">
+          <strong class="grh-toup__title">{i.title}</strong>
+          <span class="grh-toup__text">{i.text}</span>
+          <span class="grh-toup__more">Mehr erfahren <GrhIcon name="arrow-right" size={14} /></span>
+        </span>
+      </a>
+    ))}
+  </div>
+</GrhPage>
+
+<style>
+  .grh-toup__intro {
+    font-size: var(--grh-fs-md);
+    line-height: 1.6;
+    color: var(--grh-text);
+    max-width: 70ch;
+    margin: 0 0 var(--grh-space-7);
+  }
+
+  .grh-toup__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--grh-space-5);
+  }
+  @media (max-width: 640px) { .grh-toup__grid { grid-template-columns: 1fr; } }
+
+  .grh-toup__card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--grh-border);
+    border-radius: 18px 18px 56px 18px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--grh-shadow-sm);
+    transition: border-color var(--grh-dur-fast), box-shadow var(--grh-dur-fast);
+  }
+  .grh-toup__card:hover {
+    border-color: var(--grh-candle-500);
+    box-shadow: var(--grh-shadow-md);
+  }
+
+  .grh-toup__img {
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+  }
+  .grh-toup__img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 600ms var(--grh-ease-out);
+  }
+  .grh-toup__card:hover .grh-toup__img img { transform: scale(1.05); }
+
+  .grh-toup__cap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: var(--grh-space-5) var(--grh-space-5) var(--grh-space-6);
+  }
+  .grh-toup__title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    font-weight: 500;
+    color: var(--grh-text-heading);
+    line-height: 1.25;
+  }
+  .grh-toup__text {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-text-muted);
+    line-height: 1.55;
+  }
+  .grh-toup__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    font-size: var(--grh-fs-sm);
+    font-weight: 700;
+    color: var(--grh-moss-600);
+  }
+  .grh-toup__card:hover .grh-toup__more { color: var(--grh-forest-800); }
+</style>

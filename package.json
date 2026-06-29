@@ -10,8 +10,10 @@
   "scripts": {
     "dev": "npm run dev --workspace=@vv/gruenhainichen",
     "dev:gruenhainichen": "npm run dev --workspace=@vv/gruenhainichen",
+    "dev:boernichen": "npm run dev --workspace=@vv/boernichen",
     "build": "npm run build --workspaces --if-present",
     "build:gruenhainichen": "npm run build --workspace=@vv/gruenhainichen",
+    "build:boernichen": "npm run build --workspace=@vv/boernichen",
     "dev:maengelmelder": "npm run dev --workspace=@vv/maengelmelder",
     "build:maengelmelder": "npm run build --workspace=@vv/maengelmelder"
   },

@@ -1,0 +1,97 @@
+---
+import GrhIcon from '../primitives/GrhIcon.astro';
+---
+<section class="grh-melder">
+  <div class="grh-container grh-melder__inner">
+    <div class="grh-melder__text">
+      <span class="grh-eyebrow grh-melder__eyebrow">Service</span>
+      <h2 class="grh-melder__title">Mängel einfach melden</h2>
+      <p class="grh-melder__lead">
+        Ist dir ein kaputtes Straßenschild, eine defekte Lampe oder wilder Müll
+        aufgefallen? Mit dem Mängelmelder kannst du uns schnell und unkompliziert auf
+        Probleme im Gemeindegebiet hinweisen – rund um die Uhr.
+      </p>
+      <p class="grh-melder__claim">Gemeinsam halten wir Börnichen in Schuss!</p>
+      <a class="grh-melder__btn" href="https://melder.vv-wildenstein.com" target="_blank" rel="noopener noreferrer">
+        Zur Mängelmelder-App <GrhIcon name="arrow-right" size={16} />
+      </a>
+    </div>
+    <div class="grh-melder__media">
+      <img src="/images/sections/maengelmelder-phone.png" alt="Mängelmelder-App auf dem Smartphone" loading="lazy" decoding="async" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .grh-melder {
+    background:
+      radial-gradient(120% 100% at 12% 0%, rgba(120, 150, 220, 0.22), transparent 55%),
+      linear-gradient(115deg, #1c2a5e 0%, #211b46 100%);
+    color: var(--grh-cream-50);
+    overflow: hidden;
+  }
+  .grh-melder__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+    padding-block: var(--grh-space-9) 0;
+  }
+  @media (min-width: 860px) {
+    .grh-melder__inner {
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: var(--grh-space-8);
+      padding-block: var(--grh-space-9);
+    }
+  }
+
+  .grh-melder__eyebrow { color: var(--grh-candle-300); }
+  .grh-melder__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--grh-cream-50);
+    margin: 6px 0 var(--grh-space-4);
+  }
+  .grh-melder__lead {
+    font-size: var(--grh-fs-md);
+    line-height: 1.6;
+    max-width: 50ch;
+    opacity: 0.9;
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-melder__claim {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    font-style: italic;
+    color: var(--grh-candle-300);
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-melder__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 14px 14px 40px 14px;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-950);
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.5);
+    transition: transform var(--grh-dur-fast), filter var(--grh-dur-fast);
+  }
+  .grh-melder__btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+
+  .grh-melder__media {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+  }
+  .grh-melder__media img {
+    width: auto;
+    max-width: 100%;
+    max-height: 460px;
+    filter: drop-shadow(0 24px 50px rgba(0, 0, 0, 0.45));
+  }
+</style>

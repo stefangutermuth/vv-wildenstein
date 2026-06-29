@@ -4,11 +4,28 @@ name: Deploy zu All-Inkl
 # (Cloudflare-Build läuft parallel weiter).
 #
 # Manueller Trigger über GitHub → Actions → „Deploy zu All-Inkl" → Run workflow.
+#
+# Auslöser:
+#  • push auf main            → Code-Änderungen
+#  • workflow_dispatch        → manuell per Knopf
+#  • repository_dispatch      → von WordPress (vv-wildenstein) bei neuem/geändertem/
+#                               gelöschtem Beitrag oder Termin (Event-Typ: vv-content-updated)
+#  • schedule (nächtlich)     → Sicherheitsnetz, falls ein Webhook mal nicht durchkommt
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+  repository_dispatch:
+    types: [vv-content-updated]
+  schedule:
+    - cron: '0 4 * * *' # täglich 04:00 UTC (06:00 MESZ) als Fallback-Rebuild
+
+# Mehrere schnell aufeinanderfolgende Auslöser zu einem Lauf bündeln; laufenden
+# Deploy NICHT abbrechen (rsync soll sauber zu Ende laufen) — der nächste reiht sich an.
+concurrency:
+  group: deploy-allinkl
+  cancel-in-progress: false
 
 jobs:
   # ───────────────────────────────────────────────────────────────────
@@ -58,3 +75,51 @@ jobs:
       - name: Erfolg
         run: |
           echo "✅ Deploy fertig: https://grh.vv-wildenstein.com"
+
+  # ───────────────────────────────────────────────────────────────────
+  # Börnichen → boernichen.vv-wildenstein.com
+  # ───────────────────────────────────────────────────────────────────
+  deploy-boernichen:
+    name: Börnichen → boernichen.de
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Astro bauen (LIVE — Inhalte aus vv-wildenstein.com, indexierbar)
+        run: npm run build:boernichen
+        env:
+          PUBLIC_CMS_SOURCE: wordpress
+          # Kein PUBLIC_STAGING mehr → kein noindex; Live-Seite wird von Suchmaschinen gefunden.
+          WP_AUTH_USER: ${{ secrets.WP_AUTH_USER }}
+          WP_AUTH_PASS: ${{ secrets.WP_AUTH_PASS }}
+
+      - name: SSH-Schlüssel laden
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ALLINKL_SSH_KEY }}
+
+      - name: All-Inkl-Host bekannt machen
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.ALLINKL_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Per rsync zu boernichen.de hochladen
+        run: |
+          rsync -avz --delete --human-readable \
+            --exclude='.htaccess.local' \
+            apps/boernichen/dist/ \
+            ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/boernichen.de/
+
+      - name: Erfolg
+        run: |
+          echo "✅ Deploy fertig: https://boernichen.de"

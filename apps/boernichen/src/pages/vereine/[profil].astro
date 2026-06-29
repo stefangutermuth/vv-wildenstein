@@ -1,0 +1,77 @@
+---
+import GrhPage from '../../layouts/GrhPage.astro';
+import GrhIcon from '../../components/primitives/GrhIcon.astro';
+import { getProfiles, type ProfileItem } from '../../lib/cms';
+
+export async function getStaticPaths() {
+  /** CPT-Slug → gewünschter (bestehender) URL-Slug. Nicht gelistete behalten ihren CPT-Slug. */
+  const ALIAS: Record<string, string> = {
+    'evangel-luther-kirche-boernichen': 'kirche',
+    'neu-grundschule-im-gruenen-01-11-2022-aufnahme-des-schulbetriebes': 'grundschule',
+  };
+  const profiles = await getProfiles();
+  return profiles.map((p) => ({
+    params: { profil: ALIAS[p.cptSlug] ?? p.cptSlug },
+    props: { profile: p },
+  }));
+}
+
+interface Props { profile: ProfileItem }
+const { profile } = Astro.props;
+const k = profile.kontakt ?? {};
+const telHref = (t: string) => 'tel:' + t.replace(/[^+\d]/g, '');
+const hasKontakt = !!(k.fuehrende_person || k.strasse_hausnummer || k.plz_ort || k.telefon || k.email || k.website);
+// Kontaktkarte weglassen, wenn die Beschreibung die Kontaktdaten ohnehin schon enthält (sonst doppelt).
+const contentHasContact = !!(k.email && profile.contentHtml.includes(k.email));
+const showKontakt = hasKontakt && !contentHasContact;
+// Feuerwehr: das WP-Beitragsbild ist nur ein Screenshot → festes Wappen erzwingen (Override).
+const OVERRIDE_IMG: Record<string, string> = {
+  'feuerwehr-boernichen': '/images/vereine/feuerwehr-wappen.jpg',
+};
+const heroImg = OVERRIDE_IMG[profile.cptSlug] ?? profile.image;
+---
+<GrhPage
+  title={profile.title}
+  eyebrow="Leben in Börnichen"
+  description={`${profile.title} in Börnichen/Erzgeb.`}
+  breadcrumb={[{ label: 'Leben in Börnichen', href: '/leben-in-boernichen' }]}
+>
+  {heroImg && (
+    <figure class="grh-detail__img">
+      <img src={heroImg} alt={profile.title} loading="lazy" decoding="async" />
+    </figure>
+  )}
+
+  {profile.contentHtml && <Fragment set:html={profile.contentHtml} />}
+
+  {showKontakt && (
+    <div class="grh-contactcard">
+      <h2>Kontakt</h2>
+      {(k.fuehrende_person || k.strasse_hausnummer || k.plz_ort) && (
+        <p>
+          {k.fuehrende_person && <><strong>{k.fuehrende_person}</strong><br /></>}
+          {k.strasse_hausnummer && <>{k.strasse_hausnummer}<br /></>}
+          {k.plz_ort}
+        </p>
+      )}
+      {(k.telefon || k.email || k.website) && (
+        <p>
+          {k.telefon && <>Telefon: <a href={telHref(k.telefon)}>{k.telefon}</a><br /></>}
+          {k.email && <>E-Mail: <a href={`mailto:${k.email}`}>{k.email}</a><br /></>}
+          {k.website && <>Web: <a href={k.website} target="_blank" rel="noopener noreferrer">{k.website}</a></>}
+        </p>
+      )}
+    </div>
+  )}
+</GrhPage>
+
+<style>
+  .grh-detail__img {
+    margin: var(--grh-space-6) 0;
+    max-width: 520px;
+    border-radius: 18px 18px 44px 18px;
+    overflow: hidden;
+    box-shadow: var(--grh-shadow-md);
+  }
+  .grh-detail__img img { width: 100%; height: auto; display: block; }
+</style>

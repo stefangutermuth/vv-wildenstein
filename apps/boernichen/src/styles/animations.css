@@ -1,0 +1,68 @@
+/* ============================================================
+   Animations – kontrolliert, editorial, niemals selbstzweckhaft.
+   Alle Effekte respektieren prefers-reduced-motion.
+   ============================================================ */
+
+/* Marquee — endlose horizontale Bandlaufschrift (Ortsteilnamen) */
+@keyframes grh-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+.grh-marquee {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.grh-marquee__track {
+  display: inline-flex;
+  flex-shrink: 0;
+  animation: grh-marquee 38s linear infinite;
+  gap: 0;
+}
+.grh-marquee:hover .grh-marquee__track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .grh-marquee__track { animation: none; transform: none; }
+  .grh-marquee { mask-image: none; }
+}
+
+/* Text-Reveal — Headlines steigen von unten ein, leicht versetzt */
+.grh-text-reveal {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 900ms var(--grh-ease-out),
+    transform 900ms var(--grh-ease-out);
+}
+.grh-text-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .grh-text-reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* Horizon-Line — feiner Goldstrich zeichnet sich beim Hero-Load */
+@keyframes grh-horizon-draw {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.grh-horizon {
+  transform-origin: left center;
+  animation: grh-horizon-draw 1800ms var(--grh-ease-out) 200ms both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .grh-horizon { animation: none; transform: scaleX(1); }
+}
+
+/* Big-Numeral — riesige Hintergrund-Ziffer pulst dezent rein */
+@keyframes grh-numeral-in {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to   { opacity: 0.08; transform: translate3d(0, 0, 0); }
+}
+.grh-numeral.is-visible { animation: grh-numeral-in 1400ms var(--grh-ease-out) both; }
+@media (prefers-reduced-motion: reduce) {
+  .grh-numeral.is-visible { animation: none; opacity: 0.08; }
+}
