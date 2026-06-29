@@ -347,7 +347,7 @@ function mapVWEvent(ev: VWEvent): EventItem | null {
     endDate: endDate && !Number.isNaN(endDate.valueOf()) ? endDate : undefined,
     location,
     ortsteil,
-    teaser: stripHtml(ev.description_html).trim().slice(0, 180),
+    teaser: decodeEntities(stripHtml(ev.description_html)).trim().slice(0, 180),
     featured: false,
     image: ev.image?.url,
     href: ev.permalink,

@@ -134,16 +134,33 @@ const fmtMon = (d: Date) => new Intl.DateTimeFormat('de-DE', { month: 'short' })
           <ul class="grh-ne__event-list">
             {eventList.map((e) => (
               <li>
-                <a class="grh-ne__event-li" href={e.href}>
-                  <span class="grh-ne__event-li-date">
-                    <span class="grh-ne__event-li-day">{fmtDay.format(e.startDate)}</span>
-                    <span class="grh-ne__event-li-mon">{fmtMon(e.startDate)}</span>
-                  </span>
-                  <span class="grh-ne__event-li-body">
-                    <strong class="grh-ne__event-li-title">{e.title}</strong>
-                    <span class="grh-ne__event-li-loc">{e.location}</span>
-                  </span>
-                </a>
+                <details class="grh-ne__event-acc">
+                  <summary class="grh-ne__event-li">
+                    <span class="grh-ne__event-li-date">
+                      <span class="grh-ne__event-li-day">{fmtDay.format(e.startDate)}</span>
+                      <span class="grh-ne__event-li-mon">{fmtMon(e.startDate)}</span>
+                    </span>
+                    <span class="grh-ne__event-li-body">
+                      <strong class="grh-ne__event-li-title">{e.title}</strong>
+                      <span class="grh-ne__event-li-loc">{e.location}</span>
+                    </span>
+                    <span class="grh-ne__event-li-chev" aria-hidden="true">
+                      <svg viewBox="0 0 12 8" width="12" height="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.8 6 6.2l4.5-4.4"/></svg>
+                    </span>
+                  </summary>
+                  <div class="grh-ne__event-li-panel">
+                    {e.image && (
+                      <img class="grh-ne__event-li-poster" src={e.image} alt={`Plakat: ${e.title}`} loading="lazy" decoding="async" />
+                    )}
+                    <time class="grh-ne__event-li-when">{fmtLong.format(e.startDate)}</time>
+                    {e.teaser && e.teaser.trim().length >= 20 && (
+                      <p class="grh-ne__event-li-teaser">{e.teaser}</p>
+                    )}
+                    <a class="grh-ne__event-li-link" href={e.href} target="_blank" rel="noopener noreferrer">
+                      Zum Termin <GrhIcon name="arrow-right" size={13} />
+                    </a>
+                  </div>
+                </details>
               </li>
             ))}
           </ul>
@@ -383,16 +400,60 @@ const fmtMon = (d: Date) => new Intl.DateTimeFormat('de-DE', { month: 'short' })
     margin: var(--grh-space-3) 0 0;
     padding: 0;
   }
+  .grh-ne__event-acc { border-top: 1px solid var(--grh-border); }
   .grh-ne__event-li {
     display: grid;
-    grid-template-columns: 44px 1fr;
+    grid-template-columns: 44px 1fr auto;
     gap: var(--grh-space-3);
     align-items: center;
     padding: var(--grh-space-3) 0;
-    border-top: 1px solid var(--grh-border);
-    text-decoration: none;
     color: inherit;
+    cursor: pointer;
+    list-style: none;
   }
+  .grh-ne__event-li::-webkit-details-marker { display: none; }
+  .grh-ne__event-li-chev { color: var(--grh-stone-400); display: flex; transition: transform var(--grh-dur-fast), color var(--grh-dur-fast); }
+  .grh-ne__event-acc[open] .grh-ne__event-li-chev { transform: rotate(180deg); color: var(--grh-moss-600); }
+  .grh-ne__event-li:hover .grh-ne__event-li-chev { color: var(--grh-moss-600); }
+  .grh-ne__event-li-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 0 0 var(--grh-space-4) calc(44px + var(--grh-space-3));
+  }
+  .grh-ne__event-li-poster {
+    width: auto;
+    max-width: 100%;
+    max-height: 280px;
+    height: auto;
+    border-radius: var(--grh-radius-md);
+    border: 1px solid var(--grh-border);
+    box-shadow: var(--grh-shadow-sm);
+  }
+  .grh-ne__event-li-when {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    color: var(--grh-moss-600);
+  }
+  .grh-ne__event-li-teaser {
+    margin: 0;
+    font-size: var(--grh-fs-sm);
+    line-height: 1.55;
+    color: var(--grh-text-muted);
+  }
+  .grh-ne__event-li-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--grh-fs-sm);
+    font-weight: 700;
+    color: var(--grh-moss-600);
+    text-decoration: none;
+  }
+  .grh-ne__event-li-link:hover { color: var(--grh-forest-800); }
   .grh-ne__event-li-date {
     display: flex;
     flex-direction: column;
