@@ -324,12 +324,13 @@ const fmtMon = (d: Date) => new Intl.DateTimeFormat('de-DE', { month: 'short' })
   .grh-ne__event-img {
     position: relative;
     display: block;
-    aspect-ratio: 16 / 10;
     background: var(--grh-sage-100);
   }
-  .grh-ne__event-img img { width: 100%; height: 100%; object-fit: cover; }
+  /* Volles Bild in Originalformat — nicht beschnitten */
+  .grh-ne__event-img img { width: 100%; height: auto; display: block; }
   .grh-ne__event-fallback {
-    position: absolute; inset: 0;
+    display: block;
+    aspect-ratio: 16 / 10;
     background: linear-gradient(150deg, var(--grh-forest-800), var(--grh-moss-600));
   }
   .grh-ne__event-badge {
