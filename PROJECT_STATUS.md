@@ -1,9 +1,22 @@
 # Project Status — VV-Wildenstein Web-Monorepo
 
-> **Letztes Update:** 26. Juni 2026
-> **Aktuelle Phase:** Phase 2.7 — All-Inkl-Staging-Pipeline, Live-Wetter, Floating Contact Button, hellere Forest-Tokens. Bereit für parallele Multi-App-Arbeit (Verband, Börnichen, Mängelmelder)
+> **Letztes Update:** 29. Juni 2026
+> **Aktuelle Phase:** Phase 3 — **Börnichen ist LIVE** unter boernichen.de, Inhalte dynamisch aus WordPress, Auto-Deploy aktiv & getestet.
 
 Diese Datei dokumentiert den Stand, alle getroffenen Entscheidungen, Zugänge (ohne Geheimnisse) und die offenen Aufgaben — damit die Arbeit nahtlos weitergehen kann, auch wenn es eine Pause gibt oder die Konversation neu gestartet wird.
+
+---
+
+## ✅ Börnichen — LIVE seit 29. Juni 2026
+
+- **boernichen.de** liefert die neue statische Astro-App aus (Domain-Datenpfad in KAS auf `/www/htdocs/w01f6038/boernichen.de/` umgestellt). Die **WordPress-Multisite bleibt** als Headless-CMS; nur die Domain wurde umgehängt. Rollback = KAS-Datenpfad zurück auf `/vv-wildenstein.com/`.
+- **Inhalte live aus vv-wildenstein** (zur Build-Zeit): News, Veranstaltungen (vw-events), Amtsblatt (CPT `amtsblatt_download`, PDFs nur verlinkt), Bauleitplanung (Kategorie) und die **Detailseiten** (CPTs `profile` & `tourismus`) — Börnichen-gefiltert über Taxonomie `gemeindeteil` (Börnichen = 175), Kontaktdaten über das REST-Feld `vv_kontakt`. Grünhainichen-Spezifisches (z. B. „Gemeinderat Grünhainichen") wird herausgefiltert.
+- **Auto-Deploy aktiv & end-to-end getestet:** WordPress speichern → mu-Plugin `vv-deploy-webhook.php` feuert GitHub `repository_dispatch (vv-content-updated)` → Workflow `deploy-allinkl.yml` baut & deployt nach boernichen.de (~1–2 Min). Zusätzlich nächtlicher Fallback-Cron (04:00 UTC). Greift für `post`, `profile`, `tourismus`, `amtsblatt_download`, Events u. a.
+- **WP mu-Plugins** (auf vv-wildenstein installiert, Quelle versioniert in `docs/wordpress/`):
+  - `vv-deploy-webhook.php` — braucht `define('VV_DEPLOY_GH_TOKEN', …)` in `wp-config.php` (gesetzt ✅).
+  - `vv-rest-profilfelder.php` — gibt die Kontaktfelder (`vv_kontakt`) der CPTs `profile`/`tourismus` read-only in der REST-API frei.
+- **Backup** der gesamten Multisite (DB + Uploads, 29.06.) liegt auf dem Server unter `~/backups/boernichen-golive-2026-06-29/` und lokal; komplettes Hosting-Paket zusätzlich lokal gespiegelt.
+- **Offen / optional:** Cookie-Richtlinie an „keine Cookies" angleichen · Sitemap mit Astro-4-kompatibler Version nachrüsten · Actions-Versionen (Node-20-Deprecation-Hinweis) bei Gelegenheit heben.
 
 ---
 
