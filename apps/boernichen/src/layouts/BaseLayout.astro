@@ -1,0 +1,99 @@
+---
+import '@fontsource-variable/fraunces';
+import '@fontsource-variable/cabin';
+import '../styles/tokens.css';
+import '../styles/reset.css';
+import '../styles/typography.css';
+import '../styles/utilities.css';
+import '../styles/animations.css';
+
+import GrhHeader from '../components/global/GrhHeader.astro';
+import GrhHeaderCompact from '../components/global/GrhHeaderCompact.astro';
+import GrhFooter from '../components/global/GrhFooter.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  header?: 'full' | 'compact';
+}
+
+const {
+  title = 'Gemeinde Börnichen/Erzgeb.',
+  description = 'Offizielle Website der Gemeinde Börnichen/Erzgeb. im Verwaltungsverband Wildenstein — Walddorf am Rand des sächsischen Erzgebirges.',
+  ogImage = '/og-default.jpg',
+  header = 'full',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+
+const orgJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'GovernmentOrganization',
+  name: 'Gemeinde Börnichen/Erzgeb.',
+  url: Astro.site?.toString() ?? 'https://boernichen.de',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Rathausstraße 6',
+    postalCode: '09437',
+    addressLocality: 'Börnichen/Erzgeb.',
+    addressRegion: 'Sachsen',
+    addressCountry: 'DE',
+  },
+  telephone: '+49 37294 1225',
+  areaServed: ['Börnichen/Erzgeb.'],
+};
+---
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    {/* Staging-Schutz: kein Index für Vorschau-Subdomain (grh.vv-wildenstein.com) */}
+    {import.meta.env.PUBLIC_STAGING === 'true' && <meta name="robots" content="noindex,nofollow" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href="/images/logos/wappen-boernichen.png" />
+    <link rel="apple-touch-icon" href="/images/logos/wappen-boernichen.png" />
+    <meta name="theme-color" content="#1A3D27" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="de_DE" />
+
+    <title>{title}</title>
+
+    <script type="application/ld+json" set:html={JSON.stringify(orgJsonLd)} />
+  </head>
+  <body>
+    <a href="#main" class="grh-skip-link">Zum Hauptinhalt springen</a>
+    {header === 'compact' ? <GrhHeaderCompact /> : <GrhHeader />}
+    <main id="main">
+      <slot />
+    </main>
+    <GrhFooter />
+
+    <script>
+      // Reveal-Beobachter für .grh-reveal Elemente.
+      // Reine Vanilla-JS-Lösung – kein GSAP nötig (siehe docs/animation-recipes.md).
+      const reveals = document.querySelectorAll('.grh-reveal, .grh-text-reveal, .grh-numeral');
+      if (reveals.length && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              io.unobserve(entry.target);
+            }
+          }
+        }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+        reveals.forEach((el) => io.observe(el));
+      } else {
+        reveals.forEach((el) => el.classList.add('is-visible'));
+      }
+    </script>
+  </body>
+</html>

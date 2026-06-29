@@ -1,0 +1,114 @@
+---
+import { getCollection } from 'astro:content';
+import { getEvents } from '../lib/cms';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+import GrhHero from '../components/hero/GrhHero.astro';
+import GrhSection from '../components/sections/GrhSection.astro';
+import GrhDualPortal from '../components/sections/GrhDualPortal.astro';
+import GrhTourismGrid from '../components/sections/GrhTourismGrid.astro';
+import GrhEventsList from '../components/sections/GrhEventsList.astro';
+import GrhNewsEvents from '../components/sections/GrhNewsEvents.astro';
+import GrhCtaBand from '../components/sections/GrhCtaBand.astro';
+import GrhFacts from '../components/sections/GrhFacts.astro';
+import GrhTourismTeaser from '../components/sections/GrhTourismTeaser.astro';
+import GrhMaengelmelder from '../components/sections/GrhMaengelmelder.astro';
+
+import GrhNewsCard from '../components/cards/GrhNewsCard.astro';
+
+import GrhButton from '../components/primitives/GrhButton.astro';
+import GrhIcon from '../components/primitives/GrhIcon.astro';
+
+import { getCurrentSeason } from '../lib/seasons';
+import { getNews } from '../lib/cms';
+
+const newsAll = await getNews();
+const newsCards = newsAll.filter((n) => n.category !== 'sperrung').slice(0, 10);
+const sperrungen = newsAll.filter((n) => n.category === 'sperrung').slice(0, 3);
+
+const categoryLabel: Record<string, string> = {
+  verwaltung:    'Verwaltung',
+  veranstaltung: 'Veranstaltung',
+  sperrung:      'Sperrung',
+  tourismus:     'Tourismus',
+};
+const severityLabel: Record<string, string> = {
+  info:  'Hinweis',
+  warn:  'Einschränkung',
+  alert: 'Vollsperrung',
+};
+const fmtUntil = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long' });
+
+const events = (await getEvents()).map((e) => ({
+  title: e.title,
+  startDate: e.startDate,
+  endDate: e.endDate,
+  location: e.location,
+  ortsteil: e.ortsteil,
+  teaser: e.teaser,
+  featured: e.featured,
+  image: e.image,
+  href: e.href,
+}));
+
+
+const season = getCurrentSeason();
+const showAdventSection = season === 'advent';
+
+const featured = {
+  eyebrow: '27.06. – 06.07.2025',
+  title: '675 Jahre Börnichen',
+  subtitle: 'Eine ganze Festwoche lang feierte das Dorf sein Jubiläum.',
+  logo: '/images/logos/jubilaeum-675.png',
+  logoAlt: '675 Jahre Börnichen — Jubiläumslogo',
+  logoHref: 'https://www.675-jahre-boernichen.de',
+  ctas: [
+    { label: 'Zum Rückblick', href: '/gemeinde/675-jahre', variant: 'primary' as const },
+  ],
+};
+
+const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+---
+<BaseLayout
+  header="compact"
+  title="Gemeinde Börnichen/Erzgeb. — Walddorf im Erzgebirge"
+  description="Offizielle Website der Gemeinde Börnichen/Erzgeb. im Verwaltungsverband Wildenstein. Aktuelles, Tourismus, Vereine und Leben im Walddorf am Rand des Erzgebirges."
+>
+  <GrhHero
+    season={season}
+    preTitle="Herzlich willkommen in"
+    title="Börnichen"
+    titleAccent="im Erzgebirge."
+    subline="Ein Walddorf zwischen Wäldern, Wiesen und Wasser — wo man sich kennt und 2025 das 675-jährige Jubiläum gefeiert wurde."
+    featured={featured}
+    slides={[
+      {
+        src: '/images/hero/boernichen-luftbild.jpg',
+        alt: 'Luftbild von Börnichen/Erzgeb. im Sommer',
+        caption: 'Börnichen aus der Luft',
+      },
+    ]}
+  />
+
+  {/* === Neuigkeiten (2/3) + Suche & Veranstaltungen (1/3) =============== */}
+  <GrhNewsEvents news={newsCards} events={events} />
+
+  {/* === Vereine-Teaser „Hier wird's lebendig" ========================= */}
+  <GrhCtaBand
+    image="/images/sections/vereine-teaser.jpg"
+    imageAlt="Jugendliche beim gemeinsamen Spielen"
+    title="Hier wird's lebendig"
+    text="In Börnichen kennt man sich – und packt mit an. Die Vereine hier schaffen Begegnungen, fördern Talente und bewahren Traditionen."
+    ctaLabel="Unsere Vereine"
+    ctaHref="/vereine"
+  />
+
+  {/* === Fakten zur Gemeinde (animierte Counter) ======================= */}
+  <GrhFacts />
+
+  {/* === Tourismus „Zwischen Wald & Weitblick" ========================= */}
+  <GrhTourismTeaser />
+
+  {/* === Mängel einfach melden ========================================= */}
+  <GrhMaengelmelder />
+</BaseLayout>

@@ -1,0 +1,146 @@
+---
+import GrhPage from '../layouts/GrhPage.astro';
+import GrhIcon from '../components/primitives/GrhIcon.astro';
+import { getNews } from '../lib/cms';
+
+// Bekanntmachungen dynamisch aus der WP-Kategorie „bauleitplanung" (Börnichen-relevant gefiltert).
+const items = (await getNews())
+  .filter((n) => n.categories?.includes('bauleitplanung'))
+  .sort((a, b) => b.date.valueOf() - a.date.valueOf());
+
+const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+---
+<GrhPage
+  title="Bauleitplanung"
+  eyebrow="Gemeinde"
+  description="Flächennutzungsplanung und öffentliche Bekanntmachungen des Verwaltungsverbands Wildenstein."
+  wide
+>
+  <p class="grh-bl__intro">
+    Über die Bauleitplanung steuern die Gemeinden ihre städtebauliche Entwicklung. Der
+    Flächennutzungsplan (FNP) des Verwaltungsverbands Wildenstein legt die Grundzüge der
+    Bodennutzung für das gesamte Verbandsgebiet fest. Bei jedem Verfahrensschritt wird die
+    Öffentlichkeit nach § 3 BauGB beteiligt – die aktuellen Bekanntmachungen finden Sie hier.
+  </p>
+
+  <h2 class="grh-bl__h2">Aktuelle Bekanntmachungen</h2>
+
+  {items.length === 0 ? (
+    <p class="grh-bl__empty">
+      Derzeit liegen keine Bekanntmachungen vor. Aktuelle Verfahren veröffentlicht der
+      <a href="https://vv-wildenstein.com/" target="_blank" rel="noopener noreferrer">Verwaltungsverband Wildenstein</a>.
+    </p>
+  ) : (
+    <div class="grh-bl__list">
+      {items.map((it) => (
+        <a class="grh-bl__card" href={it.href} target="_blank" rel="noopener noreferrer">
+          <span class="grh-bl__card-icon" aria-hidden="true"><GrhIcon name="document" size={22} /></span>
+          <span class="grh-bl__card-body">
+            <time class="grh-bl__card-date" datetime={it.date.toISOString()}>{fmtDate.format(it.date)}</time>
+            <strong class="grh-bl__card-title">{it.title}</strong>
+          </span>
+          <span class="grh-bl__card-action" aria-hidden="true">
+            Bekanntmachung <GrhIcon name="arrow-right" size={16} />
+          </span>
+        </a>
+      ))}
+    </div>
+  )}
+
+  <!-- Info -->
+  <section class="grh-bl__info">
+    <span class="grh-bl__info-icon" aria-hidden="true"><GrhIcon name="building" size={22} /></span>
+    <div>
+      <h2 class="grh-bl__info-title">Beteiligung der Öffentlichkeit</h2>
+      <p>
+        Während der Auslegungsfristen können Bürgerinnen und Bürger die Planunterlagen einsehen
+        und Stellungnahmen abgeben. Die Unterlagen und Fristen werden in den oben verlinkten
+        Bekanntmachungen sowie im Amtsblatt des Verwaltungsverbands Wildenstein veröffentlicht.
+      </p>
+      <a class="grh-bl__info-link" href="/amtsblatt">
+        Zum Amtsblatt <GrhIcon name="arrow-right" size={15} />
+      </a>
+    </div>
+  </section>
+</GrhPage>
+
+<style>
+  .grh-bl__intro { font-size: var(--grh-fs-md); line-height: 1.65; color: var(--grh-text); max-width: 72ch; margin: var(--grh-space-6) 0 0; }
+
+  .grh-bl__h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+    font-weight: 500;
+    color: var(--grh-text-heading);
+    margin: var(--grh-space-8) 0 var(--grh-space-4);
+  }
+  .grh-bl__empty { color: var(--grh-text-muted); }
+  .grh-bl__empty a { color: var(--grh-link); font-weight: 600; }
+
+  .grh-bl__list { display: flex; flex-direction: column; gap: var(--grh-space-4); }
+  .grh-bl__card {
+    display: flex;
+    align-items: center;
+    gap: var(--grh-space-5);
+    padding: var(--grh-space-5);
+    background: #fff;
+    border: 1px solid #ddd9ef;
+    border-radius: 18px 18px 44px 18px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 1px 2px rgba(28, 24, 64, 0.04);
+    transition: border-color var(--grh-dur-fast), box-shadow var(--grh-dur-fast);
+  }
+  .grh-bl__card:hover { border-color: var(--grh-candle-500); box-shadow: var(--grh-shadow-md); }
+  .grh-bl__card-icon {
+    display: inline-grid; place-items: center;
+    width: 48px; height: 48px; flex-shrink: 0;
+    border-radius: 13px 13px 22px 13px;
+    background: var(--grh-sage-100); color: var(--grh-forest-800);
+  }
+  .grh-bl__card-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+  .grh-bl__card-date { font-size: var(--grh-fs-sm); color: var(--grh-candle-500); font-weight: 600; }
+  .grh-bl__card-title { color: var(--grh-text-heading); font-size: var(--grh-fs-md); font-weight: 600; line-height: 1.35; }
+  .grh-bl__card-action {
+    display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+    font-size: var(--grh-fs-sm); font-weight: 700; color: var(--grh-moss-600);
+    transition: color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-bl__card:hover .grh-bl__card-action { color: var(--grh-forest-800); transform: translateX(2px); }
+  @media (max-width: 620px) {
+    .grh-bl__card { flex-wrap: wrap; }
+    .grh-bl__card-action { width: 100%; }
+  }
+
+  /* Info-Box */
+  .grh-bl__info {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--grh-space-5);
+    margin-top: var(--grh-space-8);
+    padding: var(--grh-space-6);
+    background: var(--grh-bg-elevated);
+    border: 1px solid var(--grh-border);
+    border-radius: 24px 24px 56px 24px;
+  }
+  .grh-bl__info-icon {
+    display: inline-grid; place-items: center;
+    width: 46px; height: 46px; flex-shrink: 0;
+    border-radius: 13px 13px 22px 13px;
+    background: var(--grh-candle-500); color: var(--grh-forest-950);
+  }
+  .grh-bl__info-title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    font-weight: 500;
+    color: var(--grh-text-heading);
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-bl__info p { line-height: 1.65; color: var(--grh-text); margin: 0 0 var(--grh-space-3); }
+  .grh-bl__info-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-weight: 700; font-size: var(--grh-fs-sm);
+    color: var(--grh-moss-600); text-decoration: none;
+  }
+  .grh-bl__info-link:hover { color: var(--grh-forest-800); }
+</style>

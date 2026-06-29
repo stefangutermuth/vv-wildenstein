@@ -1,0 +1,47 @@
+body {
+  font-family: var(--grh-font-body);
+  font-size: var(--grh-fs-base);
+  color: var(--grh-text);
+  background: var(--grh-bg);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--grh-font-display);
+  color: var(--grh-text-heading);
+  font-weight: 600;
+  line-height: var(--grh-lh-tight);
+  letter-spacing: var(--grh-tracking-display);
+}
+
+h1 { font-size: var(--grh-fs-5xl); }
+h2 { font-size: var(--grh-fs-3xl); line-height: var(--grh-lh-snug); }
+h3 { font-size: var(--grh-fs-xl); line-height: var(--grh-lh-snug); }
+h4 { font-size: var(--grh-fs-lg); line-height: var(--grh-lh-snug); }
+
+.grh-eyebrow {
+  font-family: var(--grh-font-body);
+  font-size: var(--grh-fs-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--grh-tracking-label);
+  color: var(--grh-moss-600);
+}
+
+.grh-lead {
+  font-size: var(--grh-fs-md);
+  color: var(--grh-text);
+  max-width: 60ch;
+}
+
+.grh-script {
+  font-family: var(--grh-font-script);
+}
+
+.grh-hero-title {
+  font-family: var(--grh-font-display);
+  font-size: var(--grh-fs-hero);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--grh-text-on-dark);
+}

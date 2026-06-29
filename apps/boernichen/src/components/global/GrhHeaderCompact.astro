@@ -1,0 +1,688 @@
+---
+import GrhWappen from './GrhWappen.astro';
+import GrhIcon from '../primitives/GrhIcon.astro';
+import { navigation as nav } from '../../lib/navigation';
+
+/* Auf der Startseite schwebt der Header transparent über dem Hero-Himmel
+   und wird erst beim Scrollen solide. Unterseiten: immer solider Header. */
+const isHome = Astro.url.pathname === '/';
+---
+<header class:list={['grh-header', 'grh-header--compact', { 'grh-header--overlay': isHome }]} data-grh-header>
+  <div class="grh-container grh-headerc__inner">
+    <a href="/" class="grh-headerc__brand" aria-label="Gemeinde Börnichen/Erzgeb. – Startseite">
+      <GrhWappen size={72} />
+      <span class="grh-headerc__brandtext">
+        <span class="grh-headerc__name">Börnichen</span>
+        <span class="grh-headerc__sub">Erzgebirge · Sachsen</span>
+      </span>
+    </a>
+
+    <div class="grh-headerc__right">
+    <div class="grh-headerc__tools">
+      <span class="grh-headerc__weather" data-grh-weather aria-label="Aktuelles Wetter in Börnichen" hidden>
+        <span class="grh-headerc__weather-icon" data-grh-weather-icon aria-hidden="true">
+          {/* Default-Icon Sonne/Wolke — wird per JS gegen Wettercode getauscht */}
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="10" r="3.2" />
+            <line x1="9" y1="3.5" x2="9" y2="5" />
+            <line x1="9" y1="15"  x2="9" y2="16.5" />
+            <line x1="2.5" y1="10" x2="4" y2="10" />
+            <line x1="14"  y1="10" x2="15.5" y2="10" />
+            <line x1="4.5" y1="5.5"   x2="5.5" y2="6.5" />
+            <line x1="12.5" y1="13.5" x2="13.5" y2="14.5" />
+            <line x1="4.5" y1="14.5"  x2="5.5" y2="13.5" />
+            <line x1="12.5" y1="6.5"  x2="13.5" y2="5.5" />
+            <path d="M11 18a3 3 0 0 1 5.5-1.6 3 3 0 0 1 4 4.6H13a3 3 0 0 1-2-3z" fill="currentColor" stroke="none" opacity="0.85" />
+          </svg>
+        </span>
+        <span class="grh-headerc__weather-text">
+          <span class="grh-headerc__weather-temp" data-grh-weather-temp>—°</span>
+          <span class="grh-headerc__weather-loc">Börnichen</span>
+        </span>
+      </span>
+
+      <a class="grh-headerc__social" href="https://www.facebook.com/boernichen/" target="_blank" rel="noopener noreferrer" aria-label="Gemeinde Börnichen auf Facebook">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 4h-2c-2 0-3 1-3 3v2H7v3h2v8h3v-8h2.5l.5-3H12V7c0-.5.4-1 1-1h1V4z" />
+        </svg>
+      </a>
+
+      {/* Burger nur mobil — öffnet das Slide-In-Menü */}
+      <button
+        type="button"
+        class="grh-headerc__burger"
+        aria-label="Menü öffnen"
+        aria-expanded="false"
+        data-grh-menu-toggle
+      >
+        <span class="grh-headerc__burger-bars" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+        <span class="grh-headerc__burger-label">Menü</span>
+      </button>
+    </div>
+
+    {/* === Inline-Navigation (Desktop) — in der Logo-Box, unter Wetter/Social === */}
+    <nav class="grh-headerc__nav" aria-label="Hauptnavigation">
+      <ul class="grh-headerc__navlist">
+        {nav.map((item) => (
+          <li class={`grh-headerc__navitem ${item.children ? 'has-children' : ''}`}>
+            <a
+              href={item.noLink ? undefined : item.href}
+              class="grh-headerc__navlink"
+              role={item.noLink ? 'button' : undefined}
+              tabindex={item.noLink ? 0 : undefined}
+              aria-haspopup={item.children ? 'true' : undefined}
+            >
+              {item.label}
+              {item.children && (
+                <span class="grh-headerc__navchev" aria-hidden="true">
+                  <svg viewBox="0 0 12 8" width="12" height="8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.8 6 6.2l4.5-4.4"/></svg>
+                </span>
+              )}
+            </a>
+            {item.children && (
+              <ul class="grh-headerc__dropdown">
+                {item.children.map((sub) => (
+                  <li><a href={sub.href} class="grh-headerc__droplink">{sub.label}</a></li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+    </div>
+  </div>
+
+  {/* === Mobile Slide-In-Menü =========================================== */}
+  <div class="grh-mobilemenu" data-grh-mobilemenu hidden>
+    <button class="grh-mobilemenu__close" type="button" aria-label="Menü schließen" data-grh-menu-close>
+      <GrhIcon name="close" size={22} />
+    </button>
+    <nav class="grh-mobilemenu__nav" aria-label="Mobile Navigation">
+      <ul>
+        {nav.map((item) => (
+          <li class="grh-mobile__item">
+            {item.children ? (
+              <details>
+                <summary>
+                  {/* Im Mobile-Menü navigiert der Elternpunkt nie — Tippen klappt das Untermenü auf */}
+                  <span>{item.label}</span>
+                  <span class="grh-mobile__chev" aria-hidden="true">▾</span>
+                </summary>
+                <ul>
+                  {item.children.map((sub) => (
+                    <li><a href={sub.href}>{sub.label}</a></li>
+                  ))}
+                </ul>
+              </details>
+            ) : (
+              <a href={item.href}>{item.label}</a>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      {/* Rechtliches — auch im Mobile-Menü erreichbar */}
+      <ul class="grh-mobilemenu__legal">
+        <li><a href="/impressum">Impressum</a></li>
+        <li><a href="/datenschutz">Datenschutzerklärung</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .grh-header--compact {
+    position: sticky;
+    top: 0;
+    z-index: var(--grh-z-sticky);
+    background: var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+    transition: backdrop-filter var(--grh-dur-base), background var(--grh-dur-base);
+  }
+  .grh-header--compact.is-scrolled {
+    background: rgba(250, 247, 241, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* === Overlay-Modus (Startseite): schwebt transparent über dem Hero ===== */
+  .grh-header--overlay {
+    position: fixed;
+    left: 0; right: 0;
+    background: transparent;
+    border-bottom-color: transparent;
+  }
+  .grh-header--overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(20, 43, 31, 0.42) 0%, rgba(20, 43, 31, 0) 100%);
+    opacity: 1;
+    transition: opacity var(--grh-dur-base);
+  }
+  .grh-header--overlay.is-scrolled::before { opacity: 0; }
+
+  /* Helle Elementfarben nur im transparenten Zustand (oben, nicht gescrollt) */
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__name,
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__weather-temp {
+    color: var(--grh-cream-50);
+  }
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__sub,
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__weather-loc {
+    color: rgba(250, 247, 241, 0.82);
+  }
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__social,
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__weather {
+    color: var(--grh-cream-50);
+    border-color: rgba(250, 247, 241, 0.5);
+  }
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__weather-icon {
+    background: rgba(250, 247, 241, 0.18);
+    color: var(--grh-cream-50);
+  }
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__social:hover {
+    background: rgba(250, 247, 241, 0.18);
+    color: var(--grh-cream-50);
+    border-color: var(--grh-cream-50);
+  }
+  .grh-header--overlay:not(.is-scrolled) .grh-wappen {
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.28));
+  }
+  /* Nav hell über dem Hero */
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__navlink { color: var(--grh-cream-50); }
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__navchev {
+    background: rgba(250, 247, 241, 0.2);
+    color: var(--grh-cream-50);
+  }
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__navlink::after { background: var(--grh-candle-300); }
+  /* Über dem Hero (weiße Schrift): Hover/Fokus hell-lind statt dunkelgrün — sonst kaum lesbar */
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__navitem:hover > .grh-headerc__navlink,
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__navitem:focus-within > .grh-headerc__navlink {
+    color: var(--grh-candle-300);
+  }
+  /* Burger im transparenten Zustand hell */
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__burger {
+    background: rgba(250, 247, 241, 0.12);
+    color: var(--grh-cream-50);
+    border-color: rgba(250, 247, 241, 0.5);
+  }
+  .grh-header--overlay:not(.is-scrolled) .grh-headerc__burger:hover {
+    background: rgba(250, 247, 241, 0.22);
+  }
+
+  .grh-headerc__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--grh-space-5);
+    min-height: 112px;
+    transition: min-height var(--grh-dur-base);
+  }
+  .grh-header--compact.is-scrolled .grh-headerc__inner { min-height: 78px; }
+
+  /* Rechte Spalte: Wetter/Social oben, Menü darunter — alles in der Logo-Box */
+  .grh-headerc__right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--grh-space-3);
+  }
+
+  .grh-headerc__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--grh-space-4);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+    transform-origin: left center;
+  }
+  .grh-header--compact.is-scrolled .grh-headerc__brand {
+    transform: scale(0.82);
+  }
+
+  .grh-headerc__brandtext {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    line-height: 1;
+  }
+  .grh-headerc__name {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.3rem, 4.4vw, 3.1rem);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.03em;
+    line-height: 0.92;
+    font-stretch: 115%;
+  }
+  .grh-headerc__sub {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    color: var(--grh-moss-600);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  @media (max-width: 720px) {
+    .grh-headerc__brandtext { display: none; }
+    .grh-headerc__inner { min-height: 84px; }
+    .grh-header--compact.is-scrolled .grh-headerc__inner { min-height: 72px; }
+  }
+
+  /* === Tools (Wetter + Social + Burger) ===================== */
+  .grh-headerc__tools {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--grh-space-2);
+  }
+
+  .grh-headerc__social {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    color: var(--grh-forest-900);
+    border: 1px solid var(--grh-line);
+    text-decoration: none;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast), border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-headerc__social:hover {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    border-color: var(--grh-forest-900);
+    transform: translateY(-1px);
+  }
+  @media (max-width: 720px) {
+    .grh-headerc__social,
+    .grh-headerc__weather { display: none; }
+  }
+
+  /* === Wetter-Pille ========================================= */
+  .grh-headerc__weather {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 8px;
+    border-radius: var(--grh-radius-pill);
+    border: 1px solid var(--grh-line);
+    color: var(--grh-forest-900);
+    cursor: default;
+    transition: border-color var(--grh-dur-fast), background var(--grh-dur-fast);
+    margin-right: var(--grh-space-2);
+  }
+  .grh-headerc__weather-icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--grh-sage-100);
+    color: var(--grh-candle-500);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .grh-headerc__weather-text {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0;
+    line-height: 1;
+  }
+  .grh-headerc__weather-temp {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-headerc__weather-loc {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin-top: 2px;
+  }
+
+  /* === Inline-Navigation (Desktop) — rechtsbündig unter Wetter/Social === */
+  .grh-headerc__nav {
+    position: relative;
+  }
+  .grh-headerc__navlist {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--grh-space-1);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .grh-headerc__navitem { position: relative; }
+  .grh-headerc__navlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 9px 14px;
+    font-size: var(--grh-fs-base);
+    font-weight: 500;
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    position: relative;
+    transition: color var(--grh-dur-fast);
+  }
+  .grh-headerc__navlink::after {
+    content: '';
+    position: absolute;
+    left: 14px; right: 14px; bottom: 3px;
+    height: 1.5px;
+    background: var(--grh-moss-500);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-headerc__navitem:hover > .grh-headerc__navlink,
+  .grh-headerc__navitem:focus-within > .grh-headerc__navlink { color: var(--grh-forest-900); }
+  .grh-headerc__navitem:hover > .grh-headerc__navlink::after,
+  .grh-headerc__navitem:focus-within > .grh-headerc__navlink::after { transform: scaleX(1); }
+  .grh-headerc__navchev {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    margin-left: 4px;
+    border-radius: 50%;
+    background: var(--grh-sage-100);
+    color: var(--grh-forest-800);
+    transition: transform var(--grh-dur-fast), background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-headerc__navchev svg { display: block; }
+  .grh-headerc__navitem:hover > .grh-headerc__navlink .grh-headerc__navchev,
+  .grh-headerc__navitem:focus-within > .grh-headerc__navlink .grh-headerc__navchev {
+    transform: rotate(180deg);
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-950);
+  }
+
+  /* Dropdown */
+  .grh-headerc__dropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 250px;
+    max-width: min(300px, 92vw);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-2);
+    box-shadow: var(--grh-shadow-lg);
+    list-style: none;
+    margin: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--grh-dur-fast), visibility 0s linear var(--grh-dur-fast);
+    z-index: 20;
+  }
+  /* Unsichtbare Brücke, damit der Hover beim Übergang Menüpunkt → Panel nicht abreißt */
+  .grh-headerc__dropdown::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -10px;
+    height: 10px;
+  }
+  .grh-headerc__navitem:hover > .grh-headerc__dropdown,
+  .grh-headerc__navitem:focus-within > .grh-headerc__dropdown {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity var(--grh-dur-fast), visibility 0s;
+  }
+  .grh-headerc__droplink {
+    display: block;
+    padding: 9px 12px;
+    border-radius: var(--grh-radius-sm);
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-headerc__droplink:hover {
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-900);
+  }
+
+  /* Nav unter ~920px ausblenden, Burger zeigen */
+  @media (max-width: 919px) {
+    .grh-headerc__nav { display: none; }
+  }
+
+  /* === Burger (nur mobil) =================================== */
+  .grh-headerc__burger {
+    display: none;
+    position: relative;
+    align-items: center;
+    gap: var(--grh-space-3);
+    padding: 10px 16px 10px 14px;
+    border-radius: var(--grh-radius-pill);
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  @media (max-width: 919px) {
+    .grh-headerc__burger { display: inline-flex; }
+  }
+  .grh-headerc__burger:hover {
+    background: var(--grh-forest-800);
+    transform: translateY(-1px);
+  }
+  .grh-headerc__burger-bars {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 18px;
+  }
+  .grh-headerc__burger-bars span {
+    height: 1.5px;
+    background: currentColor;
+    border-radius: 1px;
+  }
+  .grh-headerc__burger-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+  }
+  @media (max-width: 480px) {
+    .grh-headerc__burger-label { display: none; }
+  }
+
+  /* === Mobile Slide-In-Menü ================================= */
+  .grh-mobilemenu {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(400px, 92vw);
+    background: var(--grh-cream-50);
+    z-index: var(--grh-z-modal);
+    padding: var(--grh-space-7) 0;
+    overflow-y: auto;
+    box-shadow: var(--grh-shadow-lg);
+    transform: translateX(100%);
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-mobilemenu[data-open] { transform: translateX(0); }
+  .grh-mobilemenu[hidden] { display: block !important; visibility: hidden; }
+  .grh-mobilemenu[data-open] { visibility: visible; }
+  .grh-mobilemenu__close {
+    position: absolute;
+    top: var(--grh-space-4);
+    right: var(--grh-space-4);
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    color: var(--grh-forest-900);
+  }
+  .grh-mobilemenu__close:hover { background: var(--grh-paper-100); }
+  .grh-mobilemenu__nav {
+    margin-top: var(--grh-space-6);
+    padding: 0 var(--grh-space-6);
+  }
+  .grh-mobilemenu__nav > ul { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; }
+  .grh-mobile__item { border-bottom: 1px solid var(--grh-line); }
+  .grh-mobile__item > a,
+  .grh-mobile__item > details > summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--grh-space-4) 0;
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+  }
+  .grh-mobile__item > details > summary::-webkit-details-marker { display: none; }
+  .grh-mobile__item > details > summary > a { flex: 1; color: inherit; text-decoration: none; }
+  .grh-mobile__chev { font-size: 16px; color: var(--grh-stone-400); transition: transform var(--grh-dur-fast); }
+  .grh-mobile__item details[open] > summary > .grh-mobile__chev { transform: rotate(180deg); }
+
+  /* Rechtliches unten im Mobile-Menü — abgesetzt & dezenter */
+  .grh-mobilemenu__legal {
+    list-style: none;
+    margin: var(--grh-space-5) 0 0;
+    padding: var(--grh-space-4) 0 0;
+    border-top: 1px solid var(--grh-line);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+  }
+  .grh-mobilemenu__legal a {
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    font-size: var(--grh-fs-base);
+  }
+  .grh-mobilemenu__legal a:hover { color: var(--grh-forest-900); }
+  .grh-mobile__item details > ul {
+    list-style: none;
+    padding: 0 0 var(--grh-space-3) var(--grh-space-4);
+    margin: 0 0 var(--grh-space-2);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-left: 2px solid var(--grh-moss-500);
+  }
+  .grh-mobile__item details > ul > li > a {
+    display: block;
+    padding: 9px var(--grh-space-3);
+    font-size: var(--grh-fs-base);
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    border-radius: var(--grh-radius-sm);
+  }
+  .grh-mobile__item details > ul > li > a:hover {
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-900);
+  }
+</style>
+
+<script>
+  const compactHeader = document.querySelector<HTMLElement>('.grh-header--compact[data-grh-header]');
+  if (compactHeader) {
+    let ticking = false;
+    const update = () => {
+      compactHeader.classList.toggle('is-scrolled', window.scrollY > 24);
+      ticking = false;
+    };
+    window.addEventListener('scroll', () => {
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+  }
+
+  /* === Mobile-Menü Toggle ================================================ */
+  const mobileMenu = document.querySelector<HTMLElement>('[data-grh-mobilemenu]');
+  const openBtn = document.querySelector<HTMLElement>('[data-grh-menu-toggle]');
+  const closeBtn = document.querySelector<HTMLElement>('[data-grh-menu-close]');
+  const openMenu = () => {
+    if (!mobileMenu) return;
+    mobileMenu.removeAttribute('hidden');
+    requestAnimationFrame(() => mobileMenu.setAttribute('data-open', ''));
+    document.body.style.overflow = 'hidden';
+    openBtn?.setAttribute('aria-expanded', 'true');
+  };
+  const closeMenu = () => {
+    if (!mobileMenu) return;
+    mobileMenu.removeAttribute('data-open');
+    document.body.style.overflow = '';
+    openBtn?.setAttribute('aria-expanded', 'false');
+    setTimeout(() => mobileMenu.setAttribute('hidden', ''), 320);
+  };
+  openBtn?.addEventListener('click', openMenu);
+  closeBtn?.addEventListener('click', closeMenu);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
+  /* === Live-Wetter via Open-Meteo (kein API-Key, kein Tracking) ===========
+     Börnichen-Koordinaten 50.6940 / 13.1819.
+     Browser-Cache (sessionStorage) hält die Daten 30 Min vor.            */
+  (() => {
+    const widget = document.querySelector<HTMLElement>('[data-grh-weather]');
+    const tempEl = document.querySelector<HTMLElement>('[data-grh-weather-temp]');
+    const iconEl = document.querySelector<HTMLElement>('[data-grh-weather-icon]');
+    if (!widget || !tempEl || !iconEl) return;
+
+    const CACHE_KEY = 'grh-weather-v1';
+    const CACHE_MAX_AGE = 30 * 60 * 1000;
+
+    /* WMO-Code → SVG-Icon. Linien sind monochrom currentColor.            */
+    const ICONS: Record<string, string> = {
+      sun:    `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="3"   x2="12" y2="5"/><line x1="12" y1="19"  x2="12" y2="21"/><line x1="3"  y1="12"  x2="5"  y2="12"/><line x1="19" y1="12"  x2="21" y2="12"/><line x1="5.6" y1="5.6" x2="7" y2="7"/><line x1="17" y1="17" x2="18.4" y2="18.4"/><line x1="5.6" y1="18.4" x2="7" y2="17"/><line x1="17" y1="7" x2="18.4" y2="5.6"/></svg>`,
+      cloud:  `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1-1-7.9 6 6 0 0 1 11.5 1.4A4.5 4.5 0 0 1 17.5 18z"/></svg>`,
+      partly: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="10" r="3.2"/><line x1="9" y1="3.5" x2="9" y2="5"/><line x1="2.5" y1="10" x2="4" y2="10"/><line x1="4.5" y1="5.5" x2="5.5" y2="6.5"/><line x1="4.5" y1="14.5" x2="5.5" y2="13.5"/><line x1="12.5" y1="6.5" x2="13.5" y2="5.5"/><path d="M11 18a3 3 0 0 1 5.5-1.6 3 3 0 0 1 4 4.6H13a3 3 0 0 1-2-3z" fill="currentColor" stroke="none" opacity="0.85"/></svg>`,
+      fog:    `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="8"  x2="21" y2="8"/><line x1="5" y1="12" x2="19" y2="12"/><line x1="3" y1="16" x2="21" y2="16"/></svg>`,
+      rain:   `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 0 1-1-7.9 6 6 0 0 1 11.5 1.4A4.5 4.5 0 0 1 17.5 14z"/><line x1="9" y1="17" x2="8" y2="20"/><line x1="13" y1="17" x2="12" y2="20"/><line x1="17" y1="17" x2="16" y2="20"/></svg>`,
+      snow:   `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 0 1-1-7.9 6 6 0 0 1 11.5 1.4A4.5 4.5 0 0 1 17.5 14z"/><circle cx="9"  cy="19" r="0.8" fill="currentColor"/><circle cx="13" cy="19" r="0.8" fill="currentColor"/><circle cx="17" cy="19" r="0.8" fill="currentColor"/></svg>`,
+      storm:  `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a4 4 0 0 1-1-7.9 6 6 0 0 1 11.5 1.4A4.5 4.5 0 0 1 17.5 14z"/><polyline points="12 16 10 19 13 19 11 22"/></svg>`,
+    };
+
+    const codeToIcon = (code: number): string => {
+      if (code === 0)                          return 'sun';
+      if (code === 1 || code === 2)            return 'partly';
+      if (code === 3)                          return 'cloud';
+      if (code === 45 || code === 48)          return 'fog';
+      if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+      if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+      if (code >= 95)                          return 'storm';
+      return 'partly';
+    };
+
+    const render = (tempC: number, code: number) => {
+      tempEl.textContent = `${Math.round(tempC)}°`;
+      iconEl.innerHTML = ICONS[codeToIcon(code)] ?? ICONS.partly;
+      widget.removeAttribute('hidden');
+    };
+
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { temp, code, ts } = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_MAX_AGE) render(temp, code);
+      }
+    } catch {}
+
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=50.6940&longitude=13.1819&current=temperature_2m,weather_code&timezone=Europe%2FBerlin')
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((d) => {
+        const temp = d?.current?.temperature_2m;
+        const code = d?.current?.weather_code;
+        if (typeof temp !== 'number' || typeof code !== 'number') return;
+        render(temp, code);
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ temp, code, ts: Date.now() })); } catch {}
+      })
+      .catch(() => { /* Bei Fehler bleibt das Widget hidden */ });
+  })();
+</script>

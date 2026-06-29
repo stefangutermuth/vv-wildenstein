@@ -1,0 +1,66 @@
+---
+import GrhPage from '../../layouts/GrhPage.astro';
+import { getTourismus, type TourismusItem } from '../../lib/cms';
+
+export async function getStaticPaths() {
+  const items = await getTourismus();
+  return items.map((t) => ({
+    params: { ort: t.cptSlug },
+    props: { item: t },
+  }));
+}
+
+interface Props { item: TourismusItem }
+const { item } = Astro.props;
+const k = item.kontakt ?? {};
+const telHref = (t: string) => 'tel:' + t.replace(/[^+\d]/g, '');
+const hasKontakt = !!(k.fuehrende_person || k.strasse_hausnummer || k.plz_ort || k.telefon || k.email || k.website);
+// Kontaktkarte weglassen, wenn die Beschreibung die Kontaktdaten ohnehin schon enthält (sonst doppelt).
+const contentHasContact = !!(k.email && item.contentHtml.includes(k.email));
+const showKontakt = hasKontakt && !contentHasContact;
+---
+<GrhPage
+  title={item.title}
+  eyebrow="Erleben & Entdecken"
+  description={`${item.title} — Tourismus in und um Börnichen/Erzgeb.`}
+  breadcrumb={[{ label: 'Tourismus', href: '/tourismus' }]}
+>
+  {item.image && (
+    <figure class="grh-detail__img">
+      <img src={item.image} alt={item.title} loading="lazy" decoding="async" />
+    </figure>
+  )}
+
+  {item.contentHtml && <Fragment set:html={item.contentHtml} />}
+
+  {showKontakt && (
+    <div class="grh-contactcard">
+      <h2>Kontakt</h2>
+      {(k.fuehrende_person || k.strasse_hausnummer || k.plz_ort) && (
+        <p>
+          {k.fuehrende_person && <><strong>{k.fuehrende_person}</strong><br /></>}
+          {k.strasse_hausnummer && <>{k.strasse_hausnummer}<br /></>}
+          {k.plz_ort}
+        </p>
+      )}
+      {(k.telefon || k.email || k.website) && (
+        <p>
+          {k.telefon && <>Telefon: <a href={telHref(k.telefon)}>{k.telefon}</a><br /></>}
+          {k.email && <>E-Mail: <a href={`mailto:${k.email}`}>{k.email}</a><br /></>}
+          {k.website && <>Web: <a href={k.website} target="_blank" rel="noopener noreferrer">{k.website}</a></>}
+        </p>
+      )}
+    </div>
+  )}
+</GrhPage>
+
+<style>
+  .grh-detail__img {
+    margin: var(--grh-space-6) 0;
+    max-width: 520px;
+    border-radius: 18px 18px 44px 18px;
+    overflow: hidden;
+    box-shadow: var(--grh-shadow-md);
+  }
+  .grh-detail__img img { width: 100%; height: auto; display: block; }
+</style>

@@ -1,0 +1,176 @@
+---
+import GrhIcon from '../primitives/GrhIcon.astro';
+
+interface Ortsteil {
+  index: number;
+  name: string;
+  key: 'borstendorf' | 'gruenhainichen' | 'waldkirchen';
+  tagline: string;
+  description: string;
+  image?: string;
+  href: string;
+}
+interface Props {
+  items: Ortsteil[];
+}
+const { items } = Astro.props;
+
+const iconFor = {
+  borstendorf:    'chess-knight',
+  gruenhainichen: 'angel11',
+  waldkirchen:    'bridge',
+} as const;
+---
+<div class="grh-triptych">
+  {items.map((o) => (
+    <article class="grh-triptych__col">
+      <a href={o.href} class="grh-triptych__link">
+        <div class="grh-triptych__media">
+          {o.image ? (
+            <img src={o.image} alt={`Eindruck aus ${o.name}`} loading="lazy" decoding="async" />
+          ) : (
+            <div class="grh-triptych__media-fallback" aria-hidden="true"></div>
+          )}
+          <span class="grh-triptych__icon" aria-hidden="true">
+            <GrhIcon name={iconFor[o.key]} size={24} />
+          </span>
+          <span class="grh-triptych__num" aria-hidden="true">{String(o.index).padStart(2, '0')}</span>
+        </div>
+
+        <div class="grh-triptych__body">
+          <h3 class="grh-triptych__name">{o.name}</h3>
+          <span class="grh-triptych__tagline">{o.tagline}</span>
+          <p class="grh-triptych__desc">{o.description}</p>
+          <span class="grh-triptych__cta">
+            Ortsteil entdecken
+            <GrhIcon name="arrow-right" size={14} />
+          </span>
+        </div>
+      </a>
+    </article>
+  ))}
+</div>
+
+<style>
+  .grh-triptych {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+  }
+  @media (min-width: 720px)  { .grh-triptych { grid-template-columns: 1fr 1fr; gap: var(--grh-space-5); } }
+  @media (min-width: 1024px) { .grh-triptych { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-6); } }
+
+  .grh-triptych__col {
+    display: flex;
+  }
+  .grh-triptych__link {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-triptych__link:hover { transform: translateY(-4px); }
+
+  .grh-triptych__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--grh-radius-md);
+    box-shadow: var(--grh-shadow-md);
+    isolation: isolate;
+  }
+  .grh-triptych__media img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transform: scale(1) translateZ(0);
+    transition: transform 1s var(--grh-ease-out);
+  }
+  .grh-triptych__link:hover .grh-triptych__media img {
+    transform: scale(1.04) translateZ(0);
+  }
+  .grh-triptych__media-fallback {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #2A6B43, #1A3D27);
+  }
+
+  .grh-triptych__num {
+    position: absolute;
+    top: var(--grh-space-3);
+    left: var(--grh-space-3);
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--grh-cream-50);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.45);
+  }
+  .grh-triptych__icon {
+    position: absolute;
+    bottom: var(--grh-space-3);
+    right: var(--grh-space-3);
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(20, 43, 31, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: var(--grh-candle-300);
+    display: grid; place-items: center;
+    border: 1px solid rgba(250, 247, 241, 0.25);
+  }
+
+  .grh-triptych__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: var(--grh-space-4);
+    border-top: 1px solid var(--grh-line);
+    margin-top: var(--grh-space-4);
+  }
+  .grh-triptych__link:hover .grh-triptych__body {
+    border-color: var(--grh-candle-500);
+  }
+  .grh-triptych__name {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 2.6vw, 2rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--grh-forest-900);
+    margin: 0;
+  }
+  .grh-triptych__tagline {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .grh-triptych__desc {
+    margin-top: var(--grh-space-3);
+    font-size: var(--grh-fs-sm);
+    line-height: 1.55;
+    color: var(--grh-stone-700);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .grh-triptych__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: var(--grh-space-3);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+    color: var(--grh-forest-800);
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 4px;
+    width: fit-content;
+    transition: gap var(--grh-dur-base);
+  }
+  .grh-triptych__link:hover .grh-triptych__cta { gap: 12px; color: var(--grh-moss-600); }
+</style>

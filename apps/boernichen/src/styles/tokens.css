@@ -1,0 +1,124 @@
+/* ============================================================
+   GRH Design Tokens – Single Source of Truth
+   Prefix: --grh-*
+   Migration: 1:1 nach Impreza/WPBakery via Custom-CSS oder
+   Network-Activated-Plugin "grh-design-tokens".
+   ============================================================ */
+
+:root {
+  /* --- Primärgrüns (8 Stufen) ----------------------------- */
+  --grh-forest-950: #142B1F;
+  --grh-forest-900: #1A3D27;
+  --grh-forest-800: #1B4A2F;
+  --grh-forest-700: #2A6B43;
+  --grh-moss-600:   #3E8C5A;
+  --grh-moss-500:   #5BAE78;
+  --grh-sage-300:   #A8CDB3;
+  --grh-sage-100:   #E4F0E6;
+
+  /* --- Akzente: Börnichen-Lindgrün (Wappen-/Jubiläumsfarbe) ----- */
+  /* Hauptakzent = Lindgrün #BBC74B vom Börnichener Auftritt.
+     Variablennamen (candle-*) bleiben aus Kompatibilität erhalten. */
+  --grh-wood-700:      #6B4A2A;
+  --grh-wood-500:      #A6794E;
+  --grh-sandstone-300: #D9C4A3;
+  --grh-candle-500:    #BBC74B;
+  --grh-candle-300:    #D7DE8B;
+
+  /* --- Neutrale Töne -------------------------------------- */
+  --grh-cream-50:   #FAF7F1;
+  --grh-paper-100:  #F2EDE3;
+  --grh-stone-400:  #8D9388;
+  --grh-stone-700:  #3D423A;
+  --grh-line:       #D8D2C4;
+
+  /* --- Statusfarben (gedeckt, niemals knalliges Orange) -- */
+  --grh-alert-600: #A8401E;
+  --grh-info-600:  #2A6B73;
+
+  /* --- Semantische Aliase --------------------------------- */
+  --grh-bg:            var(--grh-cream-50);
+  --grh-bg-elevated:   var(--grh-paper-100);
+  --grh-bg-section:    var(--grh-sage-100);
+  --grh-bg-dark:       var(--grh-forest-900);
+  --grh-text:          var(--grh-stone-700);
+  --grh-text-muted:    var(--grh-stone-400);
+  --grh-text-on-dark:  var(--grh-cream-50);
+  --grh-text-heading:  var(--grh-forest-900);
+  --grh-link:          var(--grh-moss-600);
+  --grh-link-hover:    var(--grh-forest-800);
+  --grh-border:        var(--grh-line);
+  --grh-focus-ring:    var(--grh-candle-500);
+
+  /* --- Typo: Familien ------------------------------------- */
+  --grh-font-display: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --grh-font-body:    'Cabin Variable', 'Cabin', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --grh-font-script:  'Caveat', 'Petit Formal Script', cursive;
+
+  /* --- Typo: Skala (Major Third 1.25) --------------------- */
+  --grh-fs-xs:   0.75rem;
+  --grh-fs-sm:   0.875rem;
+  --grh-fs-base: 1rem;
+  --grh-fs-md:   1.125rem;
+  --grh-fs-lg:   1.25rem;
+  --grh-fs-xl:   1.563rem;
+  --grh-fs-2xl:  1.953rem;
+  --grh-fs-3xl:  2.441rem;
+  --grh-fs-4xl:  3.052rem;
+  --grh-fs-5xl:  3.815rem;
+  --grh-fs-hero: clamp(2.75rem, 6vw, 5rem);
+
+  --grh-lh-tight:   1.1;
+  --grh-lh-snug:    1.25;
+  --grh-lh-normal:  1.6;
+  --grh-tracking-display: -0.02em;
+  --grh-tracking-label:    0.04em;
+
+  /* --- Spacing-Scale (4-pt-Basis) ------------------------- */
+  --grh-space-1:  4px;
+  --grh-space-2:  8px;
+  --grh-space-3:  12px;
+  --grh-space-4:  16px;
+  --grh-space-5:  24px;
+  --grh-space-6:  32px;
+  --grh-space-7:  48px;
+  --grh-space-8:  64px;
+  --grh-space-9:  96px;
+  --grh-space-10: 128px;
+
+  /* --- Radii ---------------------------------------------- */
+  --grh-radius-sm:   4px;
+  --grh-radius-md:  10px;
+  --grh-radius-lg:  18px;
+  --grh-radius-xl:  28px;
+  --grh-radius-pill: 999px;
+
+  /* --- Schatten (grünlich getönt, nie reines Schwarz) ----- */
+  --grh-shadow-sm: 0 1px 2px rgba(26, 61, 39, 0.06);
+  --grh-shadow-md: 0 6px 18px -8px rgba(26, 61, 39, 0.18);
+  --grh-shadow-lg: 0 22px 45px -20px rgba(26, 61, 39, 0.28);
+  --grh-shadow-glow-candle: 0 0 24px rgba(187, 199, 75, 0.55);
+
+  /* --- Layout-Container ----------------------------------- */
+  --grh-container-max: 1240px;
+  --grh-gutter:        var(--grh-space-5);
+
+  /* --- Motion --------------------------------------------- */
+  --grh-ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --grh-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --grh-dur-fast:    180ms;
+  --grh-dur-base:    320ms;
+  --grh-dur-slow:    700ms;
+
+  /* --- Z-Layer -------------------------------------------- */
+  --grh-z-base:    1;
+  --grh-z-sticky:  100;
+  --grh-z-overlay: 500;
+  --grh-z-modal:   1000;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --grh-gutter: var(--grh-space-6);
+  }
+}

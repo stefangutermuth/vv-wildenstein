@@ -1,0 +1,191 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import GrhIcon from '../components/primitives/GrhIcon.astro';
+
+interface Crumb { label: string; href: string }
+interface Props {
+  title: string;
+  eyebrow?: string;
+  description?: string;
+  breadcrumb?: Crumb[];
+  /** Volle Container-Breite statt der schmalen Prosa-Spalte (für Raster/Listen). */
+  wide?: boolean;
+}
+const { title, eyebrow, description, breadcrumb = [], wide = false } = Astro.props;
+const hasBody = Astro.slots.has('default');
+---
+<BaseLayout
+  header="compact"
+  title={`${title} · Gemeinde Börnichen/Erzgeb.`}
+  description={description ?? `${title} — Gemeinde Börnichen/Erzgeb.`}
+>
+  <header class="grh-page-hero">
+    <div class="grh-container">
+      <nav class="grh-page-crumbs" aria-label="Brotkrümelnavigation">
+        <a href="/">Start</a>
+        {breadcrumb.map((c) => (
+          <>
+            <GrhIcon name="arrow-right" size={11} />
+            <a href={c.href}>{c.label}</a>
+          </>
+        ))}
+        <GrhIcon name="arrow-right" size={11} />
+        <span aria-current="page">{title}</span>
+      </nav>
+      {eyebrow && <span class="grh-page-eyebrow">{eyebrow}</span>}
+      <h1 class="grh-page-title">{title}</h1>
+      {description && <p class="grh-page-lead">{description}</p>}
+    </div>
+  </header>
+
+  <section class="grh-page-body">
+    <div class:list={['grh-container', wide ? 'grh-page-wide' : 'grh-prose']}>
+      {hasBody ? (
+        <slot />
+      ) : (
+        <div class="grh-page-stub">
+          <p class="grh-page-stub__lead">Diese Seite wird gerade aufgebaut.</p>
+          <p>Die Inhalte für „{title}" folgen in Kürze. Bei Fragen erreichen Sie die
+          Gemeindeverwaltung Börnichen/Erzgeb. unter <a href="tel:+49372941225">037294&nbsp;1225</a>.</p>
+          <a href="/" class="grh-page-back"><GrhIcon name="arrow-right" size={14} /> Zur Startseite</a>
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* === Seiten-Kopf ========================================= */
+  .grh-page-hero {
+    background:
+      radial-gradient(120% 100% at 0% 0%, rgba(120, 150, 220, 0.20), transparent 55%),
+      linear-gradient(115deg, #1c2a5e 0%, #211b46 100%);
+    color: var(--grh-cream-50);
+    padding-block: var(--grh-space-8) var(--grh-space-7);
+  }
+  .grh-page-crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--grh-stone-400);
+    margin-bottom: var(--grh-space-5);
+  }
+  .grh-page-crumbs a {
+    color: var(--grh-cream-50);
+    opacity: 0.7;
+    text-decoration: none;
+    transition: opacity var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-page-crumbs a:hover { opacity: 1; color: var(--grh-candle-300); }
+  .grh-page-crumbs [aria-current="page"] { color: var(--grh-candle-300); }
+  .grh-page-crumbs :global(svg) { opacity: 0.45; }
+
+  .grh-page-eyebrow {
+    display: block;
+    font-size: var(--grh-fs-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-candle-300);
+    font-weight: 600;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-page-title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--grh-cream-50);
+    margin: 0;
+  }
+  .grh-page-lead {
+    margin: var(--grh-space-4) 0 0;
+    font-size: var(--grh-fs-md);
+    line-height: 1.6;
+    color: var(--grh-cream-50);
+    opacity: 0.82;
+    max-width: 60ch;
+  }
+
+  /* === Seiten-Inhalt ====================================== */
+  .grh-page-body {
+    background: var(--grh-cream-50);
+    color: var(--grh-text);
+    padding-block: var(--grh-space-8);
+    min-height: 30vh;
+  }
+  .grh-prose { max-width: 76ch; }
+  .grh-prose :global(h2) {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 500;
+    color: var(--grh-text-heading);
+    margin: var(--grh-space-7) 0 var(--grh-space-3);
+  }
+  .grh-prose :global(h3) {
+    font-family: var(--grh-font-display);
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--grh-text-heading);
+    margin: var(--grh-space-5) 0 var(--grh-space-2);
+  }
+  .grh-prose :global(p) { line-height: 1.7; margin: 0 0 var(--grh-space-4); }
+  .grh-prose :global(a) { color: var(--grh-link); }
+  .grh-prose :global(ul), .grh-prose :global(ol) { line-height: 1.7; margin: 0 0 var(--grh-space-4) 1.2em; }
+  .grh-prose :global(li) { margin-bottom: 6px; }
+
+  .grh-page-stub__lead {
+    font-family: var(--grh-font-display);
+    font-size: 1.4rem;
+    color: var(--grh-text-heading);
+    margin-bottom: var(--grh-space-3) !important;
+  }
+  .grh-page-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: var(--grh-space-4);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: var(--grh-moss-600);
+    text-decoration: none;
+    transition: gap var(--grh-dur-base);
+  }
+  .grh-page-back:hover { gap: 13px; }
+
+  /* === Aus migrierten Inhalten ============================ */
+  .grh-prose :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--grh-radius-md);
+    margin: var(--grh-space-4) 0;
+  }
+  .grh-prose :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 var(--grh-space-4);
+    font-size: var(--grh-fs-sm);
+  }
+  .grh-prose :global(th),
+  .grh-prose :global(td) {
+    border: 1px solid var(--grh-border);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .grh-prose :global(th) { background: var(--grh-sage-100); font-weight: 600; }
+  .grh-prose :global(.grh-contactcard) {
+    background: #fff;
+    border: 1px solid #ddd9ef;
+    border-radius: 22px 22px 64px 22px;
+    padding: var(--grh-space-5) var(--grh-space-6);
+    margin: var(--grh-space-7) 0 0;
+    box-shadow: 0 1px 2px rgba(28, 24, 64, 0.04);
+  }
+  .grh-prose :global(.grh-contactcard h2) { margin-top: 0 !important; font-size: 1.3rem; }
+  .grh-prose :global(.grh-contactcard p) { margin-bottom: var(--grh-space-2); }
+</style>

@@ -1,0 +1,109 @@
+---
+import GrhPage from '../layouts/GrhPage.astro';
+import GrhIcon from '../components/primitives/GrhIcon.astro';
+
+interface Item { title: string; href: string; text: string; image?: string }
+const items: Item[] = [
+  {
+    title: 'Evangel.-luther. Kirche Börnichen',
+    href: '/vereine/kirche',
+    text: 'Kirchgemeinde, Gottesdienste und Veranstaltungen.',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/sites/3/2025/05/IMG_20211106_142234-1024x768.jpg',
+  },
+  {
+    title: 'Grundschule „Im Grünen“',
+    href: '/vereine/grundschule',
+    text: 'Die Grundschule mitten im Ort.',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/sites/3/2025/05/waldi-04517-scaled-1024x683.jpg',
+  },
+  {
+    title: 'Kita Wunderland',
+    href: '/vereine/kita-wunderland',
+    text: 'Kindertagesstätte für die Kleinsten.',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/sites/3/2025/06/Bildschirmfoto-2022-10-11-um-09.51.40.png',
+  },
+  {
+    title: 'Seniorentreff Börnichen',
+    href: '/vereine/seniorentreff-boernichen',
+    text: 'Gemeinsame Nachmittage für Seniorinnen und Senioren.',
+  },
+  {
+    title: 'Vereine',
+    href: '/vereine',
+    text: 'Gemeinschaft, Feuerwehr und Vereinsleben.',
+  },
+  {
+    title: 'Gewerbe',
+    href: '/gewerbe',
+    text: 'Handwerk und Dienstleistungen vor Ort.',
+  },
+];
+---
+<GrhPage
+  title="Leben in Börnichen"
+  eyebrow="Mittendrin"
+  description="Bildung, Gemeinschaft und Alltag in Börnichen/Erzgeb. — ein Überblick über das Leben im Ort."
+  wide
+>
+  <p class="grh-leb__intro">
+    Börnichen ist ein lebendiges Walddorf: Kirchgemeinde, Schule und Kindergarten, ein reges
+    Vereinsleben und ortsansässige Betriebe prägen das Miteinander. Hier finden Sie die
+    Einrichtungen und Bereiche des Ortes im Überblick.
+  </p>
+
+  <div class="grh-leb__grid">
+    {items.map((i) => (
+      <a class="grh-leb__card" href={i.href}>
+        <span class={`grh-leb__media ${i.image ? '' : 'grh-leb__media--plain'}`}>
+          {i.image
+            ? <img src={i.image} alt={i.title} loading="lazy" decoding="async" />
+            : <span class="grh-leb__media-icon" aria-hidden="true"><GrhIcon name="tree" size={34} /></span>}
+        </span>
+        <span class="grh-leb__cap">
+          <strong class="grh-leb__title">{i.title}</strong>
+          <span class="grh-leb__text">{i.text}</span>
+          <span class="grh-leb__more">Mehr erfahren <GrhIcon name="arrow-right" size={14} /></span>
+        </span>
+      </a>
+    ))}
+  </div>
+</GrhPage>
+
+<style>
+  .grh-leb__intro { font-size: var(--grh-fs-md); line-height: 1.65; color: var(--grh-text); max-width: 70ch; margin: var(--grh-space-6) 0 0; }
+
+  .grh-leb__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--grh-space-5);
+    margin-top: var(--grh-space-7);
+  }
+  .grh-leb__card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #ddd9ef;
+    border-radius: 18px 18px 56px 18px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 1px 2px rgba(28, 24, 64, 0.04);
+    transition: border-color var(--grh-dur-fast), box-shadow var(--grh-dur-fast);
+  }
+  .grh-leb__card:hover { border-color: var(--grh-candle-500); box-shadow: var(--grh-shadow-md); }
+
+  .grh-leb__media { display: block; aspect-ratio: 16 / 10; overflow: hidden; }
+  .grh-leb__media img { width: 100%; height: 100%; object-fit: cover; transition: transform 600ms var(--grh-ease-out); }
+  .grh-leb__card:hover .grh-leb__media img { transform: scale(1.05); }
+  .grh-leb__media--plain {
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--grh-forest-800), var(--grh-moss-600));
+    color: var(--grh-cream-50);
+  }
+
+  .grh-leb__cap { display: flex; flex-direction: column; gap: 8px; padding: var(--grh-space-5) var(--grh-space-5) var(--grh-space-6); }
+  .grh-leb__title { font-family: var(--grh-font-display); font-size: var(--grh-fs-lg); font-weight: 500; color: var(--grh-text-heading); line-height: 1.25; }
+  .grh-leb__text { font-size: var(--grh-fs-sm); color: var(--grh-text-muted); line-height: 1.55; }
+  .grh-leb__more { display: inline-flex; align-items: center; gap: 6px; margin-top: 2px; font-size: var(--grh-fs-sm); font-weight: 700; color: var(--grh-moss-600); }
+  .grh-leb__card:hover .grh-leb__more { color: var(--grh-forest-800); }
+</style>

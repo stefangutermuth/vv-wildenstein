@@ -1,0 +1,128 @@
+---
+interface Props {
+  image: string;
+  imageAlt?: string;
+  eyebrow?: string;
+  title: string;
+  text?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+const { image, imageAlt = '', eyebrow, title, text, ctaLabel, ctaHref } = Astro.props;
+---
+<section class="grh-cta">
+  <div class="grh-cta__bg" aria-hidden="true" style={`background-image: url('${image}')`}>
+    <span class="grh-cta__scrim"></span>
+  </div>
+  <div class="grh-container grh-cta__inner">
+    <div class="grh-cta__col">
+      {eyebrow && <span class="grh-cta__eyebrow">{eyebrow}</span>}
+      <h2 class="grh-cta__title">{title}</h2>
+      {text && <p class="grh-cta__text">{text}</p>}
+      {ctaLabel && ctaHref && (
+        <a class="grh-cta__btn" href={ctaHref}>{ctaLabel}</a>
+      )}
+    </div>
+    <div class="grh-cta__col-spacer" aria-hidden="true"></div>
+  </div>
+</section>
+
+<style>
+  .grh-cta {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    /* beschneidet den fixierten Hintergrund auf diese Sektion (ohne Scroll-Ruckeln) */
+    clip-path: inset(0);
+    display: flex;
+    align-items: center;
+    min-height: clamp(360px, 52vh, 540px);
+    color: #fff;
+  }
+  /* Feststehender Hintergrund über GPU-freundliches position:fixed
+     (statt des ruckelnden background-attachment:fixed). */
+  .grh-cta__bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  /* Mobile: normaler, mitscrollender Cover-Hintergrund (fixed ist dort unzuverlässig) */
+  @media (max-width: 820px) {
+    .grh-cta__bg { position: absolute; }
+  }
+  .grh-cta__scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(18, 20, 52, 0.94) 0%,
+      rgba(18, 20, 52, 0.74) 42%,
+      rgba(18, 20, 52, 0.32) 74%,
+      rgba(18, 20, 52, 0.12) 100%
+    );
+  }
+
+  .grh-cta__inner {
+    position: relative;
+    padding-block: var(--grh-space-8);
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+  }
+  @media (max-width: 720px) {
+    .grh-cta__inner { grid-template-columns: 1fr; }
+    .grh-cta__col-spacer { display: none; }
+  }
+  /* Linke Spalte: Text + Button */
+  .grh-cta__col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--grh-space-4);
+  }
+  .grh-cta__eyebrow {
+    font-size: var(--grh-fs-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: #fff;
+    font-weight: 700;
+  }
+  .grh-cta__title {
+    font-family: var(--grh-font-body);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: clamp(2.4rem, 5.5vw, 4rem);
+    line-height: 1.02;
+    letter-spacing: 0.005em;
+    margin: 0;
+    color: #fff;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+  }
+  .grh-cta__text {
+    font-size: var(--grh-fs-md);
+    line-height: 1.6;
+    max-width: 46ch;
+    color: #fff;
+  }
+  .grh-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    margin-top: var(--grh-space-3);
+    padding: 14px 30px;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-950);
+    font-weight: 700;
+    font-size: var(--grh-fs-md);
+    text-decoration: none;
+    /* gleiche geschwungene Ecke wie die News-Karten */
+    border-radius: 14px 14px 40px 14px;
+    box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.45);
+    transition: transform var(--grh-dur-fast), filter var(--grh-dur-fast);
+  }
+  .grh-cta__btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+</style>

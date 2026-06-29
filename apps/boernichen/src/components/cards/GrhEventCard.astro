@@ -1,0 +1,151 @@
+---
+import GrhButton from '../primitives/GrhButton.astro';
+import GrhBadge from '../primitives/GrhBadge.astro';
+import GrhIcon from '../primitives/GrhIcon.astro';
+
+interface Props {
+  title: string;
+  startDate: Date;
+  endDate?: Date;
+  location: string;
+  ortsteil?: 'borstendorf' | 'gruenhainichen' | 'waldkirchen';
+  teaser: string;
+  featured?: boolean;
+  ctaUrl?: string;
+  ctaLabel?: string;
+}
+const { title, startDate, endDate, location, ortsteil, teaser, featured = false, ctaUrl, ctaLabel = 'Weitere Informationen' } = Astro.props;
+
+const day   = new Intl.DateTimeFormat('de-DE', { day: '2-digit' }).format(startDate);
+const month = new Intl.DateTimeFormat('de-DE', { month: 'short' }).format(startDate).replace('.', '');
+const time  = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' }).format(startDate);
+const ortsteilLabel = ortsteil ? { borstendorf: 'Borstendorf', gruenhainichen: 'Grünhainichen', waldkirchen: 'Waldkirchen' }[ortsteil] : null;
+
+const dateRange = endDate
+  ? `${new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit' }).format(startDate)} – ${new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(endDate)}`
+  : null;
+---
+<article class={`grh-event-card ${featured ? 'is-featured' : ''}`}>
+  <div class="grh-event-card__date" aria-hidden="true">
+    <span class="grh-event-card__day">{day}</span>
+    <span class="grh-event-card__month">{month}</span>
+    {dateRange && <span class="grh-event-card__range">→</span>}
+  </div>
+
+  <div class="grh-event-card__body">
+    <div class="grh-event-card__meta">
+      {ortsteilLabel && <GrhBadge tone="moss" size="sm">{ortsteilLabel}</GrhBadge>}
+      {featured && <GrhBadge tone="candle" size="sm">Empfehlung</GrhBadge>}
+      <span class="grh-event-card__time"><GrhIcon name="clock" size={14} /> {dateRange ?? `ab ${time} Uhr`}</span>
+    </div>
+    <h3 class="grh-event-card__title">{title}</h3>
+    <p class="grh-event-card__location">
+      <GrhIcon name="map-pin" size={16} /> {location}
+    </p>
+    <p class="grh-event-card__teaser">{teaser}</p>
+    {ctaUrl && (
+      <div class="grh-event-card__cta">
+        <GrhButton href={ctaUrl} variant="secondary" size="sm">{ctaLabel}</GrhButton>
+      </div>
+    )}
+  </div>
+</article>
+
+<style>
+  .grh-event-card {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 0;
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--grh-line);
+    box-shadow: var(--grh-shadow-sm);
+    transition: transform var(--grh-dur-base), box-shadow var(--grh-dur-base);
+  }
+  .grh-event-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--grh-shadow-md);
+  }
+
+  .grh-event-card__date {
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 6px),
+      linear-gradient(160deg, var(--grh-wood-700), var(--grh-wood-500));
+    color: var(--grh-cream-50);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--grh-space-4) var(--grh-space-3);
+    position: relative;
+    text-align: center;
+  }
+  .grh-event-card__day {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-3xl);
+    font-weight: 600;
+    line-height: 1;
+  }
+  .grh-event-card__month {
+    font-size: var(--grh-fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--grh-tracking-label);
+    margin-top: 4px;
+    opacity: 0.92;
+  }
+  .grh-event-card__range {
+    margin-top: 4px;
+    font-size: var(--grh-fs-xs);
+    opacity: 0.75;
+  }
+
+  .grh-event-card__body {
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+  }
+  .grh-event-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--grh-space-2);
+    align-items: center;
+  }
+  .grh-event-card__time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--grh-fs-xs);
+    color: var(--grh-stone-400);
+  }
+  .grh-event-card__title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    line-height: 1.25;
+    margin-top: 4px;
+  }
+  .grh-event-card__location {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+  }
+  .grh-event-card__teaser {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+  }
+  .grh-event-card__cta { margin-top: var(--grh-space-3); }
+
+  .grh-event-card.is-featured {
+    border-color: var(--grh-candle-500);
+  }
+  .grh-event-card.is-featured .grh-event-card__date {
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 6px),
+      linear-gradient(160deg, #1B4A2F, #2A6B43);
+  }
+</style>

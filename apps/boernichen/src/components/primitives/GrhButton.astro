@@ -1,0 +1,117 @@
+---
+type Variant = 'primary' | 'secondary' | 'ghost' | 'link';
+interface Props {
+  href?: string;
+  variant?: Variant;
+  size?: 'sm' | 'md' | 'lg';
+  type?: 'button' | 'submit';
+  ariaLabel?: string;
+  class?: string;
+}
+const { href, variant = 'primary', size = 'md', type = 'button', ariaLabel, class: extra = '' } = Astro.props;
+const Tag = href ? 'a' : 'button';
+const cls = `grh-btn grh-btn--${variant} grh-btn--${size} ${extra}`.trim();
+---
+<Tag
+  class={cls}
+  {...href ? { href } : { type }}
+  {...ariaLabel ? { 'aria-label': ariaLabel } : {}}
+>
+  <span class="grh-btn__label"><slot /></span>
+</Tag>
+
+<style>
+  .grh-btn {
+    --_bg: var(--grh-forest-800);
+    --_fg: var(--grh-cream-50);
+    --_border: transparent;
+    --_pad-y: var(--grh-space-3);
+    --_pad-x: var(--grh-space-5);
+    --_fs: var(--grh-fs-base);
+    --_arrow: var(--grh-candle-500);
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--grh-space-2);
+    padding: var(--_pad-y) var(--_pad-x);
+    border-radius: var(--grh-radius-pill);
+    background: var(--_bg);
+    color: var(--_fg);
+    border: 1.5px solid var(--_border);
+    font-family: var(--grh-font-body);
+    font-size: var(--_fs);
+    font-weight: 600;
+    letter-spacing: var(--grh-tracking-label);
+    text-transform: none;
+    transition:
+      box-shadow var(--grh-dur-base) var(--grh-ease-out),
+      background var(--grh-dur-base) var(--grh-ease-out),
+      color var(--grh-dur-base) var(--grh-ease-out),
+      border-color var(--grh-dur-base) var(--grh-ease-out);
+    box-shadow: var(--grh-shadow-sm);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  /* Pfeil-Reveal: erscheint rechts beim Hover */
+  .grh-btn:not(.grh-btn--link)::after {
+    content: '→';
+    position: absolute;
+    right: calc(var(--_pad-x) - 4px);
+    top: 50%;
+    color: var(--_arrow);
+    font-weight: 400;
+    opacity: 0;
+    transform: translate(-8px, -50%);
+    transition: opacity 280ms var(--grh-ease-out),
+                transform 320ms var(--grh-ease-out);
+    pointer-events: none;
+  }
+  .grh-btn__label {
+    display: inline-block;
+    transition: transform 320ms var(--grh-ease-out);
+  }
+  .grh-btn:not(.grh-btn--link):hover .grh-btn__label {
+    transform: translateX(-10px);
+  }
+  .grh-btn:not(.grh-btn--link):hover::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+  .grh-btn:hover { box-shadow: var(--grh-shadow-md); }
+
+  .grh-btn--primary { --_bg: var(--grh-forest-800); --_fg: var(--grh-cream-50); }
+  .grh-btn--primary:hover { --_bg: var(--grh-forest-700); }
+
+  .grh-btn--secondary {
+    --_bg: var(--grh-cream-50);
+    --_fg: var(--grh-forest-800);
+    --_border: var(--grh-forest-800);
+  }
+  .grh-btn--secondary:hover { --_bg: var(--grh-sage-100); }
+
+  .grh-btn--ghost {
+    --_bg: transparent;
+    --_fg: var(--grh-forest-900);
+    --_border: var(--grh-line);
+    box-shadow: none;
+  }
+  .grh-btn--ghost:hover { --_bg: var(--grh-paper-100); --_border: var(--grh-forest-700); }
+
+  .grh-btn--link {
+    --_bg: transparent;
+    --_fg: var(--grh-moss-600);
+    --_border: transparent;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .grh-btn--link:hover { --_fg: var(--grh-forest-800); transform: none; }
+  .grh-btn--link .grh-btn__label { border-bottom: 1.5px solid currentColor; padding-bottom: 2px; }
+
+  .grh-btn--sm { --_pad-y: var(--grh-space-2); --_pad-x: var(--grh-space-4); --_fs: var(--grh-fs-sm); }
+  .grh-btn--lg { --_pad-y: var(--grh-space-4); --_pad-x: var(--grh-space-6); --_fs: var(--grh-fs-md); }
+</style>

@@ -1,0 +1,250 @@
+---
+import GrhPage from '../layouts/GrhPage.astro';
+import GrhIcon from '../components/primitives/GrhIcon.astro';
+import { getAmtsblaetter } from '../lib/cms';
+
+const all = await getAmtsblaetter();
+const issues = all.filter((a) => !a.isInfo);
+const infos = all.filter((a) => a.isInfo);
+
+// Monatsausgaben nach Jahr gruppieren (absteigend)
+const byYear = new Map<number, typeof issues>();
+for (const it of issues) {
+  const y = it.date.getFullYear();
+  if (!byYear.has(y)) byYear.set(y, []);
+  byYear.get(y)!.push(it);
+}
+const years = [...byYear.keys()].sort((a, b) => b - a);
+
+const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+const hrefOf = (a: { pdfUrl: string | null; link: string }) => a.pdfUrl ?? a.link;
+
+// Uneinheitliche Original-Titel ("Nr. 09/2024", "12/2024", …) zu "Amtsblatt MM/YYYY" vereinheitlichen.
+const issueTitle = (title: string) => {
+  const m = title.match(/(\d{1,2})\s*\/\s*(\d{4})/);
+  return m ? `Amtsblatt ${m[1].padStart(2, '0')}/${m[2]}` : title;
+};
+---
+<GrhPage
+  title="Amtsblatt"
+  eyebrow="Gemeinde"
+  description="Amtliche Bekanntmachungen und Mitteilungsblatt des Verwaltungsverbands Wildenstein — alle Ausgaben zum Download."
+  wide
+>
+  <p class="grh-ab__intro">
+    Hier finden Sie alle Ausgaben des amtlichen Mitteilungsblatts chronologisch geordnet.
+    Das Amtsblatt erscheint monatlich für den gesamten Verwaltungsverband Wildenstein.
+  </p>
+
+  <div class="grh-ab__layout">
+  <main class="grh-ab__main">
+  {issues.length === 0 ? (
+    <p class="grh-ab__empty">Derzeit sind keine Ausgaben verfügbar. Bitte schauen Sie bald wieder vorbei.</p>
+  ) : (
+    years.map((year) => (
+      <section class="grh-ab__year">
+        <h2 class="grh-ab__year-title">{year}</h2>
+        <div class="grh-ab__grid">
+          {byYear.get(year)!.map((a) => (
+            <a
+              class="grh-ab__card"
+              href={hrefOf(a)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="grh-ab__card-icon" aria-hidden="true"><GrhIcon name="document" size={22} /></span>
+              <span class="grh-ab__card-text">
+                <strong>{issueTitle(a.title)}</strong>
+                <time datetime={a.date.toISOString()}>{fmtDate.format(a.date)}</time>
+              </span>
+              <span class="grh-ab__card-action" aria-hidden="true">
+                {a.pdfUrl ? 'PDF' : 'Öffnen'} <GrhIcon name="arrow-right" size={15} />
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))
+  )}
+
+  </main>
+
+  <!-- ===== Rund ums Amtsblatt ===== -->
+  <aside class="grh-ab__info grh-ab__aside">
+    <div class="grh-ab__info-text">
+      <h2 class="grh-ab__h2">Rund ums Amtsblatt</h2>
+      <p>Das Amtsblatt erscheint immer zu Beginn eines Monats in einer Auflage von rund 2.310 Exemplaren.</p>
+      <p>
+        Verantwortlich für den amtlichen Teil ist der Verwaltungsverband „Wildenstein" –
+        die Verbandsvorsitzende und die Bürgermeister der Mitgliedsgemeinden.
+      </p>
+      <p>
+        Abgabetermin für Beiträge, Berichte und Inserate ist in der Regel Mitte des Monats
+        für die kommende Ausgabe. Bitte beachten Sie unbedingt die Redaktionsschluss­termine –
+        später eingereichte Beiträge können nicht berücksichtigt werden.
+      </p>
+
+      <div class="grh-ab__contact">
+        <strong>Frau K. Schubert</strong>
+        <span>Verwaltungsverband Wildenstein</span>
+        <span>Chemnitzer Straße 41, 09579 Grünhainichen</span>
+        <span>
+          <a href="tel:+493729417032">037294 170-32</a> · <a href="tel:+49372941700">170-0</a>
+        </span>
+        <span><a href="mailto:k.schubert@wildenstein.ws">k.schubert@wildenstein.ws</a></span>
+      </div>
+    </div>
+
+    {infos.length > 0 && (
+      <div class="grh-ab__info-downloads">
+        <h3 class="grh-ab__h3">Dokumente</h3>
+        {infos.map((a) => (
+          <a
+            class="grh-ab__doc"
+            href={hrefOf(a)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="grh-ab__doc-icon" aria-hidden="true"><GrhIcon name="document" size={18} /></span>
+            <span class="grh-ab__doc-title">{a.title}</span>
+            <GrhIcon name="arrow-right" size={15} />
+          </a>
+        ))}
+      </div>
+    )}
+  </aside>
+  </div>
+</GrhPage>
+
+<style>
+  .grh-ab__intro { font-size: var(--grh-fs-md); line-height: 1.6; color: var(--grh-text); max-width: 70ch; margin: var(--grh-space-6) 0 0; }
+  .grh-ab__empty { color: var(--grh-text-muted); margin-top: var(--grh-space-6); }
+
+  .grh-ab__year { margin-top: var(--grh-space-7); }
+  .grh-ab__year-title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+    font-weight: 500;
+    color: var(--grh-text-heading);
+    margin: 0 0 var(--grh-space-4);
+    padding-bottom: var(--grh-space-2);
+    border-bottom: 2px solid var(--grh-candle-300);
+  }
+  .grh-ab__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--grh-space-4);
+  }
+
+  .grh-ab__card {
+    display: flex;
+    align-items: center;
+    gap: var(--grh-space-4);
+    padding: var(--grh-space-4) var(--grh-space-5);
+    background: #fff;
+    border: 1px solid #ddd9ef;
+    border-radius: 16px 16px 36px 16px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 1px 2px rgba(28, 24, 64, 0.04);
+    transition: border-color var(--grh-dur-fast), box-shadow var(--grh-dur-fast);
+  }
+  .grh-ab__card:hover { border-color: var(--grh-candle-500); box-shadow: var(--grh-shadow-md); }
+  .grh-ab__card-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 44px; height: 44px;
+    flex-shrink: 0;
+    border-radius: 12px 12px 20px 12px;
+    background: var(--grh-sage-100);
+    color: var(--grh-forest-800);
+  }
+  .grh-ab__card-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .grh-ab__card-text strong { color: var(--grh-text-heading); font-size: var(--grh-fs-md); line-height: 1.2; }
+  .grh-ab__card-text time { color: var(--grh-text-muted); font-size: var(--grh-fs-xs); margin-top: 2px; }
+  .grh-ab__card-action {
+    display: inline-flex; align-items: center; gap: 5px;
+    flex-shrink: 0;
+    font-size: var(--grh-fs-xs); font-weight: 700; letter-spacing: 0.04em;
+    color: var(--grh-moss-600);
+    transition: color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-ab__card:hover .grh-ab__card-action { color: var(--grh-forest-800); transform: translateX(2px); }
+
+  /* ===== Layout: Archiv + Info-Sidebar ===== */
+  .grh-ab__layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas: "aside" "main";
+    gap: var(--grh-space-6);
+    margin-top: var(--grh-space-6);
+  }
+  @media (min-width: 940px) {
+    .grh-ab__layout {
+      grid-template-columns: minmax(0, 1fr) 330px;
+      grid-template-areas: "main aside";
+      gap: var(--grh-space-7);
+      align-items: start;
+    }
+  }
+  .grh-ab__main { grid-area: main; min-width: 0; }
+  .grh-ab__main .grh-ab__year:first-child { margin-top: 0; }
+  .grh-ab__aside { grid-area: aside; }
+  @media (min-width: 940px) {
+    .grh-ab__aside { position: sticky; top: 96px; }
+  }
+
+  /* ===== Info-Sidebar ===== */
+  .grh-ab__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-5);
+    padding: var(--grh-space-6);
+    background: var(--grh-bg-elevated);
+    border: 1px solid var(--grh-border);
+    border-radius: 24px 24px 56px 24px;
+  }
+  .grh-ab__h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    font-weight: 500;
+    color: var(--grh-text-heading);
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-ab__info-text p { font-size: var(--grh-fs-sm); line-height: 1.6; color: var(--grh-text); margin: 0 0 var(--grh-space-3); }
+  .grh-ab__contact {
+    display: flex; flex-direction: column; gap: 3px;
+    margin-top: var(--grh-space-5);
+    padding-top: var(--grh-space-4);
+    border-top: 1px solid var(--grh-border);
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-text);
+  }
+  .grh-ab__contact strong { color: var(--grh-text-heading); font-size: var(--grh-fs-md); }
+  .grh-ab__contact a { color: var(--grh-link); text-decoration: none; font-weight: 600; }
+  .grh-ab__contact a:hover { text-decoration: underline; }
+
+  .grh-ab__h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    font-weight: 500;
+    color: var(--grh-text-heading);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-ab__info-downloads { display: flex; flex-direction: column; gap: var(--grh-space-3); }
+  .grh-ab__doc {
+    display: flex; align-items: center; gap: var(--grh-space-3);
+    padding: var(--grh-space-3) var(--grh-space-4);
+    background: #fff;
+    border: 1px solid #ddd9ef;
+    border-radius: 12px 12px 24px 12px;
+    text-decoration: none;
+    color: var(--grh-text-heading);
+    font-size: var(--grh-fs-sm); font-weight: 600;
+    transition: border-color var(--grh-dur-fast), box-shadow var(--grh-dur-fast);
+  }
+  .grh-ab__doc:hover { border-color: var(--grh-candle-500); box-shadow: var(--grh-shadow-sm); }
+  .grh-ab__doc-icon { display: inline-grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px 9px 16px 9px; background: var(--grh-sage-100); color: var(--grh-forest-800); }
+  .grh-ab__doc-title { flex: 1; min-width: 0; line-height: 1.3; }
+  .grh-ab__doc :global(svg:last-child) { color: var(--grh-moss-600); flex-shrink: 0; }
+</style>

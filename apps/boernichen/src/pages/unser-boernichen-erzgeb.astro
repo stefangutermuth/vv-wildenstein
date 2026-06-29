@@ -1,0 +1,16 @@
+---
+import GrhPage from '../layouts/GrhPage.astro';
+import GrhGemeindeMap from '../components/sections/GrhGemeindeMap.astro';
+import content from '../pagecontent/unser-boernichen-erzgeb.html?raw';
+---
+<GrhPage title="Unser Börnichen/Erzgeb." eyebrow="Gemeinde" description="Ein Walddorf am Rand des Erzgebirges — Geschichte, Lage und Leben in Börnichen/Erzgeb.">
+  <Fragment set:html={content} />
+
+  <h2>Lage im Verwaltungsverband Wildenstein</h2>
+  <p>
+    Börnichen/Erzgeb. bildet gemeinsam mit der Nachbargemeinde Grünhainichen den
+    Verwaltungsverband Wildenstein. Die folgende Karte zeigt unsere Gemeinde
+    hervorgehoben innerhalb des gesamten Verbandsgebiets.
+  </p>
+  <GrhGemeindeMap />
+</GrhPage>

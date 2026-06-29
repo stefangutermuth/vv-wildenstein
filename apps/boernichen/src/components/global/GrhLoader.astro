@@ -1,0 +1,372 @@
+---
+/**
+ * GrhLoader — animierter Begrüßungs-Vorhang.
+ *
+ * Beim ersten Laden pro Session wird zufällig eine von drei Animationen
+ * gespielt, die je einen Ortsteil zitieren:
+ *   - "wheel" → Waldkirchen / Blaufarbenwerk Zschopenthal (Wasserrad)
+ *   - "chess" → Borstendorf (Schachfigur)
+ *   - "angel" → Grünhainichen (zwei singende Engel)
+ *
+ * Verhalten:
+ *   - Inline-Script läuft synchron, blendet den Vorhang sofort weg, falls
+ *     bereits in dieser Session gezeigt oder bei prefers-reduced-motion.
+ *   - Sonst: Variante wählen → ~1900 ms Animation → Fade-out 450 ms → entfernen.
+ *   - Ohne JavaScript greift der <noscript>-Fallback.
+ */
+
+import engel01Raw   from '../../../public/images/loader/engel_01.svg?raw';
+import engel02Raw   from '../../../public/images/loader/engel_02.svg?raw';
+import wasserradRaw from '../../../public/images/loader/wasserrad.svg?raw';
+
+// Inhalt zwischen <svg ...> und </svg> extrahieren, plus auf jedem <path>
+// fill="currentColor" erzwingen, damit wir per CSS einfärben können.
+function prepareSvg(svg: string): string {
+  const inner = svg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+  return inner.replace(/<path(\s)/g, '<path fill="currentColor"$1');
+}
+const engel01Inner   = prepareSvg(engel01Raw);
+const engel02Inner   = prepareSvg(engel02Raw);
+const wasserradInner = prepareSvg(wasserradRaw);
+---
+<noscript><style>{`.grh-loader { display: none !important; }`}</style></noscript>
+
+<div class="grh-loader" data-grh-loader aria-hidden="true">
+  <div class="grh-loader__inner">
+    <div class="grh-loader__stage" aria-hidden="true">
+
+      {/* === Variante 1: Wasserrad (Waldkirchen) =================== */}
+      <svg class="grh-loader__svg grh-loader__svg--wheel" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+        {/* Wasserstrahl rechts oben — fällt aufs Rad und treibt es im Uhrzeigersinn */}
+        <g class="grh-loader__waterstream">
+          <line x1="190" y1="-4" x2="190" y2="60" stroke="#5BAE78" stroke-width="3"   stroke-linecap="round" opacity="0.6" />
+          <line x1="184" y1="2"  x2="184" y2="48" stroke="#A8CDB3" stroke-width="1.5" stroke-linecap="round" opacity="0.5" />
+          <line x1="196" y1="0"  x2="196" y2="52" stroke="#A8CDB3" stroke-width="1.5" stroke-linecap="round" opacity="0.5" />
+        </g>
+
+        {/* Echtes Wasserrad-SVG (1024×1024, dunkelgrün, rotiert) */}
+        <g class="grh-loader__wheel">
+          <g transform="translate(10, 10) scale(0.195)" set:html={wasserradInner}></g>
+        </g>
+
+        {/* Tropfen unten rechts — laufen am rechten Rand herunter */}
+        <g class="grh-loader__drops">
+          <circle cx="158" cy="198" r="2.5" fill="#5BAE78" />
+          <circle cx="172" cy="206" r="2"   fill="#A8CDB3" />
+          <circle cx="150" cy="210" r="1.8" fill="#5BAE78" />
+        </g>
+      </svg>
+
+      {/* === Variante 2: Schachfigur (Borstendorf) ================== */}
+      <svg class="grh-loader__svg grh-loader__svg--chess" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+        {/* Schachbrett-Grundfläche (echte SVG-Datei) */}
+        <g class="grh-loader__board">
+          <image
+            href="/images/loader/schachbrett.svg"
+            x="0"
+            y="140"
+            width="220"
+            height="88"
+            preserveAspectRatio="xMidYMid meet"
+          />
+        </g>
+
+        {/* Springer-Silhouette, springt */}
+        <g class="grh-loader__knight">
+          {/* Schatten */}
+          <ellipse cx="110" cy="170" rx="32" ry="6" fill="#1A3D27" opacity="0.25" class="grh-loader__shadow" />
+
+          {/* Echte Borstendorfer Schachfigur (SVG-Datei) */}
+          <g class="grh-loader__knight-piece">
+            <image
+              href="/images/loader/schwachfigur.svg"
+              x="35"
+              y="20"
+              width="150"
+              height="150"
+              preserveAspectRatio="xMidYMax meet"
+            />
+          </g>
+        </g>
+      </svg>
+
+      {/* === Variante 3: Zwei singende Engel (Grünhainichen) ====== */}
+      <svg class="grh-loader__svg grh-loader__svg--angel" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+        {/* Engel links — steht und wackelt leicht (570×806, eher hoch) */}
+        <g class="grh-loader__angel grh-loader__angel--left">
+          <g transform="translate(0, 22) scale(0.20)" set:html={engel01Inner}></g>
+        </g>
+
+        {/* Engel rechts — schwebt auf und ab (689×455, eher quer
+           → kleinere Skalierung, sonst clippt er rechts) */}
+        <g class="grh-loader__angel grh-loader__angel--right">
+          <g transform="translate(110, 26) scale(0.16)" set:html={engel02Inner}></g>
+        </g>
+
+        {/* Singende Noten — steigen zwischen den Engeln auf, auf Mund-/Kopfhöhe */}
+        <g class="grh-loader__notes" fill="currentColor" style="color: var(--grh-forest-800);">
+          <text class="grh-loader__note grh-loader__note--1" x="80"  y="78"  font-size="22">♪</text>
+          <text class="grh-loader__note grh-loader__note--2" x="110" y="90"  font-size="20">♫</text>
+          <text class="grh-loader__note grh-loader__note--3" x="140" y="78"  font-size="22">♩</text>
+          <text class="grh-loader__note grh-loader__note--4" x="96"  y="100" font-size="18">♬</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="grh-loader__caption" data-grh-loader-caption>
+      <span class="grh-loader__ortsteil"></span>
+      <span class="grh-loader__sub"></span>
+    </div>
+
+    <div class="grh-loader__progress" aria-hidden="true">
+      <span class="grh-loader__progress-bar"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .grh-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(ellipse at center, rgba(232, 182, 88, 0.08), transparent 60%),
+      var(--grh-cream-50);
+    transition: opacity 450ms var(--grh-ease-out);
+  }
+  .grh-loader.is-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .grh-loader__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--grh-space-5);
+  }
+
+  .grh-loader__stage {
+    width: clamp(160px, 60vw, 220px);
+    height: clamp(160px, 60vw, 220px);
+    color: var(--grh-forest-900);
+  }
+  .grh-loader__svg { width: 100%; height: 100%; display: none; }
+  .grh-loader[data-variant="wheel"] .grh-loader__svg--wheel { display: block; }
+  .grh-loader[data-variant="chess"] .grh-loader__svg--chess { display: block; }
+  .grh-loader[data-variant="angel"] .grh-loader__svg--angel { display: block; }
+
+  .grh-loader__caption {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    opacity: 0;
+    animation: grh-loader-cap 600ms var(--grh-ease-out) 200ms forwards;
+  }
+  .grh-loader__ortsteil {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-loader__sub {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+  }
+  @keyframes grh-loader-cap {
+    to { opacity: 1; }
+  }
+
+  .grh-loader__progress {
+    width: 140px;
+    height: 1px;
+    background: var(--grh-line);
+    overflow: hidden;
+  }
+  .grh-loader__progress-bar {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--grh-candle-500);
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation: grh-loader-progress 1900ms var(--grh-ease-out) forwards;
+  }
+  @keyframes grh-loader-progress {
+    to { transform: scaleX(1); }
+  }
+
+  /* === Variante 1: Wasserrad ================================== */
+  .grh-loader__wheel {
+    transform-origin: 110px 110px;
+    animation: grh-loader-spin 5200ms linear infinite;
+    color: var(--grh-forest-900);
+  }
+  @keyframes grh-loader-spin {
+    to { transform: rotate(360deg); } /* Im Uhrzeigersinn */
+  }
+
+  /* Wasserstrahl auf das Rad — Linien fallen sich überlagernd nach unten */
+  .grh-loader__waterstream line {
+    animation: grh-loader-water 750ms ease-in infinite;
+  }
+  .grh-loader__waterstream line:nth-child(2) { animation-delay: 200ms; }
+  .grh-loader__waterstream line:nth-child(3) { animation-delay: 400ms; }
+  @keyframes grh-loader-water {
+    0%   { transform: translateY(-14px); opacity: 0; }
+    50%  { opacity: 0.7; }
+    100% { transform: translateY(10px); opacity: 0; }
+  }
+
+  /* Tropfen unten rechts — laufen kurz herunter, verblassen */
+  .grh-loader__drops circle {
+    animation: grh-loader-drop 1100ms ease-in infinite;
+  }
+  .grh-loader__drops circle:nth-child(2) { animation-delay: 300ms; }
+  .grh-loader__drops circle:nth-child(3) { animation-delay: 600ms; }
+  @keyframes grh-loader-drop {
+    0%   { transform: translateY(-6px); opacity: 1; }
+    100% { transform: translateY(14px); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grh-loader__wheel,
+    .grh-loader__waterstream line,
+    .grh-loader__drops circle { animation: none; }
+  }
+
+  /* === Variante 2: Schachfigur ================================ */
+  .grh-loader__knight-piece {
+    transform-origin: 110px 170px;
+    animation: grh-loader-hop 1100ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  .grh-loader__shadow {
+    transform-origin: 110px 170px;
+    animation: grh-loader-shadow 1100ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes grh-loader-hop {
+    0%, 100% { transform: translate(0, 0)   rotate(0deg);   }
+    25%      { transform: translate(-8px, -28px) rotate(-8deg); }
+    50%      { transform: translate(-22px, -10px) rotate(0deg);  }
+    75%      { transform: translate(-32px, -28px) rotate(6deg);  }
+  }
+  @keyframes grh-loader-shadow {
+    0%, 100% { transform: scale(1)   translateX(0);   opacity: 0.25; }
+    25%      { transform: scale(0.8) translateX(-8px);  opacity: 0.15; }
+    50%      { transform: scale(1)   translateX(-22px); opacity: 0.25; }
+    75%      { transform: scale(0.8) translateX(-32px); opacity: 0.15; }
+  }
+
+  /* === Variante 3: Zwei singende Engel (Grünhainichen) ======== */
+  .grh-loader__angel {
+    color: var(--grh-forest-900);
+  }
+
+  /* Engel links — leichtes Wackeln (Wiegen) */
+  .grh-loader__angel--left {
+    transform-origin: 55px 198px;
+    animation: grh-angel-wobble 2.6s ease-in-out infinite;
+  }
+  @keyframes grh-angel-wobble {
+    0%, 100% { transform: rotate(-1.6deg); }
+    50%      { transform: rotate( 1.6deg); }
+  }
+
+  /* Engel rechts — schwebt sanft auf und ab */
+  .grh-loader__angel--right {
+    animation: grh-angel-float 2.8s ease-in-out infinite;
+  }
+  @keyframes grh-angel-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+
+  /* Singende Noten — steigen auf, drehen leicht, verblassen */
+  .grh-loader__note {
+    opacity: 0;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Sans Symbols', serif;
+    animation: grh-angel-note 2.4s ease-in-out infinite;
+  }
+  .grh-loader__note--1 { animation-delay: 0s;     transform-origin: 80px  78px;  }
+  .grh-loader__note--2 { animation-delay: 0.6s;   transform-origin: 110px 90px;  }
+  .grh-loader__note--3 { animation-delay: 1.2s;   transform-origin: 140px 78px;  }
+  .grh-loader__note--4 { animation-delay: 1.8s;   transform-origin: 96px  100px; }
+  @keyframes grh-angel-note {
+    0%   { opacity: 0;    transform: translate(0, 0)    rotate(0deg); }
+    15%  { opacity: 0.8;  transform: translate(0, -10px) rotate(-6deg); }
+    50%  { opacity: 0.6;  transform: translate(4px, -34px) rotate(8deg); }
+    85%  { opacity: 0.2;  transform: translate(-4px, -56px) rotate(-4deg); }
+    100% { opacity: 0;    transform: translate(0, -68px) rotate(0deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grh-loader__angel--left,
+    .grh-loader__angel--right,
+    .grh-loader__note { animation: none; }
+  }
+
+  @keyframes grh-loader-fadein { to { opacity: 1; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grh-loader { display: none !important; }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var loader = document.querySelector('[data-grh-loader]');
+    if (!loader) return;
+
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // URL-Override: ?loader erzwingt Anzeige (für Tests, auch auf Unterseiten).
+    // Optional: ?loader=angel|chess|wheel erzwingt eine bestimmte Variante.
+    var search = window.location.search;
+    var loaderMatch = search.match(/[?&]loader(?:=([a-z]+))?(?:&|$)/);
+    var force = !!loaderMatch;
+    var forceVariant = loaderMatch && loaderMatch[1] ? loaderMatch[1] : null;
+
+    // Standard: Loader nur auf der Startseite zeigen
+    var path = window.location.pathname;
+    var isHomepage = path === '/' || path === '' || path === '/index.html';
+
+    if (reduce || (!force && !isHomepage)) {
+      loader.parentNode && loader.parentNode.removeChild(loader);
+      return;
+    }
+
+    var variants = [
+      { key: 'wheel', ortsteil: 'Waldkirchen',   sub: 'Wasserrad am Blaufarbenwerk' },
+      { key: 'chess', ortsteil: 'Borstendorf',   sub: 'Schachdorf an der Flöha' },
+      { key: 'angel', ortsteil: 'Grünhainichen', sub: 'Das Dorf der Engel' }
+    ];
+    var v = forceVariant
+      ? (variants.find(function (x) { return x.key === forceVariant; }) || variants[0])
+      : variants[Math.floor(Math.random() * variants.length)];
+    loader.setAttribute('data-variant', v.key);
+
+    var cap = loader.querySelector('[data-grh-loader-caption]');
+    if (cap) {
+      cap.querySelector('.grh-loader__ortsteil').textContent = v.ortsteil;
+      cap.querySelector('.grh-loader__sub').textContent = v.sub;
+    }
+
+    // Body-Scroll während des Loaders sperren
+    document.documentElement.style.overflow = 'hidden';
+
+    setTimeout(function () {
+      loader.classList.add('is-out');
+      try { sessionStorage.setItem('grh-loader-shown', '1'); } catch (e) {}
+      setTimeout(function () {
+        loader.parentNode && loader.parentNode.removeChild(loader);
+        document.documentElement.style.overflow = '';
+      }, 500);
+    }, 1900);
+  })();
+</script>

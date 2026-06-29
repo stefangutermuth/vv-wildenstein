@@ -1,0 +1,441 @@
+---
+import GrhIcon from '../primitives/GrhIcon.astro';
+import { displayCategories } from '../../lib/cms';
+
+interface NewsItem {
+  title: string;
+  date: Date;
+  category: string;
+  categories?: string[];
+  excerpt: string;
+  image?: string;
+  href: string;
+}
+interface EventItem {
+  title: string;
+  startDate: Date;
+  endDate?: Date;
+  location: string;
+  teaser: string;
+  image?: string;
+  href: string;
+}
+interface Props {
+  news?: NewsItem[];
+  events?: EventItem[];
+}
+const { news = [], events = [] } = Astro.props;
+
+const newsList = news;
+const [featuredEvent, ...restEvents] = events;
+const eventList = restEvents.slice(0, 4);
+
+const categoryLabel: Record<string, string> = {
+  verwaltung: 'Verwaltung',
+  veranstaltung: 'Veranstaltung',
+  sperrung: 'Sperrung',
+  tourismus: 'Tourismus',
+};
+const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+/* Karten-Datum wie auf boernichen.de: „26 Juni, 11:48" */
+const fmtNewsDate = (d: Date) => {
+  const day = d.getDate();
+  const month = new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(d);
+  const time = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' }).format(d);
+  return `${day} ${month}, ${time}`;
+};
+const fmtLong = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: '2-digit', month: 'long' });
+const fmtDay = new Intl.DateTimeFormat('de-DE', { day: '2-digit' });
+const fmtMon = (d: Date) => new Intl.DateTimeFormat('de-DE', { month: 'short' }).format(d).replace('.', '');
+---
+<section class="grh-ne">
+  <div class="grh-container grh-ne__grid">
+    {/* ===== 2/3 — News ===================================== */}
+    <div class="grh-ne__news">
+      <header class="grh-ne__head">
+        <span class="grh-eyebrow">Aktuelles</span>
+        <h2 class="grh-ne__title">Neuigkeiten</h2>
+      </header>
+
+      {newsList.length > 0 ? (
+        <div class="grh-ne__cards">
+          {newsList.map((n) => (
+            <a class="grh-ne__card" href={n.href}>
+              {n.image && (
+                <span class="grh-ne__card-media">
+                  <img src={n.image} alt={n.title} loading="lazy" decoding="async" />
+                </span>
+              )}
+              <span class="grh-ne__card-body">
+                <span class="grh-ne__card-title">{n.title}</span>
+                <span class="grh-ne__card-meta">
+                  <span class="grh-ne__card-cat">{displayCategories(n).join(' · ')}</span>
+                  <time datetime={n.date.toISOString()}>{fmtNewsDate(n.date)}</time>
+                </span>
+                {n.excerpt && <span class="grh-ne__card-excerpt">{n.excerpt}</span>}
+              </span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="grh-ne__empty">Zurzeit keine Neuigkeiten.</p>
+      )}
+
+      <a href="/neuigkeiten" class="grh-ne__more">
+        Alle Neuigkeiten <GrhIcon name="arrow-right" size={14} />
+      </a>
+    </div>
+
+    {/* ===== 1/3 — Suche + Veranstaltungen ================== */}
+    <aside class="grh-ne__side">
+      <form class="grh-ne__search" role="search" action="/suche" method="get">
+        <GrhIcon name="search" size={18} class="grh-ne__search-icon" />
+        <input
+          type="search"
+          name="q"
+          class="grh-ne__search-input"
+          placeholder="Suche auf der Seite …"
+          aria-label="Suche auf der Seite"
+        />
+        <button type="submit" class="grh-ne__search-btn" aria-label="Suchen">
+          <GrhIcon name="arrow-right" size={16} />
+        </button>
+      </form>
+
+      <div class="grh-ne__events">
+        <header class="grh-ne__head">
+          <span class="grh-eyebrow">Kalender</span>
+          <h2 class="grh-ne__title">Veranstaltungen</h2>
+        </header>
+
+        {featuredEvent ? (
+          <a class="grh-ne__event-feature" href={featuredEvent.href}>
+            <span class="grh-ne__event-img">
+              {featuredEvent.image
+                ? <img src={featuredEvent.image} alt={featuredEvent.title} loading="lazy" decoding="async" />
+                : <span class="grh-ne__event-fallback" aria-hidden="true"></span>}
+              <span class="grh-ne__event-badge">
+                <span class="grh-ne__event-badge-day">{fmtDay.format(featuredEvent.startDate)}</span>
+                <span class="grh-ne__event-badge-mon">{fmtMon(featuredEvent.startDate)}</span>
+              </span>
+            </span>
+            <span class="grh-ne__event-feature-body">
+              <time class="grh-ne__event-when">{fmtLong.format(featuredEvent.startDate)}</time>
+              <strong class="grh-ne__event-headline">{featuredEvent.title}</strong>
+              <span class="grh-ne__event-loc"><GrhIcon name="map-pin" size={13} /> {featuredEvent.location}</span>
+              {featuredEvent.teaser && <span class="grh-ne__event-teaser">{featuredEvent.teaser}</span>}
+            </span>
+          </a>
+        ) : (
+          <p class="grh-ne__empty">Zurzeit keine Termine.</p>
+        )}
+
+        {eventList.length > 0 && (
+          <ul class="grh-ne__event-list">
+            {eventList.map((e) => (
+              <li>
+                <a class="grh-ne__event-li" href={e.href}>
+                  <span class="grh-ne__event-li-date">
+                    <span class="grh-ne__event-li-day">{fmtDay.format(e.startDate)}</span>
+                    <span class="grh-ne__event-li-mon">{fmtMon(e.startDate)}</span>
+                  </span>
+                  <span class="grh-ne__event-li-body">
+                    <strong class="grh-ne__event-li-title">{e.title}</strong>
+                    <span class="grh-ne__event-li-loc">{e.location}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <a href="/veranstaltungen" class="grh-ne__more">
+          Alle Veranstaltungen <GrhIcon name="arrow-right" size={14} />
+        </a>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .grh-ne {
+    background: var(--grh-cream-50);
+    color: var(--grh-text);
+    padding-block: var(--grh-space-8);
+  }
+  .grh-ne__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-8);
+  }
+  @media (min-width: 920px) {
+    .grh-ne__grid {
+      grid-template-columns: 2.6fr 1fr;
+      gap: var(--grh-space-8);
+      align-items: start;
+    }
+  }
+
+  .grh-ne__head { margin-bottom: var(--grh-space-5); }
+  .grh-ne__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.7rem, 3vw, 2.3rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: #1c2a5e;
+    background: linear-gradient(100deg, #1c2a5e 0%, #211b46 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 4px 0 0;
+  }
+
+  /* === News-Masonry (3 Spalten) ========================== */
+  .grh-ne__cards {
+    columns: 3;
+    column-gap: var(--grh-space-4);
+  }
+  @media (max-width: 1180px) {
+    .grh-ne__cards { columns: 2; }
+  }
+  @media (max-width: 640px) {
+    .grh-ne__cards { columns: 1; }
+  }
+
+  .grh-ne__card {
+    display: block;
+    break-inside: avoid;
+    margin-bottom: var(--grh-space-5);
+    background: #fff;
+    border: 1px solid #ddd9ef;
+    /* markantes Detail: untere rechte Ecke stark abgerundet (TL TR BR BL) */
+    border-radius: 22px 22px 64px 22px;
+    padding: 14px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 1px 2px rgba(28, 24, 64, 0.04);
+    transition: transform var(--grh-dur-fast), box-shadow var(--grh-dur-fast), border-color var(--grh-dur-fast);
+  }
+  .grh-ne__card:hover {
+    box-shadow: 0 16px 34px -18px rgba(28, 24, 64, 0.30);
+    border-color: #c7c1ea;
+  }
+  /* Bild eingerückt, an allen Ecken gerundet */
+  .grh-ne__card-media {
+    display: block;
+    line-height: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: var(--grh-space-4);
+  }
+  .grh-ne__card-media img { width: 100%; height: auto; display: block; }
+  .grh-ne__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 8px 10px;
+  }
+  .grh-ne__card-title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.2rem, 2vw, 1.45rem);
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.01em;
+    text-transform: capitalize;
+    color: #1d1842;
+  }
+  .grh-ne__card-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--grh-text-muted);
+  }
+  .grh-ne__card-cat {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: #8a972f;
+  }
+  .grh-ne__card-excerpt {
+    margin-top: 4px;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: #5a5570;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* === Suche (1/3 oben) =================================== */
+  .grh-ne__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 14px;
+    background: #fff;
+    border: 1px solid var(--grh-border);
+    border-radius: var(--grh-radius-pill);
+    margin-bottom: var(--grh-space-7);
+    transition: border-color var(--grh-dur-fast), box-shadow var(--grh-dur-fast);
+  }
+  .grh-ne__search:focus-within {
+    border-color: var(--grh-candle-500);
+    box-shadow: 0 0 0 3px rgba(187, 199, 75, 0.18);
+  }
+  .grh-ne__search-icon { color: var(--grh-stone-400); flex-shrink: 0; }
+  .grh-ne__search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-text);
+    padding: 8px 0;
+  }
+  .grh-ne__search-input:focus { outline: none; }
+  .grh-ne__search-btn {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-950);
+    cursor: pointer;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-ne__search-btn:hover { transform: translateX(1px); filter: brightness(1.05); }
+
+  /* === Veranstaltungen (1/3 unten) ======================== */
+  .grh-ne__event-feature {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border-radius: var(--grh-radius-lg);
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--grh-border);
+    box-shadow: var(--grh-shadow-sm);
+    transition: transform var(--grh-dur-fast), box-shadow var(--grh-dur-fast);
+  }
+  .grh-ne__event-feature:hover { transform: translateY(-3px); box-shadow: var(--grh-shadow-md); }
+  .grh-ne__event-img {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    background: var(--grh-sage-100);
+  }
+  .grh-ne__event-img img { width: 100%; height: 100%; object-fit: cover; }
+  .grh-ne__event-fallback {
+    position: absolute; inset: 0;
+    background: linear-gradient(150deg, var(--grh-forest-800), var(--grh-moss-600));
+  }
+  .grh-ne__event-badge {
+    position: absolute;
+    top: 12px; left: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    padding: 8px 10px;
+    border-radius: var(--grh-radius-md);
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    box-shadow: var(--grh-shadow-md);
+  }
+  .grh-ne__event-badge-day { font-family: var(--grh-font-display); font-size: 1.4rem; font-weight: 600; }
+  .grh-ne__event-badge-mon { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--grh-moss-600); }
+  .grh-ne__event-feature-body { display: flex; flex-direction: column; gap: 6px; padding: var(--grh-space-4); }
+  .grh-ne__event-when {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+  }
+  .grh-ne__event-headline {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--grh-text-heading);
+  }
+  .grh-ne__event-loc {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-text-muted);
+  }
+  .grh-ne__event-teaser {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.5;
+    color: var(--grh-text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .grh-ne__event-list {
+    list-style: none;
+    margin: var(--grh-space-3) 0 0;
+    padding: 0;
+  }
+  .grh-ne__event-li {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: var(--grh-space-3);
+    align-items: center;
+    padding: var(--grh-space-3) 0;
+    border-top: 1px solid var(--grh-border);
+    text-decoration: none;
+    color: inherit;
+  }
+  .grh-ne__event-li-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    padding: 6px 0;
+    border-radius: var(--grh-radius-sm);
+    background: var(--grh-sage-100);
+    color: var(--grh-forest-900);
+  }
+  .grh-ne__event-li-day { font-family: var(--grh-font-display); font-size: 1.05rem; font-weight: 600; }
+  .grh-ne__event-li-mon { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grh-moss-600); }
+  .grh-ne__event-li-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .grh-ne__event-li-title {
+    font-size: var(--grh-fs-sm);
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--grh-text-heading);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .grh-ne__event-li-loc { font-size: 12px; color: var(--grh-text-muted); }
+  .grh-ne__event-li:hover .grh-ne__event-li-title { color: var(--grh-moss-600); }
+
+  /* === Gemeinsame „Mehr"-Links =========================== */
+  .grh-ne__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: var(--grh-space-5);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: var(--grh-moss-600);
+    text-decoration: none;
+    transition: gap var(--grh-dur-base);
+  }
+  .grh-ne__more:hover { gap: 13px; }
+  .grh-ne__empty {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-text-muted);
+    padding: var(--grh-space-4) 0;
+  }
+</style>

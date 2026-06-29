@@ -1,0 +1,39 @@
+---
+type Tone = 'neutral' | 'forest' | 'moss' | 'wood' | 'alert' | 'info' | 'candle';
+interface Props {
+  tone?: Tone;
+  size?: 'sm' | 'md';
+  class?: string;
+}
+const { tone = 'neutral', size = 'sm', class: extra = '' } = Astro.props;
+---
+<span class={`grh-badge grh-badge--${tone} grh-badge--${size} ${extra}`}>
+  <slot />
+</span>
+
+<style>
+  .grh-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--grh-radius-pill);
+    font-family: var(--grh-font-body);
+    font-size: var(--grh-fs-xs);
+    font-weight: 600;
+    letter-spacing: var(--grh-tracking-label);
+    text-transform: uppercase;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .grh-badge--md { font-size: var(--grh-fs-sm); padding: 6px 14px; }
+
+  .grh-badge--neutral { background: var(--grh-paper-100); color: var(--grh-stone-700); border-color: var(--grh-line); }
+  .grh-badge--forest  { background: var(--grh-forest-900); color: var(--grh-cream-50); }
+  .grh-badge--moss    { background: var(--grh-sage-100);   color: var(--grh-forest-800); border-color: var(--grh-moss-500); }
+  .grh-badge--wood    { background: var(--grh-sandstone-300); color: var(--grh-wood-700); }
+  .grh-badge--alert   { background: var(--grh-alert-600); color: var(--grh-cream-50); }
+  .grh-badge--info    { background: var(--grh-info-600);  color: var(--grh-cream-50); }
+  .grh-badge--candle  { background: var(--grh-candle-300); color: var(--grh-forest-900); }
+</style>
