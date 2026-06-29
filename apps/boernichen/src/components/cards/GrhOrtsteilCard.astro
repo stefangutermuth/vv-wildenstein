@@ -1,0 +1,117 @@
+---
+import GrhIcon from '../primitives/GrhIcon.astro';
+
+interface Props {
+  name: string;
+  slug: 'borstendorf' | 'gruenhainichen' | 'waldkirchen';
+  tagline: string;
+  description: string;
+  image?: string;
+  href: string;
+}
+const { name, slug, tagline, description, image, href } = Astro.props;
+
+const slugIcon = {
+  borstendorf:    'chess-knight',
+  gruenhainichen: 'angel11',
+  waldkirchen:    'bridge',
+} as const;
+
+const slugBg = {
+  borstendorf:    'linear-gradient(160deg, #2A6B43, #1B4A2F)',
+  gruenhainichen: 'linear-gradient(160deg, #6B4A2A, #A6794E)',
+  waldkirchen:    'linear-gradient(160deg, #1A3D27, #3E8C5A)',
+}[slug];
+---
+<a class="grh-ortsteil-card" href={href} style={`--grh-os-bg: ${slugBg}`}>
+  <div class="grh-ortsteil-card__media" aria-hidden="true">
+    {image && <img src={image} alt="" loading="lazy" />}
+    <div class="grh-ortsteil-card__icon-wrap">
+      <GrhIcon name={slugIcon[slug]} size={56} />
+    </div>
+  </div>
+  <div class="grh-ortsteil-card__body">
+    <span class="grh-eyebrow">{tagline}</span>
+    <h3 class="grh-ortsteil-card__name">{name}</h3>
+    <p class="grh-ortsteil-card__desc">{description}</p>
+    <span class="grh-ortsteil-card__cta">
+      Mehr erfahren <GrhIcon name="arrow-right" size={16} />
+    </span>
+  </div>
+</a>
+
+<style>
+  .grh-ortsteil-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-lg);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--grh-shadow-sm);
+    border: 1px solid var(--grh-line);
+    transition: transform var(--grh-dur-base) var(--grh-ease-out), box-shadow var(--grh-dur-base) var(--grh-ease-out);
+    height: 100%;
+  }
+  .grh-ortsteil-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--grh-shadow-lg);
+  }
+
+  .grh-ortsteil-card__media {
+    aspect-ratio: 4 / 3;
+    position: relative;
+    background: var(--grh-os-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .grh-ortsteil-card__media img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 600ms var(--grh-ease-out);
+  }
+  .grh-ortsteil-card:hover .grh-ortsteil-card__media img { transform: scale(1.04); }
+  .grh-ortsteil-card__icon-wrap {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    background: rgba(250, 247, 241, 0.16);
+    backdrop-filter: blur(6px);
+    color: var(--grh-cream-50);
+    display: grid; place-items: center;
+    z-index: 1;
+    border: 1.5px solid rgba(250, 247, 241, 0.3);
+  }
+
+  .grh-ortsteil-card__body {
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+    flex: 1;
+  }
+  .grh-ortsteil-card__name {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-2xl);
+    color: var(--grh-forest-900);
+    line-height: 1.15;
+    margin-top: var(--grh-space-1);
+  }
+  .grh-ortsteil-card__desc {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    flex: 1;
+  }
+  .grh-ortsteil-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--grh-moss-600);
+    font-weight: 600;
+    font-size: var(--grh-fs-sm);
+    margin-top: auto;
+  }
+</style>

@@ -1,0 +1,210 @@
+---
+/**
+ * „Fakten zur Gemeinde" — Kreise mit hochzählenden Countern (nach boernichen.de).
+ * Animation startet, sobald der Block ins Sichtfeld scrollt.
+ */
+interface Fact {
+  to: number;
+  decimals?: number;
+  suffix?: string;
+  label: string;
+  size: 's' | 'm' | 'l' | 'xl';
+  color: 'white' | 'navy' | 'lavender' | 'lime';
+  raised?: boolean;
+}
+const facts: Fact[] = [
+  { to: 1350, label: 'als „Burnichin“ erwähnt', size: 'm', color: 'white' },
+  { to: 955, label: 'Einwohner', size: 'xl', color: 'navy' },
+  { to: 15.45, decimals: 2, suffix: ' km2', label: 'Fläche', size: 'l', color: 'lavender' },
+  { to: 604, suffix: ' m', label: 'Lange Stein', size: 's', color: 'lime', raised: true },
+];
+const mainFacts = facts.slice(0, 3);
+const corner = facts[3];
+---
+<section class="grh-facts">
+  <div class="grh-container">
+    <h2 class="grh-facts__title">Fakten zur Gemeinde</h2>
+
+    <div class="grh-facts__row">
+      {mainFacts.map((f) => (
+        <div class={`grh-facts__circle grh-facts__circle--${f.size} grh-facts__circle--${f.color}`}>
+          <span class="grh-facts__value">
+            <span
+              class="grh-facts__num"
+              data-count-to={f.to}
+              data-decimals={f.decimals ?? 0}
+            >{f.decimals ? '0,00' : '0'}</span>{f.suffix && <span class="grh-facts__unit">{f.suffix}</span>}
+          </span>
+          <span class="grh-facts__label">{f.label}</span>
+        </div>
+      ))}
+
+      {/* Rechte Spalte: lime Kreis oben + Ort/Koordinaten darunter */}
+      <div class="grh-facts__corner">
+        <div class={`grh-facts__circle grh-facts__circle--${corner.size} grh-facts__circle--${corner.color}`}>
+          <span class="grh-facts__value">
+            <span
+              class="grh-facts__num"
+              data-count-to={corner.to}
+              data-decimals={corner.decimals ?? 0}
+            >{corner.decimals ? '0,00' : '0'}</span>{corner.suffix && <span class="grh-facts__unit">{corner.suffix}</span>}
+          </span>
+          <span class="grh-facts__label">{corner.label}</span>
+        </div>
+        <div class="grh-facts__place">
+          <span class="grh-facts__place-name">Börnichen/Erzg.</span>
+          <span class="grh-facts__place-coords">50° 45′ N, 13° 8′ O</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .grh-facts {
+    background:
+      linear-gradient(120deg, #eef0f2 0%, #e8eaee 100%);
+    padding-block: var(--grh-space-9);
+    overflow: hidden;
+  }
+  .grh-facts__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+    font-weight: 600;
+    color: #1c2a5e;
+    background: linear-gradient(100deg, #1c2a5e 0%, #211b46 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 0 var(--grh-space-7);
+  }
+
+  .grh-facts__row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(var(--grh-space-2), 1.6vw, var(--grh-space-5));
+  }
+  /* Erst auf schmaleren Schirmen umbrechen */
+  @media (max-width: 900px) {
+    .grh-facts__row { flex-wrap: wrap; }
+  }
+
+  /* === Kreise ============================================== */
+  .grh-facts__circle {
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--grh-space-4);
+    aspect-ratio: 1;
+  }
+  .grh-facts__circle--s  { width: clamp(140px, 15vw, 180px); }
+  .grh-facts__circle--m  { width: clamp(160px, 19vw, 230px); }
+  .grh-facts__circle--l  { width: clamp(180px, 22vw, 280px); }
+  .grh-facts__circle--xl { width: clamp(200px, 26vw, 320px); }
+
+  /* Rechte Spalte: lime Kreis oben, Ort/Koordinaten darunter — am oberen Rand der Reihe */
+  .grh-facts__corner {
+    align-self: flex-start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--grh-space-5);
+  }
+
+  .grh-facts__circle--white {
+    background: #fff;
+    color: #1c2a5e;
+    box-shadow: 0 14px 40px -22px rgba(28, 42, 94, 0.45);
+  }
+  .grh-facts__circle--navy   { background: #1c2a5e; color: #fff; }
+  .grh-facts__circle--lavender { background: #e7e3f3; color: #4a4560; }
+  .grh-facts__circle--lime   { background: var(--grh-candle-500); color: #fff; }
+
+  .grh-facts__value {
+    font-family: var(--grh-font-body);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    white-space: nowrap;
+  }
+  .grh-facts__circle--xl .grh-facts__value { font-size: clamp(2.8rem, 6vw, 5rem); }
+  .grh-facts__circle--s  .grh-facts__value { font-size: clamp(1.6rem, 3vw, 2.4rem); }
+  .grh-facts__unit { font-size: 0.78em; margin-left: 0.1em; }
+  .grh-facts__label {
+    margin-top: var(--grh-space-2);
+    font-size: var(--grh-fs-sm);
+    opacity: 0.9;
+    max-width: 16ch;
+  }
+
+  /* === Ort + Koordinaten (kein Kreis) ===================== */
+  .grh-facts__place {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    text-align: center;
+    padding: var(--grh-space-4);
+  }
+  .grh-facts__place-name {
+    font-family: var(--grh-font-display);
+    font-weight: 600;
+    font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+    color: #1c2a5e;
+  }
+  .grh-facts__place-coords {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-text-muted);
+  }
+
+  @media (max-width: 720px) {
+    .grh-facts__corner { align-self: center; }
+  }
+</style>
+
+<script>
+  const fmt = (n: number, decimals: number) =>
+    new Intl.NumberFormat('de-DE', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+      useGrouping: false,
+    }).format(n);
+
+  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function runCounter(el: HTMLElement) {
+    const to = parseFloat(el.dataset.countTo ?? '0');
+    const decimals = parseInt(el.dataset.decimals ?? '0', 10);
+    if (reduce) { el.textContent = fmt(to, decimals); return; }
+    const duration = 1500;
+    let start: number | null = null;
+    const step = (ts: number) => {
+      if (start === null) start = ts;
+      const p = Math.min((ts - start) / duration, 1);
+      el.textContent = fmt(to * easeOutCubic(p), decimals);
+      if (p < 1) requestAnimationFrame(step);
+      else el.textContent = fmt(to, decimals);
+    };
+    requestAnimationFrame(step);
+  }
+
+  const nums = document.querySelectorAll<HTMLElement>('.grh-facts__num');
+  if (nums.length) {
+    const io = new IntersectionObserver((entries, obs) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          runCounter(e.target as HTMLElement);
+          obs.unobserve(e.target);
+        }
+      }
+    }, { threshold: 0.4 });
+    nums.forEach((n) => io.observe(n));
+  }
+</script>

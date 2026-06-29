@@ -1,0 +1,127 @@
+---
+import { displayCategories } from '../../lib/cms';
+
+interface NewsItem {
+  title: string;
+  date: Date;
+  category: string;
+  categories?: string[];
+  excerpt: string;
+  image?: string;
+  href: string;
+}
+interface Props {
+  news?: NewsItem[];
+  columns?: number;
+}
+const { news = [], columns = 3 } = Astro.props;
+
+const fmtNewsDate = (d: Date) => {
+  const day = d.getDate();
+  const month = new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(d);
+  const time = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' }).format(d);
+  return `${day} ${month}, ${time}`;
+};
+---
+{news.length > 0 ? (
+  <div class="grh-newsgrid" style={`--cols:${columns}`}>
+    {news.map((n) => (
+      <a class="grh-newsgrid__card" href={n.href}>
+        {n.image && (
+          <span class="grh-newsgrid__media">
+            <img src={n.image} alt={n.title} loading="lazy" decoding="async" />
+          </span>
+        )}
+        <span class="grh-newsgrid__body">
+          <span class="grh-newsgrid__title">{n.title}</span>
+          <span class="grh-newsgrid__meta">
+            <span class="grh-newsgrid__cat">{displayCategories(n).join(' · ')}</span>
+            <time datetime={n.date.toISOString()}>{fmtNewsDate(n.date)}</time>
+          </span>
+          {n.excerpt && <span class="grh-newsgrid__excerpt">{n.excerpt}</span>}
+        </span>
+      </a>
+    ))}
+  </div>
+) : (
+  <p class="grh-newsgrid__empty">Zurzeit keine Neuigkeiten.</p>
+)}
+
+<style>
+  .grh-newsgrid {
+    columns: var(--cols, 3);
+    column-gap: var(--grh-space-5);
+  }
+  @media (max-width: 980px) { .grh-newsgrid { columns: 2; } }
+  @media (max-width: 640px) { .grh-newsgrid { columns: 1; } }
+
+  .grh-newsgrid__card {
+    display: block;
+    break-inside: avoid;
+    margin-bottom: var(--grh-space-5);
+    background: #fff;
+    border: 1px solid #ddd9ef;
+    border-radius: 22px 22px 64px 22px;
+    padding: 14px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 1px 2px rgba(28, 24, 64, 0.04);
+    transition: transform var(--grh-dur-fast), box-shadow var(--grh-dur-fast), border-color var(--grh-dur-fast);
+  }
+  .grh-newsgrid__card:hover {
+    box-shadow: 0 16px 34px -18px rgba(28, 24, 64, 0.30);
+    border-color: #c7c1ea;
+  }
+  .grh-newsgrid__media {
+    display: block;
+    line-height: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: var(--grh-space-4);
+  }
+  .grh-newsgrid__media img { width: 100%; height: auto; display: block; }
+  .grh-newsgrid__body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 8px 10px;
+  }
+  .grh-newsgrid__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.2rem, 2vw, 1.45rem);
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.01em;
+    text-transform: capitalize;
+    color: #1d1842;
+  }
+  .grh-newsgrid__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--grh-text-muted);
+  }
+  .grh-newsgrid__cat {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: #8a972f;
+  }
+  .grh-newsgrid__excerpt {
+    margin-top: 4px;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: #5a5570;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .grh-newsgrid__empty {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-text-muted);
+    padding: var(--grh-space-5) 0;
+  }
+</style>

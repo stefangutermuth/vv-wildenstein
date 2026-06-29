@@ -1,0 +1,81 @@
+.grh-container {
+  width: 100%;
+  max-width: var(--grh-container-max);
+  margin-inline: auto;
+  padding-inline: var(--grh-gutter);
+}
+
+.grh-stack > * + * { margin-top: var(--grh-space-4); }
+.grh-stack-lg > * + * { margin-top: var(--grh-space-6); }
+
+.grh-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--grh-space-3);
+  align-items: center;
+}
+
+.grh-grid { display: grid; gap: var(--grh-space-5); }
+.grh-grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
+.grh-grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
+.grh-grid-4 { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
+
+.grh-visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+.grh-skip-link {
+  position: absolute;
+  top: -100px;
+  left: var(--grh-space-4);
+  z-index: var(--grh-z-modal);
+  background: var(--grh-forest-900);
+  color: var(--grh-cream-50);
+  padding: var(--grh-space-3) var(--grh-space-5);
+  border-radius: var(--grh-radius-md);
+  text-decoration: underline;
+}
+.grh-skip-link:focus { top: var(--grh-space-4); }
+
+.grh-section-tone-cream     { background: var(--grh-cream-50); }
+.grh-section-tone-paper     { background: var(--grh-paper-100); }
+.grh-section-tone-sage      { background: var(--grh-sage-100); }
+.grh-section-tone-sandstone { background: var(--grh-sandstone-300); }
+.grh-section-tone-forest    {
+  background: var(--grh-forest-900);
+  color: var(--grh-text-on-dark);
+}
+.grh-section-tone-forest-deep {
+  background: var(--grh-forest-950);
+  color: var(--grh-text-on-dark);
+}
+.grh-section-tone-forest h1,
+.grh-section-tone-forest h2,
+.grh-section-tone-forest h3,
+.grh-section-tone-forest h4,
+.grh-section-tone-forest-deep h1,
+.grh-section-tone-forest-deep h2,
+.grh-section-tone-forest-deep h3,
+.grh-section-tone-forest-deep h4 { color: var(--grh-cream-50); }
+.grh-section-tone-forest .grh-eyebrow,
+.grh-section-tone-forest-deep .grh-eyebrow { color: var(--grh-candle-500); }
+
+/* Reveal-Animation für Sektionen (IntersectionObserver fügt .is-visible hinzu) */
+.grh-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity var(--grh-dur-slow) var(--grh-ease-out),
+    transform var(--grh-dur-slow) var(--grh-ease-out);
+}
+.grh-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .grh-reveal { opacity: 1; transform: none; transition: none; }
+}

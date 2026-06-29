@@ -1,0 +1,409 @@
+---
+import type { Season } from '../../lib/seasons';
+import GrhIcon from '../primitives/GrhIcon.astro';
+
+interface CTA { label: string; href: string; variant?: 'primary' | 'secondary' | 'ghost' }
+interface Featured {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  ctas?: CTA[];
+  logo?: string;
+  logoAlt?: string;
+  /** Optionales Link-Ziel des Eck-Badges (z. B. externe Jubiläumsseite). */
+  logoHref?: string;
+}
+interface Slide {
+  src: string;
+  alt: string;
+  credit?: string;
+  caption?: string;
+}
+interface Props {
+  season?: Season;
+  preTitle?: string;
+  title?: string;
+  titleAccent?: string;
+  subline?: string;
+  featured?: Featured;
+  slides?: Slide[];
+}
+const {
+  preTitle = 'Herzlich willkommen in',
+  title = 'Börnichen',
+  titleAccent = 'im Erzgebirge.',
+  subline = '',
+  featured,
+  slides = [],
+} = Astro.props;
+---
+<section class="grh-hero" data-grh-hero>
+  {/* Vollbild-Hintergrund über die gesamte Breite */}
+  <div class="grh-hero__bg" data-grh-slider data-interval="6000">
+    {slides.map((s, i) => (
+      <figure class={`grh-hero__slide ${i === 0 ? 'is-active' : ''}`} aria-hidden={i !== 0 ? 'true' : 'false'}>
+        <img
+          src={s.src}
+          alt={s.alt}
+          loading={i === 0 ? 'eager' : 'lazy'}
+          fetchpriority={i === 0 ? 'high' : 'auto'}
+          decoding="async"
+        />
+      </figure>
+    ))}
+    <div class="grh-hero__scrim" aria-hidden="true"></div>
+  </div>
+
+  {/* Jubiläumslogo als Eck-Badge */}
+  {featured?.logo && (
+    <a
+      class="grh-hero__badge"
+      href={featured.logoHref ?? featured.ctas?.[0]?.href ?? '#'}
+      aria-label={featured.title}
+      {...(/^https?:/i.test(featured.logoHref ?? '') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+    >
+      <img src={featured.logo} alt={featured.logoAlt ?? featured.title} loading="eager" decoding="async" />
+    </a>
+  )}
+
+  {/* Zentrierter Text-Overlay */}
+  <div class="grh-hero__content">
+    <span class="grh-hero__pre grh-text-reveal">{preTitle}</span>
+    <h1 class="grh-hero__title">
+      <span class="grh-hero__line grh-text-reveal" style="transition-delay: 80ms;">{title}</span>
+      {titleAccent && (
+        <em class="grh-hero__line grh-hero__line--accent grh-text-reveal" style="transition-delay: 200ms;">{titleAccent}</em>
+      )}
+    </h1>
+    {subline && <p class="grh-hero__subline grh-text-reveal" style="transition-delay: 360ms;">{subline}</p>}
+
+    <div class="grh-hero__ctas grh-text-reveal" style="transition-delay: 520ms;">
+      <a href="/neuigkeiten" class="grh-hero__btn grh-hero__btn--primary">
+        <GrhIcon name="document" size={16} /><span>Neuigkeiten</span>
+      </a>
+      <a href="/veranstaltungen" class="grh-hero__btn grh-hero__btn--secondary">
+        <GrhIcon name="calendar" size={16} /><span>Veranstaltungen</span>
+      </a>
+    </div>
+  </div>
+
+  {/* Slider-Punkte nur bei mehreren Bildern */}
+  {slides.length > 1 && (
+    <ol class="grh-hero__dots" role="tablist" aria-label="Bilder auswählen">
+      {slides.map((_, i) => (
+        <li>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={i === 0 ? 'true' : 'false'}
+            aria-label={`Bild ${i + 1} von ${slides.length}`}
+            data-grh-slider-dot={i}
+            class={i === 0 ? 'is-active' : ''}
+          ></button>
+        </li>
+      ))}
+    </ol>
+  )}
+
+  <button class="grh-hero__scrolldown" type="button" data-grh-hero-scroll aria-label="Nach unten scrollen">
+    <GrhIcon name="arrow-down" size={26} />
+  </button>
+</section>
+
+<style>
+  .grh-hero {
+    position: relative;
+    z-index: 1;
+    min-height: clamp(460px, 70vh, 720px);
+    display: grid;
+    place-items: center;
+    color: var(--grh-cream-50);
+    isolation: isolate;
+    background: var(--grh-forest-950);
+  }
+
+  /* --- Vollbild-Hintergrund ---------------------------------- */
+  .grh-hero__bg { position: absolute; inset: 0; z-index: -2; overflow: hidden; }
+  .grh-hero__slide {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    transition: opacity 1200ms var(--grh-ease-out);
+  }
+  .grh-hero__slide.is-active { opacity: 1; }
+  .grh-hero__slide img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    filter: saturate(0.98) contrast(1.02);
+    /* sehr langsamer Ken-Burns-Effekt */
+    transform: scale(1.04);
+    transition: transform 14s linear;
+  }
+  .grh-hero__slide.is-active img { transform: scale(1.1); }
+
+  /* Abdunklung für Textlesbarkeit — oben/unten dunkler, Mitte klar */
+  .grh-hero__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse 72% 56% at 50% 52%,
+        rgba(20, 43, 31, 0.58) 0%,
+        rgba(20, 43, 31, 0.0) 78%),
+      linear-gradient(180deg,
+        rgba(20, 43, 31, 0.48) 0%,
+        rgba(20, 43, 31, 0.14) 30%,
+        rgba(20, 43, 31, 0.18) 58%,
+        rgba(20, 43, 31, 0.74) 100%);
+  }
+
+  /* --- Jubiläums-Badge --------------------------------------- */
+  .grh-hero__badge {
+    position: absolute;
+    /* Unterhalb der (fix schwebenden) Header-Zone */
+    top: 138px;
+    right: clamp(var(--grh-gutter), 4vw, var(--grh-space-8));
+    z-index: 2;
+    width: clamp(110px, 12vw, 168px);
+    line-height: 0;
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
+    transition: transform var(--grh-dur-base) var(--grh-ease-out);
+  }
+  .grh-hero__badge:hover { transform: rotate(-2deg) scale(1.03); }
+  .grh-hero__badge img { width: 100%; height: auto; }
+  @media (max-width: 620px) {
+    .grh-hero__badge { width: 92px; top: 96px; }
+  }
+
+  /* --- Zentrierter Inhalt ------------------------------------ */
+  .grh-hero__content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 880px;
+    padding: var(--grh-space-8) var(--grh-gutter);
+    /* schiebt den Inhalt unter dem (fixen) Header herunter — mehr Luft zum Menü */
+    margin-top: clamp(3rem, 11vh, 9rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--grh-space-4);
+  }
+  /* Weicher dunkler Schein direkt hinter dem Text — verbessert die
+     Lesbarkeit über hellen Bildbereichen, ohne das Foto abzudunkeln. */
+  .grh-hero__content::before {
+    content: '';
+    position: absolute;
+    inset: -6% -8%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center,
+      rgba(16, 36, 26, 0.60) 0%,
+      rgba(16, 36, 26, 0.36) 42%,
+      rgba(16, 36, 26, 0.0) 72%);
+    filter: blur(26px);
+  }
+
+  .grh-hero__pre {
+    font-family: var(--grh-font-body);
+    font-size: var(--grh-fs-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-300);
+    font-weight: 600;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
+  }
+
+  .grh-hero__title {
+    font-family: var(--grh-font-display);
+    font-weight: 500;
+    font-size: clamp(2.8rem, 6.5vw, 5.4rem);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    margin: 0;
+    color: var(--grh-cream-50);
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+  }
+  .grh-hero__line { display: block; }
+  .grh-hero__line--accent {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--grh-candle-300);
+  }
+
+  .grh-hero__subline {
+    font-size: var(--grh-fs-md);
+    line-height: 1.55;
+    color: var(--grh-cream-50);
+    opacity: 0.92;
+    max-width: 56ch;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 2px 16px rgba(0, 0, 0, 0.6);
+  }
+
+  /* --- Buttons ----------------------------------------------- */
+  .grh-hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--grh-space-3);
+    margin-top: var(--grh-space-3);
+  }
+  .grh-hero__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: var(--grh-radius-pill);
+    font-size: var(--grh-fs-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform var(--grh-dur-fast), background var(--grh-dur-fast), box-shadow var(--grh-dur-fast);
+  }
+  .grh-hero__btn:hover { transform: translateY(-2px); }
+  .grh-hero__btn--primary {
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-950);
+    box-shadow: 0 8px 22px -8px rgba(187, 199, 75, 0.7);
+  }
+  .grh-hero__btn--primary:hover { box-shadow: 0 12px 28px -8px rgba(187, 199, 75, 0.85); }
+  .grh-hero__btn--secondary {
+    background: rgba(250, 247, 241, 0.12);
+    color: var(--grh-cream-50);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(250, 247, 241, 0.35);
+  }
+  .grh-hero__btn--secondary:hover { background: rgba(250, 247, 241, 0.22); }
+
+  /* --- Slider-Punkte ----------------------------------------- */
+  .grh-hero__dots {
+    position: absolute;
+    bottom: var(--grh-space-6);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    list-style: none;
+    margin: 0; padding: 0;
+  }
+  .grh-hero__dots button {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(250, 247, 241, 0.45);
+    transition: background var(--grh-dur-fast), width var(--grh-dur-base);
+  }
+  .grh-hero__dots button:hover { background: rgba(250, 247, 241, 0.75); }
+  .grh-hero__dots button.is-active {
+    background: var(--grh-candle-500);
+    width: 26px;
+    border-radius: 999px;
+  }
+
+  /* --- Scroll-Button (Karten-Stil mit geschwungener Ecke) ----- */
+  .grh-hero__scrolldown {
+    position: absolute;
+    left: 50%;
+    bottom: -30px;
+    z-index: 5;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    color: var(--grh-cream-50);
+    background: var(--grh-candle-500);
+    /* gleiche geschwungene Ecke wie die News-Karten (TL TR BR BL) */
+    border-radius: 20px 20px 56px 20px;
+    box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+    animation: grh-scrolldown-bob 2.2s ease-in-out infinite;
+    transition: box-shadow var(--grh-dur-fast), filter var(--grh-dur-fast);
+  }
+  .grh-hero__scrolldown:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.55);
+    animation-play-state: paused;
+  }
+  @keyframes grh-scrolldown-bob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(6px); }
+  }
+  @media (max-width: 620px) {
+    .grh-hero__scrolldown {
+      width: 54px; height: 54px; bottom: -26px;
+      border-radius: 16px 16px 46px 16px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-hero__scrolldown { animation: none; transform: translateX(-50%); }
+    .grh-hero__slide img { transition: none; transform: none; }
+  }
+</style>
+
+<script>
+  type SliderEl = HTMLElement & { _grhInterval?: number };
+
+  function initSlider(slider: SliderEl) {
+    const slides = Array.from(slider.querySelectorAll<HTMLElement>('.grh-hero__slide'));
+    const hero   = slider.closest('.grh-hero');
+    const dots   = Array.from(hero?.querySelectorAll<HTMLButtonElement>('[data-grh-slider-dot]') ?? []);
+    if (slides.length < 2) return;
+
+    let current = 0;
+    const interval = parseInt(slider.dataset.interval ?? '6000', 10);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const go = (next: number) => {
+      const n = (next + slides.length) % slides.length;
+      slides[current].classList.remove('is-active');
+      slides[current].setAttribute('aria-hidden', 'true');
+      dots[current]?.classList.remove('is-active');
+      dots[current]?.setAttribute('aria-selected', 'false');
+
+      slides[n].classList.add('is-active');
+      slides[n].setAttribute('aria-hidden', 'false');
+      dots[n]?.classList.add('is-active');
+      dots[n]?.setAttribute('aria-selected', 'true');
+      current = n;
+    };
+
+    const start = () => {
+      if (reduce) return;
+      stop();
+      slider._grhInterval = window.setInterval(() => go(current + 1), interval);
+    };
+    const stop = () => {
+      if (slider._grhInterval) {
+        clearInterval(slider._grhInterval);
+        slider._grhInterval = undefined;
+      }
+    };
+
+    dots.forEach((dot, i) => dot.addEventListener('click', () => { go(i); start(); }));
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop(); else start();
+    });
+    start();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-grh-slider]').forEach((s) => initSlider(s as SliderEl));
+
+  /* Scroll-Hinweis: springt zur ersten Sektion nach dem Hero */
+  const scrollLink = document.querySelector<HTMLAnchorElement>('[data-grh-hero-scroll]');
+  const heroEl     = document.querySelector<HTMLElement>('.grh-hero');
+  if (scrollLink && heroEl) {
+    scrollLink.addEventListener('click', (e) => {
+      const next = heroEl.nextElementSibling as HTMLElement | null;
+      if (!next) return;
+      e.preventDefault();
+      const header = document.querySelector<HTMLElement>('.grh-header, .grh-headerc');
+      const headerOffset = header ? header.offsetHeight : 88;
+      const targetY = next.getBoundingClientRect().top + window.scrollY - headerOffset;
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    });
+  }
+</script>
