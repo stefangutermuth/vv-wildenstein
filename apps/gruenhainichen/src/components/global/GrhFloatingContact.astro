@@ -157,13 +157,17 @@
   </div>
 
   <!-- ===================== Trigger ===================== -->
-  <button type="button" class="grh-fab__trigger" data-grh-fab-toggle aria-label="Kontakt & Service" aria-expanded="false">
+  <button type="button" class="grh-fab__trigger" data-grh-fab-toggle aria-label="Service & Kontakt" aria-expanded="false">
     <span class="grh-fab__trigger-icon" data-grh-fab-trigger-icon>
-      <!-- Brief-Icon (Standard) -->
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="grh-fab__icon-mail">
-        <rect x="3" y="5" width="18" height="14" rx="2" />
-        <polyline points="3 7 12 13 21 7" />
+      <!-- Sprechblase mit drei Punkten (Standard) -->
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="grh-fab__icon-mail">
+        <path d="M21 11.5c0 4.1-4 7.5-9 7.5-1.2 0-2.4-.2-3.5-.6L3 20l1.3-4.1C3.5 14.7 3 13.2 3 11.5 3 7.4 7 4 12 4s9 3.4 9 7.5z" />
+        <circle cx="8"  cy="11.5" r="1.1" fill="currentColor" stroke="none" />
+        <circle cx="12" cy="11.5" r="1.1" fill="currentColor" stroke="none" />
+        <circle cx="16" cy="11.5" r="1.1" fill="currentColor" stroke="none" />
       </svg>
+      <!-- Goldener Glanzpunkt -->
+      <span class="grh-fab__sparkle" aria-hidden="true"></span>
       <!-- X-Icon (offen) -->
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="grh-fab__icon-close">
         <line x1="6" y1="6" x2="18" y2="18" />
@@ -244,7 +248,7 @@
     .grh-fab__trigger { animation: none; }
   }
 
-  /* Icon-Wechsel (Brief ↔ X) */
+  /* Icon-Wechsel (Sprechblase ↔ X) */
   .grh-fab__trigger-icon { position: relative; width: 22px; height: 22px; }
   .grh-fab__icon-mail,
   .grh-fab__icon-close {
@@ -257,6 +261,30 @@
   .grh-fab[data-state="panel"] .grh-fab__icon-mail { opacity: 0; transform: scale(0.5); }
   .grh-fab[data-state="open"] .grh-fab__icon-close,
   .grh-fab[data-state="panel"] .grh-fab__icon-close { opacity: 1; transform: scale(1); }
+
+  /* Goldener Glanzpunkt oben rechts am Bubble — Wärme + Aufmerksamkeit */
+  .grh-fab__sparkle {
+    position: absolute;
+    top: -4px;
+    right: -5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--grh-candle-500);
+    box-shadow:
+      0 0 6px rgba(232, 182, 88, 0.7),
+      0 0 14px rgba(232, 182, 88, 0.4);
+    animation: grh-fab-sparkle 3s ease-in-out infinite;
+  }
+  @keyframes grh-fab-sparkle {
+    0%, 100% { transform: scale(1);    opacity: 1;   }
+    50%      { transform: scale(1.25); opacity: 0.6; }
+  }
+  .grh-fab[data-state="open"] .grh-fab__sparkle,
+  .grh-fab[data-state="panel"] .grh-fab__sparkle { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-fab__sparkle { animation: none; }
+  }
 
   /* === Verbindungs-Fäden (Netz) ===================================== */
   .grh-fab__web {
@@ -731,5 +759,6 @@
         }, 2000);
       }
     });
+
   })();
 </script>

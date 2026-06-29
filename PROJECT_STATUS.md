@@ -1,7 +1,7 @@
 # Project Status — VV-Wildenstein Web-Monorepo
 
 > **Letztes Update:** 26. Juni 2026
-> **Aktuelle Phase:** Phase 2.7 — All-Inkl-Staging-Pipeline, Live-Wetter, Floating Contact Button, hellere Forest-Tokens. Bereit für parallele Multi-App-Arbeit (Verband, Börnichen, Mängelmelder)
+> **Aktuelle Phase:** Phase 3 — **Börnichen-App im Aufbau** (eigenes Branding, Hero, News/Events-Sektion, Footer). Grünhainichen unverändert live.
 
 Diese Datei dokumentiert den Stand, alle getroffenen Entscheidungen, Zugänge (ohne Geheimnisse) und die offenen Aufgaben — damit die Arbeit nahtlos weitergehen kann, auch wenn es eine Pause gibt oder die Konversation neu gestartet wird.
 
@@ -48,9 +48,37 @@ Bevor Du Code änderst: gib Dem Konversations-Owner einen **Stand-Bericht** wie 
 |---|---|---|---|
 | **grh.vv-wildenstein.com**       | `apps/gruenhainichen/`       | `/www/htdocs/w01f6038/grh.vv-wildenstein.com/`        | **live** ✓ |
 | 2026.vv-wildenstein.com          | `apps/verband/` (geplant)    | `/www/htdocs/w01f6038/2026.vv-wildenstein.com/`       | Subdomain steht, App-Skelett offen |
-| boernichen.vv-wildenstein.com    | `apps/boernichen/` (geplant) | `/www/htdocs/w01f6038/boernichen.vv-wildenstein.com/` | Subdomain steht, App-Skelett offen |
+| boernichen.vv-wildenstein.com    | `apps/boernichen/`           | `/www/htdocs/w01f6038/boernichen.vv-wildenstein.com/` | **In aktivem Aufbau** (baut lokal ✓, eigenes Branding, Hero, News/Events, Footer — siehe §1a). Deploy-Job aktiv. Offen: WP-Inhalte verdrahten, alte Grünhainichen-Sektionen aufräumen |
 | melder2026.vv-wildenstein.com    | `apps/maengelmelder/` (geplant) | `/www/htdocs/w01f6038/melder2026.vv-wildenstein.com/` | Subdomain steht, App-Skelett offen |
 | melder.vv-wildenstein.com        | (Production-Slot Mängelmelder, später Day X) | bestehend | reserviert |
+
+---
+
+## 1a. Börnichen-App — Aufbaustand (26.06.2026)
+
+Eigenständiger Auftritt für die Gemeinde **Börnichen/Erzgeb.** unter `apps/boernichen/`, optisch von **boernichen.de** (WordPress-Original, sites/3) inspiriert. Lokaler Dev/Preview: `npm run dev:boernichen` (Port 4321/4322) bzw. Preview-Server auf 4399.
+
+**Skelett & Technik**
+- App aus `apps/gruenhainichen/` kopiert, `package.json` → `@vv/boernichen`, `astro.config.mjs` `site` → `https://boernichen.vv-wildenstein.com`
+- CMS-Filter in `src/lib/cms-wordpress.ts` **umgedreht**: behält nur `boernichen`-markierte + allgemeine Posts/Events, wirft die Grünhainichen-Ortsteile raus (News **und** Events)
+- Root-Scripts `build:boernichen` / `dev:boernichen`; Deploy-Job `deploy-boernichen` in `deploy-allinkl.yml`
+
+**Branding & Assets** (von boernichen.de gezogen, in `public/images/`)
+- Wappen `logos/wappen-boernichen.png` (heraldisches Schild), 675-Jahre-Jubiläumslogo `logos/jubilaeum-675.png`, Luftbild `hero/boernichen-luftbild.jpg`, Förderlogo-Reihe `partner/foerderung-logos.svg` (Sachsen·ASSKomm·Landespräventionsrat, per `viewBox` auf Logos zugeschnitten)
+- Akzentfarbe: Gold-Token (`--grh-candle-*`) auf **Lindgrün #BBC74B** umgestellt (`tokens.css`); Forest-Grün bleibt
+- Favicon, `<title>`, Meta-Description, OG-Tags und JSON-LD (`GovernmentOrganization`: Rathausstraße 6, 09437, Tel. +49 37294 1225) auf Börnichen
+- Header (`GrhHeaderCompact`): Wortmarke „Börnichen · Erzgebirge · Sachsen", Wetter-Koordinaten 50.6940/13.1819, Wetter als **reine Info** (kein Link/Hover)
+
+**Layout-Stand der Startseite**
+- **Ladeanimation (`GrhLoader`) entfernt**; **Floating-Contact-Button entfernt**
+- **Hero** (`GrhHero`): Vollbild-Luftbild über ganze Breite, zentrierter Text-Overlay, 675-Badge oben rechts, weicher Dunkel-Halo hinter dem Text für Lesbarkeit; Höhe auf `70vh` (max 720px) gekürzt; **Scroll-Down-Button** (lime, geschwungene Ecke `20 20 56 20`) statt Rand-Hinweis
+- **Header transparent** über dem Hero (nur Startseite, `position:fixed`), wird beim Scrollen solide; Menü-Button im transparenten Zustand hell
+- **News/Events-Sektion** (`GrhNewsEvents`, direkt nach Hero): 2/3 News als **Masonry-Karten** (Bild eingerückt+gerundet, dunkelblauer Title-Case-Titel, olivgrüne Kategorie + „26 Juni, 11:48", Lavendel-Rahmen, **untere rechte Ecke stark gerundet** `22 22 64 22`); 1/3 = Suchfeld (→ `/suche`) + erstes Event groß + Folge-Events als Liste
+- **Footer** (`GrhFooter`) nach boernichen.de-Vorbild: Indigo-Band (Wappen+Copyright | Impressum/Datenschutz/Cookie | Navigation) + heller Förderstreifen mit Text + Logo-Reihe; alter „Mega-Menü-Demos"-Block raus
+
+**Noch offen:** WP-Inhalte real verdrahten (lokal noch Grünhainichen-Fallback, daher Uhrzeiten „02:00"); Suche `/suche` bauen; alte Grünhainichen-Sektionen unter der News/Events-Sektion (Manifest, Ortsteile-Cardstack, Tradition-Showcases) aufräumen/ersetzen; Wappen-SVG-Favicon optional.
+
+> **Wichtig:** Alle Änderungen nur in `apps/boernichen/` (eigene Komponenten-Kopien) — Grünhainichen bleibt unberührt. Noch **kein Commit** (Vorschlag-Branch: `feat/boernichen-skelett`).
 
 ---
 
@@ -471,7 +499,7 @@ WP-Multisite mit Master `vv-wildenstein.com` (Blog-ID 1) und Subsites (Grünhain
 
 ### Phase 3 — Multi-App-Ausbau (parallel in eigenen Chats)
 - [ ] **`apps/verband/`** für `2026.vv-wildenstein.com` — eigenes Wappen, eigene Foto-Bibliothek, optisch eigenständige Farbpalette, Inhalte vom Verband (siehe §10 Multi-App-Theming)
-- [ ] **`apps/boernichen/`** für `boernichen.vv-wildenstein.com` — analog, eigenes Wappen
+- [~] **`apps/boernichen/`** für `boernichen.vv-wildenstein.com` — **in aktivem Aufbau** (Branding, Hero, News/Events, Footer fertig — siehe §1a). Offen: WP-Inhalte verdrahten, Suche, alte Grünhainichen-Sektionen aufräumen
 - [ ] **`apps/maengelmelder/`** für `melder2026.vv-wildenstein.com` — PWA, Submission-Form, Standort-Pin, Foto-Upload
 - [ ] **`vw-melder` WP-Plugin** spezifizieren + bauen (analog `vw-events`): CPT für Submissions, REST, Admin-Status-Pipeline, Mail-Benachrichtigungen
 - [ ] **Design-System extrahieren** in `packages/design-system/` (nachdem Verband+Börnichen stehen, dann sehen wir genau welche Komponenten geteilt werden müssen)

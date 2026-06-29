@@ -120,6 +120,9 @@ const tiles = [
     /* auto = direkter 1:1 Drag, kein Browser-Animations-Override */
     scroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
+    /* Track läuft rechts bis zum Viewport-Rand (Peek-Effekt für weitere Karten),
+       linker Rand bleibt am Section-Content ausgerichtet */
+    margin-right: calc(50% - 50vw);
   }
   .grh-strip__track::-webkit-scrollbar { display: none; }
 
