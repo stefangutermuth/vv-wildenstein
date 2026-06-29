@@ -2,7 +2,7 @@
 import GrhWappen from './GrhWappen.astro';
 import { navigation } from '../../lib/navigation';
 
-/* Rechtslinks wie auf boernichen.de */
+/* Rechtslinks */
 const legal: Array<[string, string]> = [
   ['Impressum', '/impressum'],
   ['Datenschutzerklärung', '/datenschutz'],
@@ -14,23 +14,37 @@ const navLinks = navigation.map((n) => [n.label, n.href] as [string, string]);
 ---
 <footer class="grh-footer">
   <div class="grh-container grh-footer__inner">
-    {/* Links: Wappen + Copyright */}
+    {/* Marke + Kontakt */}
     <div class="grh-footer__brand">
-      <GrhWappen size={150} />
-      <span class="grh-footer__copy">© Gemeinde Börnichen/Erzg.</span>
+      <div class="grh-footer__brand-top">
+        <GrhWappen size={84} />
+        <span class="grh-footer__wordmark">
+          <span class="grh-footer__name">Börnichen</span>
+          <span class="grh-footer__sub">Erzgebirge · Sachsen</span>
+        </span>
+      </div>
+      <address class="grh-footer__contact">
+        Gemeindeverwaltung Börnichen/Erzgeb.<br />
+        Rathausstraße 6 · 09437 Börnichen/Erzgeb.<br />
+        Tel. <a href="tel:+49372941225">037294 1225</a><br />
+        <a href="mailto:rathaus@boernichen.de">rathaus@boernichen.de</a>
+      </address>
+      <span class="grh-footer__copy">© Gemeinde Börnichen/Erzgeb. · im Verwaltungsverband Wildenstein</span>
     </div>
 
-    {/* Mitte: Rechtliches */}
-    <nav class="grh-footer__links" aria-label="Rechtliches">
+    {/* Navigation */}
+    <nav class="grh-footer__col" aria-label="Footer-Navigation">
+      <h2 class="grh-footer__heading">Navigation</h2>
       <ul>
-        {legal.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
+        {navLinks.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
       </ul>
     </nav>
 
-    {/* Rechts: Navigation */}
-    <nav class="grh-footer__links" aria-label="Footer-Navigation">
+    {/* Rechtliches */}
+    <nav class="grh-footer__col" aria-label="Rechtliches">
+      <h2 class="grh-footer__heading">Rechtliches</h2>
       <ul>
-        {navLinks.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
+        {legal.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
       </ul>
     </nav>
   </div>
@@ -72,30 +86,72 @@ const navLinks = navigation.map((n) => [n.label, n.href] as [string, string]);
   }
   @media (min-width: 820px) {
     .grh-footer__inner {
-      grid-template-columns: auto 1fr auto;
-      gap: var(--grh-space-9);
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: var(--grh-space-8);
       align-items: start;
     }
   }
 
-  /* Wappen + Copyright */
+  /* --- Marke + Kontakt --- */
   .grh-footer__brand {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: var(--grh-space-4);
+    max-width: 42ch;
   }
-  .grh-footer__brand :global(.grh-wappen) {
+  .grh-footer__brand-top {
+    display: flex;
+    align-items: center;
+    gap: var(--grh-space-4);
+  }
+  .grh-footer__brand-top :global(.grh-wappen) {
     filter: drop-shadow(0 6px 22px rgba(0, 0, 0, 0.45));
+    flex-shrink: 0;
   }
-  .grh-footer__copy {
-    font-size: var(--grh-fs-sm);
+  .grh-footer__wordmark { display: flex; flex-direction: column; line-height: 1.1; }
+  .grh-footer__name {
+    font-family: var(--grh-font-display);
+    font-size: 1.7rem;
+    font-weight: 500;
     color: var(--grh-cream-50);
-    opacity: 0.75;
+    letter-spacing: -0.02em;
+  }
+  .grh-footer__sub {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-300);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .grh-footer__contact {
+    font-style: normal;
+    font-size: var(--grh-fs-sm);
+    line-height: 1.7;
+    color: var(--grh-cream-50);
+    opacity: 0.82;
+  }
+  .grh-footer__contact a { color: inherit; text-decoration: none; }
+  .grh-footer__contact a:hover { color: var(--grh-candle-300); }
+  .grh-footer__copy {
+    font-size: var(--grh-fs-xs);
+    color: var(--grh-cream-50);
+    opacity: 0.6;
   }
 
-  /* Link-Spalten (Rechtliches + Navigation) */
-  .grh-footer__links ul {
+  /* --- Link-Spalten --- */
+  .grh-footer__heading {
+    font-family: var(--grh-font-body);
+    font-size: var(--grh-fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: var(--grh-candle-300);
+    margin: 0 0 var(--grh-space-4);
+    opacity: 0.85;
+  }
+  .grh-footer__col ul {
     display: flex;
     flex-direction: column;
     gap: var(--grh-space-3);
@@ -103,11 +159,7 @@ const navLinks = navigation.map((n) => [n.label, n.href] as [string, string]);
     margin: 0;
     padding: 0;
   }
-  @media (min-width: 820px) {
-    /* Navigation rechtsbündig wie im Original */
-    .grh-footer__links:last-of-type ul { align-items: flex-end; }
-  }
-  .grh-footer__links a {
+  .grh-footer__col a {
     font-family: var(--grh-font-display);
     font-size: var(--grh-fs-md);
     font-weight: 500;
@@ -117,10 +169,7 @@ const navLinks = navigation.map((n) => [n.label, n.href] as [string, string]);
     opacity: 0.9;
     transition: color var(--grh-dur-fast), opacity var(--grh-dur-fast);
   }
-  .grh-footer__links a:hover {
-    opacity: 1;
-    color: var(--grh-candle-300);
-  }
+  .grh-footer__col a:hover { opacity: 1; color: var(--grh-candle-300); }
 
   /* === Heller Förderstreifen =============================== */
   .grh-footer__funding {

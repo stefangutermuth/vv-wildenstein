@@ -41,8 +41,11 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     .grh-melder__inner {
       grid-template-columns: 1.1fr 0.9fr;
       gap: var(--grh-space-8);
-      padding-block: var(--grh-space-9);
+      /* Kein Bottom-Padding → die Hand sitzt bündig auf der Unterkante */
+      padding-block: var(--grh-space-9) 0;
+      align-items: end;
     }
+    .grh-melder__text { padding-bottom: var(--grh-space-9); }
   }
 
   .grh-melder__eyebrow { color: var(--grh-candle-300); }
@@ -87,11 +90,14 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     display: flex;
     justify-content: center;
     align-items: flex-end;
+    align-self: end;
   }
   .grh-melder__media img {
+    display: block;
     width: auto;
     max-width: 100%;
-    max-height: 460px;
+    max-height: 540px;
+    margin-bottom: -2px; /* sicher bündig zur Unterkante, kein Hairline-Spalt */
     filter: drop-shadow(0 24px 50px rgba(0, 0, 0, 0.45));
   }
 </style>
