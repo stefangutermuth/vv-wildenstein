@@ -14,7 +14,8 @@ on:
       - 'apps/maengelmelder/**'
       - '.github/workflows/deploy-maengelmelder.yml'
   schedule:
-    - cron: '*/30 * * * *'
+    # Stündlich tagsüber (6–22 Uhr UTC) — kein Lauf im nächtlichen Wartungsfenster
+    - cron: '0 6-22 * * *'
   workflow_dispatch:
 
 jobs:
@@ -42,17 +43,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ALLINKL_SSH_KEY }}
 
-      - name: All-Inkl-Host bekannt machen
+      - name: Known-Hosts hinterlegen
+        env:
+          KNOWN_HOSTS: ${{ secrets.ALLINKL_KNOWN_HOSTS }}
         run: |
           mkdir -p ~/.ssh
-          # Mit Wiederholung gegen kurze Netzwerk-Aussetzer
-          for i in 1 2 3 4 5; do
-            if ssh-keyscan -T 20 -H "${{ secrets.ALLINKL_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null && [ -s ~/.ssh/known_hosts ]; then
-              echo "Host-Key erhalten (Versuch $i)"; exit 0
-            fi
-            echo "ssh-keyscan Versuch $i fehlgeschlagen — neuer Versuch in 10s…"; sleep 10
-          done
-          echo "ssh-keyscan nach 5 Versuchen fehlgeschlagen"; exit 1
+          # Server-Schlüssel fest aus dem Secret schreiben — kein fehleranfälliger
+          # Netzwerk-Keyscan bei jedem Lauf mehr.
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Per rsync zu melder.vv-wildenstein.com hochladen
         run: |
