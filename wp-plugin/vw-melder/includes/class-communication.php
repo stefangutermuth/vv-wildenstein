@@ -2,18 +2,18 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
- * Direkte Rückmeldung an den Melder (einseitig: Amt → Melder),
- * mit Nachrichten-Verlauf in der Meldung. Ersetzt die frühere
- * Zweckentfremdung der WordPress-Kommentare.
+ * Direkte Rückmeldung an den Melder (einseitig: Amt → Melder), mit Protokoll.
+ * Die Nachricht wird beim Speichern (Aktualisieren) der Meldung versendet —
+ * kein verschachteltes Formular, kein Pflichtfeld.
  */
 final class VW_Melder_Communication {
 
     public const HISTORY_META = '_vw_meldung_messages';
-    public const ACTION       = 'vw_melder_send_message';
+    public const NONCE        = 'vwc_nonce';
 
     public static function init(): void {
         add_action( 'add_meta_boxes', [ __CLASS__, 'add_box' ] );
-        add_action( 'admin_post_' . self::ACTION, [ __CLASS__, 'handle_send' ] );
+        add_action( 'save_post_vw_meldung', [ __CLASS__, 'save' ], 20, 1 );
         add_action( 'admin_notices', [ __CLASS__, 'notice' ] );
     }
 
@@ -28,26 +28,30 @@ final class VW_Melder_Communication {
         );
     }
 
-    /** @return array<int,array{time:string,user:string,message:string}> */
+    /** @return array<int,array{time:string,user:string,message:string,to?:string}> */
     public static function get_history( int $post_id ): array {
         $h = get_post_meta( $post_id, self::HISTORY_META, true );
         return is_array( $h ) ? $h : [];
     }
 
     public static function render( WP_Post $post ): void {
-        $name   = (string) get_post_meta( $post->ID, '_vw_meldung_reporter_name', true );
-        $email  = (string) get_post_meta( $post->ID, '_vw_meldung_reporter_email', true );
-        $notify = (bool) get_post_meta( $post->ID, '_vw_meldung_notify', true );
+        $name    = (string) get_post_meta( $post->ID, '_vw_meldung_reporter_name', true );
+        $email   = (string) get_post_meta( $post->ID, '_vw_meldung_reporter_email', true );
+        $notify  = (bool) get_post_meta( $post->ID, '_vw_meldung_notify', true );
         $history = self::get_history( $post->ID );
+        wp_nonce_field( 'vwc_save_' . $post->ID, self::NONCE );
         ?>
         <style>
             .vwc-meta { margin: 0 0 12px; }
             .vwc-meta code { background: #f0f0f1; padding: 2px 6px; border-radius: 3px; }
-            .vwc-hist { margin: 12px 0; padding: 0; list-style: none; }
-            .vwc-hist li { border-left: 3px solid #0a5f2b; background: #f6f7f7; padding: 8px 12px; margin: 0 0 8px; border-radius: 0 4px 4px 0; }
-            .vwc-hist .vwc-when { color: #646970; font-size: 12px; }
             .vwc-empty { color: #646970; font-style: italic; }
             .vwc-warn { color: #b32d2e; }
+            .vwc-log { margin: 10px 0 16px; padding: 0; list-style: none; }
+            .vwc-log li { border-left: 3px solid #0a5f2b; background: #f6f7f7; padding: 8px 12px; margin: 0 0 8px; border-radius: 0 4px 4px 0; }
+            .vwc-sent { color: #0a5f2b; font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+            .vwc-sent .dashicons { font-size: 15px; width: 15px; height: 15px; }
+            .vwc-log .vwc-msg { margin: 4px 0 2px; }
+            .vwc-log .vwc-by { color: #646970; font-size: 12px; }
         </style>
 
         <p class="vwc-meta">
@@ -62,21 +66,32 @@ final class VW_Melder_Communication {
                 : '<span class="vwc-empty">' . esc_html__( 'keine Updates gewünscht', 'vw-melder' ) . '</span>'; ?>
         </p>
 
-        <h4 style="margin:14px 0 6px"><?php esc_html_e( 'Verlauf', 'vw-melder' ); ?></h4>
+        <h4 style="margin:14px 0 6px"><?php esc_html_e( 'Protokoll der Nachrichten', 'vw-melder' ); ?></h4>
         <?php if ( $history === [] ) : ?>
-            <p class="vwc-empty"><?php esc_html_e( 'Noch keine Nachrichten gesendet.', 'vw-melder' ); ?></p>
+            <p class="vwc-empty"><?php esc_html_e( 'Noch keine Nachrichten an den Melder gesendet.', 'vw-melder' ); ?></p>
         <?php else : ?>
-            <ul class="vwc-hist">
-                <?php foreach ( array_reverse( $history ) as $entry ) : ?>
+            <ul class="vwc-log">
+                <?php foreach ( array_reverse( $history ) as $entry ) :
+                    $ts   = strtotime( (string) ( $entry['time'] ?? '' ) );
+                    $when = $ts ? wp_date( 'd.m.Y', $ts ) . ' um ' . wp_date( 'H:i', $ts ) . ' Uhr' : '';
+                    $to   = (string) ( $entry['to'] ?? '' );
+                ?>
                     <li>
-                        <div class="vwc-when">
+                        <div class="vwc-sent">
+                            <span class="dashicons dashicons-yes-alt"></span>
                             <?php
-                            $ts = strtotime( (string) ( $entry['time'] ?? '' ) );
-                            echo esc_html( $ts ? wp_date( 'd.m.Y H:i', $ts ) : '' );
-                            echo ' — ' . esc_html( (string) ( $entry['user'] ?? '' ) );
+                            printf(
+                                /* translators: 1: E-Mail, 2: Datum/Uhrzeit */
+                                esc_html__( 'E-Mail gesendet%1$s — %2$s', 'vw-melder' ),
+                                $to !== '' ? ' ' . esc_html__( 'an', 'vw-melder' ) . ' ' . esc_html( $to ) : '',
+                                esc_html( $when )
+                            );
                             ?>
                         </div>
-                        <div><?php echo nl2br( esc_html( (string) ( $entry['message'] ?? '' ) ) ); ?></div>
+                        <div class="vwc-msg"><?php echo nl2br( esc_html( (string) ( $entry['message'] ?? '' ) ) ); ?></div>
+                        <?php if ( ! empty( $entry['user'] ) ) : ?>
+                            <div class="vwc-by"><?php echo esc_html( sprintf( __( 'von %s', 'vw-melder' ), (string) $entry['user'] ) ); ?></div>
+                        <?php endif; ?>
                     </li>
                 <?php endforeach; ?>
             </ul>
@@ -85,92 +100,87 @@ final class VW_Melder_Communication {
         <?php if ( $email === '' ) : ?>
             <p class="vwc-warn"><?php esc_html_e( 'Ohne hinterlegte E-Mail kann keine Rückmeldung gesendet werden.', 'vw-melder' ); ?></p>
         <?php else : ?>
-            <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-                <input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION ); ?>">
-                <input type="hidden" name="post_id" value="<?php echo (int) $post->ID; ?>">
-                <?php wp_nonce_field( self::ACTION . '_' . $post->ID, 'vwc_nonce' ); ?>
-                <p>
-                    <label for="vwc-message"><strong><?php esc_html_e( 'Neue Nachricht an den Melder:', 'vw-melder' ); ?></strong></label>
-                </p>
-                <textarea id="vwc-message" name="vwc_message" rows="4" class="large-text" required placeholder="<?php esc_attr_e( 'Ihre Nachricht …', 'vw-melder' ); ?>"></textarea>
-                <p>
-                    <button type="submit" class="button button-primary"><?php esc_html_e( 'Nachricht senden', 'vw-melder' ); ?></button>
-                    <span class="description" style="margin-left:8px">
-                        <?php esc_html_e( 'Geht direkt als E-Mail an den Melder. Antworten landen bei der Benachrichtigungs-Adresse.', 'vw-melder' ); ?>
-                    </span>
-                </p>
-            </form>
+            <p><label for="vwc-message"><strong><?php esc_html_e( 'Neue Nachricht an den Melder:', 'vw-melder' ); ?></strong></label></p>
+            <textarea id="vwc-message" name="vwc_message" rows="4" class="large-text" placeholder="<?php esc_attr_e( 'Ihre Nachricht … (leer lassen = nichts senden)', 'vw-melder' ); ?>"></textarea>
+            <p class="description">
+                <?php esc_html_e( 'Wird beim „Aktualisieren" direkt als E-Mail an den Melder gesendet und hier protokolliert. Antworten landen bei der Benachrichtigungs-Adresse. Leer lassen ändert nichts.', 'vw-melder' ); ?>
+            </p>
         <?php endif; ?>
         <?php
     }
 
-    public static function handle_send(): void {
-        $post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
-
-        if ( ! $post_id
-            || ! current_user_can( 'edit_post', $post_id )
-            || ! isset( $_POST['vwc_nonce'] )
-            || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['vwc_nonce'] ) ), self::ACTION . '_' . $post_id )
+    public static function save( int $post_id ): void {
+        if ( ! isset( $_POST[ self::NONCE ] )
+            || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ), 'vwc_save_' . $post_id )
         ) {
-            wp_die( esc_html__( 'Sicherheitsprüfung fehlgeschlagen.', 'vw-melder' ) );
+            return;
+        }
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
         }
 
         $message = trim( (string) wp_unslash( $_POST['vwc_message'] ?? '' ) );
-        $email   = (string) get_post_meta( $post_id, '_vw_meldung_reporter_email', true );
-        $result  = 'empty';
-
-        if ( $message !== '' && $email !== '' && is_email( $email ) ) {
-            $title = get_the_title( $post_id );
-            $reply_to = VW_Melder_Settings::notify_recipients()[0] ?? get_option( 'admin_email' );
-
-            $subject = sprintf( __( 'Ihre Mängelmeldung: %s', 'vw-melder' ), $title );
-            $body    = $message . "\n\n"
-                . "—\n"
-                . sprintf( __( 'Diese Nachricht bezieht sich auf Ihre Meldung „%s".', 'vw-melder' ), $title ) . "\n"
-                . __( 'Verwaltungsverband Wildenstein – Mängelmelder', 'vw-melder' );
-
-            $headers = [ 'Reply-To: ' . $reply_to ];
-            $sent    = wp_mail( $email, $subject, $body, $headers );
-
-            if ( $sent ) {
-                $current = wp_get_current_user();
-                $history = self::get_history( $post_id );
-                $history[] = [
-                    'time'    => gmdate( 'c' ),
-                    'user'    => $current ? $current->display_name : '—',
-                    'message' => sanitize_textarea_field( $message ),
-                ];
-                update_post_meta( $post_id, self::HISTORY_META, $history );
-                $result = 'sent';
-            } else {
-                $result = 'failed';
-            }
+        if ( $message === '' ) {
+            return; // nichts eingegeben → nichts senden (Status etc. wird normal gespeichert)
         }
 
-        wp_safe_redirect( add_query_arg(
-            [ 'vwc_msg' => $result ],
-            get_edit_post_link( $post_id, 'url' )
-        ) );
-        exit;
+        $email = (string) get_post_meta( $post_id, '_vw_meldung_reporter_email', true );
+        if ( $email === '' || ! is_email( $email ) ) {
+            self::set_notice( 'noemail' );
+            return;
+        }
+
+        $title    = get_the_title( $post_id );
+        $reply_to = VW_Melder_Settings::notify_recipients()[0] ?? get_option( 'admin_email' );
+        $subject  = sprintf( __( 'Ihre Mängelmeldung: %s', 'vw-melder' ), $title );
+        $body     = $message . "\n\n—\n"
+            . sprintf( __( 'Diese Nachricht bezieht sich auf Ihre Meldung „%s".', 'vw-melder' ), $title ) . "\n"
+            . __( 'Verwaltungsverband Wildenstein – Mängelmelder', 'vw-melder' );
+
+        $sent = wp_mail( $email, $subject, $body, [ 'Reply-To: ' . $reply_to ] );
+
+        if ( $sent ) {
+            $current   = wp_get_current_user();
+            $history   = self::get_history( $post_id );
+            $history[] = [
+                'time'    => gmdate( 'c' ),
+                'user'    => $current ? $current->display_name : '—',
+                'to'      => $email,
+                'message' => sanitize_textarea_field( $message ),
+            ];
+            update_post_meta( $post_id, self::HISTORY_META, $history );
+            self::set_notice( 'sent' );
+        } else {
+            self::set_notice( 'failed' );
+        }
+    }
+
+    private static function set_notice( string $result ): void {
+        set_transient( 'vwc_notice_' . get_current_user_id(), $result, 45 );
     }
 
     public static function notice(): void {
-        if ( ! isset( $_GET['vwc_msg'] ) ) {
+        $uid = get_current_user_id();
+        $result = get_transient( 'vwc_notice_' . $uid );
+        if ( ! $result ) {
             return;
         }
+        delete_transient( 'vwc_notice_' . $uid );
         $map = [
-            'sent'   => [ 'success', __( 'Nachricht an den Melder wurde gesendet.', 'vw-melder' ) ],
-            'failed' => [ 'error', __( 'Nachricht konnte nicht gesendet werden (E-Mail-Versand fehlgeschlagen).', 'vw-melder' ) ],
-            'empty'  => [ 'warning', __( 'Keine Nachricht gesendet (Text oder E-Mail fehlt).', 'vw-melder' ) ],
+            'sent'    => [ 'success', __( 'Nachricht an den Melder wurde gesendet.', 'vw-melder' ) ],
+            'failed'  => [ 'error', __( 'Nachricht konnte nicht gesendet werden (E-Mail-Versand fehlgeschlagen).', 'vw-melder' ) ],
+            'noemail' => [ 'warning', __( 'Keine Nachricht gesendet: beim Melder ist keine gültige E-Mail hinterlegt.', 'vw-melder' ) ],
         ];
-        $key = sanitize_key( (string) $_GET['vwc_msg'] );
-        if ( ! isset( $map[ $key ] ) ) {
+        if ( ! isset( $map[ $result ] ) ) {
             return;
         }
         printf(
             '<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
-            esc_attr( $map[ $key ][0] ),
-            esc_html( $map[ $key ][1] )
+            esc_attr( $map[ $result ][0] ),
+            esc_html( $map[ $result ][1] )
         );
     }
 }

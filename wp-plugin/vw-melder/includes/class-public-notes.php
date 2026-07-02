@@ -3,17 +3,18 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
  * Öffentliche Antworten/Notizen der Verwaltung an einer Meldung.
- * Im Frontend für alle sichtbar (ersetzt die früher zweckentfremdeten Kommentare).
+ * Im Frontend sichtbar. Hinzufügen beim Speichern (Aktualisieren) — kein
+ * verschachteltes Formular, kein Pflichtfeld. Löschen per Link.
  */
 final class VW_Melder_Public_Notes {
 
-    public const META       = '_vw_meldung_public_notes';
-    public const ACTION_ADD = 'vw_melder_add_note';
-    public const ACTION_DEL = 'vw_melder_del_note';
+    public const META        = '_vw_meldung_public_notes';
+    public const ACTION_DEL  = 'vw_melder_del_note';
+    public const NONCE       = 'vwn_save_nonce';
 
     public static function init(): void {
         add_action( 'add_meta_boxes', [ __CLASS__, 'add_box' ] );
-        add_action( 'admin_post_' . self::ACTION_ADD, [ __CLASS__, 'handle_add' ] );
+        add_action( 'save_post_vw_meldung', [ __CLASS__, 'save' ], 20, 1 );
         add_action( 'admin_post_' . self::ACTION_DEL, [ __CLASS__, 'handle_del' ] );
         add_action( 'admin_notices', [ __CLASS__, 'notice' ] );
     }
@@ -37,6 +38,7 @@ final class VW_Melder_Public_Notes {
 
     public static function render( WP_Post $post ): void {
         $notes = self::get_notes( $post->ID );
+        wp_nonce_field( 'vwn_save_' . $post->ID, self::NONCE );
         ?>
         <style>
             .vwn-note { border-left:3px solid #2a3196; background:#f6f7f7; padding:8px 12px; margin:0 0 8px; border-radius:0 4px 4px 0; }
@@ -56,7 +58,7 @@ final class VW_Melder_Public_Notes {
                         <span>
                             <?php
                             $ts = strtotime( (string) ( $note['time'] ?? '' ) );
-                            echo esc_html( $ts ? wp_date( 'd.m.Y H:i', $ts ) : '' );
+                            echo esc_html( $ts ? wp_date( 'd.m.Y', $ts ) . ' um ' . wp_date( 'H:i', $ts ) . ' Uhr' : '' );
                             if ( ! empty( $note['by'] ) ) {
                                 echo ' — ' . esc_html( (string) $note['by'] );
                             }
@@ -72,14 +74,9 @@ final class VW_Melder_Public_Notes {
             <?php endforeach; ?>
         <?php endif; ?>
 
-        <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-            <input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION_ADD ); ?>">
-            <input type="hidden" name="post_id" value="<?php echo (int) $post->ID; ?>">
-            <?php wp_nonce_field( self::ACTION_ADD . '_' . $post->ID, 'vwn_nonce' ); ?>
-            <p><label for="vwn-text"><strong><?php esc_html_e( 'Neue öffentliche Antwort:', 'vw-melder' ); ?></strong></label></p>
-            <textarea id="vwn-text" name="vwn_text" rows="4" class="large-text" required placeholder="<?php esc_attr_e( 'z. B. Aktueller Stand: Die Reparatur ist für … geplant.', 'vw-melder' ); ?>"></textarea>
-            <p><button type="submit" class="button button-primary"><?php esc_html_e( 'Antwort veröffentlichen', 'vw-melder' ); ?></button></p>
-        </form>
+        <p><label for="vwn-text"><strong><?php esc_html_e( 'Neue öffentliche Antwort:', 'vw-melder' ); ?></strong></label></p>
+        <textarea id="vwn-text" name="vwn_text" rows="4" class="large-text" placeholder="<?php esc_attr_e( 'z. B. Aktueller Stand: Die Reparatur ist für … geplant. (leer lassen = nichts veröffentlichen)', 'vw-melder' ); ?>"></textarea>
+        <p class="description"><?php esc_html_e( 'Wird beim „Aktualisieren" veröffentlicht. Leer lassen ändert nichts.', 'vw-melder' ); ?></p>
         <?php
     }
 
@@ -91,30 +88,32 @@ final class VW_Melder_Public_Notes {
         );
     }
 
-    public static function handle_add(): void {
-        $post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
-        if ( ! $post_id
-            || ! current_user_can( 'edit_post', $post_id )
-            || ! isset( $_POST['vwn_nonce'] )
-            || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['vwn_nonce'] ) ), self::ACTION_ADD . '_' . $post_id )
+    public static function save( int $post_id ): void {
+        if ( ! isset( $_POST[ self::NONCE ] )
+            || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ), 'vwn_save_' . $post_id )
         ) {
-            wp_die( esc_html__( 'Sicherheitsprüfung fehlgeschlagen.', 'vw-melder' ) );
+            return;
+        }
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
         }
 
         $text = trim( (string) wp_unslash( $_POST['vwn_text'] ?? '' ) );
-        $res  = 'empty';
-        if ( $text !== '' ) {
-            $user  = wp_get_current_user();
-            $notes = self::get_notes( $post_id );
-            $notes[] = [
-                'time' => gmdate( 'c' ),
-                'text' => sanitize_textarea_field( $text ),
-                'by'   => $user ? $user->display_name : '',
-            ];
-            update_post_meta( $post_id, self::META, $notes );
-            $res = 'added';
+        if ( $text === '' ) {
+            return;
         }
-        self::redirect( $post_id, $res );
+        $user    = wp_get_current_user();
+        $notes   = self::get_notes( $post_id );
+        $notes[] = [
+            'time' => gmdate( 'c' ),
+            'text' => sanitize_textarea_field( $text ),
+            'by'   => $user ? $user->display_name : '',
+        ];
+        update_post_meta( $post_id, self::META, $notes );
+        set_transient( 'vwn_notice_' . get_current_user_id(), 'added', 45 );
     }
 
     public static function handle_del(): void {
@@ -132,26 +131,20 @@ final class VW_Melder_Public_Notes {
             unset( $notes[ $idx ] );
             update_post_meta( $post_id, self::META, array_values( $notes ) );
         }
-        self::redirect( $post_id, 'deleted' );
-    }
-
-    private static function redirect( int $post_id, string $res ): void {
-        wp_safe_redirect( add_query_arg( [ 'vwn_msg' => $res ], get_edit_post_link( $post_id, 'url' ) ) );
+        wp_safe_redirect( add_query_arg( [ 'vwn_msg' => 'deleted' ], get_edit_post_link( $post_id, 'url' ) ) );
         exit;
     }
 
     public static function notice(): void {
-        if ( ! isset( $_GET['vwn_msg'] ) ) {
-            return;
+        // „Veröffentlicht" (beim Speichern) via Transient
+        $uid = get_current_user_id();
+        if ( get_transient( 'vwn_notice_' . $uid ) === 'added' ) {
+            delete_transient( 'vwn_notice_' . $uid );
+            printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html__( 'Öffentliche Antwort veröffentlicht.', 'vw-melder' ) );
         }
-        $map = [
-            'added'   => [ 'success', __( 'Öffentliche Antwort veröffentlicht.', 'vw-melder' ) ],
-            'deleted' => [ 'success', __( 'Öffentliche Antwort gelöscht.', 'vw-melder' ) ],
-            'empty'   => [ 'warning', __( 'Kein Text eingegeben.', 'vw-melder' ) ],
-        ];
-        $key = sanitize_key( (string) $_GET['vwn_msg'] );
-        if ( isset( $map[ $key ] ) ) {
-            printf( '<div class="notice notice-%s is-dismissible"><p>%s</p></div>', esc_attr( $map[ $key ][0] ), esc_html( $map[ $key ][1] ) );
+        // „Gelöscht" via Redirect-Parameter
+        if ( isset( $_GET['vwn_msg'] ) && sanitize_key( (string) $_GET['vwn_msg'] ) === 'deleted' ) {
+            printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html__( 'Öffentliche Antwort gelöscht.', 'vw-melder' ) );
         }
     }
 }
