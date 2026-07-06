@@ -194,10 +194,10 @@ export interface TourismItem {
 
 export async function getTourism(): Promise<TourismItem[]> {
   const data = await fetchJson<WPCPTBase>('tourismus');
-  return data.filter(hasGrhOrtsteil).map((p) => ({
+  const items = data.filter(hasGrhOrtsteil).map((p) => ({
     slug: p.slug,
     title: decodeEntities(p.title.rendered),
-    excerpt: stripHtml(p.excerpt?.rendered ?? ''),
+    excerpt: decodeEntities(stripHtml(p.excerpt?.rendered ?? '')),
     contentHtml: p.content?.rendered ?? '',
     image: pickImage(p),
     ortsteil: pickOrtsteil(termSlugs(p, 'gemeindeteil')),
@@ -205,6 +205,15 @@ export async function getTourism(): Promise<TourismItem[]> {
     kontakt: p.vv_kontakt,
     link: p.link,
   }));
+  // Frontend-Dedup: In vv-wildenstein.com liegen einzelne Tourismus-Beiträge
+  // mehrfach unter verschiedenen Slugs. Wir behalten den ersten pro Titel.
+  const seen = new Set<string>();
+  return items.filter((it) => {
+    const key = it.title.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /* ============================================================
@@ -311,7 +320,7 @@ export async function getPostsByCategory(categorySlug: string, limit = 100): Pro
       slug: p.slug,
       title: decodeEntities(p.title.rendered),
       date: new Date(p.date),
-      excerpt: stripHtml(p.excerpt?.rendered ?? ''),
+      excerpt: decodeEntities(stripHtml(p.excerpt?.rendered ?? '')),
       link: p.link,
     }))
     .sort((a, b) => b.date.valueOf() - a.date.valueOf());
@@ -393,7 +402,7 @@ export async function getAmtsblaetter(): Promise<AmtsblattItem[]> {
         slug: p.slug,
         title: decodeEntities(p.title.rendered),
         date,
-        excerpt: stripHtml(excerptHtml),
+        excerpt: decodeEntities(stripHtml(excerptHtml)),
         jahr: String(date.getFullYear()),
         pdfUrl: pdfFromAttach ?? pdfFromExcerpt,
         link: p.link,

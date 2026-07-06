@@ -281,39 +281,53 @@ interface VWEvent {
   permalink: string;
 }
 
-export async function fetchWordPressEvents(): Promise<EventItem[]> {
-  const url = new URL(`${VW_EVENTS_BASE}/events`);
-  url.searchParams.set('per_page', '100');
-  // Plugin filtert nur auf start >= from. Wir setzen from = heute - 14 Tage,
-  // damit aktuell laufende mehrtägige Events (Start in jüngster Vergangenheit,
-  // Ende noch in der Zukunft) noch zurückkommen. Final filtert dann unser
-  // map-Schritt unten auf "end >= now ODER start >= now".
+export async function fetchWordPressEvents(opts: { includePast?: boolean } = {}): Promise<EventItem[]> {
   const fromDate = new Date();
-  fromDate.setDate(fromDate.getDate() - 14);
-  url.searchParams.set('from', fromDate.toISOString().slice(0, 19));
+  if (opts.includePast) {
+    fromDate.setFullYear(fromDate.getFullYear() - 2);
+  } else {
+    // Standard: nur Zukunft (mit 14 Tagen Puffer für laufende mehrtägige)
+    fromDate.setDate(fromDate.getDate() - 14);
+  }
+  const from = fromDate.toISOString().slice(0, 19);
 
-  let res: Response;
-  try {
-    res = await fetchWithTimeout(url.toString(), { headers: { Accept: 'application/json' } });
-  } catch (err) {
-    console.warn('[cms-wp] vw-events Timeout/Abort:', (err as Error).message);
-    return [];
+  // Plugin limitiert per_page auf 100. Bei includePast holen wir paginiert bis
+  // die Antwort leer bleibt oder wir die Sicherheitsgrenze erreichen.
+  const MAX_PAGES = opts.includePast ? 6 : 2;
+  const all: VWEvent[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const url = new URL(`${VW_EVENTS_BASE}/events`);
+    url.searchParams.set('per_page', '100');
+    url.searchParams.set('from', from);
+    url.searchParams.set('page', String(page));
+
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(url.toString(), { headers: { Accept: 'application/json' } });
+    } catch (err) {
+      console.warn(`[cms-wp] vw-events page ${page} Timeout/Abort:`, (err as Error).message);
+      break;
+    }
+    if (!res.ok) {
+      console.warn(`[cms-wp] vw-events page ${page} ${res.status} ${res.statusText} → stop`);
+      break;
+    }
+    const batch = (await res.json()) as VWEvent[];
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    all.push(...batch);
+    if (batch.length < 100) break; // letzte Seite erreicht
   }
-  if (!res.ok) {
-    console.warn(`[cms-wp] vw-events ${res.status} ${res.statusText} → leere Liste`);
-    return [];
-  }
-  const events = (await res.json()) as VWEvent[];
+
+  const mapped = all
+    .map(mapVWEvent)
+    .filter((e): e is EventItem => e !== null);
 
   const now = new Date();
-  return events
-    .map(mapVWEvent)
-    .filter((e): e is EventItem => e !== null)
-    .filter((e) => {
-      const endRef = e.endDate ?? e.startDate;
-      return endRef.valueOf() >= now.valueOf();
-    })
-    .sort((a, b) => a.startDate.valueOf() - b.startDate.valueOf());
+  const filtered = opts.includePast
+    ? mapped
+    : mapped.filter((e) => (e.endDate ?? e.startDate).valueOf() >= now.valueOf());
+
+  return filtered.sort((a, b) => a.startDate.valueOf() - b.startDate.valueOf());
 }
 
 function mapVWEvent(ev: VWEvent): EventItem | null {
@@ -343,7 +357,7 @@ function mapVWEvent(ev: VWEvent): EventItem | null {
     endDate,
     location,
     ortsteil,
-    teaser: stripHtml(ev.description_html).trim().slice(0, 180),
+    teaser: decodeEntities(stripHtml(ev.description_html)).trim().slice(0, 180),
     featured: false,
     image: ev.image?.url,
     href: ev.permalink,

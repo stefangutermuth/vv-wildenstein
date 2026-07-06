@@ -19,53 +19,10 @@ const fmtShortDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '
 const fmtDay   = new Intl.DateTimeFormat('de-DE', { day: '2-digit' });
 const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
 ---
-<div class="grh-mega" data-grh-megamenu data-grh-mega-variant="default" hidden role="dialog" aria-modal="true" aria-label="Hauptnavigation">
+<div class="grh-mega" data-grh-megamenu data-grh-mega-variant="ticker-bottom" hidden role="dialog" aria-modal="true" aria-label="Hauptnavigation">
   <div class="grh-mega__backdrop" data-grh-megamenu-close></div>
 
   <div class="grh-mega__panel" role="document">
-    {/* === DEMO B/A: Live-Ticker (Position via CSS oben/unten gesteuert) === */}
-    <div class="grh-mega__ticker" data-grh-mega-block="ticker">
-      <div class="grh-container grh-mega__ticker-inner">
-        <span class="grh-mega__ticker-pill grh-mega__ticker-pill--news">
-          <strong>{latestNews.length}</strong> News
-        </span>
-        {sperrungen.length > 0 && (
-          <span class="grh-mega__ticker-pill grh-mega__ticker-pill--alert">
-            <strong>{sperrungen.length}</strong> Sperrung{sperrungen.length === 1 ? '' : 'en'}
-          </span>
-        )}
-        {upcomingEvents.length > 0 && (
-          <span class="grh-mega__ticker-pill">
-            Nächster Termin: <strong>{fmtShortDate.format(upcomingEvents[0].data.startDate)}</strong> · {upcomingEvents[0].data.title}
-          </span>
-        )}
-        <a class="grh-mega__ticker-more" href="/neuigkeiten">Alle Live-Infos →</a>
-      </div>
-    </div>
-
-    {/* === DEMO C: Floating Live-Card === */}
-    <aside class="grh-mega__floating" data-grh-mega-block="floating" aria-label="Live-Infos">
-      <h3>Live</h3>
-      {latestNews[0] && (
-        <a class="grh-mega__floating-item" href={latestNews[0].href}>
-          <span class="grh-mega__floating-cat">Aktuelles</span>
-          <span class="grh-mega__floating-title">{latestNews[0].title}</span>
-        </a>
-      )}
-      {sperrungen[0] && (
-        <a class="grh-mega__floating-item grh-mega__floating-item--alert" href={sperrungen[0].href}>
-          <span class="grh-mega__floating-cat">Sperrung</span>
-          <span class="grh-mega__floating-title">{sperrungen[0].title}</span>
-        </a>
-      )}
-      {upcomingEvents[0] && (
-        <a class="grh-mega__floating-item" href={`/veranstaltungen/${upcomingEvents[0].slug}`}>
-          <span class="grh-mega__floating-cat">{fmtShortDate.format(upcomingEvents[0].data.startDate)}</span>
-          <span class="grh-mega__floating-title">{upcomingEvents[0].data.title}</span>
-        </a>
-      )}
-      <a class="grh-mega__floating-more" href="/neuigkeiten">Mehr →</a>
-    </aside>
     {/* === Linke Spalte: dunkler Wichtig-Block ============================= */}
     <aside class="grh-mega__brief">
       <div class="grh-mega__brief-top">
@@ -193,24 +150,55 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
         ))}
       </nav>
 
-      {/* === DEMO A: Inline-Ticker zwischen Navigation und „Drei Orte"-Card === */}
-      <div class="grh-mega__ticker grh-mega__ticker--inline" data-grh-mega-block="ticker-inline">
-        <div class="grh-mega__ticker-inner">
-          <span class="grh-mega__ticker-pill grh-mega__ticker-pill--news">
-            <strong>{latestNews.length}</strong> News
-          </span>
-          {sperrungen.length > 0 && (
-            <span class="grh-mega__ticker-pill grh-mega__ticker-pill--alert">
-              <strong>{sperrungen.length}</strong> Sperrung{sperrungen.length === 1 ? '' : 'en'}
-            </span>
-          )}
-          {upcomingEvents.length > 0 && (
-            <span class="grh-mega__ticker-pill">
-              Nächster Termin: <strong>{fmtShortDate.format(upcomingEvents[0].data.startDate)}</strong> · {upcomingEvents[0].data.title}
-            </span>
-          )}
-          <a class="grh-mega__ticker-more" href="/neuigkeiten">Alle Live-Infos →</a>
-        </div>
+      {/* === Live-Zeile: 3 Spalten (News / Sperrungen / nächste Termine) ==== */}
+      <div class="grh-mega__live" data-grh-mega-block="live">
+        <section class="grh-mega__live-col">
+          <h3 class="grh-mega__live-head">Aktuelles</h3>
+          <ul>
+            {latestNews.slice(0, 3).map((n) => (
+              <li>
+                <a href={n.href}>
+                  <time>{fmtShortDate.format(n.date)}</time>
+                  <span>{n.title}</span>
+                </a>
+              </li>
+            ))}
+            {latestNews.length === 0 && <li class="grh-mega__live-empty">Aktuell keine Meldungen.</li>}
+          </ul>
+          <a class="grh-mega__live-more" href="/neuigkeiten">Alle Neuigkeiten →</a>
+        </section>
+
+        <section class="grh-mega__live-col grh-mega__live-col--alert">
+          <h3 class="grh-mega__live-head">Sperrungen</h3>
+          <ul>
+            {sperrungen.slice(0, 3).map((s) => (
+              <li>
+                <a href={s.href}>
+                  <time>{fmtShortDate.format(s.date)}</time>
+                  <span>{s.title}</span>
+                </a>
+              </li>
+            ))}
+            {sperrungen.length === 0 && <li class="grh-mega__live-empty">Keine aktiven Sperrungen.</li>}
+          </ul>
+          <a class="grh-mega__live-more" href="/neuigkeiten/sperrungen">Alle Sperrungen →</a>
+        </section>
+
+        <section class="grh-mega__live-col">
+          <h3 class="grh-mega__live-head">Nächste Termine</h3>
+          <ul>
+            {upcomingEvents.slice(0, 3).map((e) => (
+              <li>
+                <a href={`/veranstaltungen/${e.slug}`}>
+                  <time>{fmtShortDate.format(e.data.startDate)}</time>
+                  <span>{e.data.title}</span>
+                </a>
+              </li>
+            ))}
+            {upcomingEvents.length === 0 && <li class="grh-mega__live-empty">Aktuell keine Termine.</li>}
+          </ul>
+          <a class="grh-mega__live-more" href="/veranstaltungen">Alle Termine →</a>
+        </section>
       </div>
 
       <aside class="grh-mega__feature">
@@ -552,14 +540,14 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
   .grh-mega__col-head {
     display: block;
     font-family: var(--grh-font-display);
-    font-size: var(--grh-fs-md);
+    font-size: var(--grh-fs-lg);
     font-weight: 500;
     line-height: 1.2;
     letter-spacing: -0.01em;
     color: var(--grh-forest-900);
     text-decoration: none;
-    padding-bottom: 6px;
-    margin-bottom: 6px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
     border-bottom: 1px solid var(--grh-line);
     transition: color var(--grh-dur-fast), border-color var(--grh-dur-fast);
   }
@@ -578,10 +566,10 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
   }
   .grh-mega__sublink {
     display: inline-block;
-    padding: 3px 0;
+    padding: 4px 0;
     color: var(--grh-stone-700);
-    font-size: 13px;
-    line-height: 1.4;
+    font-size: 15px;
+    line-height: 1.45;
     text-decoration: none;
     transition: color var(--grh-dur-fast), padding-left var(--grh-dur-fast);
   }
@@ -593,14 +581,14 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
   .grh-mega__sublist3 {
     display: flex;
     flex-direction: column;
-    margin: 0 0 4px var(--grh-space-3);
+    margin: 2px 0 6px var(--grh-space-3);
     list-style: none;
     padding: 0;
   }
   .grh-mega__sublist3 a {
     display: inline-block;
-    padding: 1px 0;
-    font-size: 11px;
+    padding: 2px 0;
+    font-size: 13px;
     color: var(--grh-stone-400);
     text-decoration: none;
   }
@@ -776,200 +764,110 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
   }
 
   /* ====================================================================
-     VARIANTEN-SCHALTER für Mega-Menü-Demos
-     ====================================================================
-     Standard: default (alles unverändert)
-     compact:  schmalerer Brief-Block, kleinere Texte, weniger Padding
-     ticker:   Brief weg, schmaler Live-Streifen oben über der Navigation
-     floating: Brief weg, kleine schwebende Live-Karte unten rechts
+     Live-Zeile unten — 3 Spalten (Aktuelles / Sperrungen / Termine)
+     direkt unter der Hauptnavigation.
+     Standard-Variante (data-grh-mega-variant="ticker-bottom"): Brief
+     (linke dunkle Spalte) ist ausgeblendet, Panel wird einspaltig.
   ==================================================================== */
-
-  /* Demo-Blöcke standardmäßig ausblenden */
-  .grh-mega__ticker,
-  .grh-mega__floating { display: none; }
-
-  /* === Variante „compact" — Brief schrumpfen ============================== */
-  @media (min-width: 980px) {
-    .grh-mega[data-grh-mega-variant="compact"] .grh-mega__panel {
-      grid-template-columns: 3fr 9fr;
-    }
-  }
-  .grh-mega[data-grh-mega-variant="compact"] .grh-mega__brief {
-    padding: var(--grh-space-5) var(--grh-space-4);
-    gap: var(--grh-space-4);
-  }
-  .grh-mega[data-grh-mega-variant="compact"] .grh-mega__brief-wappen { width: 44px !important; height: 44px !important; }
-  .grh-mega[data-grh-mega-variant="compact"] .grh-mega__brief-name { font-size: var(--grh-fs-lg); }
-  .grh-mega[data-grh-mega-variant="compact"] .grh-mega__brief-section h3 { font-size: 10px; margin-bottom: 6px; }
-  .grh-mega[data-grh-mega-variant="compact"] .grh-mega__brief-section li { padding: 4px 0; }
-  .grh-mega[data-grh-mega-variant="compact"] .grh-mega__brief-section a {
-    font-size: 12px; line-height: 1.35;
-  }
-  .grh-mega[data-grh-mega-variant="compact"] .grh-mega__brief-section time {
-    font-size: 10px; min-width: 38px;
-  }
-  .grh-mega[data-grh-mega-variant="compact"] .grh-mega__brief-foot a {
-    font-size: 11px;
-  }
-
-  /* === Variante „ticker" — Brief raus, einzeilige Live-Leiste oben ========= */
-  .grh-mega[data-grh-mega-variant="ticker"] .grh-mega__brief { display: none; }
-  .grh-mega[data-grh-mega-variant="ticker"] .grh-mega__panel {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-  }
-  .grh-mega[data-grh-mega-variant="ticker"] .grh-mega__ticker { display: block; }
-
-  /* === Variante „ticker-bottom" — Brief raus, Live-Leiste zwischen Nav und Feature-Card === */
   .grh-mega[data-grh-mega-variant="ticker-bottom"] .grh-mega__brief { display: none; }
   .grh-mega[data-grh-mega-variant="ticker-bottom"] .grh-mega__panel {
     grid-template-columns: 1fr;
   }
-  /* Der äußere Ticker bleibt bei dieser Variante versteckt — wir nutzen den Inline-Ticker IM Main */
-  .grh-mega[data-grh-mega-variant="ticker-bottom"] .grh-mega__ticker--inline { display: block; }
 
-  /* Inline-Ticker im Main-Bereich — schmaler Streifen über der Feature-Card */
-  .grh-mega__ticker--inline {
+  .grh-mega__live {
     margin: var(--grh-space-6) 0 0;
-    padding: var(--grh-space-4) 0;
+    padding: var(--grh-space-5) var(--grh-space-6) var(--grh-space-4);
     border-top: 1px solid var(--grh-line);
     border-bottom: 1px solid var(--grh-line);
-    background: transparent;
-    color: var(--grh-stone-700);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
   }
-  .grh-mega__ticker--inline .grh-mega__ticker-inner {
-    padding: 0;
+  @media (min-width: 768px) {
+    .grh-mega__live {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--grh-space-6);
+    }
   }
-  .grh-mega__ticker--inline .grh-mega__ticker-pill {
-    background: var(--grh-cream-50);
-    border-color: var(--grh-line);
-    color: var(--grh-stone-700);
-  }
-  .grh-mega__ticker--inline .grh-mega__ticker-pill strong { color: var(--grh-forest-800); }
-  .grh-mega__ticker--inline .grh-mega__ticker-pill--news strong { color: var(--grh-moss-600); }
-  .grh-mega__ticker--inline .grh-mega__ticker-pill--alert {
-    background: rgba(176, 47, 47, 0.08);
-    border-color: rgba(176, 47, 47, 0.25);
-  }
-  .grh-mega__ticker--inline .grh-mega__ticker-pill--alert strong { color: var(--grh-alert-600, #b02f2f); }
-  .grh-mega__ticker--inline .grh-mega__ticker-more { color: var(--grh-forest-800); }
-  .grh-mega__ticker {
-    background:
-      radial-gradient(120% 100% at 0% 0%, rgba(91, 174, 120, 0.18), transparent 50%),
-      var(--grh-forest-950);
-    color: var(--grh-cream-50);
-    padding: 14px 0;
-    border-bottom: 1px solid rgba(250, 247, 241, 0.12);
-  }
-  .grh-mega__ticker-inner {
+  .grh-mega__live-col {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--grh-space-4);
+    flex-direction: column;
+    gap: 8px;
   }
-  .grh-mega__ticker-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: var(--grh-radius-pill);
-    background: rgba(250, 247, 241, 0.08);
-    border: 1px solid rgba(250, 247, 241, 0.18);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-weight: 600;
-    color: var(--grh-cream-50);
-  }
-  .grh-mega__ticker-pill strong {
+  .grh-mega__live-head {
     font-family: var(--grh-font-display);
-    font-style: italic;
+    font-size: var(--grh-fs-md);
     font-weight: 500;
-    color: var(--grh-candle-500);
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-mega__live-col--alert .grh-mega__live-head {
+    color: var(--grh-alert-600, #b02f2f);
+    border-color: rgba(176, 47, 47, 0.35);
+  }
+  .grh-mega__live-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .grh-mega__live-col li a {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    align-items: baseline;
+    gap: 10px;
+    padding: 4px 0;
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    line-height: 1.35;
+    transition: color var(--grh-dur-fast), padding-left var(--grh-dur-fast);
+  }
+  .grh-mega__live-col li a:hover {
+    color: var(--grh-forest-900);
+    padding-left: 4px;
+  }
+  .grh-mega__live-col time {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: var(--grh-moss-600);
+  }
+  .grh-mega__live-col--alert time {
+    color: var(--grh-alert-600, #b02f2f);
+  }
+  .grh-mega__live-col li a span {
     font-size: 14px;
-    letter-spacing: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  .grh-mega__ticker-pill--news strong { color: var(--grh-sage-300); }
-  .grh-mega__ticker-pill--alert {
-    background: rgba(176, 47, 47, 0.18);
-    border-color: rgba(242, 160, 127, 0.35);
+  .grh-mega__live-empty {
+    font-size: 13px;
+    color: var(--grh-stone-400);
+    font-style: italic;
+    padding: 4px 0;
   }
-  .grh-mega__ticker-pill--alert strong { color: #F2A07F; }
-  .grh-mega__ticker-more {
-    margin-left: auto;
-    color: var(--grh-candle-300);
+  .grh-mega__live-more {
+    align-self: flex-start;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.22em;
     font-weight: 700;
+    color: var(--grh-forest-800);
     text-decoration: none;
+    padding-top: 6px;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 3px;
+    transition: color var(--grh-dur-fast);
   }
-
-  /* === Variante „floating" — Brief raus, kleine Live-Karte schwebt ========= */
-  .grh-mega[data-grh-mega-variant="floating"] .grh-mega__brief { display: none; }
-  .grh-mega[data-grh-mega-variant="floating"] .grh-mega__panel { grid-template-columns: 1fr; }
-  .grh-mega[data-grh-mega-variant="floating"] .grh-mega__floating { display: flex; }
-  .grh-mega__floating {
-    position: absolute;
-    bottom: var(--grh-space-5);
-    right: var(--grh-space-5);
-    width: 280px;
-    flex-direction: column;
-    gap: var(--grh-space-2);
-    padding: var(--grh-space-4);
-    background: var(--grh-forest-950);
-    color: var(--grh-cream-50);
-    border: 1px solid rgba(250, 247, 241, 0.18);
-    border-radius: var(--grh-radius-md);
-    box-shadow: var(--grh-shadow-lg);
-    z-index: 5;
-  }
-  .grh-mega__floating h3 {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.28em;
-    color: var(--grh-candle-500);
-    margin-bottom: 4px;
-    font-weight: 700;
-  }
-  .grh-mega__floating-item {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 8px 10px;
-    border-radius: var(--grh-radius-sm, 6px);
-    text-decoration: none;
-    color: inherit;
-    background: rgba(250, 247, 241, 0.06);
-    transition: background var(--grh-dur-fast);
-  }
-  .grh-mega__floating-item:hover { background: rgba(250, 247, 241, 0.12); }
-  .grh-mega__floating-cat {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: var(--grh-candle-500);
-    font-weight: 700;
-  }
-  .grh-mega__floating-item--alert .grh-mega__floating-cat { color: #F2A07F; }
-  .grh-mega__floating-title {
-    font-size: 12px;
-    line-height: 1.35;
-    color: var(--grh-cream-50);
-  }
-  .grh-mega__floating-more {
-    align-self: flex-end;
-    color: var(--grh-candle-300);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.22em;
-    font-weight: 700;
-    text-decoration: none;
-    margin-top: 4px;
-  }
-  @media (max-width: 720px) {
-    .grh-mega__floating { left: var(--grh-space-3); right: var(--grh-space-3); width: auto; bottom: var(--grh-space-3); }
-  }
+  .grh-mega__live-more:hover { color: var(--grh-moss-600); }
 </style>
 
 <script>
@@ -1002,16 +900,5 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
   closes.forEach((btn) => btn.addEventListener('click', close));
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && mega?.hasAttribute('data-open')) close();
-  });
-
-  /* === Demo-Schalter: setzt eine Variante + öffnet das Menü ============ */
-  document.querySelectorAll<HTMLElement>('[data-grh-mega-demo]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const variant = btn.dataset.grhMegaDemo || 'default';
-      if (!mega) return;
-      mega.setAttribute('data-grh-mega-variant', variant);
-      open();
-    });
   });
 </script>

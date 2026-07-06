@@ -86,6 +86,7 @@ export const navigation: NavItem[] = [
     label: 'Veranstaltungen',
     href: '/veranstaltungen',
     children: [
+      { label: 'Alle Veranstaltungen', href: '/veranstaltungen' },
       {
         label: 'Heimatfest',
         href: '/veranstaltungen/heimatfest',

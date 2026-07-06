@@ -1,33 +1,672 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
-import GrhCardGrid from '../../components/global/GrhCardGrid.astro';
 import { getEvents } from '../../lib/cms';
 
-const events = await getEvents();
-const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-const fmtTime = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
+const events = await getEvents({ includePast: true });
 
-const items = events.map((e) => ({
-  href: `/veranstaltungen/${e.slug}`,
-  title: e.title,
-  image: e.image,
-  eyebrow: e.location || (e.ortsteil ? e.ortsteil.replace(/^./, c => c.toUpperCase()) : 'Termin'),
-  meta: `${fmt.format(e.startDate)} · ${fmtTime.format(e.startDate)} Uhr`,
-  body: e.teaser,
-}));
+const now = new Date();
+const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+const fmtDate  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+const fmtDay   = new Intl.DateTimeFormat('de-DE', { day: '2-digit' });
+const fmtMon   = new Intl.DateTimeFormat('de-DE', { month: 'short' });
+const fmtYear  = new Intl.DateTimeFormat('de-DE', { year: 'numeric' });
+const fmtWeek  = new Intl.DateTimeFormat('de-DE', { weekday: 'short' });
+const fmtTime  = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
+const fmtMonthYear = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' });
+
+// Für Filter: alle vorkommenden Ortsteile sammeln
+const ortsteile = Array.from(new Set(events.map((e) => e.ortsteil).filter(Boolean))) as string[];
+ortsteile.sort();
+const ORTSTEIL_LABEL: Record<string, string> = {
+  borstendorf:    'Borstendorf',
+  gruenhainichen: 'Grünhainichen',
+  waldkirchen:    'Waldkirchen / Erzgeb.',
+};
+const ortsteilLabel = (slug: string) => ORTSTEIL_LABEL[slug] ?? slug.replace(/^./, (c) => c.toUpperCase());
+
+// Enrich für Frontend
+type Enriched = typeof events[number] & {
+  isPast: boolean;
+  year: string;
+  monthKey: string; // YYYY-MM
+  monthLabel: string;
+  isoDate: string;  // YYYY-MM-DD
+  weekday: string;
+  time: string;
+};
+const enriched: Enriched[] = events.map((e) => {
+  const isPast = (e.endDate ?? e.startDate).valueOf() < startOfToday.valueOf();
+  const y = e.startDate.getFullYear();
+  const m = String(e.startDate.getMonth() + 1).padStart(2, '0');
+  const d = String(e.startDate.getDate()).padStart(2, '0');
+  return {
+    ...e,
+    isPast,
+    year: String(y),
+    monthKey: `${y}-${m}`,
+    monthLabel: fmtMonthYear.format(new Date(y, e.startDate.getMonth(), 1)),
+    isoDate: `${y}-${m}-${d}`,
+    weekday: fmtWeek.format(e.startDate),
+    time: fmtTime.format(e.startDate),
+  };
+});
+
+// Split für Standard-Ansicht: kommende zuerst, vergangene extra
+const upcoming = enriched.filter((e) => !e.isPast);
+const past     = enriched.filter((e) => e.isPast).reverse(); // neueste zuerst
+
+// Für die Monatsansicht: alle Monate finden (mit Events)
+const monthsMap = new Map<string, { key: string; label: string; events: Enriched[] }>();
+for (const e of enriched) {
+  if (!monthsMap.has(e.monthKey)) monthsMap.set(e.monthKey, { key: e.monthKey, label: e.monthLabel, events: [] });
+  monthsMap.get(e.monthKey)!.events.push(e);
+}
+const months = Array.from(monthsMap.values()).sort((a, b) => a.key.localeCompare(b.key));
+
+// Für Monatsansicht: aktueller/nächster Monat mit Events als Default
+const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? months[months.length - 1]?.key ?? currentMonthKey;
 ---
 <BaseLayout title="Veranstaltungen · Grünhainichen" header="compact">
   <GrhPageHeader
     title="Veranstaltungen"
     breadcrumb="Startseite · Veranstaltungen"
     lead="Heimatfeste, Märkte, Konzerte und vieles mehr — der Kalender unserer Gemeinde."
-    count={items.length}
-    countLabel="Termine"
+    count={upcoming.length}
+    countLabel="kommende Termine"
   />
-  <section>
+
+  <section class="grh-ev">
     <div class="grh-container">
-      <GrhCardGrid items={items} empty="Aktuell sind keine Veranstaltungen eingetragen." />
+      {/* Toolbar: Suche + Filter + Ansicht */}
+      <div class="grh-ev-toolbar" role="toolbar" aria-label="Filter und Ansicht">
+        <div class="grh-ev-toolbar__search">
+          <label class="grh-ev-search" for="grh-ev-search">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="16.5" y1="16.5" x2="21" y2="21" />
+            </svg>
+            <input
+              id="grh-ev-search"
+              type="search"
+              placeholder="Suchen (Titel, Ort, Beschreibung)…"
+              autocomplete="off"
+              data-grh-ev-search
+            />
+          </label>
+        </div>
+
+        <div class="grh-ev-toolbar__filters" role="group" aria-label="Filter">
+          <div class="grh-ev-chips" data-grh-ev-filter-group="time">
+            <button type="button" class="grh-ev-chip is-active" data-grh-ev-filter="time" data-value="upcoming">Kommend</button>
+            <button type="button" class="grh-ev-chip" data-grh-ev-filter="time" data-value="past">Vergangen</button>
+            <button type="button" class="grh-ev-chip" data-grh-ev-filter="time" data-value="all">Alle</button>
+          </div>
+
+          {ortsteile.length > 0 && (
+            <div class="grh-ev-chips" data-grh-ev-filter-group="ortsteil">
+              <button type="button" class="grh-ev-chip is-active" data-grh-ev-filter="ortsteil" data-value="all">Alle Orte</button>
+              {ortsteile.map((o) => (
+                <button type="button" class="grh-ev-chip" data-grh-ev-filter="ortsteil" data-value={o}>{ortsteilLabel(o)}</button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div class="grh-ev-toolbar__views" role="group" aria-label="Ansicht">
+          <button type="button" class="grh-ev-view is-active" data-grh-ev-view="cards" aria-label="Kartenansicht" title="Kartenansicht">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+            <span>Karten</span>
+          </button>
+          <button type="button" class="grh-ev-view" data-grh-ev-view="list" aria-label="Listenansicht" title="Listenansicht">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+            <span>Liste</span>
+          </button>
+          <button type="button" class="grh-ev-view" data-grh-ev-view="month" aria-label="Monatsansicht" title="Monatsansicht">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+            <span>Monat</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Card-View (default) */}
+      <div class="grh-ev-cards" data-grh-ev-pane="cards">
+        {enriched.map((e) => (
+          <a
+            class="grh-ev-card grh-ev-item"
+            href={`/veranstaltungen/${e.slug}`}
+            data-grh-ev-item
+            data-past={e.isPast ? '1' : '0'}
+            data-ortsteil={e.ortsteil ?? ''}
+            data-search={`${e.title} ${e.location ?? ''} ${e.teaser ?? ''}`.toLowerCase()}
+            data-month={e.monthKey}
+          >
+            <div class="grh-ev-card__media">
+              {e.image
+                ? <img src={e.image} alt="" loading="lazy" />
+                : <div class="grh-ev-card__placeholder" aria-hidden="true">
+                    <span class="grh-ev-card__ph-day">{fmtDay.format(e.startDate)}</span>
+                    <span class="grh-ev-card__ph-mon">{fmtMon.format(e.startDate).replace('.', '')}</span>
+                  </div>
+              }
+              {e.isPast && <span class="grh-ev-card__past-badge">Vergangen</span>}
+            </div>
+            <div class="grh-ev-card__body">
+              <span class="grh-ev-card__eyebrow">{e.location || (e.ortsteil ? ortsteilLabel(e.ortsteil) : 'Termin')}</span>
+              <h3 class="grh-ev-card__title">{e.title}</h3>
+              <p class="grh-ev-card__meta">{fmtDate.format(e.startDate)} · {e.time} Uhr</p>
+              {e.teaser && <p class="grh-ev-card__teaser">{e.teaser}</p>}
+            </div>
+          </a>
+        ))}
+        <p class="grh-ev-empty" data-grh-ev-empty hidden>Keine Veranstaltung entspricht den aktuellen Filtern.</p>
+      </div>
+
+      {/* List-View */}
+      <div class="grh-ev-list" data-grh-ev-pane="list" hidden>
+        {enriched.map((e) => (
+          <a
+            class="grh-ev-row grh-ev-item"
+            href={`/veranstaltungen/${e.slug}`}
+            data-grh-ev-item
+            data-past={e.isPast ? '1' : '0'}
+            data-ortsteil={e.ortsteil ?? ''}
+            data-search={`${e.title} ${e.location ?? ''} ${e.teaser ?? ''}`.toLowerCase()}
+            data-month={e.monthKey}
+          >
+            <div class="grh-ev-row__date">
+              <span class="grh-ev-row__day">{fmtDay.format(e.startDate)}</span>
+              <span class="grh-ev-row__mon">{fmtMon.format(e.startDate).replace('.', '')}</span>
+              <span class="grh-ev-row__year">{e.year}</span>
+            </div>
+            <div class="grh-ev-row__body">
+              <h3 class="grh-ev-row__title">
+                {e.title}
+                {e.isPast && <span class="grh-ev-row__past-flag">Vergangen</span>}
+              </h3>
+              <p class="grh-ev-row__meta">
+                <span>{e.weekday}, {fmtDate.format(e.startDate)}</span>
+                <span> · {e.time} Uhr</span>
+                {e.location && <span> · {e.location}</span>}
+              </p>
+            </div>
+            <span class="grh-ev-row__cta" aria-hidden="true">→</span>
+          </a>
+        ))}
+        <p class="grh-ev-empty" data-grh-ev-empty hidden>Keine Veranstaltung entspricht den aktuellen Filtern.</p>
+      </div>
+
+      {/* Month-View: gruppierte Monatslisten */}
+      <div class="grh-ev-month" data-grh-ev-pane="month" hidden>
+        <div class="grh-ev-month__nav" role="group" aria-label="Monat wählen">
+          {months.map((m) => (
+            <button
+              type="button"
+              class={`grh-ev-month__btn ${m.key === defaultMonthKey ? 'is-active' : ''}`}
+              data-grh-ev-month-btn={m.key}
+            >
+              {m.label}
+              <span class="grh-ev-month__count">{m.events.length}</span>
+            </button>
+          ))}
+        </div>
+        <div class="grh-ev-month__panes">
+          {months.map((m) => (
+            <section
+              class={`grh-ev-month__pane ${m.key === defaultMonthKey ? 'is-active' : ''}`}
+              data-grh-ev-month-pane={m.key}
+              hidden={m.key !== defaultMonthKey}
+            >
+              <h2 class="grh-ev-month__title">{m.label}</h2>
+              <div class="grh-ev-month__list">
+                {m.events.map((e) => (
+                  <a
+                    class="grh-ev-row grh-ev-item"
+                    href={`/veranstaltungen/${e.slug}`}
+                    data-grh-ev-item
+                    data-past={e.isPast ? '1' : '0'}
+                    data-ortsteil={e.ortsteil ?? ''}
+                    data-search={`${e.title} ${e.location ?? ''} ${e.teaser ?? ''}`.toLowerCase()}
+                    data-month={e.monthKey}
+                  >
+                    <div class="grh-ev-row__date">
+                      <span class="grh-ev-row__day">{fmtDay.format(e.startDate)}</span>
+                      <span class="grh-ev-row__mon">{e.weekday}</span>
+                    </div>
+                    <div class="grh-ev-row__body">
+                      <h3 class="grh-ev-row__title">
+                        {e.title}
+                        {e.isPast && <span class="grh-ev-row__past-flag">Vergangen</span>}
+                      </h3>
+                      <p class="grh-ev-row__meta">
+                        <span>{e.time} Uhr</span>
+                        {e.location && <span> · {e.location}</span>}
+                      </p>
+                    </div>
+                    <span class="grh-ev-row__cta" aria-hidden="true">→</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  .grh-ev {
+    padding: var(--grh-space-6) 0 var(--grh-space-8);
+  }
+
+  /* === Toolbar =========================================================== */
+  .grh-ev-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+    margin-bottom: var(--grh-space-6);
+    padding: var(--grh-space-4);
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+  }
+  @media (min-width: 900px) {
+    .grh-ev-toolbar {
+      grid-template-columns: 320px 1fr auto;
+      align-items: start;
+    }
+  }
+  .grh-ev-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    color: var(--grh-stone-700);
+  }
+  .grh-ev-search:focus-within {
+    border-color: var(--grh-moss-500);
+    box-shadow: 0 0 0 3px rgba(91,174,120,0.18);
+  }
+  .grh-ev-search input {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: var(--grh-forest-900);
+    outline: none;
+    min-width: 0;
+  }
+
+  .grh-ev-toolbar__filters {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+  }
+  .grh-ev-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .grh-ev-chip {
+    padding: 6px 14px;
+    border-radius: var(--grh-radius-pill);
+    border: 1px solid var(--grh-line);
+    background: var(--grh-cream-50);
+    color: var(--grh-stone-700);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast), border-color var(--grh-dur-fast);
+  }
+  .grh-ev-chip:hover { border-color: var(--grh-moss-500); }
+  .grh-ev-chip.is-active {
+    background: var(--grh-forest-800);
+    color: var(--grh-cream-50);
+    border-color: var(--grh-forest-800);
+  }
+
+  .grh-ev-toolbar__views {
+    display: flex;
+    gap: 4px;
+    background: var(--grh-cream-50);
+    padding: 4px;
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    align-self: start;
+  }
+  .grh-ev-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 0;
+    background: transparent;
+    color: var(--grh-stone-700);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border-radius: var(--grh-radius-pill);
+    cursor: pointer;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-ev-view:hover { color: var(--grh-forest-900); }
+  .grh-ev-view.is-active {
+    background: var(--grh-forest-800);
+    color: var(--grh-cream-50);
+  }
+
+  /* === Karten-Ansicht (Masonry via CSS-columns) ========================= */
+  .grh-ev-cards {
+    column-count: 1;
+    column-gap: var(--grh-space-5);
+  }
+  @media (min-width: 720px)  { .grh-ev-cards { column-count: 2; } }
+  @media (min-width: 1100px) { .grh-ev-cards { column-count: 3; } }
+  .grh-ev-card {
+    display: inline-block; /* für column-flow, verhält sich wie block */
+    width: 100%;
+    margin-bottom: var(--grh-space-5);
+    break-inside: avoid;
+    page-break-inside: avoid;
+    text-decoration: none;
+    color: inherit;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    transition: transform var(--grh-dur-base) var(--grh-ease-out), box-shadow var(--grh-dur-base), border-color var(--grh-dur-base);
+  }
+  .grh-ev-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--grh-shadow-md);
+    border-color: var(--grh-forest-700);
+  }
+  .grh-ev-card[data-past="1"] { opacity: 0.7; }
+  .grh-ev-card__media {
+    position: relative;
+    background: var(--grh-paper-100);
+  }
+  .grh-ev-card__media img { width: 100%; height: auto; display: block; }
+  .grh-ev-card__placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 3 / 2;
+    background: linear-gradient(160deg, var(--grh-sage-100), var(--grh-paper-100));
+    font-family: var(--grh-font-display);
+  }
+  .grh-ev-card__ph-day { font-size: 44px; line-height: 1; color: var(--grh-forest-900); }
+  .grh-ev-card__ph-mon { font-size: 14px; text-transform: uppercase; letter-spacing: 0.22em; color: var(--grh-moss-600); }
+  .grh-ev-card__past-badge {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700;
+    padding: 4px 10px; border-radius: var(--grh-radius-pill);
+    background: rgba(20, 43, 31, 0.75); color: var(--grh-cream-50);
+    backdrop-filter: blur(6px);
+  }
+  .grh-ev-card__body { padding: var(--grh-space-4); display: flex; flex-direction: column; gap: 6px; }
+  .grh-ev-card__eyebrow {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 700; color: var(--grh-moss-600);
+  }
+  .grh-ev-card__title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    line-height: 1.2;
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .grh-ev-card__meta { font-size: 13px; color: var(--grh-stone-700); margin: 0; }
+  .grh-ev-card__teaser {
+    font-size: 13px; line-height: 1.5; color: var(--grh-stone-700); margin: 4px 0 0;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  /* === Listen-Ansicht =================================================== */
+  .grh-ev-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .grh-ev-row {
+    display: grid;
+    grid-template-columns: 68px 1fr auto;
+    align-items: center;
+    gap: var(--grh-space-4);
+    padding: var(--grh-space-3) var(--grh-space-4);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--grh-dur-fast), border-color var(--grh-dur-fast), background var(--grh-dur-fast);
+  }
+  .grh-ev-row:hover {
+    transform: translateX(2px);
+    border-color: var(--grh-forest-700);
+    background: var(--grh-paper-100);
+  }
+  .grh-ev-row[data-past="1"] { opacity: 0.7; }
+  .grh-ev-row__date {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    padding: 6px 4px;
+    border-right: 1px solid var(--grh-line);
+    font-family: var(--grh-font-display);
+  }
+  .grh-ev-row__day { font-size: 22px; line-height: 1; color: var(--grh-forest-900); font-weight: 500; }
+  .grh-ev-row__mon { font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--grh-moss-600); font-weight: 700; margin-top: 4px; }
+  .grh-ev-row__year { font-size: 10px; color: var(--grh-stone-400); margin-top: 2px; letter-spacing: 0.1em; }
+  .grh-ev-row__body { min-width: 0; }
+  .grh-ev-row__title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    margin: 0 0 4px;
+    line-height: 1.25;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline;
+  }
+  .grh-ev-row__past-flag {
+    font-family: var(--grh-font-body);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700;
+    padding: 2px 8px; border-radius: var(--grh-radius-pill);
+    background: var(--grh-paper-100); color: var(--grh-stone-400);
+    border: 1px solid var(--grh-line);
+  }
+  .grh-ev-row__meta { font-size: 13px; color: var(--grh-stone-700); margin: 0; }
+  .grh-ev-row__cta { font-size: 20px; color: var(--grh-stone-400); }
+
+  /* === Monats-Ansicht ==================================================== */
+  .grh-ev-month__nav {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: var(--grh-space-5);
+    padding-bottom: var(--grh-space-4);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-ev-month__btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    color: var(--grh-stone-700);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .grh-ev-month__btn:hover { border-color: var(--grh-moss-500); }
+  .grh-ev-month__btn[hidden] { display: none; }
+  .grh-ev-month__btn.is-active {
+    background: var(--grh-forest-800); color: var(--grh-cream-50); border-color: var(--grh-forest-800);
+  }
+  .grh-ev-month__count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 6px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 10px;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: 11px;
+    color: inherit;
+  }
+  .grh-ev-month__btn.is-active .grh-ev-month__count { background: rgba(250,247,241,0.18); color: var(--grh-cream-50); }
+  .grh-ev-month__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    letter-spacing: -0.02em;
+  }
+  .grh-ev-month__list { display: flex; flex-direction: column; gap: 8px; }
+  .grh-ev-month__pane[hidden] { display: none; }
+
+  /* === Empty ============================================================= */
+  .grh-ev-empty {
+    grid-column: 1 / -1;
+    padding: var(--grh-space-6);
+    text-align: center;
+    color: var(--grh-stone-400);
+    font-style: italic;
+  }
+
+  /* Hidden vom Filter — nicht display:none, sondern data-hidden, damit
+     der Grid-Fluss nicht kaputtgeht */
+  .grh-ev-item[data-hidden="1"] { display: none !important; }
+
+  /* Section-Panes */
+  [data-grh-ev-pane][hidden] { display: none; }
+</style>
+
+<script>
+  (() => {
+    const search = document.querySelector<HTMLInputElement>('[data-grh-ev-search]');
+    const items  = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-item]'));
+    const empties = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-empty]'));
+    const views  = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-view]'));
+    const panes  = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-pane]'));
+    const filterButtons = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-filter]'));
+    const monthBtns = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-month-btn]'));
+    const monthPanes = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-month-pane]'));
+
+    const state = {
+      view: 'cards' as 'cards' | 'list' | 'month',
+      time: 'upcoming' as 'upcoming' | 'past' | 'all',
+      ortsteil: 'all',
+      q: '',
+    };
+
+    function apply() {
+      const q = state.q.trim().toLowerCase();
+      const perPaneCount: Record<string, number> = {};
+      const perMonthCount: Record<string, number> = {};
+
+      for (const el of items) {
+        const isPast = el.dataset.past === '1';
+        const ortsteil = el.dataset.ortsteil ?? '';
+        const searchIdx = el.dataset.search ?? '';
+        const month = el.dataset.month ?? '';
+
+        let show = true;
+        if (state.time === 'upcoming' && isPast) show = false;
+        if (state.time === 'past' && !isPast) show = false;
+        if (state.ortsteil !== 'all' && ortsteil !== state.ortsteil) show = false;
+        if (q && !searchIdx.includes(q)) show = false;
+
+        el.dataset.hidden = show ? '0' : '1';
+
+        if (show) {
+          const paneEl = el.closest('[data-grh-ev-pane], [data-grh-ev-month-pane]');
+          const paneKey = paneEl?.getAttribute('data-grh-ev-pane') || paneEl?.getAttribute('data-grh-ev-month-pane') || '';
+          perPaneCount[paneKey] = (perPaneCount[paneKey] || 0) + 1;
+          // Nur die Items aus dem Month-Pane für die Monatszähler zählen (sonst
+          // wird jeder Termin 3x gezählt — 1× je View-Pane).
+          if (paneEl?.hasAttribute('data-grh-ev-month-pane')) {
+            perMonthCount[month] = (perMonthCount[month] || 0) + 1;
+          }
+        }
+      }
+
+      // Monats-Pillen und -Panes ausblenden, wenn sie durch aktuelle Filter leer sind
+      let firstVisibleMonth = '';
+      for (const btn of monthBtns) {
+        const key = btn.dataset.grhEvMonthBtn ?? '';
+        const has = (perMonthCount[key] || 0) > 0;
+        btn.hidden = !has;
+        if (has && !firstVisibleMonth) firstVisibleMonth = key;
+        // Zähler aktualisieren
+        const counter = btn.querySelector('.grh-ev-month__count');
+        if (counter) counter.textContent = String(perMonthCount[key] || 0);
+      }
+      // Wenn aktueller aktiver Monat weggefiltert wurde, auf ersten sichtbaren wechseln
+      const active = monthBtns.find(b => b.classList.contains('is-active'));
+      if (state.view === 'month' && firstVisibleMonth && (!active || active.hidden)) {
+        activateMonth(firstVisibleMonth);
+      }
+
+      // Empty-Meldung im aktiven Pane
+      for (const e of empties) {
+        const pane = e.closest('[data-grh-ev-pane]');
+        const key = pane?.getAttribute('data-grh-ev-pane') || '';
+        e.hidden = !(state.view === key && (perPaneCount[key] || 0) === 0);
+      }
+    }
+
+    function activateMonth(key: string) {
+      monthBtns.forEach(b => b.classList.toggle('is-active', b.dataset.grhEvMonthBtn === key));
+      monthPanes.forEach(p => {
+        const isActive = p.dataset.grhEvMonthPane === key;
+        p.hidden = !isActive;
+        p.classList.toggle('is-active', isActive);
+      });
+    }
+
+    function setView(v: 'cards' | 'list' | 'month') {
+      state.view = v;
+      views.forEach(b => b.classList.toggle('is-active', b.dataset.grhEvView === v));
+      panes.forEach(p => { p.hidden = p.dataset.grhEvPane !== v; });
+      apply();
+    }
+
+    // Suche mit Debounce
+    let searchTimer: number | undefined;
+    search?.addEventListener('input', () => {
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(() => {
+        state.q = search.value || '';
+        apply();
+      }, 120);
+    });
+
+    // Filter-Chips
+    for (const btn of filterButtons) {
+      btn.addEventListener('click', () => {
+        const group = btn.dataset.grhEvFilter as 'time' | 'ortsteil';
+        const value = btn.dataset.value ?? 'all';
+        state[group] = value as any;
+        const groupEl = btn.closest('[data-grh-ev-filter-group]');
+        groupEl?.querySelectorAll('.grh-ev-chip').forEach(c => c.classList.toggle('is-active', c === btn));
+        apply();
+      });
+    }
+
+    // View-Toggle
+    for (const btn of views) {
+      btn.addEventListener('click', () => setView(btn.dataset.grhEvView as any));
+    }
+
+    // Monatsauswahl
+    for (const btn of monthBtns) {
+      btn.addEventListener('click', () => activateMonth(btn.dataset.grhEvMonthBtn ?? ''));
+    }
+
+    apply();
+  })();
+</script>

@@ -87,10 +87,10 @@ export interface EventItem {
   href: string;
 }
 
-export async function getEvents(): Promise<EventItem[]> {
+export async function getEvents(opts: { includePast?: boolean } = {}): Promise<EventItem[]> {
   if (SOURCE === 'wordpress') {
     try {
-      const items = await fetchWordPressEvents();
+      const items = await fetchWordPressEvents(opts);
       if (items.length > 0) return items;
       console.warn('[cms] vw-events lieferte 0 Events — fallback zu local');
     } catch (err) {
