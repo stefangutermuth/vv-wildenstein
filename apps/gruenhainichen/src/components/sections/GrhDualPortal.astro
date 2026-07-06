@@ -1,18 +1,29 @@
 ---
 import GrhIcon from '../primitives/GrhIcon.astro';
 
-const portals = [
+interface QuickLink { label: string; href: string; fa: string; }
+interface Portal {
+  side: 'buerger' | 'gast';
+  num: string;
+  eyebrow: string;
+  title: string;
+  fa: string;
+  quicklinks: QuickLink[];
+  href: string;
+}
+
+const portals: Portal[] = [
   {
     side: 'buerger',
     num: '01',
     eyebrow: 'Für Bürgerinnen und Bürger',
     title: 'Service, Verwaltung und Leben in der Gemeinde.',
-    icon: 'building',
+    fa: 'building-columns',
     quicklinks: [
-      { label: 'Aktuelle Sperrungen', href: '/neuigkeiten/sperrungen', icon: 'map-pin' },
-      { label: 'Amtsblatt',           href: '/gemeinde/amtsblatt',     icon: 'document' },
-      { label: 'Bürgermeister',       href: '/gemeinde/buergermeister', icon: 'user' },
-      { label: 'Kita & Schule',       href: '/leben/kita',             icon: 'building' },
+      { label: 'Aktuelle Sperrungen', href: '/neuigkeiten/sperrungen',  fa: 'triangle-exclamation' },
+      { label: 'Amtsblatt',           href: '/gemeinde/amtsblatt',      fa: 'file-lines' },
+      { label: 'Bürgermeister',       href: '/gemeinde/buergermeister', fa: 'user-tie' },
+      { label: 'Kita & Schule',       href: '/leben/kita',              fa: 'graduation-cap' },
     ],
     href: '/gemeinde',
   },
@@ -21,24 +32,43 @@ const portals = [
     num: '02',
     eyebrow: 'Für Gäste',
     title: 'Wandern, Holzkunst und Lichtermeer im Erzgebirge.',
-    icon: 'hiking',
+    fa: 'person-hiking',
     quicklinks: [
-      { label: 'Wendt-&-Kühn-Welt', href: '/tourismus/sehenswuerdigkeiten', icon: 'angel11' },
-      { label: 'Schachwanderweg',   href: '/tourismus/wandern',             icon: 'chess-knight' },
-      { label: 'Wandern',           href: '/tourismus/wandern',             icon: 'hiking' },
-      { label: 'Unterkünfte',       href: '/tourismus/unterkuenfte',        icon: 'bed' },
+      { label: 'Wendt-&-Kühn-Welt', href: '/tourismus/sehenswuerdigkeiten', fa: 'star' },
+      { label: 'Schachwanderweg',   href: '/tourismus/wandern',             fa: 'chess-knight' },
+      { label: 'Wandern',           href: '/tourismus/wandern',             fa: 'person-hiking' },
+      { label: 'Unterkünfte',       href: '/tourismus/unterkuenfte',        fa: 'bed' },
     ],
     href: '/tourismus',
   },
-] as const;
+];
+
+// Font-Awesome-SVGs zur Build-Zeit über iconify ziehen (fa6-solid)
+async function fetchFa(slug: string, size: number): Promise<string> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(`https://api.iconify.design/fa6-solid/${slug}.svg?width=${size}&height=${size}`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) return '';
+    let svg = await res.text();
+    svg = svg.replace(/<svg /, '<svg aria-hidden="true" focusable="false" ');
+    return svg;
+  } catch { return ''; }
+}
+
+const allSlugs = Array.from(new Set([
+  ...portals.map(p => p.fa),
+  ...portals.flatMap(p => p.quicklinks.map(q => q.fa)),
+]));
+const headSvgs = Object.fromEntries(await Promise.all(allSlugs.map(async s => [s, await fetchFa(s, 40)])));
+const linkSvgs = Object.fromEntries(await Promise.all(allSlugs.map(async s => [s, await fetchFa(s, 22)])));
 ---
 <div class="grh-dualportal">
   {portals.map((p) => (
     <a class={`grh-dualportal__card grh-dualportal__card--${p.side} grh-reveal`} href={p.href}>
       <div class="grh-dualportal__head">
-        <div class="grh-dualportal__icon-wrap">
-          <GrhIcon name={p.icon as any} size={32} />
-        </div>
+        <div class="grh-dualportal__icon-wrap" set:html={headSvgs[p.fa]} />
         <div>
           <span class="grh-eyebrow">{p.eyebrow}</span>
           <h3 class="grh-dualportal__title">{p.title}</h3>
@@ -48,7 +78,7 @@ const portals = [
       <ul class="grh-dualportal__links">
         {p.quicklinks.map((q) => (
           <li>
-            <span class="grh-dualportal__link-icon"><GrhIcon name={q.icon as any} size={16} /></span>
+            <span class="grh-dualportal__link-icon" set:html={linkSvgs[q.fa]} />
             <span class="grh-dualportal__link-label">{q.label}</span>
             <GrhIcon name="arrow-right" size={14} class="grh-dualportal__link-arrow" />
           </li>
@@ -128,7 +158,7 @@ const portals = [
     align-items: flex-start;
   }
   .grh-dualportal__icon-wrap {
-    width: 56px; height: 56px;
+    width: 76px; height: 76px;
     border-radius: 50%;
     background: var(--grh-cream-50);
     color: var(--grh-forest-800);
@@ -136,6 +166,10 @@ const portals = [
     flex-shrink: 0;
     box-shadow: var(--grh-shadow-sm);
     border: 1px solid var(--grh-line);
+  }
+  .grh-dualportal__icon-wrap :global(svg) {
+    width: 40px; height: 40px;
+    display: block;
   }
   .grh-dualportal__title {
     font-family: var(--grh-font-display);
@@ -178,13 +212,17 @@ const portals = [
     color: var(--grh-forest-900);
   }
   .grh-dualportal__link-icon {
-    width: 30px; height: 30px;
+    width: 40px; height: 40px;
     display: grid; place-items: center;
     color: var(--grh-moss-600);
     background: var(--grh-cream-50);
     border-radius: 50%;
     flex-shrink: 0;
     transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-dualportal__link-icon :global(svg) {
+    width: 22px; height: 22px;
+    display: block;
   }
   .grh-dualportal__links li:hover .grh-dualportal__link-icon {
     background: var(--grh-forest-800);

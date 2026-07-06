@@ -1,0 +1,432 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+interface Wehr {
+  ortsteil: string;
+  slug: string;
+  emblem: string;
+  url: string;
+}
+
+const wehren: Wehr[] = [
+  {
+    ortsteil: 'Borstendorf',
+    slug: 'borstendorf',
+    emblem: 'https://vv-wildenstein.com/wp-content/uploads/2022/02/logo_feuerwehr_borstendorf-200x220-1.png',
+    url: 'https://feuerwehr-gruenhainichen.de/ortsfeuerwehr-borstendorf/',
+  },
+  {
+    ortsteil: 'Grünhainichen',
+    slug: 'gruenhainichen',
+    emblem: 'https://vv-wildenstein.com/wp-content/uploads/2022/02/Wappen_FF_Gruenhainchen-200x200-1.png',
+    url: 'https://feuerwehr-gruenhainichen.de/ortsfeuerwehr-gruenhainichen/',
+  },
+  {
+    ortsteil: 'Waldkirchen',
+    slug: 'waldkirchen',
+    emblem: 'https://vv-wildenstein.com/wp-content/uploads/2022/02/FF_Waldkrichen-200x200-1.png',
+    url: 'https://feuerwehr-gruenhainichen.de/ortsfeuerwehr-waldkirchen/',
+  },
+];
+---
+<BaseLayout title="Feuerwehren · Gemeinde Grünhainichen" header="compact">
+
+  {/* === Notfall-Streifen ============================================== */}
+  <section class="grh-fw-alert" aria-label="Notruf">
+    <div class="grh-container grh-fw-alert__inner">
+      <div class="grh-fw-alert__text">
+        <span class="grh-fw-alert__label">Im Notfall</span>
+        <p>
+          Bei <strong>Feuer</strong>, <strong>Unfall</strong> oder <strong>akuter Gefahr</strong>
+          immer den Notruf wählen — nicht erst die Wehr direkt anrufen.
+        </p>
+      </div>
+      <div class="grh-fw-alert__numbers">
+        <a href="tel:112" class="grh-fw-alert__btn grh-fw-alert__btn--primary">
+          <span class="grh-fw-alert__big">112</span>
+          <span class="grh-fw-alert__sub">Feuerwehr · Rettungsdienst</span>
+        </a>
+        <a href="tel:110" class="grh-fw-alert__btn">
+          <span class="grh-fw-alert__big">110</span>
+          <span class="grh-fw-alert__sub">Polizei</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  {/* === Kopfzeile ===================================================== */}
+  <header class="grh-fw-head">
+    <div class="grh-container">
+      <p class="grh-fw-crumb">Gemeinde · Feuerwehren</p>
+      <h1 class="grh-fw-title">Unsere Freiwilligen Feuerwehren</h1>
+      <p class="grh-fw-lead">
+        Drei Ortsfeuerwehren bilden gemeinsam die Gemeindefeuerwehr Grünhainichen —
+        ehrenamtlich, gut ausgebildet und seit 1875 fester Bestandteil unserer
+        Gemeinde.
+      </p>
+    </div>
+  </header>
+
+  {/* === Die drei Wehren =============================================== */}
+  <section class="grh-fw-block">
+    <div class="grh-container">
+      <div class="grh-fw-grid">
+        {wehren.map((w) => (
+          <a class="grh-fw-card" href={w.url} target="_blank" rel="noopener">
+            <div class="grh-fw-card__emblem">
+              <img src={w.emblem} alt={`Wappen Ortsfeuerwehr ${w.ortsteil}`} loading="lazy" />
+            </div>
+            <div class="grh-fw-card__body">
+              <span class="grh-fw-card__eyebrow">Ortsfeuerwehr</span>
+              <h2>{w.ortsteil}</h2>
+              <span class="grh-fw-card__cta">Zur Wehr-Seite ↗</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* === Gemeinsame Infos / Verweis ==================================== */}
+  <section class="grh-fw-block grh-fw-block--alt">
+    <div class="grh-container grh-fw-info">
+      <div>
+        <span class="grh-fw-eyebrow">Gemeinsam stark</span>
+        <h2>Eine Gemeinde, drei Wehren</h2>
+        <p>
+          Die drei Ortsfeuerwehren rücken nicht nur in ihrem eigenen Ortsteil aus,
+          sondern unterstützen sich bei größeren Einsätzen gegenseitig. Regelmäßige
+          gemeinsame Übungen — vom ABC-Einsatz bis zum Brandszenario mit
+          Gefahrgut — sorgen dafür, dass im Ernstfall jeder Handgriff sitzt.
+        </p>
+        <p>
+          Berichte zu aktuellen Einsätzen, Übungen und Festen veröffentlicht
+          die Gemeindefeuerwehr fortlaufend auf ihrer eigenen Website und
+          ihrer Facebook-Seite.
+        </p>
+      </div>
+      <aside class="grh-fw-aside">
+        <span class="grh-fw-eyebrow">Externe Seite</span>
+        <a class="grh-fw-aside__link" href="https://feuerwehr-gruenhainichen.de/" target="_blank" rel="noopener">
+          <strong>feuerwehr-gruenhainichen.de</strong>
+          <span>Einsatzberichte · Termine · Jugendfeuerwehr · Galerie</span>
+          <span class="grh-fw-aside__arrow">→</span>
+        </a>
+      </aside>
+    </div>
+  </section>
+
+  {/* === Hinweis & historische Verankerung ============================== */}
+  <section class="grh-fw-block">
+    <div class="grh-container">
+      <div class="grh-fw-history">
+        <span class="grh-fw-eyebrow">Tradition</span>
+        <h2>Seit 1875 im Dienst</h2>
+        <p>
+          Im selben Jahr, in dem die Eisenbahn Grünhainichen erreichte, wurde
+          auch die Freiwillige Feuerwehr Grünhainichen gegründet. 150 Jahre
+          später leisten in Borstendorf, Grünhainichen und Waldkirchen Männer
+          und Frauen ehrenamtlich das, was den Charakter unserer Gemeinde
+          mitprägt: einfach da sein, wenn es brennt.
+        </p>
+        <p class="grh-fw-history__cta">
+          <strong>Lust mitzumachen?</strong>
+          Jeder Ortsteil hat eine eigene Jugendfeuerwehr — und freut sich über
+          neue Aktive in jedem Alter. Sprich die Wehr in deinem Ortsteil
+          direkt an (Links oben).
+        </p>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Notfall-Streifen ================================================ */
+  .grh-fw-alert {
+    background:
+      radial-gradient(circle at 100% 100%, rgba(176, 47, 47, 0.18), transparent 55%),
+      #b02f2f;
+    color: #fff;
+    padding: var(--grh-space-5) 0;
+  }
+  .grh-fw-alert__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+    align-items: center;
+  }
+  @media (min-width: 800px) {
+    .grh-fw-alert__inner { grid-template-columns: 1fr auto; gap: var(--grh-space-7); }
+  }
+  .grh-fw-alert__label {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .grh-fw-alert__text p {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.4;
+    margin: 0;
+    color: rgba(255,255,255,0.95);
+    max-width: 50ch;
+  }
+  .grh-fw-alert__text strong { font-weight: 500; color: #fff; }
+
+  .grh-fw-alert__numbers {
+    display: flex;
+    gap: var(--grh-space-3);
+  }
+  .grh-fw-alert__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--grh-space-3) var(--grh-space-4);
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: #fff;
+    min-width: 120px;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-fw-alert__btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+  }
+  .grh-fw-alert__btn--primary {
+    background: rgba(255,255,255,0.95);
+    color: #b02f2f;
+    border-color: rgba(255,255,255,0.95);
+  }
+  .grh-fw-alert__btn--primary:hover { background: #fff; }
+  .grh-fw-alert__big {
+    font-family: var(--grh-font-display);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .grh-fw-alert__sub {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    margin-top: 4px;
+    opacity: 0.85;
+  }
+
+  /* === Kopfzeile ======================================================= */
+  .grh-fw-head {
+    padding: clamp(var(--grh-space-7), 9vw, var(--grh-space-9)) 0 var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-fw-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-fw-title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    max-width: 18ch;
+  }
+  .grh-fw-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    color: var(--grh-forest-800);
+    line-height: 1.5;
+    max-width: 58ch;
+    margin: 0;
+  }
+
+  /* === Block-Layout ==================================================== */
+  .grh-fw-block { padding: var(--grh-space-7) 0; }
+  .grh-fw-block--alt { background: var(--grh-paper-100); }
+  .grh-fw-eyebrow {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    display: block;
+    margin-bottom: var(--grh-space-2);
+  }
+
+  /* === Drei-Wehren-Grid ================================================= */
+  .grh-fw-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 720px) {
+    .grh-fw-grid { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-6); }
+  }
+  .grh-fw-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--grh-space-6) var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast), box-shadow var(--grh-dur-base);
+  }
+  .grh-fw-card:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(26, 61, 39, 0.08);
+  }
+  .grh-fw-card__emblem {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto var(--grh-space-4);
+    display: grid;
+    place-items: center;
+  }
+  .grh-fw-card__emblem img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .grh-fw-card__eyebrow {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .grh-fw-card h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.015em;
+  }
+  .grh-fw-card__cta {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+
+  /* === Info-Block ======================================================= */
+  .grh-fw-info {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+  }
+  @media (min-width: 880px) {
+    .grh-fw-info { grid-template-columns: 1.5fr 1fr; gap: var(--grh-space-7); align-items: start; }
+  }
+  .grh-fw-info h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    letter-spacing: -0.015em;
+  }
+  .grh-fw-info p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.65;
+    margin: 0 0 var(--grh-space-4);
+    max-width: 60ch;
+  }
+  .grh-fw-info p:last-child { margin-bottom: 0; }
+
+  .grh-fw-aside__link {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid transparent;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+    position: relative;
+  }
+  .grh-fw-aside__link:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-2px);
+  }
+  .grh-fw-aside__link strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    word-break: break-all;
+  }
+  .grh-fw-aside__link span:not(.grh-fw-aside__arrow) {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.45;
+  }
+  .grh-fw-aside__arrow {
+    position: absolute;
+    top: var(--grh-space-5);
+    right: var(--grh-space-5);
+    color: var(--grh-candle-500);
+    font-size: 20px;
+  }
+
+  /* === Historie ======================================================= */
+  .grh-fw-history { max-width: 720px; }
+  .grh-fw-history h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    letter-spacing: -0.015em;
+  }
+  .grh-fw-history p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.65;
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-fw-history__cta {
+    padding-left: var(--grh-space-4);
+    border-left: 3px solid var(--grh-candle-500);
+    margin-top: var(--grh-space-5) !important;
+  }
+  .grh-fw-history__cta strong {
+    display: block;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-lg);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    margin-bottom: 4px;
+  }
+</style>

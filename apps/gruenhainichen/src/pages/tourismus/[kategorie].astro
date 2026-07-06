@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
+import GrhCardGrid from '../../components/global/GrhCardGrid.astro';
+import { getTourism } from '../../lib/cms-cpt';
+
+const CATEGORIES: Record<string, { label: string; lead: string; matchers: RegExp[] }> = {
+  sehenswuerdigkeiten: {
+    label: 'Sehenswürdigkeiten',
+    lead: 'Kirchen, Denkmäler, historische Plätze — was unsere Region geprägt hat.',
+    matchers: [/sehensw/i, /denkmal/i, /kirche/i],
+  },
+  museum: {
+    label: 'Museum',
+    lead: 'Erzgebirgische Volkskunst, Handwerk und Heimatgeschichte zum Anfassen.',
+    matchers: [/museum/i, /sammlung/i],
+  },
+  baden: {
+    label: 'Baden',
+    lead: 'Schwimmbäder, Stauseen und kühles Wasser für heiße Tage.',
+    matchers: [/bad/i, /schwimm/i, /see/i],
+  },
+  gastronomie: {
+    label: 'Gastronomie',
+    lead: 'Gasthöfe, Cafés und urige Einkehrmöglichkeiten in unseren Ortsteilen.',
+    matchers: [/gastro/i, /gaststaette/i, /gasthof/i, /restaurant/i, /cafe/i, /pension/i],
+  },
+  wandern: {
+    label: 'Wandern',
+    lead: 'Vom Schachwanderweg bis zum Zschopautalweg — Touren durchs Erzgebirge.',
+    matchers: [/wander/i, /weg/i, /tour/i],
+  },
+  radfahren: {
+    label: 'Radfahren',
+    lead: 'Radwege durch Wälder, Flusstäler und über Höhenzüge.',
+    matchers: [/rad/i, /bike/i, /velo/i],
+  },
+  unterkuenfte: {
+    label: 'Unterkünfte',
+    lead: 'Ferienwohnungen, Pensionen und Hotels in Grünhainichen und Umgebung.',
+    matchers: [/unterkunft/i, /unterkuenfte/i, /pension/i, /hotel/i, /ferien/i, /uebernacht/i],
+  },
+};
+
+export async function getStaticPaths() {
+  return Object.keys({
+    sehenswuerdigkeiten: 1, museum: 1, baden: 1, gastronomie: 1,
+    wandern: 1, radfahren: 1, unterkuenfte: 1,
+  }).map((kategorie) => ({ params: { kategorie } }));
+}
+
+const { kategorie } = Astro.params;
+const cat = CATEGORIES[kategorie as string];
+if (!cat) return Astro.redirect('/tourismus');
+
+const all = await getTourism();
+const filtered = all.filter((t) =>
+  t.kategorien.some((k) => cat.matchers.some((m) => m.test(k))) ||
+  cat.matchers.some((m) => m.test(t.title)),
+);
+
+const items = filtered.map((t) => ({
+  href: `/tourismus/eintrag/${t.slug}`,
+  title: t.title,
+  image: t.image,
+  eyebrow: t.ortsteil ? t.ortsteil.replace(/^./, c => c.toUpperCase()) : undefined,
+  body: t.excerpt,
+}));
+---
+<BaseLayout title={`${cat.label} · Tourismus · Grünhainichen`} header="compact">
+  <GrhPageHeader
+    title={cat.label}
+    breadcrumb={`Tourismus · ${cat.label}`}
+    lead={cat.lead}
+    count={items.length}
+  />
+  <section>
+    <div class="grh-container">
+      <GrhCardGrid items={items} empty={`Hier sind aktuell keine Einträge zu „${cat.label}" gepflegt.`} />
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,591 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhCardGrid from '../../../components/global/GrhCardGrid.astro';
+import { getTourism, getVereine } from '../../../lib/cms-cpt';
+import { getEvents } from '../../../lib/cms';
+
+// Tourismus-Kacheln nur für Borstendorf
+const tourismAll = await getTourism();
+const tourism = tourismAll.filter((t) => t.ortsteil === 'borstendorf');
+
+// Ergänzende Daten
+const vereineAll = await getVereine();
+const vereine = vereineAll.filter((v) => v.ortsteil === 'borstendorf');
+const eventsAll = await getEvents();
+// Heuristik: Event zählt zu Borstendorf, wenn die WP-Taxonomie `standort` passt
+// ODER der Titel den Ortsteil-Namen enthält. Hintergrund: Die `standort`-Taxonomie
+// wird auf vv-wildenstein.com nur sporadisch gepflegt — viele eindeutige
+// Borstendorf-Events haben kein Standort-Tag.
+const ORTSTEIL = 'borstendorf';
+const ORTSTEIL_RE = /borstendorf/i;
+const events = eventsAll
+  .filter((e) => e.ortsteil === ORTSTEIL || ORTSTEIL_RE.test(e.title) || ORTSTEIL_RE.test(e.location ?? ''))
+  .slice(0, 3);
+
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long' });
+
+const tourismItems = tourism.map((t) => ({
+  href: `/tourismus/eintrag/${t.slug}`,
+  title: t.title,
+  image: t.image,
+  eyebrow: t.kategorien[0]?.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase()),
+  body: t.excerpt,
+}));
+---
+<BaseLayout title="Ortsteil Borstendorf · Gemeinde Grünhainichen" header="compact">
+
+  {/* === Hero ============================================================ */}
+  <header class="grh-ot-head">
+    <div class="grh-container">
+      <p class="grh-ot-crumb">Gemeinde · Ortsteile · Borstendorf</p>
+      <div class="grh-ot-hero">
+        <div class="grh-ot-hero__text">
+          <figure class="grh-ot-wappen">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Wappen_Borstendorf.png" alt="Wappen von Borstendorf" loading="eager" />
+          </figure>
+          <span class="grh-ot-eyebrow">Einer von drei Ortsteilen</span>
+          <h1>Borstendorf</h1>
+          <p class="grh-ot-claim">
+            <em>Das historische Schachdorf an der Flöha</em> — bekannt für sein
+            Waldlabyrinth, das Freibad seit 1926 und einen lebendigen
+            Wander­tourismus rund um den Schach­wanderweg.
+          </p>
+        </div>
+
+        <aside class="grh-ot-card">
+          <span class="grh-ot-card__label">Ortsvorsteherin</span>
+          <strong>Frau Rothamel</strong>
+          <div class="grh-ot-card__sub">Sprechzeit dienstags 14:00 – 17:00 Uhr</div>
+          <div class="grh-ot-card__sub">im Ortssekretariat (ehemalige Schule Borstendorf)</div>
+          <hr />
+          <span class="grh-ot-card__label">Gemeindeverwaltung</span>
+          <strong>Rathaus Grünhainichen</strong>
+          <div class="grh-ot-card__sub">Chemnitzer Straße 41, 09579 Grünhainichen</div>
+          <a href="tel:+4937294170-0" class="grh-ot-card__link">037294 / 170-0</a>
+        </aside>
+      </div>
+    </div>
+  </header>
+
+  {/* === Daten & Karte =================================================== */}
+  <section class="grh-ot-mapsection">
+    <div class="grh-container grh-ot-mapgrid">
+      <div class="grh-ot-facts">
+        <h2>Daten zum Ort</h2>
+        <dl>
+          <div><dt>Einwohner</dt><dd><strong>1 080</strong><span>Stand Mai 2022</span></dd></div>
+          <div><dt>Fläche</dt><dd><strong>14,5 km²</strong></dd></div>
+          <div><dt>Höhe</dt><dd><strong>454 m</strong><span>über NHN</span></dd></div>
+          <div><dt>Eingemeindet</dt><dd><strong>2015</strong><span>zur Gemeinde Grünhainichen</span></dd></div>
+        </dl>
+        <p class="grh-ot-coords">
+          50°46′20″ N · 13°10′41″ O
+        </p>
+      </div>
+
+      <figure class="grh-ot-map">
+        <iframe
+          title="Karte von Borstendorf (OpenStreetMap)"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=13.155%2C50.760%2C13.205%2C50.785&layer=mapnik&marker=50.7722%2C13.1781"
+          loading="lazy"
+        ></iframe>
+        <figcaption>
+          <span>Borstendorf im Flöhatal</span>
+          <a href="https://www.openstreetmap.org/?mlat=50.7722&mlon=13.1781#map=14/50.7722/13.1781" target="_blank" rel="noopener">
+            Größere Karte ↗
+          </a>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  {/* === Charakter des Ortes ============================================ */}
+  <section class="grh-ot-block grh-ot-block--alt">
+    <div class="grh-container">
+      <div class="grh-ot-features">
+        <article>
+          <span class="grh-ot-eyebrow">Tradition</span>
+          <h2>Schachdorf</h2>
+          <p>
+            Auf dem Borstendorfer Schach­wanderweg verwandelt sich das Spiel
+            ins Gelände — überlebensgroße Figuren entlang einer 6 km langen
+            Runde durchs Flöha­tal. Ein Markenzeichen, das den Ort
+            sachsenweit bekannt gemacht hat.
+          </p>
+        </article>
+        <article>
+          <span class="grh-ot-eyebrow">Natur</span>
+          <h2>Waldlabyrinth</h2>
+          <p>
+            Seit 2022 lockt das Waldlabyrinth mit Bambiniwanderweg Familien
+            in den Borstendorfer Wald — verschlungene Pfade, kleine
+            Mitmach-Stationen, kein WLAN, viel Frischluft.
+          </p>
+        </article>
+        <article>
+          <span class="grh-ot-eyebrow">Sommer-Wahrzeichen</span>
+          <h2>Freibad seit 1926</h2>
+          <p>
+            Fast 100 Jahre Badetradition: Das Freibad Borstendorf gehört zum
+            Sommer wie das Knirschen der Holzfiguren zur Weihnachts­zeit.
+            Förderverein und Wehr tragen es gemeinsam.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  {/* === Sehenswürdigkeiten / Kacheln aus CPT ============================ */}
+  <section class="grh-ot-block">
+    <div class="grh-container">
+      <header class="grh-ot-section-head">
+        <h2>Erleben in Borstendorf</h2>
+        <p>
+          {tourism.length > 0
+            ? `${tourism.length} Empfehlungen aus unserem Tourismus-Verzeichnis — gepflegt im CMS auf vv-wildenstein.com`
+            : 'Empfehlungen werden ergänzt'}
+        </p>
+      </header>
+
+      <GrhCardGrid
+        items={tourismItems}
+        empty="Aktuell sind keine Tourismus-Einträge für Borstendorf gepflegt."
+      />
+    </div>
+  </section>
+
+  {/* === Zwei-Spalter: Vereine + nächste Veranstaltungen ================= */}
+  <section class="grh-ot-block grh-ot-block--alt">
+    <div class="grh-container grh-ot-split">
+
+      <article class="grh-ot-split__col">
+        <header class="grh-ot-section-head grh-ot-section-head--left">
+          <h2>Vereine in Borstendorf</h2>
+          <p>{vereine.length} Vereine</p>
+        </header>
+        {vereine.length > 0 ? (
+          <ul class="grh-ot-list">
+            {vereine.slice(0, 8).map((v) => (
+              <li>
+                <a href={`/vereine/${v.slug}`}>{v.title}</a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="grh-ot-empty">Keine Vereine gepflegt.</p>
+        )}
+        {vereine.length > 8 && (
+          <a class="grh-ot-more" href="/vereine">Alle Vereine ansehen →</a>
+        )}
+      </article>
+
+      <article class="grh-ot-split__col">
+        <header class="grh-ot-section-head grh-ot-section-head--left">
+          <h2>Nächste Termine</h2>
+          <p>Veranstaltungen im Ortsteil</p>
+        </header>
+        {events.length > 0 ? (
+          <ul class="grh-ot-events">
+            {events.map((e) => (
+              <li>
+                <a href={`/veranstaltungen/${e.slug}`}>
+                  <time>{fmt.format(e.startDate)}</time>
+                  <div>
+                    <strong>{e.title}</strong>
+                    {e.location && <span>{e.location}</span>}
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="grh-ot-empty">Aktuell keine Termine vorgemerkt.</p>
+        )}
+        <a class="grh-ot-more" href="/veranstaltungen">Vollständiger Kalender →</a>
+      </article>
+
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Hero ============================================================ */
+  .grh-ot-head {
+    padding: clamp(var(--grh-space-6), 9vw, var(--grh-space-8)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.08), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-ot-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-ot-hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: end;
+  }
+  @media (min-width: 880px) {
+    .grh-ot-hero { grid-template-columns: 1.4fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-ot-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+
+  /* Wappen über dem Titel */
+  .grh-ot-wappen {
+    margin: 0 0 var(--grh-space-4);
+    width: 96px;
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+  }
+  .grh-ot-wappen img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 18px rgba(26, 61, 39, 0.15));
+  }
+  .grh-ot-hero h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(3rem, 8vw, 5.4rem);
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-ot-claim {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+    color: var(--grh-forest-800);
+    line-height: 1.5;
+    max-width: 38ch;
+    margin: 0;
+    padding-left: var(--grh-space-4);
+    border-left: 3px solid var(--grh-candle-500);
+  }
+  .grh-ot-claim em { font-style: italic; }
+
+  /* Ortsvorsteher-Karte */
+  .grh-ot-card {
+    background: var(--grh-paper-100);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-ot-card__label {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .grh-ot-card strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .grh-ot-card__sub {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.5;
+  }
+  .grh-ot-card hr {
+    border: none;
+    border-top: 1px solid var(--grh-line);
+    margin: var(--grh-space-3) 0 var(--grh-space-2);
+  }
+  .grh-ot-card__link {
+    align-self: flex-start;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    margin-top: 6px;
+    padding-bottom: 2px;
+  }
+  .grh-ot-card__link:hover { color: var(--grh-moss-600); }
+
+  /* === Daten & Karte =================================================== */
+  .grh-ot-mapsection {
+    padding: var(--grh-space-6) 0 var(--grh-space-7);
+    background: var(--grh-forest-950);
+    color: var(--grh-cream-50);
+  }
+  .grh-ot-mapgrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: stretch;
+  }
+  @media (min-width: 880px) {
+    .grh-ot-mapgrid { grid-template-columns: 1fr 1.4fr; gap: var(--grh-space-7); }
+  }
+  .grh-ot-facts h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    color: var(--grh-cream-50);
+    margin: 0 0 var(--grh-space-5);
+    letter-spacing: -0.015em;
+  }
+  .grh-ot-facts dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--grh-space-4);
+    margin: 0;
+  }
+  .grh-ot-facts dl > div {
+    border-top: 1px solid rgba(250, 247, 241, 0.18);
+    padding-top: var(--grh-space-3);
+  }
+  .grh-ot-facts dt {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-300);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .grh-ot-facts dd {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-ot-facts dd strong {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.6rem, 2.4vw, 2rem);
+    font-weight: 500;
+    color: var(--grh-cream-50);
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .grh-ot-facts dd span {
+    font-size: 10px;
+    color: rgba(250, 247, 241, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-top: 2px;
+  }
+  .grh-ot-coords {
+    margin: var(--grh-space-5) 0 0;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-candle-300);
+    letter-spacing: 0.04em;
+  }
+
+  .grh-ot-map {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    background: var(--grh-cream-50);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+  }
+  .grh-ot-map iframe {
+    width: 100%;
+    height: 360px;
+    border: 0;
+    display: block;
+    filter: contrast(0.92) saturate(0.9);
+  }
+  .grh-ot-map figcaption {
+    background: var(--grh-cream-50);
+    color: var(--grh-stone-700);
+    padding: var(--grh-space-3) var(--grh-space-4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--grh-space-3);
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+  }
+  .grh-ot-map figcaption span {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 600;
+    color: var(--grh-forest-800);
+  }
+  .grh-ot-map figcaption a {
+    color: var(--grh-moss-600);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 1px;
+    font-weight: 700;
+  }
+  .grh-ot-map figcaption a:hover { color: var(--grh-forest-900); }
+
+  /* === Block-Layout ==================================================== */
+  .grh-ot-block { padding: var(--grh-space-7) 0; }
+  .grh-ot-block--alt { background: var(--grh-paper-100); }
+
+  .grh-ot-section-head {
+    text-align: center;
+    margin-bottom: var(--grh-space-6);
+  }
+  .grh-ot-section-head--left { text-align: left; margin-bottom: var(--grh-space-4); }
+  .grh-ot-section-head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .grh-ot-section-head p {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0;
+  }
+
+  /* === Charakter-Kacheln =============================================== */
+  .grh-ot-features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 800px) {
+    .grh-ot-features { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-6); }
+  }
+  .grh-ot-features article {
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    border-left: 3px solid var(--grh-candle-500);
+  }
+  .grh-ot-features h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-ot-features p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* === Split-Layout (Vereine + Termine) ================================ */
+  .grh-ot-split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-7);
+  }
+  @media (min-width: 800px) {
+    .grh-ot-split { grid-template-columns: 1fr 1fr; gap: var(--grh-space-8); }
+  }
+  .grh-ot-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .grh-ot-list li {
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-ot-list li:last-child { border-bottom: 1px solid var(--grh-line); }
+  .grh-ot-list a {
+    display: block;
+    padding: 10px 0;
+    text-decoration: none;
+    color: var(--grh-forest-900);
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    transition: padding-left var(--grh-dur-fast);
+  }
+  .grh-ot-list a:hover { padding-left: 6px; color: var(--grh-moss-600); }
+
+  .grh-ot-events {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-ot-events li { border-top: 1px solid var(--grh-line); }
+  .grh-ot-events li:last-child { border-bottom: 1px solid var(--grh-line); }
+  .grh-ot-events a {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    align-items: center;
+    gap: var(--grh-space-3);
+    padding: var(--grh-space-3) 0;
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left var(--grh-dur-fast);
+  }
+  .grh-ot-events a:hover { padding-left: 6px; }
+  .grh-ot-events time {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    color: var(--grh-candle-500);
+    font-size: var(--grh-fs-sm);
+  }
+  .grh-ot-events strong {
+    display: block;
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  .grh-ot-events span {
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+
+  .grh-ot-more {
+    display: inline-block;
+    margin-top: var(--grh-space-4);
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+  .grh-ot-more:hover { color: var(--grh-moss-600); }
+  .grh-ot-empty {
+    color: var(--grh-stone-400);
+    font-style: italic;
+    font-family: var(--grh-font-display);
+    margin: 0;
+  }
+</style>

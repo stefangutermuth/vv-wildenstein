@@ -1,0 +1,237 @@
+---
+/**
+ * Generische Detail-Ansicht für alle CPTs.
+ * Bekommt Titel, Bild, Inhalts-HTML, optional Kontakt-Block.
+ */
+import type { VVKontakt } from '../../lib/cms-cpt';
+
+interface Props {
+  title: string;
+  breadcrumb?: string;
+  image?: string;
+  contentHtml?: string;
+  eyebrow?: string;
+  meta?: string;
+  kontakt?: VVKontakt;
+  backHref?: string;
+  backLabel?: string;
+  sourceLink?: string;
+}
+const {
+  title, breadcrumb, image, contentHtml, eyebrow, meta,
+  kontakt, backHref = '/', backLabel = 'Zurück', sourceLink,
+} = Astro.props;
+---
+<article class="grh-detail">
+  <header class="grh-detail__head">
+    <div class="grh-container">
+      {breadcrumb && <p class="grh-detail__crumb">{breadcrumb}</p>}
+      {eyebrow && <span class="grh-detail__eyebrow">{eyebrow}</span>}
+      <h1 class="grh-detail__title">{title}</h1>
+      {meta && <p class="grh-detail__meta">{meta}</p>}
+    </div>
+  </header>
+
+  {image && (
+    <div class="grh-detail__hero">
+      <div class="grh-container">
+        <img src={image} alt="" loading="eager" />
+      </div>
+    </div>
+  )}
+
+  <div class="grh-container grh-detail__body">
+    <div class="grh-detail__content">
+      {contentHtml ? (
+        <div class="grh-prose" set:html={contentHtml} />
+      ) : (
+        <p class="grh-detail__empty">Zu diesem Eintrag liegt noch keine ausführliche Beschreibung vor.</p>
+      )}
+    </div>
+
+    {kontakt && (kontakt.fuehrende_person || kontakt.telefon || kontakt.email || kontakt.website || kontakt.strasse_hausnummer) && (
+      <aside class="grh-detail__kontakt">
+        <h3>Kontakt</h3>
+        {kontakt.fuehrende_person && <p class="grh-detail__person">{kontakt.fuehrende_person}</p>}
+        {(kontakt.strasse_hausnummer || kontakt.plz_ort) && (
+          <p class="grh-detail__addr">
+            {kontakt.strasse_hausnummer && <>{kontakt.strasse_hausnummer}<br /></>}
+            {kontakt.plz_ort}
+          </p>
+        )}
+        <ul>
+          {kontakt.telefon && <li><a href={`tel:${kontakt.telefon.replace(/\s/g,'')}`}>{kontakt.telefon}</a></li>}
+          {kontakt.email && <li><a href={`mailto:${kontakt.email}`}>{kontakt.email}</a></li>}
+          {kontakt.website && <li><a href={kontakt.website} target="_blank" rel="noopener">{kontakt.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a></li>}
+        </ul>
+      </aside>
+    )}
+  </div>
+
+  <footer class="grh-detail__foot">
+    <div class="grh-container">
+      <a href={backHref} class="grh-detail__back">← {backLabel}</a>
+      {sourceLink && (
+        <a href={sourceLink} target="_blank" rel="noopener" class="grh-detail__source">
+          Auf vv-wildenstein.com ↗
+        </a>
+      )}
+    </div>
+  </footer>
+</article>
+
+<style>
+  .grh-detail { background: var(--grh-cream-50); padding-bottom: var(--grh-space-9); }
+  .grh-detail__head {
+    padding: clamp(var(--grh-space-6), 9vw, var(--grh-space-8)) 0 var(--grh-space-5);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-detail__crumb {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-detail__eyebrow {
+    display: inline-block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-detail__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+    max-width: 22ch;
+  }
+  .grh-detail__meta {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    margin: 0;
+  }
+  .grh-detail__hero {
+    padding: var(--grh-space-5) 0 0;
+  }
+  .grh-detail__hero img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--grh-radius-md);
+    display: block;
+  }
+  .grh-detail__body {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    padding: var(--grh-space-6) 0;
+  }
+  @media (min-width: 880px) {
+    .grh-detail__body { grid-template-columns: minmax(0, 1fr) 280px; gap: var(--grh-space-7); }
+  }
+  .grh-detail__empty {
+    color: var(--grh-stone-400);
+    font-style: italic;
+    font-family: var(--grh-font-display);
+  }
+  .grh-detail__kontakt {
+    background: var(--grh-paper-100);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    align-self: start;
+    position: sticky;
+    top: calc(var(--grh-space-7));
+  }
+  .grh-detail__kontakt h3 {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-700);
+    margin: 0 0 var(--grh-space-3);
+    font-weight: 700;
+  }
+  .grh-detail__person {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-2);
+  }
+  .grh-detail__addr {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    margin: 0 0 var(--grh-space-3);
+    line-height: 1.5;
+  }
+  .grh-detail__kontakt ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .grh-detail__kontakt a {
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    font-size: var(--grh-fs-sm);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--grh-dur-fast);
+    word-break: break-word;
+  }
+  .grh-detail__kontakt a:hover { border-color: var(--grh-candle-500); }
+  .grh-detail__foot {
+    padding: var(--grh-space-5) 0;
+    border-top: 1px solid var(--grh-line);
+    display: flex;
+  }
+  .grh-detail__foot .grh-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--grh-space-4);
+    flex-wrap: wrap;
+  }
+  .grh-detail__back, .grh-detail__source {
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 3px;
+  }
+  .grh-detail__source { color: var(--grh-stone-700); border-color: var(--grh-line); }
+
+  /* Prose-Styling für WP-Content */
+  .grh-prose { font-size: var(--grh-fs-md); line-height: 1.7; color: var(--grh-stone-700); }
+  .grh-prose > * + * { margin-top: 1em; }
+  .grh-prose h2, .grh-prose h3, .grh-prose h4 {
+    font-family: var(--grh-font-display);
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+    margin-top: 1.5em;
+  }
+  .grh-prose h2 { font-size: var(--grh-fs-2xl); }
+  .grh-prose h3 { font-size: var(--grh-fs-xl); }
+  .grh-prose a { color: var(--grh-moss-600); border-bottom: 1px solid var(--grh-candle-500); text-decoration: none; }
+  .grh-prose img { max-width: 100%; height: auto; border-radius: var(--grh-radius-sm); margin: 1em 0; }
+  .grh-prose ul, .grh-prose ol { padding-left: 1.3em; }
+  .grh-prose blockquote {
+    border-left: 3px solid var(--grh-candle-500);
+    padding-left: var(--grh-space-4);
+    font-style: italic;
+    color: var(--grh-forest-800);
+  }
+</style>

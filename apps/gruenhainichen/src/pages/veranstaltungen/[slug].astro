@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhCPTDetail from '../../components/global/GrhCPTDetail.astro';
+import { getEvents } from '../../lib/cms';
+
+export async function getStaticPaths() {
+  const list = await getEvents();
+  return list.map((e) => ({
+    params: { slug: e.slug },
+    props: { event: e },
+  }));
+}
+
+const { event } = Astro.props as { event: Awaited<ReturnType<typeof getEvents>>[number] };
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+const fmtTime = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
+const meta = event.endDate
+  ? `${fmt.format(event.startDate)} – ${fmt.format(event.endDate)}`
+  : `${fmt.format(event.startDate)} · ${fmtTime.format(event.startDate)} Uhr`;
+---
+<BaseLayout title={`${event.title} · Veranstaltungen · Grünhainichen`} header="compact">
+  <GrhCPTDetail
+    title={event.title}
+    breadcrumb={`Veranstaltungen${event.ortsteil ? ' · ' + event.ortsteil.replace(/^./, c => c.toUpperCase()) : ''}`}
+    eyebrow={event.location || 'Termin'}
+    image={event.image}
+    meta={meta}
+    contentHtml={`<p>${event.teaser}</p>`}
+    backHref="/veranstaltungen"
+    backLabel="Alle Termine"
+  />
+</BaseLayout>

@@ -1,0 +1,416 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhCardGrid from '../../components/global/GrhCardGrid.astro';
+import { getTourism } from '../../lib/cms-cpt';
+
+const list = await getTourism();
+
+function toItem(t: typeof list[number]) {
+  return {
+    href: `/tourismus/eintrag/${t.slug}`,
+    title: t.title,
+    image: t.image,
+    eyebrow: t.ortsteil ? t.ortsteil.replace(/^./, c => c.toUpperCase()) : undefined,
+    body: t.excerpt,
+  };
+}
+
+// Themen-Sektionen — Reihenfolge wie eine Tour durch die Region
+interface Theme {
+  slug: string;          // Anchor-ID + URL-Slug der Kategorie-Filterseite
+  label: string;
+  matchers: RegExp[];    // matcht die WP-tourismus_kat-Slugs
+  eyebrow: string;       // kleine Überzeile
+  lead: string;          // ein-zeiliger Lead-Text
+}
+
+const themes: Theme[] = [
+  {
+    slug: 'sehenswuerdigkeiten',
+    label: 'Sehenswertes',
+    matchers: [/sehenswert/i, /denkmal/i, /kirche/i, /museum/i],
+    eyebrow: 'Wahrzeichen & Geschichte',
+    lead: 'Spieldose, Volkskunstmuseum, historisches Schachdorf — Plätze, die unsere Heimat erzählen.',
+  },
+  {
+    slug: 'wandern',
+    label: 'Wandern',
+    matchers: [/wander/i, /weg/i, /tour/i],
+    eyebrow: 'Im Erzgebirge unterwegs',
+    lead: 'Vom Schachwanderweg bis ins Zschopautal — kleine Runden, lange Touren, immer Wald.',
+  },
+  {
+    slug: 'gastronomie',
+    label: 'Einkehren',
+    matchers: [/gastro/i, /gaststaette/i, /gasthof/i, /restaurant/i, /cafe/i],
+    eyebrow: 'Essen & Trinken',
+    lead: 'Bodenständige Gasthöfe und gemütliche Cafés mit erzgebirgischer Küche.',
+  },
+  {
+    slug: 'unterkuenfte',
+    label: 'Übernachten',
+    matchers: [/unterkunft/i, /unterkuenfte/i, /pension/i, /hotel/i, /ferien/i, /uebernacht/i],
+    eyebrow: 'Bleib eine Nacht',
+    lead: 'Ferienwohnungen und Pensionen bei Gastgebern, die ihre Region lieben.',
+  },
+  {
+    slug: 'baden',
+    label: 'Baden',
+    matchers: [/bad/i, /schwimm/i, /see/i],
+    eyebrow: 'Sommer am Wasser',
+    lead: 'Das Borstendorfer Freibad und kühle Wasser für heiße Tage.',
+  },
+];
+
+function bucketsForTheme(theme: Theme) {
+  return list.filter((t) =>
+    t.kategorien.some((k) => theme.matchers.some((m) => m.test(k))) ||
+    theme.matchers.some((m) => m.test(t.title)),
+  );
+}
+
+const sections = themes
+  .map((t) => ({ theme: t, items: bucketsForTheme(t) }))
+  .filter((s) => s.items.length > 0);
+
+// Anchor-Chips für die Hero — nur Themen, die wirklich Einträge haben
+const chips = sections.map((s) => ({ label: s.theme.label, count: s.items.length, slug: s.theme.slug }));
+
+// Hero-Slider: 5 atmosphärische Tourismus-Bilder von vv-wildenstein.com
+const heroSlides = [
+  { src: 'https://vv-wildenstein.com/wp-content/uploads/2022/05/Schachwanderweg_Borstendorf_Foto_TVE-BErnd-_Maerz.jpg', alt: 'Schachfigur am Borstendorfer Schachwanderweg' },
+  { src: 'https://vv-wildenstein.com/wp-content/uploads/2022/09/Freilandspieldose-Fruehling.jpg',                       alt: 'Freilandspieldose Grünhainichen im Frühling' },
+  { src: 'https://vv-wildenstein.com/wp-content/uploads/2022/11/Eingangportal-W.Labyrinth.jpeg',                        alt: 'Eingang zum Waldlabyrinth Borstendorf' },
+  { src: 'https://vv-wildenstein.com/wp-content/uploads/2022/09/Fuchsturm-im-Mai-2023.jpg',                             alt: 'Fuchsturm-Ruine bei Grünhainichen' },
+  { src: 'https://vv-wildenstein.com/wp-content/uploads/2022/10/IMG_8138-1000x667-1.jpg',                               alt: 'Freibad Borstendorf' },
+];
+// Slide-Timing: jedes Bild ist effektiv 6 s zu sehen, davon 1.5 s Crossfade
+// zum nächsten — Schritt-Abstand also 4.5 s, total = N × 4.5 s.
+const SLIDE_VISIBLE = 6;
+const FADE_DUR = 1.5;
+const STEP = SLIDE_VISIBLE - FADE_DUR;
+const TOTAL = STEP * heroSlides.length;
+---
+<BaseLayout title="Erleben & Entdecken · Grünhainichen" header="compact">
+
+  {/* === Touristischer Hero mit Bilder-Slider ============================ */}
+  <header class="grh-tour-hero">
+    <div class="grh-tour-hero__slider" aria-hidden="true" data-grh-tour-slider data-step-ms={STEP * 1000}>
+      {heroSlides.map((s, i) => (
+        <img class={i === 0 ? 'is-active' : ''} src={s.src} alt={s.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+      ))}
+      <div class="grh-tour-hero__veil" />
+    </div>
+
+    <div class="grh-container grh-tour-hero__content">
+      <p class="grh-tour-crumb">Startseite · Tourismus</p>
+      <span class="grh-tour-eyebrow">Erzgebirge zum Anfassen</span>
+      <h1 class="grh-tour-title">Erleben &amp; Entdecken</h1>
+      <p class="grh-tour-lead">
+        Drei Orte, eine Heimat — vom <em>Schachwanderweg</em> in Borstendorf
+        über die <em>Freilandspieldose</em> in Grünhainichen bis ins
+        <em>Zschopautal</em> nach Waldkirchen. {list.length} handverlesene Empfehlungen.
+      </p>
+
+      <div class="grh-tour-chips" role="list">
+        {chips.map((c) => (
+          <a class="grh-tour-chip" href={`#${c.slug}`} role="listitem">
+            <span>{c.label}</span>
+            <em>{c.count}</em>
+          </a>
+        ))}
+      </div>
+    </div>
+  </header>
+
+  {/* === Themen-Sektionen ============================================== */}
+  {sections.map((s, i) => (
+    <section class={`grh-tour-section ${i % 2 === 0 ? '' : 'grh-tour-section--alt'}`} id={s.theme.slug}>
+      <div class="grh-container">
+        <header class="grh-tour-section__head">
+          <span class="grh-tour-section__eyebrow">{s.theme.eyebrow}</span>
+          <h2>{s.theme.label}</h2>
+          <p class="grh-tour-section__lead">{s.theme.lead}</p>
+          <a class="grh-tour-section__all" href={`/tourismus/${s.theme.slug}`}>
+            Alle {s.theme.label.toLowerCase()} ({s.items.length}) →
+          </a>
+        </header>
+
+        <GrhCardGrid items={s.items.map(toItem)} />
+      </div>
+    </section>
+  ))}
+
+  <script>
+    // Hintergrund-Slider: alle X ms (data-step-ms) auf das nächste Bild umschalten.
+    // Respektiert prefers-reduced-motion — dann kein Auto-Advance.
+    const slider = document.querySelector<HTMLElement>('[data-grh-tour-slider]');
+    if (slider) {
+      const imgs = Array.from(slider.querySelectorAll<HTMLImageElement>('img'));
+      const stepMs = parseInt(slider.dataset.stepMs || '4500', 10);
+      const prefersStill = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (imgs.length > 1 && !prefersStill) {
+        let idx = 0;
+        setInterval(() => {
+          imgs[idx]?.classList.remove('is-active');
+          idx = (idx + 1) % imgs.length;
+          imgs[idx]?.classList.add('is-active');
+        }, stepMs);
+      }
+    }
+  </script>
+
+  {/* === Footer-CTA: Zur Veranstaltungs-Seite ========================== */}
+  <section class="grh-tour-cta">
+    <div class="grh-container">
+      <span class="grh-tour-eyebrow">Während des Besuchs</span>
+      <h2>Was ist gerade los?</h2>
+      <p>
+        Märkte, Konzerte, Heimatfeste — in unseren Ortsteilen ist meist
+        irgendwo etwas geboten. Schau in den Veranstaltungs-Kalender.
+      </p>
+      <a href="/veranstaltungen/" class="grh-tour-cta__link">Zum Kalender →</a>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Hero mit Slider ================================================= */
+  .grh-tour-hero {
+    position: relative;
+    padding: clamp(var(--grh-space-7), 11vw, var(--grh-space-9)) 0;
+    background: var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    overflow: hidden;
+    isolation: isolate;
+    min-height: clamp(420px, 70vh, 640px);
+    display: flex;
+    align-items: center;
+  }
+  .grh-tour-hero__slider {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+  .grh-tour-hero__slider img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transform: scale(1.06);
+    transition:
+      opacity 1.5s ease-in-out,
+      transform 8s ease-out;
+    will-change: opacity, transform;
+  }
+  .grh-tour-hero__slider img.is-active {
+    opacity: 1;
+    transform: scale(1.00);
+  }
+  .grh-tour-hero__veil {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(20, 43, 31, 0.45) 0%, rgba(20, 43, 31, 0.65) 60%, rgba(20, 43, 31, 0.85) 100%);
+    z-index: 1;
+  }
+  .grh-tour-hero__content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+  }
+
+  /* Reduced-motion: keine Animation, nur das erste Bild stehen lassen */
+  @media (prefers-reduced-motion: reduce) {
+    .grh-tour-hero__slider img { transition: none; transform: none; }
+  }
+
+  .grh-tour-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: rgba(250, 247, 241, 0.7);
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-tour-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-300);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-tour-title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(3rem, 8vw, 5.6rem);
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--grh-cream-50);
+    margin: 0 0 var(--grh-space-5);
+    max-width: 14ch;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  }
+  .grh-tour-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.15rem, 2vw, 1.5rem);
+    line-height: 1.5;
+    color: rgba(250, 247, 241, 0.92);
+    max-width: 60ch;
+    margin: 0 0 var(--grh-space-6);
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+  }
+  .grh-tour-lead em {
+    font-style: italic;
+    color: var(--grh-candle-300);
+    background:
+      linear-gradient(transparent 62%, rgba(212, 165, 92, 0.35) 62%, rgba(212, 165, 92, 0.35) 90%, transparent 90%);
+    padding: 0 2px;
+  }
+
+  /* Quick-Chips */
+  .grh-tour-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--grh-space-2);
+  }
+  .grh-tour-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(250, 247, 241, 0.12);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(250, 247, 241, 0.28);
+    border-radius: var(--grh-radius-pill);
+    text-decoration: none;
+    color: var(--grh-cream-50);
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    transition: background var(--grh-dur-fast), border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-tour-chip:hover {
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    border-color: var(--grh-cream-50);
+    transform: translateY(-2px);
+  }
+  .grh-tour-chip em {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--grh-candle-300);
+    letter-spacing: 0;
+  }
+  .grh-tour-chip:hover em { color: var(--grh-moss-600); }
+
+  /* === Themen-Sektionen ================================================ */
+  .grh-tour-section {
+    padding: clamp(var(--grh-space-7), 9vw, var(--grh-space-9)) 0;
+    scroll-margin-top: 80px;
+  }
+  .grh-tour-section--alt {
+    background: var(--grh-paper-100);
+  }
+  .grh-tour-section__head {
+    max-width: 56ch;
+    margin: 0 0 var(--grh-space-6);
+  }
+  .grh-tour-section__eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-tour-section__head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-tour-section__lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-lg);
+    line-height: 1.5;
+    color: var(--grh-forest-800);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-tour-section__all {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+  .grh-tour-section__all:hover { color: var(--grh-moss-600); }
+
+  /* === Footer-CTA ====================================================== */
+  .grh-tour-cta {
+    padding: var(--grh-space-7) 0;
+    background:
+      radial-gradient(circle at 100% 100%, rgba(91, 174, 120, 0.18), transparent 55%),
+      var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    text-align: center;
+  }
+  .grh-tour-cta .grh-tour-eyebrow {
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-tour-cta h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--grh-cream-50);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.02em;
+  }
+  .grh-tour-cta p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: rgba(250, 247, 241, 0.85);
+    max-width: 50ch;
+    margin: 0 auto var(--grh-space-5);
+    line-height: 1.5;
+  }
+  .grh-tour-cta__link {
+    display: inline-block;
+    padding: 12px 24px;
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    text-decoration: none;
+    border-radius: var(--grh-radius-pill);
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-tour-cta__link:hover {
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-900);
+    transform: translateY(-2px);
+  }
+</style>

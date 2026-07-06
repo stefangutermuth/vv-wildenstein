@@ -1,0 +1,276 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
+import GrhSperrungenMap from '../../components/global/GrhSperrungenMap.astro';
+import { getNews } from '../../lib/cms';
+import { geocodeTitle } from '../../lib/geocode';
+
+const all = await getNews();
+const sperrungen = all.filter((n) => n.category === 'sperrung');
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+
+// Sequenzielle Multi-Query-Geocoding-Anfragen (Nominatim erlaubt ~1 req/sec).
+// In-Memory-Cache im Modul macht Reloads schnell.
+const enriched = [];
+for (const n of sperrungen) {
+  const point = await geocodeTitle(n.title);
+  enriched.push({ news: n, point });
+}
+
+const markers = enriched
+  .filter((e): e is typeof e & { point: NonNullable<typeof e['point']> } => e.point !== null)
+  .map((e) => ({
+    lat: e.point.lat,
+    lon: e.point.lon,
+    title: e.news.title,
+    date: fmt.format(e.news.date),
+    href: `/neuigkeiten/${e.news.slug}`,
+  }));
+
+const withCoords = markers.length;
+const withoutCoords = sperrungen.length - withCoords;
+
+// Art der Sperrung aus dem Titel ableiten — gibt's so nicht als Taxonomie in WP
+type SperrArt = 'voll' | 'halb' | 'umleitung' | 'hinweis' | 'sperrung';
+function ableiteArt(title: string): { key: SperrArt; label: string } {
+  const t = title.toLowerCase();
+  if (/vollsperrung|voll[- ]?sperrung/.test(t)) return { key: 'voll', label: 'Vollsperrung' };
+  if (/halbseitig/.test(t)) return { key: 'halb', label: 'Halbseitig' };
+  if (/umleitung/.test(t)) return { key: 'umleitung', label: 'Umleitung' };
+  if (/verkehrshinweis|hinweis|einschränkung|aktualisierung/.test(t)) return { key: 'hinweis', label: 'Hinweis' };
+  return { key: 'sperrung', label: 'Sperrung' };
+}
+
+function ortsteilLabel(slug?: string): string | undefined {
+  switch (slug) {
+    case 'gruenhainichen': return 'Grünhainichen';
+    case 'borstendorf':    return 'Borstendorf';
+    case 'waldkirchen':    return 'Waldkirchen';
+    default: return undefined;
+  }
+}
+
+interface Row {
+  slug: string;
+  title: string;
+  date: Date;
+  excerpt: string;
+  art: ReturnType<typeof ableiteArt>;
+  ortsteil?: string;
+  hasMarker: boolean;
+}
+const rows: Row[] = sperrungen.map((n, i) => ({
+  slug: n.slug,
+  title: n.title,
+  date: n.date,
+  excerpt: n.excerpt,
+  art: ableiteArt(n.title),
+  ortsteil: ortsteilLabel(n.ortsteil),
+  hasMarker: enriched[i].point !== null,
+}));
+---
+<BaseLayout title="Sperrungen · Grünhainichen" header="compact">
+  <GrhPageHeader
+    title="Sperrungen"
+    breadcrumb="Neuigkeiten · Sperrungen"
+    lead="Aktuelle Verkehrs- und Wegeumlenkungen in unseren Ortsteilen. Klicke auf ein Ausrufezeichen auf der Karte für Details."
+    count={sperrungen.length}
+    countLabel="aktiv"
+  />
+
+  <section class="grh-sperrungen">
+    <div class="grh-container">
+      <GrhSperrungenMap markers={markers} />
+
+      {withoutCoords > 0 && (
+        <p class="grh-sperrungen__hint">
+          <strong>Hinweis:</strong> {withoutCoords} {withoutCoords === 1 ? 'Sperrung' : 'Sperrungen'}
+          {withoutCoords === 1 ? ' konnte' : ' konnten'} automatisch nicht verortet werden —
+          sie {withoutCoords === 1 ? 'erscheint' : 'erscheinen'} nur in der Liste unten.
+        </p>
+      )}
+
+      <ol class="grh-spliste" aria-label="Sperrungen-Liste">
+        {rows.map((r) => (
+          <li>
+            <a href={`/neuigkeiten/${r.slug}`} class="grh-spliste__row">
+              <div class="grh-spliste__date">
+                <strong>{fmt.format(r.date)}</strong>
+              </div>
+              <div class="grh-spliste__body">
+                <div class="grh-spliste__badges">
+                  <span class={`grh-spliste__badge grh-spliste__badge--${r.art.key}`}>
+                    {r.art.label}
+                  </span>
+                  {r.ortsteil && <span class="grh-spliste__ortsteil">{r.ortsteil}</span>}
+                  {r.hasMarker && <span class="grh-spliste__pin" title="Auf der Karte verortet">●</span>}
+                </div>
+                <h3>{r.title}</h3>
+                {r.excerpt && <p>{r.excerpt}</p>}
+              </div>
+              <span class="grh-spliste__chevron" aria-hidden="true">→</span>
+            </a>
+          </li>
+        ))}
+        {rows.length === 0 && (
+          <li class="grh-spliste__empty">Aktuell sind keine Sperrungen gemeldet.</li>
+        )}
+      </ol>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .grh-sperrungen { padding: var(--grh-space-5) 0 var(--grh-space-7); }
+  .grh-sperrungen__hint {
+    background: var(--grh-paper-100);
+    border-left: 3px solid var(--grh-candle-500);
+    padding: var(--grh-space-3) var(--grh-space-4);
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    border-radius: var(--grh-radius-sm);
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-sperrungen__hint strong {
+    color: var(--grh-forest-900);
+    font-weight: 600;
+  }
+
+  /* === Liste ============================================================ */
+  .grh-spliste {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-spliste li {
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-spliste li:last-child { border-bottom: 1px solid var(--grh-line); }
+  .grh-spliste__row {
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    gap: var(--grh-space-4);
+    align-items: start;
+    padding: var(--grh-space-4) 0;
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left var(--grh-dur-fast);
+  }
+  .grh-spliste__row:hover { padding-left: 6px; }
+  @media (max-width: 640px) {
+    .grh-spliste__row {
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "date chev" "body body";
+      gap: var(--grh-space-3);
+    }
+    .grh-spliste__date { grid-area: date; }
+    .grh-spliste__body { grid-area: body; }
+    .grh-spliste__chevron { grid-area: chev; }
+  }
+
+  .grh-spliste__date strong {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-candle-500);
+    line-height: 1.2;
+    display: block;
+  }
+  .grh-spliste__body { min-width: 0; }
+
+  .grh-spliste__badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .grh-spliste__badge {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--grh-radius-sm);
+  }
+  .grh-spliste__badge--voll {
+    background: rgba(176, 47, 47, 0.12);
+    color: #b02f2f;
+    border: 1px solid rgba(176, 47, 47, 0.3);
+  }
+  .grh-spliste__badge--halb {
+    background: rgba(212, 165, 92, 0.18);
+    color: var(--grh-candle-500);
+    border: 1px solid rgba(212, 165, 92, 0.4);
+  }
+  .grh-spliste__badge--umleitung {
+    background: rgba(91, 174, 120, 0.12);
+    color: var(--grh-moss-600);
+    border: 1px solid rgba(91, 174, 120, 0.3);
+  }
+  .grh-spliste__badge--hinweis {
+    background: var(--grh-paper-100);
+    color: var(--grh-stone-700);
+    border: 1px solid var(--grh-line);
+  }
+  .grh-spliste__badge--sperrung {
+    background: rgba(26, 61, 39, 0.08);
+    color: var(--grh-forest-800);
+    border: 1px solid rgba(26, 61, 39, 0.2);
+  }
+  .grh-spliste__ortsteil {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    color: var(--grh-stone-700);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+  .grh-spliste__pin {
+    color: #b02f2f;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .grh-spliste__body h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .grh-spliste__body p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.55;
+    margin: 4px 0 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 70ch;
+  }
+
+  .grh-spliste__chevron {
+    color: var(--grh-stone-400);
+    font-size: 18px;
+    line-height: 1.2;
+    transition: color var(--grh-dur-fast), transform var(--grh-dur-fast);
+    align-self: center;
+  }
+  .grh-spliste__row:hover .grh-spliste__chevron {
+    color: var(--grh-moss-600);
+    transform: translateX(3px);
+  }
+
+  .grh-spliste__empty {
+    border: none !important;
+    text-align: center;
+    color: var(--grh-stone-400);
+    font-style: italic;
+    font-family: var(--grh-font-display);
+    padding: var(--grh-space-6) 0;
+  }
+</style>

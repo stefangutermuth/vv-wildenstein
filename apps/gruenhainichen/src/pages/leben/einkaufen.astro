@@ -1,0 +1,389 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+interface Shop {
+  name: string;
+  icon: string;          // Lucide-Icon-Slug, z.B. "croissant"
+  street?: string;
+  city: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+}
+interface Group {
+  slug: string;
+  title: string;
+  eyebrow: string;
+  shops: Shop[];
+}
+
+const groups: Group[] = [
+  {
+    slug: 'essen-trinken',
+    title: 'Essen & Trinken',
+    eyebrow: 'Frisch vom Handwerk',
+    shops: [
+      { name: 'Bäckerei Vieweger', icon: 'croissant',
+        street: 'Chemnitzer Straße 37', city: '09579 Grünhainichen',
+        phone: '037294 / 1462', email: 'info@viewegerback.de', website: 'https://viewegerback.de' },
+      { name: 'Fleischerei Borstendorf', icon: 'beef',
+        street: 'August-Bebel-Straße 80', city: 'Borstendorf · 09579 Grünhainichen',
+        phone: '037294 / 1461', email: 'fleischerei-borstendorf@t-online.de', website: 'http://fleischerei-borstendorf.de' },
+      { name: 'Fachhandel für Getränke & Spirituosen Fethke', icon: 'wine',
+        street: 'Am Waldrand 3', city: '09579 Grünhainichen',
+        phone: '037294 / 1660', email: 'info@getraenke-fethke.de', website: 'http://www.getraenke-fethke.de' },
+    ],
+  },
+  {
+    slug: 'erzgebirgisches-handwerk',
+    title: 'Erzgebirgisches Handwerk',
+    eyebrow: 'Holzkunst & Tradition',
+    shops: [
+      { name: 'Wendt & Kühn KG', icon: 'sparkles',
+        street: 'Chemnitzer Straße 40', city: '09579 Grünhainichen',
+        phone: '037294 / 86128', email: 'erlebnis@wendt-kuehn.de', website: 'https://wendt-kuehn.de' },
+      { name: 'Hobler — Figuren mit Herz', icon: 'heart-handshake',
+        street: 'Lengefelder Straße 6', city: '09579 Grünhainichen',
+        phone: '037294 / 87677', email: 'info@hobler-figuren.de', website: 'http://www.hobler-figuren.de' },
+      { name: 'Blank Kunsthandwerk', icon: 'palette',
+        street: 'Chemnitzer Straße 59 B', city: '09579 Grünhainichen',
+        website: 'http://www.blank-engel.de' },
+      { name: 'Baumann’s Holzschnitzerei', icon: 'axe',
+        street: 'Rathausstraße 29', city: '09437 Börnichen/Erzgeb.',
+        phone: '037294 / 87751', email: 'info@baumanns-holzschnitzerei.de', website: 'http://www.baumanns-holzschnitzerei.de' },
+      { name: 'Drechslerei Kluge', icon: 'cylinder',
+        street: 'Dorfstraße 45', city: 'Waldkirchen · 09579 Grünhainichen',
+        website: 'http://www.drechslerei-kluge.de' },
+    ],
+  },
+  {
+    slug: 'haus-garten',
+    title: 'Haus, Hof & Garten',
+    eyebrow: 'Bauen & Pflegen',
+    shops: [
+      { name: 'Holzhandel Köhler', icon: 'tree-pine',
+        street: 'Am Berg 1 b', city: 'Borstendorf · 09579 Grünhainichen' },
+      { name: 'Gartenbau Schneller', icon: 'sprout',
+        street: 'Mühlenstraße 50', city: '09579 Grünhainichen',
+        phone: '037294 / 1478' },
+      { name: 'Kommunalmaschinen & Friedhofstechnik Fethke', icon: 'wrench',
+        street: 'Chemnitzer Straße 4', city: '09579 Grünhainichen',
+        phone: '037294 / 1612', email: 'info@fethke-friedhofstechnik.de', website: 'http://www.fethke-friedhofstechnik.de' },
+      { name: 'Auto-Sachße', icon: 'car',
+        street: 'Försterbauerweg 4', city: 'Borstendorf · 09579 Grünhainichen',
+        phone: '037294 / 90220', email: 'auto-sachsse@web.de' },
+    ],
+  },
+  {
+    slug: 'antik-geschenke',
+    title: 'Antik, Trödel & Geschenke',
+    eyebrow: 'Stöbern & Finden',
+    shops: [
+      { name: 'Antik & Dekoration Jana Franke', icon: 'armchair',
+        street: 'Chemnitzer Straße 39', city: '09579 Grünhainichen',
+        email: 'jana.franke@t-online.de', website: 'http://www.antik-erzgebirge.de' },
+      { name: 'Troedelschmiede', icon: 'hammer',
+        street: 'Chemnitzer Straße 21 B', city: '09579 Grünhainichen',
+        phone: '037294 / 7271', email: 'ts-erzgebirge@web.de', website: 'http://troedelschmiede-erzgebirge.de' },
+      { name: 'Rochhausmühle', icon: 'clock',
+        street: 'Rochhausmühle', city: '09579 Grünhainichen',
+        email: 'rochhausmuehle@web.de', website: 'http://www.antiquitaeten-erzgebirge.de' },
+      { name: 'Feuerwerkland', icon: 'rocket',
+        street: 'Chemnitzer Straße 12', city: '09579 Grünhainichen',
+        phone: '0178 / 1340837', email: 'info@feuerwerkland-shop.de', website: 'http://feuerwerkland-shop.de' },
+    ],
+  },
+  {
+    slug: 'service',
+    title: 'Service & Genossenschaft',
+    eyebrow: 'Dienstleistung vor Ort',
+    shops: [
+      { name: 'Hörgeräte-Akustik Rochhausen GmbH', icon: 'ear',
+        street: 'Hauptstraße 42', city: 'Waldkirchen · 09579 Grünhainichen' },
+      { name: 'Raiffeisen BHG Waldkirchen e.G.', icon: 'tractor',
+        street: 'Am Bahnhof 1', city: 'Waldkirchen · 09579 Grünhainichen',
+        phone: '03725 / 2901-0', email: 'info@raiffeisen-waldkirchen.de', website: 'http://bhg-waldkirchen.de' },
+      { name: 'Freitag GmbH', icon: 'store',
+        street: 'Am Feldrain 10', city: 'Waldkirchen · 09579 Grünhainichen',
+        phone: '037294 / 90602', email: 'Freitag-waldkirchen@t-online.de' },
+      { name: 'Rolle Mühle', icon: 'wheat',
+        city: '09579 Grünhainichen' },
+    ],
+  },
+];
+
+const totalShops = groups.reduce((n, g) => n + g.shops.length, 0);
+
+function telHref(p: string): string {
+  return 'tel:' + p.replace(/[^+\d]/g, '');
+}
+
+// Build-Time SVG-Fetch von Iconify-CDN. Hat den Vorteil:
+//   - Keine Runtime-Requests beim Nutzer (CSP-sicher, offline-fähig)
+//   - Inline-SVGs nehmen `currentColor` an → easy zu stylen
+// Wenn Iconify nicht erreichbar ist, fallback auf leeres SVG.
+async function fetchIcon(slug: string): Promise<string> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(`https://api.iconify.design/lucide/${slug}.svg?width=32&height=32`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) return '';
+    let svg = await res.text();
+    // Iconify SVGs nutzen "currentColor" by default → wir können via CSS einfärben.
+    return svg;
+  } catch {
+    return '';
+  }
+}
+
+const uniqueSlugs = Array.from(new Set(groups.flatMap((g) => g.shops.map((s) => s.icon))));
+const iconMap: Record<string, string> = {};
+await Promise.all(uniqueSlugs.map(async (slug) => {
+  iconMap[slug] = await fetchIcon(slug);
+}));
+---
+<BaseLayout title="Einkaufen · Gemeinde Grünhainichen" header="compact">
+
+  <header class="grh-eink-head">
+    <div class="grh-container">
+      <p class="grh-eink-crumb">Leben · Einkaufen</p>
+      <span class="grh-eink-eyebrow">Vor Ort gut versorgt</span>
+      <h1>Einkaufen in unserer Gemeinde</h1>
+      <p class="grh-eink-lead">
+        Von der Bäckerei am Morgen über die Fleischerei in Borstendorf bis
+        zur weltweit bekannten Manufaktur Wendt &amp; Kühn — {totalShops}
+        Geschäfte, Handwerker und Manufakturen mit Adresse und Telefon.
+      </p>
+      <nav class="grh-eink-anchors" aria-label="Sprung zu Kategorien">
+        {groups.map((g) => <a href={`#${g.slug}`}>{g.title}</a>)}
+      </nav>
+    </div>
+  </header>
+
+  {groups.map((g, i) => (
+    <section class={`grh-eink-section ${i % 2 === 0 ? '' : 'grh-eink-section--alt'}`} id={g.slug}>
+      <div class="grh-container">
+        <header class="grh-eink-section__head">
+          <span class="grh-eink-section__eyebrow">{g.eyebrow}</span>
+          <h2>{g.title}</h2>
+        </header>
+        <ul class="grh-eink-list">
+          {g.shops.map((s) => (
+            <li class="grh-eink-card">
+              <div class="grh-eink-card__icon" aria-hidden="true" set:html={iconMap[s.icon] ?? ''} />
+              <h3>{s.name}</h3>
+              <p class="grh-eink-card__addr">
+                {s.street && <>{s.street}<br /></>}{s.city}
+              </p>
+              <ul class="grh-eink-card__ways">
+                {s.phone && <li><span>Telefon</span><a href={telHref(s.phone)}>{s.phone}</a></li>}
+                {s.email && <li><span>E-Mail</span><a href={`mailto:${s.email}`}>{s.email}</a></li>}
+                {s.website && (
+                  <li>
+                    <span>Internet</span>
+                    <a href={s.website} target="_blank" rel="noopener">
+                      {s.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  ))}
+
+</BaseLayout>
+
+<style>
+  .grh-eink-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.08), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-eink-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-eink-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-eink-head h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    max-width: 18ch;
+  }
+  .grh-eink-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--grh-forest-800);
+    max-width: 60ch;
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-eink-anchors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .grh-eink-anchors a {
+    padding: 6px 14px;
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    text-decoration: none;
+    color: var(--grh-forest-800);
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-eink-anchors a:hover {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    border-color: var(--grh-forest-900);
+  }
+
+  /* === Sektionen ====================================================== */
+  .grh-eink-section {
+    padding: var(--grh-space-7) 0;
+    scroll-margin-top: 80px;
+  }
+  .grh-eink-section--alt { background: var(--grh-paper-100); }
+  .grh-eink-section__head { margin-bottom: var(--grh-space-5); }
+  .grh-eink-section__eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-eink-section__head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  /* === Karten ========================================================= */
+  .grh-eink-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px)  { .grh-eink-list { grid-template-columns: repeat(2, 1fr); gap: var(--grh-space-4); } }
+  @media (min-width: 1000px) { .grh-eink-list { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-5); } }
+
+  .grh-eink-card {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-eink-card:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-2px);
+  }
+  .grh-eink-card__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--grh-radius-sm);
+    background: var(--grh-paper-100);
+    display: grid;
+    place-items: center;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+    color: var(--grh-forest-900);
+  }
+  .grh-eink-card:hover .grh-eink-card__icon {
+    background: rgba(212, 165, 92, 0.25);
+    color: var(--grh-moss-600);
+  }
+  .grh-eink-card__icon :global(svg) {
+    width: 32px;
+    height: 32px;
+    display: block;
+    stroke: currentColor;
+    stroke-width: 1.6;
+  }
+  .grh-eink-card h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+  .grh-eink-card__addr {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .grh-eink-card__ways {
+    list-style: none;
+    padding: var(--grh-space-3) 0 0;
+    margin: 0;
+    border-top: 1px solid var(--grh-line);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .grh-eink-card__ways li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-eink-card__ways span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+  }
+  .grh-eink-card__ways a {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    width: fit-content;
+    padding-bottom: 2px;
+    word-break: break-word;
+  }
+  .grh-eink-card__ways a:hover { color: var(--grh-moss-600); }
+</style>

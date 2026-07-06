@@ -1,0 +1,173 @@
+---
+/**
+ * Pagination-Leiste — generischer Wegweiser zwischen Seiten einer Liste.
+ *
+ * Routen-Konvention: Seite 1 lebt unter `${baseHref}`,
+ * Seite 2+ unter `${baseHref}/seite/<n>/`.
+ */
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  baseHref: string;        // z.B. "/neuigkeiten"
+  label?: string;          // z.B. "Beiträge"
+  total?: number;          // Gesamtanzahl der Items (für „X von Y")
+}
+const { currentPage, totalPages, baseHref, label = 'Einträge', total } = Astro.props;
+
+function hrefFor(p: number): string {
+  return p === 1 ? `${baseHref}/` : `${baseHref}/seite/${p}/`;
+}
+
+// Welche Seitenzahlen zeigen wir? Aktuelle ± 1, plus erste und letzte, Lücken mit „…"
+function pageNumbers(): Array<number | '…'> {
+  const out: Array<number | '…'> = [];
+  const add = (n: number) => out.push(n);
+
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) add(i);
+    return out;
+  }
+
+  add(1);
+  if (currentPage > 3) out.push('…');
+  for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+    add(i);
+  }
+  if (currentPage < totalPages - 2) out.push('…');
+  add(totalPages);
+  return out;
+}
+const numbers = pageNumbers();
+
+const hasPrev = currentPage > 1;
+const hasNext = currentPage < totalPages;
+---
+{totalPages > 1 && (
+  <nav class="grh-pag" aria-label="Seitennavigation">
+    <a
+      class={`grh-pag__step ${hasPrev ? '' : 'is-disabled'}`}
+      href={hasPrev ? hrefFor(currentPage - 1) : undefined}
+      aria-disabled={hasPrev ? undefined : 'true'}
+    >
+      ← Vorherige
+    </a>
+
+    <ol class="grh-pag__list">
+      {numbers.map((n) =>
+        n === '…' ? (
+          <li class="grh-pag__ellipsis" aria-hidden="true">…</li>
+        ) : (
+          <li>
+            <a
+              class={`grh-pag__num ${n === currentPage ? 'is-current' : ''}`}
+              href={hrefFor(n)}
+              aria-current={n === currentPage ? 'page' : undefined}
+            >
+              {n}
+            </a>
+          </li>
+        )
+      )}
+    </ol>
+
+    <a
+      class={`grh-pag__step ${hasNext ? '' : 'is-disabled'}`}
+      href={hasNext ? hrefFor(currentPage + 1) : undefined}
+      aria-disabled={hasNext ? undefined : 'true'}
+    >
+      Nächste →
+    </a>
+
+    {total !== undefined && (
+      <p class="grh-pag__total">
+        Seite {currentPage} von {totalPages} · {total} {label}
+      </p>
+    )}
+  </nav>
+)}
+
+<style>
+  .grh-pag {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--grh-space-3) var(--grh-space-2);
+    padding: var(--grh-space-5) 0 var(--grh-space-7);
+  }
+  .grh-pag__step {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    text-decoration: none;
+    padding: 8px 14px;
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast), border-color var(--grh-dur-fast);
+  }
+  .grh-pag__step:hover {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    border-color: var(--grh-forest-900);
+  }
+  .grh-pag__step.is-disabled {
+    color: var(--grh-stone-400);
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .grh-pag__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 4px;
+  }
+  .grh-pag__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: var(--grh-radius-sm);
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-pag__num:hover {
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-900);
+  }
+  .grh-pag__num.is-current {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    font-style: normal;
+    font-weight: 500;
+  }
+  .grh-pag__ellipsis {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 4px;
+    color: var(--grh-stone-400);
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+  }
+  .grh-pag__total {
+    flex-basis: 100%;
+    text-align: center;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: var(--grh-space-3) 0 0;
+  }
+</style>

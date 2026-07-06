@@ -1,0 +1,382 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+interface Produkt {
+  name: string;
+  category: string;
+  description: string;
+  image?: string;
+  imageAlt?: string;
+}
+
+const produkte: Produkt[] = [
+  {
+    name: 'Festschrift Heimatfest 2024',
+    category: 'Sammler-Edition',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/2024/12/Cover_Festschrift-scaled.jpg',
+    imageAlt: 'Cover der Festschrift Heimatfest 2024',
+    description: 'Die offizielle Festschrift mit Programm, Geschichte und Beiträgen aus allen drei Ortsteilen — ein umfassendes Erinnerungsstück an die gemeinsame Festwoche.',
+  },
+  {
+    name: 'Ortschronik Grünhainichen',
+    category: 'Chronik',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/2024/05/Heimatfest-Verkauf-Ortschroniken-Grh.Bodo_Plakat-Nr.2.jpg',
+    imageAlt: 'Ortschroniken Grünhainichen und Borstendorf zum Heimatfest',
+    description: 'Druckfrisch zur Festwoche erschienen: die ausführliche Chronik unseres namensgebenden Ortsteils — Geschichte, Persönlichkeiten und Anekdoten von 1349 bis heute.',
+  },
+  {
+    name: 'Ortschronik Borstendorf',
+    category: 'Chronik',
+    description: 'Parallel zur Grünhainichener Chronik entstanden, mit dem Schwerpunkt auf 645 Jahren Borstendorfer Geschichte und der Tradition als Schachdorf an der Flöha.',
+  },
+  {
+    name: 'Jubiläums-Logo als Anstecker',
+    category: 'Anstecker & Andenken',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/2024/01/Jubilaeums-Logo_final_01_2024.png',
+    imageAlt: 'Jubiläums-Logo Heimatfest 2024',
+    description: 'Das offizielle Festlogo — gestaltet von der Werbegrafik der drei Ortsteile — gab es als Anstecker und auf zahlreichen Souvenirs in verschiedenen Ausführungen.',
+  },
+  {
+    name: 'Heimatfest-Plakat als Sammler-Druck',
+    category: 'Plakat',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/2024/04/HEIMATFEST-PLAKAT.jpeg',
+    imageAlt: 'Heimatfest-Plakat 2024',
+    description: 'Das offizielle Festplakat wurde in limitierter Auflage auf hochwertigem Papier nachgedruckt — als Erinnerung an die Festwoche und zur Sammlung.',
+  },
+  {
+    name: 'Strohpuppen-Bausatz',
+    category: 'Mitmach-Aktion',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/2024/01/Strohpuppenbestellung-Heimatfest.jpg',
+    imageAlt: 'Strohpuppen-Bausatz zum Heimatfest',
+    description: 'Im Vorlauf des Festes konnten Bürgerinnen und Bürger Strohpuppen-Bausätze bestellen — für den Wettbewerb der schönsten geschmückten Grundstücke.',
+  },
+];
+
+const withImage = produkte.filter((p) => p.image);
+const withoutImage = produkte.filter((p) => !p.image);
+---
+<BaseLayout title="Heimatfest 2024 — Jubiläumsprodukte · Gemeinde Grünhainichen" header="compact">
+
+  <header class="grh-hfj-head">
+    <div class="grh-container">
+      <p class="grh-hfj-crumb">Veranstaltungen · Heimatfest · Jubiläumsprodukte</p>
+      <span class="grh-hfj-eyebrow">Erinnerungsstücke der Festwoche</span>
+      <h1>Jubiläumsprodukte</h1>
+      <p class="grh-hfj-lead">
+        Festschrift, Ortschroniken, Logo-Anstecker und limitierte Plakat-Drucke —
+        die offiziellen Erinnerungsstücke des Heimatfestes 2024 zum
+        gemeinsamen Jubiläum der drei Ortsteile.
+      </p>
+    </div>
+  </header>
+
+  <section class="grh-hfj-products">
+    <div class="grh-container">
+      <div class="grh-hfj-grid">
+        {withImage.map((p) => (
+          <article class="grh-hfj-card">
+            <figure class="grh-hfj-card__media">
+              <img src={p.image!} alt={p.imageAlt ?? p.name} loading="lazy" />
+            </figure>
+            <div class="grh-hfj-card__body">
+              <span class="grh-hfj-card__cat">{p.category}</span>
+              <h2>{p.name}</h2>
+              <p>{p.description}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {withoutImage.length > 0 && (
+        <div class="grh-hfj-noimg">
+          <h2 class="grh-hfj-noimg__title">Weitere Erinnerungsstücke</h2>
+          <ul>
+            {withoutImage.map((p) => (
+              <li>
+                <span class="grh-hfj-card__cat">{p.category}</span>
+                <strong>{p.name}</strong>
+                <p>{p.description}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="grh-hfj-verkauf">
+    <div class="grh-container">
+      <span class="grh-hfj-section-eyebrow">Verkauf &amp; Restposten</span>
+      <h2>Wo bekomme ich die Produkte?</h2>
+      <p>
+        Festschrift, Ortschroniken und Erinnerungsstücke des Heimatfestes
+        wurden über die <strong>Gemeindeverwaltung</strong> und am Stand
+        des <strong>Förderverein Wildenstein e. V.</strong> während der
+        Festwoche verkauft. Restbestände sind im Rathaus erhältlich —
+        Verfügbarkeit auf Anfrage.
+      </p>
+      <div class="grh-hfj-verkauf__links">
+        <a href="/gemeinde/verwaltung/">Verwaltung kontaktieren →</a>
+        <a href="/vereine/foerderverein-wildenstein-e-v/">Zum Förderverein →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="grh-hfj-back">
+    <div class="grh-container">
+      <p>Mehr zum Heimatfest:</p>
+      <div class="grh-hfj-back__links">
+        <a href="/veranstaltungen/heimatfest/">← Zur Übersicht</a>
+        <a href="/veranstaltungen/heimatfest/rueckblick/">Rückblick &amp; Bilder →</a>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .grh-hfj-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.10), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-hfj-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-hfj-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-hfj-head h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-hfj-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--grh-forest-800);
+    max-width: 58ch;
+    margin: 0;
+  }
+
+  /* === Produkt-Karten ================================================== */
+  .grh-hfj-products { padding: var(--grh-space-7) 0; }
+  .grh-hfj-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 720px)  { .grh-hfj-grid { grid-template-columns: 1fr 1fr; gap: var(--grh-space-6); } }
+  @media (min-width: 1100px) { .grh-hfj-grid { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-6); } }
+
+  .grh-hfj-card {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-hfj-card:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-3px);
+  }
+  .grh-hfj-card__media {
+    margin: 0;
+    background: var(--grh-paper-100);
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+  }
+  .grh-hfj-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .grh-hfj-card__body {
+    padding: var(--grh-space-4) var(--grh-space-5) var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+    flex: 1;
+  }
+  .grh-hfj-card__cat {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+  }
+  .grh-hfj-card h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-hfj-card p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* === Weitere ohne Bild ============================================== */
+  .grh-hfj-noimg {
+    margin-top: var(--grh-space-7);
+    padding-top: var(--grh-space-6);
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-hfj-noimg__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    letter-spacing: -0.015em;
+  }
+  .grh-hfj-noimg ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px) {
+    .grh-hfj-noimg ul { grid-template-columns: 1fr 1fr; gap: var(--grh-space-5); }
+  }
+  .grh-hfj-noimg li {
+    background: var(--grh-paper-100);
+    border-left: 3px solid var(--grh-candle-500);
+    padding: var(--grh-space-4) var(--grh-space-5);
+    border-radius: var(--grh-radius-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .grh-hfj-noimg strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-hfj-noimg p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  /* === Verkauf-Hinweis ================================================= */
+  .grh-hfj-verkauf {
+    padding: var(--grh-space-7) 0;
+    background: var(--grh-paper-100);
+    text-align: center;
+  }
+  .grh-hfj-section-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-hfj-verkauf h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    letter-spacing: -0.015em;
+  }
+  .grh-hfj-verkauf p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    max-width: 60ch;
+    margin: 0 auto var(--grh-space-5);
+    line-height: 1.65;
+  }
+  .grh-hfj-verkauf strong {
+    font-style: normal;
+    color: var(--grh-forest-900);
+    font-weight: 500;
+  }
+  .grh-hfj-verkauf__links {
+    display: flex;
+    justify-content: center;
+    gap: var(--grh-space-4) var(--grh-space-6);
+    flex-wrap: wrap;
+  }
+  .grh-hfj-verkauf__links a {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+  .grh-hfj-verkauf__links a:hover { color: var(--grh-moss-600); }
+
+  /* === Back/Forward =================================================== */
+  .grh-hfj-back {
+    padding: var(--grh-space-5) 0 var(--grh-space-7);
+    background: var(--grh-cream-50);
+    border-top: 1px solid var(--grh-line);
+    text-align: center;
+  }
+  .grh-hfj-back p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-hfj-back__links {
+    display: flex;
+    justify-content: center;
+    gap: var(--grh-space-4) var(--grh-space-6);
+    flex-wrap: wrap;
+  }
+  .grh-hfj-back__links a {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+  .grh-hfj-back__links a:hover { color: var(--grh-moss-600); }
+</style>

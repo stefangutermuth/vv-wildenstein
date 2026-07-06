@@ -1,0 +1,355 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+interface Kirche {
+  ortsteil: string;
+  name: string;
+  image?: string;
+  imageAlt?: string;
+  street?: string;
+  city?: string;
+  phone?: string;
+  fax?: string;
+  email?: string;
+  website?: string;
+  pastor?: string;
+  description?: string;
+  yearFounded?: string;
+}
+
+const kirchen: Kirche[] = [
+  {
+    ortsteil: 'Grünhainichen',
+    name: 'Ev.-Luth. Kirchgemeinde Grünhainichen',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/2022/06/IMG_9695-1000x667.jpg',
+    imageAlt: 'Kirche Grünhainichen',
+    street: 'Kirchstraße 4',
+    city: '09579 Grünhainichen',
+    phone: '037294 / 87 884',
+    fax:   '037294 / 87 885',
+    email: 'kg.gruenhainichen@evlks.de',
+    website: 'https://www.kirche-gruenhainichen.de',
+    pastor: 'Pfarrer Jens Meyer (Pfarrhaus Waldkirchen) · jens.meyer@evlks.de',
+    yearFounded: '1848',
+    description: 'Die Mutterkirche im Ortskern — gegründet als eigene Parochie am 31. Januar 1848. Gottesdienste, Kreise, Chor- und Kinderarbeit.',
+  },
+  {
+    ortsteil: 'Waldkirchen',
+    name: 'Ev.-Luth. Kirchgemeinde Waldkirchen',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/2/2d/Kirche_in_Waldkirchen_9300.jpg',
+    imageAlt: 'Kirche Waldkirchen/Erzgeb.',
+    street: 'Börnichener Straße 3',
+    city: '09579 Grünhainichen',
+    website: 'http://www.kirchgemeinde-waldkirchen-erzgebirge.de',
+    pastor: 'Pfarrer Jens Meyer',
+    yearFounded: '1539',
+    description: 'Mutterkirche der Region seit der Reformation — Grünhainichen und Borstendorf gehörten lange Zeit zur Parochie Waldkirchen. Mit dem Pfarrhaus, in dem auch der Pfarrer für die Schwestergemeinden seinen Dienstsitz hat.',
+  },
+  {
+    ortsteil: 'Borstendorf',
+    name: 'Ev.-Luth. Kirche Borstendorf',
+    description: 'Filialkirche der Parochie Grünhainichen mit eigener Tradition im Flöhatal. Informationen zu Gottesdiensten und Veranstaltungen über die Kirchgemeinde Grünhainichen.',
+    website: 'https://www.kirche-gruenhainichen.de',
+    yearFounded: 'Filialkirche',
+  },
+  {
+    ortsteil: 'Börnichen',
+    name: 'Ev.-Luth. Kirchgemeinde Börnichen',
+    image: 'https://vv-wildenstein.com/wp-content/uploads/2022/06/IMG_20211106_142234-1000x750.jpg',
+    imageAlt: 'Kirche Börnichen',
+    street: 'Försterweg 1',
+    city: '09437 Börnichen',
+    website: 'https://kirchgemeinde-boernichen.de',
+    pastor: 'Pfarrer Jens Meyer (Pfarrhaus Waldkirchen)',
+    yearFounded: '1900',
+    description: 'Am 27. März 1899 vom Kirchenvorstand beschlossen, am 26. Februar 1900 erster Spatenstich, am 8. Oktober 1900 mit großem Festakt geweiht. Schwesterkirche im Verwaltungsverband.',
+  },
+];
+---
+<BaseLayout title="Kirchen · Gemeinde Grünhainichen" header="compact">
+
+  <header class="grh-kir-head">
+    <div class="grh-container">
+      <p class="grh-kir-crumb">Leben · Kirche</p>
+      <span class="grh-kir-eyebrow">Glauben &amp; Gemeinschaft</span>
+      <h1>Kirchen unserer Gemeinde</h1>
+      <p class="grh-kir-lead">
+        Vier evangelisch-lutherische Kirchgemeinden prägen das Leben in
+        unseren Ortsteilen und der Nachbargemeinde Börnichen — von der
+        <em>Mutterkirche Waldkirchen</em> (seit 1539) bis zur jüngsten
+        Schwester in Börnichen (geweiht 1900).
+      </p>
+    </div>
+  </header>
+
+  <section class="grh-kir-grid-section">
+    <div class="grh-container">
+      <div class="grh-kir-grid">
+        {kirchen.map((k) => (
+          <article class="grh-kir-card">
+            {k.image && (
+              <figure class="grh-kir-card__media">
+                <img src={k.image!} alt={k.imageAlt ?? k.name} loading="lazy" />
+              </figure>
+            )}
+            <div class="grh-kir-card__body">
+              <header class="grh-kir-card__head">
+                <span class="grh-kir-card__ort">{k.ortsteil}</span>
+                {k.yearFounded && <span class="grh-kir-card__year">{k.yearFounded}</span>}
+              </header>
+              <h2>{k.name}</h2>
+              {k.description && <p class="grh-kir-card__desc">{k.description}</p>}
+
+              {(k.street || k.phone || k.email) && (
+                <div class="grh-kir-card__contact">
+                  {k.street && (
+                    <p class="grh-kir-card__addr">
+                      {k.street}<br />
+                      {k.city}
+                    </p>
+                  )}
+                  <ul>
+                    {k.pastor && <li><span>Pfarrer</span>{k.pastor}</li>}
+                    {k.phone && <li><span>Telefon</span><a href={`tel:${k.phone.replace(/[^+\d]/g,'')}`}>{k.phone}</a></li>}
+                    {k.fax && <li><span>Fax</span>{k.fax}</li>}
+                    {k.email && <li><span>E-Mail</span><a href={`mailto:${k.email}`}>{k.email}</a></li>}
+                  </ul>
+                </div>
+              )}
+
+              {k.website && (
+                <a class="grh-kir-card__link" href={k.website} target="_blank" rel="noopener">
+                  {k.website.replace(/^https?:\/\//,'').replace(/\/$/,'')} ↗
+                </a>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="grh-kir-foot">
+    <div class="grh-container">
+      <p>
+        Aktuelle Gottesdienste, Termine und Mitarbeitende der Kirchgemeinden
+        veröffentlichen die Pfarrämter auf den jeweiligen Webseiten. Pfarrer
+        <strong>Jens Meyer</strong> betreut von Waldkirchen aus die Gemeinden
+        Grünhainichen, Borstendorf und Börnichen.
+      </p>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Kopfzeile ====================================================== */
+  .grh-kir-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(91, 174, 120, 0.10), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-kir-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-kir-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-kir-head h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    max-width: 18ch;
+  }
+  .grh-kir-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--grh-forest-800);
+    max-width: 58ch;
+    margin: 0;
+  }
+  .grh-kir-lead em {
+    font-style: italic;
+    color: var(--grh-moss-600);
+  }
+
+  /* === Karten-Grid ==================================================== */
+  .grh-kir-grid-section { padding: var(--grh-space-7) 0; }
+  .grh-kir-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 800px) {
+    .grh-kir-grid { grid-template-columns: 1fr 1fr; gap: var(--grh-space-6); }
+  }
+
+  .grh-kir-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast), box-shadow var(--grh-dur-base);
+  }
+  .grh-kir-card:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(26, 61, 39, 0.08);
+  }
+  .grh-kir-card__media {
+    margin: 0;
+    overflow: hidden;
+    background: var(--grh-paper-100);
+  }
+  .grh-kir-card__media img {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    display: block;
+  }
+  .grh-kir-card__body {
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    flex: 1;
+  }
+  .grh-kir-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--grh-space-3);
+  }
+  .grh-kir-card__ort {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+  }
+  .grh-kir-card__year {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-400);
+  }
+  .grh-kir-card__body h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    color: var(--grh-forest-900);
+    margin: 0;
+  }
+  .grh-kir-card__desc {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .grh-kir-card__contact {
+    border-top: 1px solid var(--grh-line);
+    padding-top: var(--grh-space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+  }
+  .grh-kir-card__addr {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    line-height: 1.4;
+    margin: 0;
+  }
+  .grh-kir-card__contact ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .grh-kir-card__contact li {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.5;
+  }
+  .grh-kir-card__contact li span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+  }
+  .grh-kir-card__contact a {
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--grh-dur-fast);
+    word-break: break-word;
+  }
+  .grh-kir-card__contact a:hover { border-color: var(--grh-candle-500); }
+  .grh-kir-card__link {
+    margin-top: auto;
+    align-self: flex-start;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+    word-break: break-all;
+  }
+  .grh-kir-card__link:hover { color: var(--grh-moss-600); }
+
+  /* === Footer ========================================================= */
+  .grh-kir-foot {
+    padding: var(--grh-space-6) 0 var(--grh-space-8);
+    background: var(--grh-paper-100);
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-kir-foot p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    text-align: center;
+    max-width: 58ch;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .grh-kir-foot strong {
+    font-style: normal;
+    color: var(--grh-forest-900);
+    font-weight: 500;
+  }
+</style>

@@ -1,0 +1,154 @@
+---
+/**
+ * GrhPagePlaceholder — einheitlicher „In Arbeit"-Hinweis für Seiten,
+ * deren Inhalt noch nicht entschieden ist.
+ *
+ * Nutzung:
+ *   <GrhPagePlaceholder
+ *     title="Bürgermeister"
+ *     breadcrumb="Gemeinde · Bürgermeister"
+ *     hints={['Vorstellung', 'Sprechzeiten', 'Kontakt-Block']}
+ *   />
+ */
+interface Props {
+  title: string;
+  breadcrumb?: string;
+  description?: string;
+  hints?: string[];
+}
+const { title, breadcrumb, description, hints = [] } = Astro.props;
+---
+<section class="grh-placeholder">
+  <div class="grh-container">
+    {breadcrumb && <p class="grh-placeholder__crumb">{breadcrumb}</p>}
+    <h1 class="grh-placeholder__title">
+      <span class="grh-placeholder__badge" aria-label="Inhalt noch nicht final">!</span>
+      {title}
+    </h1>
+    <p class="grh-placeholder__lead">
+      Diese Seite ist als Platzhalter angelegt — der Inhalt wird noch
+      gemeinsam mit der Gemeinde abgestimmt.
+    </p>
+    {description && <p class="grh-placeholder__desc">{description}</p>}
+    {hints.length > 0 && (
+      <div class="grh-placeholder__hints">
+        <h2>Mögliche Bausteine</h2>
+        <ul>
+          {hints.map((h) => <li>{h}</li>)}
+        </ul>
+      </div>
+    )}
+    <p class="grh-placeholder__foot">
+      <a href="/" class="grh-placeholder__back">← Zur Startseite</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .grh-placeholder {
+    padding: clamp(var(--grh-space-7), 12vw, var(--grh-space-9)) 0;
+    background: var(--grh-cream-50);
+    min-height: 60vh;
+  }
+  .grh-placeholder__crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-placeholder__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--grh-space-3);
+    flex-wrap: wrap;
+  }
+  .grh-placeholder__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #b02f2f;
+    color: #fff;
+    font-family: var(--grh-font-body);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1;
+    box-shadow: 0 8px 24px rgba(176, 47, 47, 0.25);
+  }
+  .grh-placeholder__lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.15rem, 2vw, 1.5rem);
+    color: var(--grh-forest-800);
+    max-width: 55ch;
+    line-height: 1.45;
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-placeholder__desc {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    max-width: 60ch;
+    line-height: 1.65;
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-placeholder__hints {
+    margin: var(--grh-space-6) 0;
+    padding: var(--grh-space-5) var(--grh-space-5);
+    border-left: 3px solid var(--grh-candle-500);
+    background: var(--grh-paper-100);
+    max-width: 56ch;
+  }
+  .grh-placeholder__hints h2 {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-700);
+    margin: 0 0 var(--grh-space-3);
+    font-weight: 700;
+  }
+  .grh-placeholder__hints ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+  }
+  .grh-placeholder__hints li {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-800);
+    padding-left: var(--grh-space-3);
+    position: relative;
+  }
+  .grh-placeholder__hints li::before {
+    content: '·';
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    position: absolute;
+    left: 0;
+  }
+  .grh-placeholder__back {
+    display: inline-block;
+    margin-top: var(--grh-space-5);
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 3px;
+  }
+  .grh-placeholder__back:hover { color: var(--grh-moss-600); }
+</style>

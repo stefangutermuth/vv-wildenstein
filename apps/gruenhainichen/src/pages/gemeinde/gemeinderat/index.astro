@@ -1,0 +1,347 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../../components/global/GrhPageHeader.astro';
+import { getPersonen, getPostsByCategory } from '../../../lib/cms-cpt';
+
+// Sitzungen werden bewusst NICHT aus dem CPT `gemeinderatssitzung` gezogen:
+// der CPT auf vv-wildenstein.com ist nur dünn gepflegt (Stand 06/2026: 4 alte
+// Einträge), die aktuellen Sitzungs-Einladungen liegen als ganz normale
+// Beiträge in der Kategorie `gemeinderat-gruenhainichen` und tauchen unten
+// im Block „Neuigkeiten aus dem Gemeinderat" auf. Wenn die Gemeinde künftig
+// den CPT pflegt, separaten Block wieder aktivieren.
+const [mitglieder, beitraege] = await Promise.all([
+  getPersonen({ gremium: 'gemeinderat-gruenhainichen' }),
+  getPostsByCategory('gemeinderat-gruenhainichen', 12),
+]);
+
+// Sortier-Reihenfolge: Vorsitzender, 1. Stv., 2. Stv., dann alphabetisch
+const ROLES: Record<string, { rank: number; role: string }> = {
+  'Robert Arnold':  { rank: 0, role: 'Vorsitzender' },
+  'Kay Weißbach':   { rank: 1, role: '1. Stellvertreter' },
+  'Jan Harbeck':    { rank: 2, role: '2. Stellvertreter' },
+};
+const sortedMitglieder = [...mitglieder].sort((a, b) => {
+  const ra = ROLES[a.title]?.rank ?? 99;
+  const rb = ROLES[b.title]?.rank ?? 99;
+  if (ra !== rb) return ra - rb;
+  return a.title.localeCompare(b.title, 'de');
+});
+
+const fmtShort = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+const recentBeitraege = beitraege.slice(0, 6);
+
+// Hilfsfunktion: Initialen für Avatar-Fallback
+function initials(name: string): string {
+  const parts = name.replace(/^Dr\.?\s+/, '').trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase();
+}
+---
+<BaseLayout title="Gemeinderat · Grünhainichen" header="compact">
+  <GrhPageHeader
+    title="Gemeinderat"
+    breadcrumb="Gemeinde · Gemeinderat"
+    lead="16 ehrenamtliche Mitglieder gestalten die Geschicke unserer Gemeinde — gewählt für fünf Jahre, beratend und beschließend in regelmäßigen Sitzungen."
+  />
+
+  {/* === Mitglieder =================================================== */}
+  <section class="grh-gr-block">
+    <div class="grh-container">
+      <div class="grh-gr-block__head">
+        <h2 class="grh-gr-block__title">Mitglieder</h2>
+        <span class="grh-gr-block__count">{sortedMitglieder.length} Personen</span>
+      </div>
+
+      <div class="grh-personen">
+        {sortedMitglieder.map((p) => {
+          const role = ROLES[p.title]?.role;
+          return (
+            <div class={`grh-person${role ? ' grh-person--lead' : ''}`}>
+              <div class="grh-person__avatar" aria-hidden="true">
+                {p.image
+                  ? <img src={p.image} alt="" loading="lazy" />
+                  : <span class="grh-person__initial">{initials(p.title)}</span>
+                }
+              </div>
+              <div class="grh-person__name">{p.title}</div>
+              {role && <div class="grh-person__role">{role}</div>}
+            </div>
+          );
+        })}
+        {sortedMitglieder.length === 0 && (
+          <p class="grh-gr-empty">Mitglieder werden gerade gepflegt.</p>
+        )}
+      </div>
+    </div>
+  </section>
+
+  {/* === Beiträge aus dem Gemeinderat ================================= */}
+  {recentBeitraege.length > 0 && (
+    <section class="grh-gr-block grh-gr-block--alt">
+      <div class="grh-container">
+        <div class="grh-gr-block__head">
+          <h2 class="grh-gr-block__title">Neuigkeiten aus dem Gemeinderat</h2>
+          <a class="grh-gr-block__more" href="/neuigkeiten?kategorie=gemeinderat-gruenhainichen">
+            Alle Beiträge →
+          </a>
+        </div>
+        <ul class="grh-gr-posts">
+          {recentBeitraege.map((b) => (
+            <li>
+              <a href={`/neuigkeiten/${b.slug}`}>
+                <time>{fmtShort.format(b.date)}</time>
+                <div class="grh-gr-posts__body">
+                  <h3>{b.title}</h3>
+                  {b.excerpt && <p>{b.excerpt}</p>}
+                </div>
+                <span class="grh-gr-posts__chevron">→</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+</BaseLayout>
+
+<style>
+  /* === Hero-Streifen ==================================================== */
+  .grh-gr-next {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(91, 174, 120, 0.18), transparent 55%),
+      var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    padding: var(--grh-space-6) 0;
+  }
+  .grh-gr-next__inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--grh-space-5);
+    flex-wrap: wrap;
+  }
+  .grh-gr-next__label {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .grh-gr-next h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    margin: 0;
+    color: var(--grh-cream-50);
+    letter-spacing: -0.02em;
+  }
+  .grh-gr-next__link {
+    color: var(--grh-candle-300);
+    text-decoration: none;
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+    transition: color var(--grh-dur-fast);
+  }
+  .grh-gr-next__link:hover { color: var(--grh-cream-50); }
+
+  /* === Block-Layout ===================================================== */
+  .grh-gr-block { padding: var(--grh-space-7) 0; }
+  .grh-gr-block--alt { background: var(--grh-paper-100); }
+  .grh-gr-block__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--grh-space-4);
+    margin-bottom: var(--grh-space-5);
+    flex-wrap: wrap;
+  }
+  .grh-gr-block__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+  }
+  .grh-gr-block__count {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+  }
+  .grh-gr-block__more {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+  .grh-gr-block__more:hover { color: var(--grh-moss-600); }
+
+  /* === Personen-Grid ==================================================== */
+  .grh-personen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--grh-space-5) var(--grh-space-4);
+  }
+  .grh-person { text-align: center; }
+  .grh-person__avatar {
+    width: 92px; height: 92px;
+    border-radius: 50%;
+    margin: 0 auto var(--grh-space-3);
+    background: var(--grh-paper-100);
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--grh-line);
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-person--lead .grh-person__avatar {
+    width: 108px; height: 108px;
+    border-color: var(--grh-candle-500);
+    box-shadow: 0 12px 28px rgba(212, 165, 92, 0.18);
+  }
+  .grh-person__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .grh-person__initial {
+    font-family: var(--grh-font-display);
+    font-size: 30px;
+    color: var(--grh-moss-600);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .grh-person__name {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .grh-person--lead .grh-person__name {
+    font-size: var(--grh-fs-md);
+  }
+  .grh-person__role {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .grh-gr-empty {
+    color: var(--grh-stone-400);
+    font-style: italic;
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--grh-space-5) 0;
+  }
+
+  /* === Beiträge-Liste =================================================== */
+  .grh-gr-posts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .grh-gr-posts li {
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-gr-posts li:last-child { border-bottom: 1px solid var(--grh-line); }
+  .grh-gr-posts a {
+    display: grid;
+    grid-template-columns: 96px 1fr auto;
+    gap: var(--grh-space-4);
+    align-items: center;
+    padding: var(--grh-space-4) 0;
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left var(--grh-dur-fast);
+  }
+  .grh-gr-posts a:hover { padding-left: 6px; }
+  .grh-gr-posts time {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-candle-500);
+    letter-spacing: 0;
+  }
+  .grh-gr-posts__body { min-width: 0; }
+  .grh-gr-posts__body h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    margin: 0 0 4px;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .grh-gr-posts__body p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    margin: 0;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 70ch;
+  }
+  .grh-gr-posts__chevron {
+    color: var(--grh-stone-400);
+    font-size: 18px;
+    transition: color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-gr-posts a:hover .grh-gr-posts__chevron {
+    color: var(--grh-moss-600);
+    transform: translateX(3px);
+  }
+
+  /* === Sitzungs-Liste =================================================== */
+  .grh-gr-sitzungen {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-gr-sitzungen li { border-top: 1px solid var(--grh-line); }
+  .grh-gr-sitzungen li:last-child { border-bottom: 1px solid var(--grh-line); }
+  .grh-gr-sitzungen a {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: center;
+    gap: var(--grh-space-4);
+    padding: var(--grh-space-3) 0;
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left var(--grh-dur-fast);
+  }
+  .grh-gr-sitzungen a:hover { padding-left: 6px; }
+  .grh-gr-sitzungen__date {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    color: var(--grh-forest-800);
+    font-size: var(--grh-fs-md);
+  }
+  .grh-gr-sitzungen__label {
+    font-family: var(--grh-font-body);
+    color: var(--grh-stone-700);
+    font-size: var(--grh-fs-sm);
+  }
+  .grh-gr-sitzungen__chevron {
+    color: var(--grh-stone-400);
+    font-size: 16px;
+  }
+</style>

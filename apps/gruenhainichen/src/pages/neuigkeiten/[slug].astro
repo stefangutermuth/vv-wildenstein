@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhCPTDetail from '../../components/global/GrhCPTDetail.astro';
+import { getNews } from '../../lib/cms';
+import { getPostBySlug } from '../../lib/cms-cpt';
+
+export async function getStaticPaths() {
+  const list = await getNews();
+  return list.map((n) => ({
+    params: { slug: n.slug },
+    props: { news: n },
+  }));
+}
+
+const { news } = Astro.props as { news: Awaited<ReturnType<typeof getNews>>[number] };
+// Volltext separat aus WP nachladen (Posts-Liste enthält nur Excerpt)
+const detail = await getPostBySlug(news.slug);
+
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+const eyebrow = news.category === 'sperrung' ? 'Sperrung' :
+                news.category === 'veranstaltung' ? 'Veranstaltung' :
+                news.category === 'tourismus' ? 'Tourismus' : 'Aktuelles';
+---
+<BaseLayout title={`${news.title} · Neuigkeiten · Grünhainichen`} header="compact">
+  <GrhCPTDetail
+    title={news.title}
+    breadcrumb={`Neuigkeiten · ${eyebrow}`}
+    eyebrow={eyebrow}
+    image={news.image ?? detail?.image}
+    meta={fmt.format(news.date)}
+    contentHtml={detail?.content?.rendered ?? `<p>${news.excerpt}</p>`}
+    backHref="/neuigkeiten"
+    backLabel="Alle Neuigkeiten"
+  />
+</BaseLayout>

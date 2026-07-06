@@ -1,0 +1,478 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+interface TrauOrt {
+  name: string;
+  ort: string;
+  address: string;
+  capacity?: string;
+  features: string[];
+  badge?: string;
+}
+
+const orte: TrauOrt[] = [
+  {
+    name: 'Rathaus Grünhainichen',
+    ort: 'Grünhainichen',
+    address: 'Chemnitzer Straße 41, 09579 Grünhainichen',
+    capacity: 'bis zu 30 Personen',
+    features: [
+      'Neu renoviertes Trauzimmer',
+      'Direkt im Sitz des Standesamtes',
+      'Klassisch & würdig',
+    ],
+  },
+  {
+    name: 'Waldhof Börnichen',
+    ort: 'Börnichen/Erzgeb.',
+    address: 'Hauptstraße 50, 09437 Börnichen/Erzgeb.',
+    badge: 'Neu',
+    features: [
+      'Innen- und Außentrauung möglich',
+      'Pavillon für Freiluft-Zeremonien',
+      'Familiäre Atmosphäre im Grünen',
+    ],
+  },
+];
+---
+<BaseLayout title="Heiraten · Gemeinde Grünhainichen" header="compact">
+
+  <header class="grh-h-head">
+    <div class="grh-container">
+      <p class="grh-h-crumb">Leben · Heiraten</p>
+      <span class="grh-h-eyebrow">Standesamt &amp; Trau-Orte</span>
+      <h1>Heiraten in unserer Gemeinde</h1>
+      <p class="grh-h-lead">
+        Ob feierlich im Trauzimmer des Rathauses oder unter freiem Himmel
+        am Waldhof Börnichen — wir begleiten Euch durch den schönsten Tag
+        und alle Formalitäten davor.
+      </p>
+    </div>
+  </header>
+
+  {/* === Trau-Orte ====================================================== */}
+  <section class="grh-h-orte">
+    <div class="grh-container">
+      <header class="grh-h-section-head">
+        <span class="grh-h-section-eyebrow">Zwei besondere Orte</span>
+        <h2>Wo wir Euch trauen</h2>
+      </header>
+
+      <div class="grh-h-orte-grid">
+        {orte.map((o) => (
+          <article class="grh-h-ort">
+            {o.badge && <span class="grh-h-ort__badge">{o.badge}</span>}
+            <span class="grh-h-ort__ort">{o.ort}</span>
+            <h3>{o.name}</h3>
+            <p class="grh-h-ort__addr">{o.address}</p>
+            {o.capacity && (
+              <p class="grh-h-ort__cap">
+                <span>Kapazität</span> {o.capacity}
+              </p>
+            )}
+            <ul class="grh-h-ort__features">
+              {o.features.map((f) => <li>{f}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* === Ablauf ========================================================= */}
+  <section class="grh-h-ablauf">
+    <div class="grh-container">
+      <header class="grh-h-section-head">
+        <span class="grh-h-section-eyebrow">Schritt für Schritt</span>
+        <h2>Vom „Ja" zum Termin</h2>
+      </header>
+
+      <ol class="grh-h-steps">
+        <li>
+          <span class="grh-h-step__num">1</span>
+          <div>
+            <h3>Anmeldung beim heimischen Standesamt</h3>
+            <p>
+              Die Eheschließung wird beim Standesamt des aktuellen Wohnortes
+              angemeldet. Dort werden die Unterlagen geprüft und an uns
+              weitergeleitet — frühestens <strong>sechs Monate</strong> vor
+              dem Wunschtermin.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="grh-h-step__num">2</span>
+          <div>
+            <h3>Termin- und Ort-Absprache</h3>
+            <p>
+              Sobald die Unterlagen bei uns liegen, melden wir uns für eine
+              persönliche Absprache: Trau-Ort, Termin, Musik, Stammbuch.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span class="grh-h-step__num">3</span>
+          <div>
+            <h3>Die Trauung</h3>
+            <p>
+              Am Tag selbst übernehmen wir die Zeremonie — individuell gestaltet,
+              nach Euren Wünschen, im Rathaus oder am Waldhof.
+            </p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  {/* === Standesamt-Kontakt ============================================= */}
+  <section class="grh-h-kontakt">
+    <div class="grh-container">
+      <header class="grh-h-section-head grh-h-section-head--light">
+        <span class="grh-h-section-eyebrow grh-h-section-eyebrow--light">Standesamt</span>
+        <h2>Unsere Standesbeamtinnen</h2>
+      </header>
+
+      <div class="grh-h-people">
+        <article class="grh-h-person">
+          <span class="grh-h-person__role">Leiterin Standesbeamtin</span>
+          <h3>Frau Kathrin Ardelt</h3>
+          <a href="tel:+493729417011">037294 / 170-11</a>
+        </article>
+        <article class="grh-h-person">
+          <span class="grh-h-person__role">Standesbeamtin</span>
+          <h3>Frau Lisa Lehnert</h3>
+          <a href="tel:+493729417010">037294 / 170-10</a>
+        </article>
+      </div>
+
+      <div class="grh-h-meta">
+        <div>
+          <span>Anschrift</span>
+          <strong>Rathaus Grünhainichen<br />Chemnitzer Straße 41, 09579 Grünhainichen</strong>
+        </div>
+        <div>
+          <span>E-Mail</span>
+          <a href="mailto:standesamt@wildenstein.ws">standesamt@wildenstein.ws</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Kopfzeile ====================================================== */
+  .grh-h-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 0% 100%, rgba(212, 165, 92, 0.10), transparent 50%),
+      radial-gradient(circle at 100% 0%, rgba(91, 174, 120, 0.10), transparent 50%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-h-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-h-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-h-head h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    max-width: 16ch;
+  }
+  .grh-h-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--grh-forest-800);
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  /* === Section-Heads ================================================== */
+  .grh-h-section-head { margin-bottom: var(--grh-space-6); }
+  .grh-h-section-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-h-section-eyebrow--light { color: var(--grh-candle-300); }
+  .grh-h-section-head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .grh-h-section-head--light h2 { color: var(--grh-cream-50); }
+
+  /* === Trau-Orte ====================================================== */
+  .grh-h-orte { padding: var(--grh-space-7) 0; }
+  .grh-h-orte-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 800px) {
+    .grh-h-orte-grid { grid-template-columns: 1fr 1fr; gap: var(--grh-space-6); }
+  }
+  .grh-h-ort {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    position: relative;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-h-ort:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-2px);
+  }
+  .grh-h-ort__badge {
+    position: absolute;
+    top: var(--grh-space-4);
+    right: var(--grh-space-4);
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    padding: 4px 10px;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-900);
+    border-radius: var(--grh-radius-pill);
+  }
+  .grh-h-ort__ort {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+  }
+  .grh-h-ort h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-2xl);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  .grh-h-ort__addr {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .grh-h-ort__cap {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-forest-800);
+    margin: 0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+  .grh-h-ort__cap span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+  }
+  .grh-h-ort__features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .grh-h-ort__features li {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    padding-left: var(--grh-space-3);
+    position: relative;
+  }
+  .grh-h-ort__features li::before {
+    content: '·';
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    position: absolute;
+    left: 0;
+  }
+
+  /* === Ablauf-Schritte ================================================ */
+  .grh-h-ablauf {
+    padding: var(--grh-space-7) 0;
+    background: var(--grh-paper-100);
+  }
+  .grh-h-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 800px) {
+    .grh-h-steps { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-5); }
+  }
+  .grh-h-steps li {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    border-top: 3px solid var(--grh-candle-500);
+  }
+  .grh-h-step__num {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--grh-candle-500);
+    line-height: 1;
+    font-weight: 500;
+  }
+  .grh-h-steps h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-h-steps p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.55;
+    margin: 0;
+  }
+  .grh-h-steps strong {
+    color: var(--grh-forest-900);
+    font-weight: 600;
+  }
+
+  /* === Standesamt-Kontakt (dunkel) ==================================== */
+  .grh-h-kontakt {
+    padding: var(--grh-space-7) 0;
+    background:
+      radial-gradient(circle at 100% 100%, rgba(212, 165, 92, 0.20), transparent 55%),
+      var(--grh-forest-950);
+    color: var(--grh-cream-50);
+  }
+  .grh-h-people {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+    margin-bottom: var(--grh-space-6);
+  }
+  @media (min-width: 720px) {
+    .grh-h-people { grid-template-columns: 1fr 1fr; gap: var(--grh-space-5); }
+  }
+  .grh-h-person {
+    background: rgba(250, 247, 241, 0.08);
+    border: 1px solid rgba(250, 247, 241, 0.20);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+  }
+  .grh-h-person__role {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-candle-300);
+    font-weight: 700;
+  }
+  .grh-h-person h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-cream-50);
+    margin: 0;
+    letter-spacing: -0.015em;
+  }
+  .grh-h-person a {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-candle-300);
+    text-decoration: none;
+    border-bottom: 1.5px solid rgba(212, 165, 92, 0.55);
+    width: fit-content;
+    padding-bottom: 2px;
+  }
+  .grh-h-person a:hover {
+    color: var(--grh-cream-50);
+    border-color: var(--grh-cream-50);
+  }
+
+  .grh-h-meta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+    padding-top: var(--grh-space-5);
+    border-top: 1px solid rgba(250, 247, 241, 0.18);
+  }
+  @media (min-width: 720px) {
+    .grh-h-meta { grid-template-columns: 1.5fr 1fr; gap: var(--grh-space-6); }
+  }
+  .grh-h-meta span {
+    display: block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-300);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .grh-h-meta strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-cream-50);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.5;
+  }
+  .grh-h-meta a {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-candle-300);
+    text-decoration: none;
+    border-bottom: 1.5px solid rgba(212, 165, 92, 0.55);
+    padding-bottom: 2px;
+    word-break: break-word;
+  }
+  .grh-h-meta a:hover { color: var(--grh-cream-50); border-color: var(--grh-cream-50); }
+</style>

@@ -1,0 +1,87 @@
+---
+/**
+ * Einheitliche Seiten-Kopfzeile mit Breadcrumb, H1 und optionalem Lead-Text.
+ * Wird von allen Unterseiten als „Anschnitt" genutzt.
+ */
+interface Props {
+  title: string;
+  breadcrumb?: string;
+  lead?: string;
+  count?: number;
+  countLabel?: string;
+}
+const { title, breadcrumb, lead, count, countLabel } = Astro.props;
+---
+<header class="grh-pagehead">
+  <div class="grh-container">
+    {breadcrumb && <p class="grh-pagehead__crumb">{breadcrumb}</p>}
+    <div class="grh-pagehead__row">
+      <h1 class="grh-pagehead__title">{title}</h1>
+      {typeof count === 'number' && (
+        <span class="grh-pagehead__count">
+          <strong>{count}</strong> {countLabel ?? 'Einträge'}
+        </span>
+      )}
+    </div>
+    {lead && <p class="grh-pagehead__lead">{lead}</p>}
+  </div>
+</header>
+
+<style>
+  .grh-pagehead {
+    padding: clamp(var(--grh-space-6), 9vw, var(--grh-space-8)) 0 var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-pagehead__crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-pagehead__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--grh-space-4);
+  }
+  .grh-pagehead__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.6rem, 7vw, 4.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--grh-forest-900);
+    margin: 0;
+  }
+  .grh-pagehead__count {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-700);
+    background: var(--grh-paper-100);
+    padding: 6px 12px;
+    border-radius: var(--grh-radius-pill);
+  }
+  .grh-pagehead__count strong {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-weight: 500;
+    color: var(--grh-moss-600);
+    font-size: 14px;
+    letter-spacing: 0;
+    margin-right: 2px;
+  }
+  .grh-pagehead__lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+    color: var(--grh-forest-800);
+    max-width: 60ch;
+    line-height: 1.5;
+    margin: var(--grh-space-4) 0 0;
+  }
+</style>

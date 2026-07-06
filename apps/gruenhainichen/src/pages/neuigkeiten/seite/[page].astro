@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../../components/global/GrhPageHeader.astro';
+import GrhCardGrid from '../../../components/global/GrhCardGrid.astro';
+import GrhPagination from '../../../components/global/GrhPagination.astro';
+import { getNews } from '../../../lib/cms';
+
+export async function getStaticPaths() {
+  // PAGE_SIZE muss inline stehen — getStaticPaths läuft in eigenem Scope
+  // und sieht keine Modul-Konstanten aus dem Frontmatter darüber.
+  const PAGE_SIZE = 12;
+  const all = await getNews();
+  const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+  // Seite 1 wird unter /neuigkeiten/ ausgeliefert → hier nur Seite 2..N
+  const paths = [];
+  for (let p = 2; p <= totalPages; p++) {
+    paths.push({
+      params: { page: String(p) },
+      props: { pageNum: p, totalPages, all },
+    });
+  }
+  return paths;
+}
+
+const PAGE_SIZE = 12;
+
+interface PageProps {
+  pageNum: number;
+  totalPages: number;
+  all: Awaited<ReturnType<typeof getNews>>;
+}
+const { pageNum, totalPages, all } = Astro.props as PageProps;
+
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+
+const start = (pageNum - 1) * PAGE_SIZE;
+const slice = all.slice(start, start + PAGE_SIZE);
+
+const items = slice.map((n) => ({
+  href: `/neuigkeiten/${n.slug}`,
+  title: n.title,
+  image: n.image,
+  eyebrow: n.category === 'sperrung' ? 'Sperrung' :
+           n.category === 'veranstaltung' ? 'Veranstaltung' :
+           n.category === 'tourismus' ? 'Tourismus' : 'Aktuelles',
+  meta: fmt.format(n.date),
+  body: n.excerpt,
+}));
+---
+<BaseLayout title={`Neuigkeiten · Seite ${pageNum} · Grünhainichen`} header="compact">
+  <GrhPageHeader
+    title="Neuigkeiten"
+    breadcrumb={`Neuigkeiten · Seite ${pageNum}`}
+    lead="Was unsere Gemeinde gerade beschäftigt — Mitteilungen, Sperrungen, Veranstaltungshinweise."
+    count={all.length}
+    countLabel="Beiträge"
+  />
+  <section>
+    <div class="grh-container">
+      <GrhCardGrid items={items} empty="Keine Beiträge auf dieser Seite." />
+      <GrhPagination
+        currentPage={pageNum}
+        totalPages={totalPages}
+        baseHref="/neuigkeiten"
+        label="Beiträge"
+        total={all.length}
+      />
+    </div>
+  </section>
+</BaseLayout>

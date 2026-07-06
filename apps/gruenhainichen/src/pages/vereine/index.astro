@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
+import GrhCardGrid from '../../components/global/GrhCardGrid.astro';
+import { getVereine } from '../../lib/cms-cpt';
+
+const vereine = await getVereine();
+
+const items = vereine
+  .sort((a, b) => a.title.localeCompare(b.title, 'de'))
+  .map((v) => ({
+    href: `/vereine/${v.slug}`,
+    title: v.title,
+    image: v.image,
+    eyebrow: v.ortsteil ? v.ortsteil.replace(/^./, c => c.toUpperCase()) : undefined,
+    meta: v.kontakt?.fuehrende_person,
+  }));
+---
+<BaseLayout title="Vereine · Grünhainichen" header="compact">
+  <GrhPageHeader
+    title="Vereine"
+    breadcrumb="Startseite · Vereine"
+    lead="Heimat-, Sport-, Feuerwehr- und Kulturvereine — das Vereinsleben unserer drei Ortsteile."
+    count={items.length}
+    countLabel="Vereine"
+  />
+  <section>
+    <div class="grh-container">
+      <GrhCardGrid items={items} empty="Es sind aktuell keine Vereine gepflegt." />
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,624 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const ANMELDUNG_URL = 'https://regio.outdooractive.com/oar-erzgebirge/de/veranstaltung/wandern-berge/gefuehrte-wanderung-entlang-des-zschopautalwanderweges/810240056/';
+
+const heroBgImage = 'https://vv-wildenstein.com/wp-content/uploads/2026/01/2026_Wandern-allgemein.jpg';
+const eurorandoLogo = 'https://vv-wildenstein.com/wp-content/uploads/2026/04/Eurorando_logo_white-768x1110-1.webp';
+const eurorandoBanner = 'https://vv-wildenstein.com/wp-content/uploads/2025/09/Eurorando_MedRectangle_SK05.jpg';
+
+interface Termin {
+  date: string;   // formatiert
+  iso: string;
+  weekday: string;
+  source: string; // Link zur Detail-Seite auf vv-wildenstein.com
+}
+
+const termine: Termin[] = [
+  {
+    date: '23. September 2026',
+    iso: '2026-09-23',
+    weekday: 'Mittwoch',
+    source: 'https://vv-wildenstein.com/veranstaltungen/eurando-gefuehrte-wanderung-auf-dem-zschopautalweg-ueber-waldkirchen-am-23-09-2026/',
+  },
+  {
+    date: '27. September 2026',
+    iso: '2026-09-27',
+    weekday: 'Sonntag',
+    source: 'https://vv-wildenstein.com/veranstaltungen/eurando-gefuehrte-wanderung-auf-dem-zschopautalweg-durch-waldkirchen-am-27-09-2026/',
+  },
+];
+
+const highlights = [
+  { title: 'Schloss Wildeck',         body: 'Start am barocken Renaissanceschloss in Zschopau — mit Blick übers Zschopautal.' },
+  { title: 'Rast an der Rolle Mühle', body: 'Kleine kulinarische Pause an der historischen Mühle im Tal.' },
+  { title: 'Holzbrücke Hennersdorf',  body: 'Überquerung der charakteristischen Holzbrücke — eines der Wahrzeichen entlang des Weges.' },
+  { title: 'Augustusburg',            body: 'Ankunft am Jagdschloss Augustusburg mit Stadtkirche und neuer 360°-Klanginstallation.' },
+];
+---
+<BaseLayout title="EURORANDO 2026 · Gemeinde Grünhainichen" header="compact">
+
+  {/* === Hero mit Wander-Hintergrund + Logo ============================== */}
+  <header class="grh-eu-head">
+    <div class="grh-eu-head__bg" aria-hidden="true">
+      <img src={heroBgImage} alt="" loading="eager" />
+      <div class="grh-eu-head__veil" />
+    </div>
+    <div class="grh-container grh-eu-head__inner">
+      <div class="grh-eu-head__text">
+        <p class="grh-eu-crumb">Veranstaltungen · EURORANDO 2026</p>
+        <span class="grh-eu-eyebrow">20. – 27. September 2026 · Erzgebirge</span>
+        <h1>EURORANDO <em>2026</em></h1>
+        <p class="grh-eu-lead">
+          Europas größtes Wanderfest macht im September 2026 Halt im
+          Erzgebirge — und führt zweimal direkt durch unsere Ortsteile.
+          Geführte Wanderungen entlang des <strong>Zschopautalweges</strong>
+          von Schloss Wildeck in Zschopau über Waldkirchen nach Augustusburg.
+        </p>
+        <a class="grh-eu-cta" href={ANMELDUNG_URL} target="_blank" rel="noopener">
+          Zur Anmeldung auf outdooractive.com ↗
+        </a>
+      </div>
+      <figure class="grh-eu-head__logo">
+        <img src={eurorandoLogo} alt="EURORANDO 2026 Logo" loading="eager" />
+      </figure>
+    </div>
+  </header>
+
+  {/* === Was ist EURORANDO ============================================= */}
+  <section class="grh-eu-intro">
+    <div class="grh-container grh-eu-intro__grid">
+      <div>
+        <span class="grh-eu-section-eyebrow">Was ist EURORANDO?</span>
+        <h2>50 Touren · 8 Tage · ganz Europa zu Gast</h2>
+      </div>
+      <div class="grh-eu-intro__body">
+        <p>
+          Die <strong>EURORANDO</strong> ist Europas größtes Wanderfest
+          unter dem Dach der European Ramblers Association. Vom
+          <strong>20. bis 27. September 2026</strong> kommen Wandererinnen
+          und Wanderer aus ganz Europa ins Erzgebirge — mit rund
+          50 Wanderungen verschiedenster Länge und Schwierigkeit.
+        </p>
+        <p>
+          Zwei dieser Touren führen durch unsere Gemeinde: die
+          <strong>4. Etappe des Zschopautalweges</strong> startet in
+          Zschopau und endet in Augustusburg — und sie führt direkt
+          durch unseren Ortsteil <em>Waldkirchen</em>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* === Die zwei Termine =============================================== */}
+  <section class="grh-eu-termine">
+    <div class="grh-container grh-eu-termine__layout">
+      <header class="grh-eu-section-head">
+        <span class="grh-eu-section-eyebrow">Zwei Termine zur Auswahl</span>
+        <h2>Die Touren durch Grünhainichen</h2>
+        <p>
+          Beide Wanderungen führen die identische Strecke — du kannst
+          frei wählen, ob Mittwoch- oder Sonntags-Tour besser passt.
+        </p>
+      </header>
+      <figure class="grh-eu-banner">
+        <img src={eurorandoBanner} alt="EURORANDO 2026 — Wanderfest im Erzgebirge" loading="lazy" />
+      </figure>
+    </div>
+    <div class="grh-container">
+      <div class="grh-eu-termine__grid">
+        {termine.map((t) => (
+          <article class="grh-eu-termin">
+            <time datetime={t.iso}>
+              <span class="grh-eu-termin__weekday">{t.weekday}</span>
+              <strong>{t.date}</strong>
+            </time>
+            <h3>Geführte Wanderung Zschopautalweg</h3>
+            <p>
+              Von Schloss Wildeck in Zschopau über Grünhainichen / Waldkirchen
+              nach Augustusburg — geführt von zwei erfahrenen Wanderleitern.
+            </p>
+            <div class="grh-eu-termin__actions">
+              <a class="grh-eu-termin__btn" href={ANMELDUNG_URL} target="_blank" rel="noopener">
+                Anmeldung ↗
+              </a>
+              <a class="grh-eu-termin__src" href={t.source} target="_blank" rel="noopener">
+                Detailseite Verband ↗
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* === Route-Highlights ============================================== */}
+  <section class="grh-eu-route">
+    <div class="grh-container">
+      <header class="grh-eu-section-head">
+        <span class="grh-eu-section-eyebrow">Unterwegs</span>
+        <h2>Vier Stationen entlang des Weges</h2>
+      </header>
+      <ol class="grh-eu-route__list">
+        {highlights.map((h, i) => (
+          <li>
+            <span class="grh-eu-route__num">{String(i + 1).padStart(2, '0')}</span>
+            <div>
+              <h3>{h.title}</h3>
+              <p>{h.body}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  {/* === Anreise ======================================================== */}
+  <section class="grh-eu-anreise">
+    <div class="grh-container">
+      <header class="grh-eu-section-head">
+        <span class="grh-eu-section-eyebrow grh-eu-section-eyebrow--light">Anreise</span>
+        <h2>So kommst Du zum Start</h2>
+      </header>
+      <div class="grh-eu-anreise__grid">
+        <article>
+          <h3>Mit der Bahn</h3>
+          <p>
+            <strong>Erzgebirgsbahn</strong> bis Zschopau — von dort sind
+            es ca. 10 Minuten Fußweg zum Schloss Wildeck.
+          </p>
+        </article>
+        <article>
+          <h3>Mit dem Auto</h3>
+          <p>
+            <strong>Schloss Wildeck</strong> · 09405 Zschopau.
+            Parkplätze in der Innenstadt; wer in Augustusburg parken
+            möchte, sollte mit Shuttle / Bahn zurück planen.
+          </p>
+        </article>
+        <article>
+          <h3>Zustieg unterwegs</h3>
+          <p>
+            Die Tour führt durch <strong>Waldkirchen</strong> — Zustieg
+            für Ortsansässige direkt möglich. Treffpunkt-Details
+            erhältst Du nach der Anmeldung.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  {/* === Kontakt ======================================================== */}
+  <section class="grh-eu-foot">
+    <div class="grh-container">
+      <p>
+        Fragen zu den Touren beantwortet der Verwaltungsverband Wildenstein
+        unter <a href="tel:+4937294170-0">037294 / 170-0</a> oder
+        <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a>.
+      </p>
+      <a class="grh-eu-cta grh-eu-cta--alt" href={ANMELDUNG_URL} target="_blank" rel="noopener">
+        Jetzt anmelden ↗
+      </a>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Hero mit Foto-Hintergrund ====================================== */
+  .grh-eu-head {
+    position: relative;
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0;
+    background: var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    overflow: hidden;
+    isolation: isolate;
+    border-bottom: 1px solid var(--grh-line);
+    min-height: clamp(420px, 70vh, 640px);
+    display: flex;
+    align-items: center;
+  }
+  .grh-eu-head__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+  .grh-eu-head__bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .grh-eu-head__veil {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(20, 43, 31, 0.55) 0%, rgba(20, 43, 31, 0.75) 100%);
+  }
+  .grh-eu-head__inner {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+    width: 100%;
+  }
+  @media (min-width: 880px) {
+    .grh-eu-head__inner { grid-template-columns: 1.6fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-eu-head__logo {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+  }
+  .grh-eu-head__logo img {
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    filter: drop-shadow(0 12px 36px rgba(0, 0, 0, 0.4));
+  }
+  .grh-eu-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: rgba(250, 247, 241, 0.7);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-eu-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-300);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-eu-head h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.6rem, 7vw, 5.4rem);
+    line-height: 1.0;
+    letter-spacing: -0.025em;
+    color: var(--grh-cream-50);
+    margin: 0 0 var(--grh-space-4);
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+  .grh-eu-head h1 em {
+    font-style: italic;
+    color: var(--grh-candle-300);
+  }
+  .grh-eu-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: rgba(250, 247, 241, 0.95);
+    max-width: 56ch;
+    margin: 0 0 var(--grh-space-5);
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+  }
+  .grh-eu-lead strong {
+    font-style: normal;
+    color: var(--grh-candle-300);
+    font-weight: 500;
+  }
+  .grh-eu-cta {
+    display: inline-block;
+    padding: 14px 26px;
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    text-decoration: none;
+    border-radius: var(--grh-radius-pill);
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-eu-cta:hover { background: var(--grh-candle-500); transform: translateY(-2px); }
+  .grh-eu-cta--alt { background: var(--grh-forest-900); color: var(--grh-cream-50); }
+  .grh-eu-cta--alt:hover { background: var(--grh-moss-600); }
+
+  /* === Banner-Bild über den Terminen ================================== */
+  .grh-eu-termine__layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+    margin-bottom: var(--grh-space-6);
+  }
+  @media (min-width: 880px) {
+    .grh-eu-termine__layout { grid-template-columns: 1.6fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-eu-banner {
+    margin: 0;
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(26, 61, 39, 0.15);
+  }
+  .grh-eu-banner img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* === Section heads =================================================== */
+  .grh-eu-section-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-eu-section-eyebrow--light { color: var(--grh-candle-300); }
+  .grh-eu-section-head {
+    margin-bottom: var(--grh-space-5);
+  }
+  .grh-eu-section-head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.02em;
+  }
+  .grh-eu-section-head p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    margin: 0;
+    line-height: 1.55;
+    max-width: 56ch;
+  }
+
+  /* === Intro ========================================================== */
+  .grh-eu-intro { padding: var(--grh-space-7) 0; }
+  .grh-eu-intro__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 880px) {
+    .grh-eu-intro__grid { grid-template-columns: 1fr 1.5fr; gap: var(--grh-space-7); }
+  }
+  .grh-eu-intro h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .grh-eu-intro__body p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.7;
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-eu-intro__body p:last-child { margin: 0; }
+  .grh-eu-intro__body strong {
+    color: var(--grh-forest-900);
+    font-weight: 600;
+  }
+  .grh-eu-intro__body em {
+    font-style: italic;
+    color: var(--grh-moss-600);
+  }
+
+  /* === Termine ======================================================== */
+  .grh-eu-termine {
+    padding: var(--grh-space-7) 0;
+    background: var(--grh-paper-100);
+  }
+  .grh-eu-termine__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 720px) {
+    .grh-eu-termine__grid { grid-template-columns: 1fr 1fr; gap: var(--grh-space-6); }
+  }
+  .grh-eu-termin {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    border-top: 4px solid var(--grh-candle-500);
+  }
+  .grh-eu-termin time {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-eu-termin__weekday {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+  }
+  .grh-eu-termin time strong {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .grh-eu-termin h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+  .grh-eu-termin p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .grh-eu-termin__actions {
+    margin-top: auto;
+    padding-top: var(--grh-space-3);
+    border-top: 1px solid var(--grh-line);
+    display: flex;
+    align-items: center;
+    gap: var(--grh-space-4);
+    flex-wrap: wrap;
+  }
+  .grh-eu-termin__btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    text-decoration: none;
+    border-radius: var(--grh-radius-pill);
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-eu-termin__btn:hover { background: var(--grh-moss-600); }
+  .grh-eu-termin__src {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-700);
+    text-decoration: none;
+    font-weight: 700;
+    border-bottom: 1px solid var(--grh-stone-400);
+    padding-bottom: 1px;
+  }
+  .grh-eu-termin__src:hover { color: var(--grh-forest-900); border-color: var(--grh-candle-500); }
+
+  /* === Route-Highlights =============================================== */
+  .grh-eu-route { padding: var(--grh-space-7) 0; }
+  .grh-eu-route__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 800px) {
+    .grh-eu-route__list { grid-template-columns: repeat(2, 1fr); gap: var(--grh-space-5); }
+  }
+  .grh-eu-route__list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--grh-space-4);
+    align-items: start;
+    padding: var(--grh-space-4);
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    border-left: 3px solid var(--grh-candle-500);
+  }
+  .grh-eu-route__num {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    color: var(--grh-candle-500);
+    line-height: 1;
+    font-weight: 500;
+  }
+  .grh-eu-route__list h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    margin: 0 0 6px;
+    letter-spacing: -0.015em;
+  }
+  .grh-eu-route__list p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* === Anreise (dunkel) =============================================== */
+  .grh-eu-anreise {
+    padding: var(--grh-space-7) 0;
+    background:
+      radial-gradient(circle at 100% 100%, rgba(91, 174, 120, 0.18), transparent 55%),
+      var(--grh-forest-950);
+    color: var(--grh-cream-50);
+  }
+  .grh-eu-anreise .grh-eu-section-head h2 { color: var(--grh-cream-50); }
+  .grh-eu-anreise__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 800px) {
+    .grh-eu-anreise__grid { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-5); }
+  }
+  .grh-eu-anreise article {
+    background: rgba(250, 247, 241, 0.08);
+    border: 1px solid rgba(250, 247, 241, 0.18);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+  }
+  .grh-eu-anreise h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-cream-50);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.015em;
+  }
+  .grh-eu-anreise p {
+    font-size: var(--grh-fs-md);
+    color: rgba(250, 247, 241, 0.85);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .grh-eu-anreise strong {
+    color: var(--grh-candle-300);
+    font-weight: 500;
+  }
+
+  /* === Footer ========================================================= */
+  .grh-eu-foot {
+    padding: var(--grh-space-6) 0 var(--grh-space-8);
+    background: var(--grh-cream-50);
+    border-top: 1px solid var(--grh-line);
+    text-align: center;
+  }
+  .grh-eu-foot p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    max-width: 56ch;
+    margin: 0 auto var(--grh-space-5);
+    line-height: 1.6;
+  }
+  .grh-eu-foot a {
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1px solid var(--grh-candle-500);
+  }
+  .grh-eu-foot a:hover { color: var(--grh-moss-600); }
+  .grh-eu-foot a.grh-eu-cta {
+    border: none;
+    padding: 14px 26px;
+    color: var(--grh-cream-50);
+  }
+  .grh-eu-foot a.grh-eu-cta:hover { color: var(--grh-cream-50); }
+</style>

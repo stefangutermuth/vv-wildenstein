@@ -1,0 +1,473 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+interface Praxis {
+  name: string;
+  person?: string;
+  street: string;
+  city: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+}
+
+interface Section {
+  slug: string;
+  title: string;
+  eyebrow: string;
+  items: Praxis[];
+}
+
+const sections: Section[] = [
+  {
+    slug: 'hausarzt',
+    title: 'Allgemeinmedizin',
+    eyebrow: 'Hausarzt',
+    items: [
+      {
+        name: 'Arztpraxis Gunar Gläser',
+        street: 'Hohe Straße 6',
+        city: '09579 Grünhainichen',
+        phone: '037294 / 1250',
+        website: 'http://www.praxisggg.de/',
+      },
+    ],
+  },
+  {
+    slug: 'zahnaerzte',
+    title: 'Zahnärzte',
+    eyebrow: 'Zahnmedizin',
+    items: [
+      {
+        name: 'Zahnarztpraxis Anke Nüßler',
+        person: 'Anke Nüßler',
+        street: 'Chemnitzer Straße 45',
+        city: '09579 Grünhainichen',
+        phone: '037294 / 1207',
+      },
+      {
+        name: 'Dr. med. dent. Heinz-Peter Krause',
+        street: 'August-Bebel-Straße 58',
+        city: 'Borstendorf · 09579 Grünhainichen',
+        phone: '037294 / 7180',
+      },
+    ],
+  },
+  {
+    slug: 'physiotherapie',
+    title: 'Physiotherapie',
+    eyebrow: 'Bewegung & Reha',
+    items: [
+      {
+        name: 'Praxis Ines Holler',
+        person: 'Ines Holler',
+        street: 'Grete-Wendt-Straße 42',
+        city: '09579 Grünhainichen',
+        phone: '037294 / 1650',
+      },
+      {
+        name: 'Physiotherapie „in Balance"',
+        person: 'Diana Reichel',
+        street: 'Chemnitzer Straße 56',
+        city: '09579 Grünhainichen',
+        phone: '037294 / 79457',
+      },
+    ],
+  },
+  {
+    slug: 'apotheke',
+    title: 'Apotheke',
+    eyebrow: 'Medikamente vor Ort',
+    items: [
+      {
+        name: 'Apotheke Grünhainichen',
+        person: 'Apotheker Andreas Enger e. K.',
+        street: 'Chemnitzer Straße 44',
+        city: '09579 Grünhainichen',
+        phone: '037294 / 1264',
+        email: 'apotheke-gruenhainichen@gmx.de',
+      },
+    ],
+  },
+  {
+    slug: 'tierarzt',
+    title: 'Tierarzt',
+    eyebrow: 'Veterinärmedizin',
+    items: [
+      {
+        name: 'Dr. med. vet. Christian Bauer',
+        street: 'Am Wasserwerk 20',
+        city: '09579 Grünhainichen',
+        phone: '037294 / 1358',
+      },
+    ],
+  },
+];
+
+function telHref(p: string): string {
+  return 'tel:' + p.replace(/[^+\d]/g, '');
+}
+---
+<BaseLayout title="Gesundheit · Gemeinde Grünhainichen" header="compact">
+
+  {/* === Notruf-Streifen oben ============================================ */}
+  <section class="grh-ges-notruf" aria-label="Notrufnummern">
+    <div class="grh-container grh-ges-notruf__inner">
+      <div class="grh-ges-notruf__text">
+        <span>Im medizinischen Notfall</span>
+        <p>Wählen Sie immer zuerst den Notruf — nicht die einzelne Praxis.</p>
+      </div>
+      <div class="grh-ges-notruf__btns">
+        <a href="tel:112" class="grh-ges-notruf__btn grh-ges-notruf__btn--primary">
+          <strong>112</strong>
+          <em>Rettungsdienst</em>
+        </a>
+        <a href="tel:116117" class="grh-ges-notruf__btn">
+          <strong>116 117</strong>
+          <em>Ärztl. Bereitschaft</em>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  {/* === Kopfzeile ====================================================== */}
+  <header class="grh-ges-head">
+    <div class="grh-container">
+      <p class="grh-ges-crumb">Leben · Gesundheit</p>
+      <span class="grh-ges-eyebrow">Versorgung vor Ort</span>
+      <h1>Gesundheit</h1>
+      <p class="grh-ges-lead">
+        Hausarzt, Zahnärzte, Apotheke, Physiotherapie und Tierarzt — alle
+        Adressen und Telefonnummern für eine schnelle medizinische Versorgung
+        in unserer Gemeinde auf einen Blick.
+      </p>
+      <nav class="grh-ges-anchors" aria-label="Sprung zu Kategorien">
+        {sections.map((s) => (
+          <a href={`#${s.slug}`}>{s.title}</a>
+        ))}
+      </nav>
+    </div>
+  </header>
+
+  {/* === Sektionen ====================================================== */}
+  {sections.map((s, i) => (
+    <section class={`grh-ges-section ${i % 2 === 0 ? '' : 'grh-ges-section--alt'}`} id={s.slug}>
+      <div class="grh-container">
+        <header class="grh-ges-section__head">
+          <span class="grh-ges-section__eyebrow">{s.eyebrow}</span>
+          <h2>{s.title}</h2>
+        </header>
+        <ul class="grh-ges-list">
+          {s.items.map((p) => (
+            <li class="grh-ges-card">
+              {p.person && p.person !== p.name && <span class="grh-ges-card__person">{p.person}</span>}
+              <h3>{p.name}</h3>
+              <p class="grh-ges-card__addr">
+                {p.street}<br />
+                {p.city}
+              </p>
+              <ul class="grh-ges-card__ways">
+                {p.phone && <li><span>Telefon</span><a href={telHref(p.phone)}>{p.phone}</a></li>}
+                {p.email && <li><span>E-Mail</span><a href={`mailto:${p.email}`}>{p.email}</a></li>}
+                {p.website && (
+                  <li>
+                    <span>Internet</span>
+                    <a href={p.website} target="_blank" rel="noopener">
+                      {p.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  ))}
+
+  {/* === Hinweis-Footer ================================================= */}
+  <section class="grh-ges-hint">
+    <div class="grh-container">
+      <p>
+        <strong>Hinweis zu Sprechzeiten:</strong> Aktuelle Öffnungszeiten und
+        Urlaubsvertretungen entnehmen Sie bitte den Internet-Auftritten oder
+        Aushängen der jeweiligen Praxis.
+      </p>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Notruf-Streifen (rot) =========================================== */
+  .grh-ges-notruf {
+    background:
+      radial-gradient(circle at 100% 100%, rgba(176, 47, 47, 0.18), transparent 55%),
+      #b02f2f;
+    color: #fff;
+    padding: var(--grh-space-4) 0;
+  }
+  .grh-ges-notruf__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+    align-items: center;
+  }
+  @media (min-width: 800px) {
+    .grh-ges-notruf__inner { grid-template-columns: 1fr auto; gap: var(--grh-space-6); }
+  }
+  .grh-ges-notruf__text span {
+    display: block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: rgba(255,255,255,0.75);
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .grh-ges-notruf__text p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    margin: 0;
+    line-height: 1.4;
+    color: rgba(255,255,255,0.95);
+  }
+  .grh-ges-notruf__btns {
+    display: flex;
+    gap: var(--grh-space-2);
+  }
+  .grh-ges-notruf__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: #fff;
+    min-width: 110px;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-ges-notruf__btn:hover { background: rgba(255,255,255,0.22); transform: translateY(-2px); }
+  .grh-ges-notruf__btn--primary {
+    background: rgba(255,255,255,0.95);
+    color: #b02f2f;
+    border-color: rgba(255,255,255,0.95);
+  }
+  .grh-ges-notruf__btn--primary:hover { background: #fff; }
+  .grh-ges-notruf__btn strong {
+    font-family: var(--grh-font-display);
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .grh-ges-notruf__btn em {
+    font-family: var(--grh-font-body);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    margin-top: 4px;
+    font-style: normal;
+    opacity: 0.9;
+  }
+
+  /* === Kopfzeile ====================================================== */
+  .grh-ges-head {
+    padding: clamp(var(--grh-space-7), 9vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background: var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-ges-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-ges-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-ges-head h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.6rem, 7vw, 4.8rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-ges-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--grh-forest-800);
+    max-width: 60ch;
+    margin: 0 0 var(--grh-space-5);
+  }
+
+  /* Anchor-Chips */
+  .grh-ges-anchors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .grh-ges-anchors a {
+    padding: 6px 14px;
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    text-decoration: none;
+    color: var(--grh-forest-800);
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-ges-anchors a:hover {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    border-color: var(--grh-forest-900);
+  }
+
+  /* === Sektionen ====================================================== */
+  .grh-ges-section {
+    padding: var(--grh-space-7) 0;
+    scroll-margin-top: 80px;
+  }
+  .grh-ges-section--alt { background: var(--grh-paper-100); }
+  .grh-ges-section__head { margin-bottom: var(--grh-space-5); }
+  .grh-ges-section__eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-ges-section__head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .grh-ges-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px) {
+    .grh-ges-list { grid-template-columns: repeat(2, 1fr); gap: var(--grh-space-5); }
+  }
+
+  .grh-ges-card {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+  }
+  .grh-ges-section--alt .grh-ges-card { background: var(--grh-cream-50); }
+  .grh-ges-card__person {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+  }
+  .grh-ges-card h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-ges-card__addr {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .grh-ges-card__ways {
+    list-style: none;
+    padding: var(--grh-space-3) 0 0;
+    margin: 0;
+    border-top: 1px solid var(--grh-line);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .grh-ges-card__ways li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-ges-card__ways span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+  }
+  .grh-ges-card__ways a {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    width: fit-content;
+    padding-bottom: 2px;
+    word-break: break-word;
+  }
+  .grh-ges-card__ways a:hover { color: var(--grh-moss-600); }
+
+  /* === Footer-Hinweis ================================================= */
+  .grh-ges-hint {
+    padding: var(--grh-space-5) 0 var(--grh-space-7);
+    background: var(--grh-cream-50);
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-ges-hint p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    text-align: center;
+    max-width: 60ch;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .grh-ges-hint strong {
+    font-style: normal;
+    color: var(--grh-forest-900);
+    font-weight: 500;
+  }
+</style>

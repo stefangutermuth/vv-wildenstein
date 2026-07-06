@@ -1,0 +1,197 @@
+---
+/**
+ * Leaflet-Karte mit Markern für Sperrungen.
+ * Leaflet kommt vom CDN — keine npm-Dependency, kein Build-Overhead.
+ */
+interface SperrungMarker {
+  lat: number;
+  lon: number;
+  title: string;
+  date: string;     // formatiertes Datum für Popup
+  href: string;
+}
+interface Props {
+  markers: SperrungMarker[];
+  centerLat?: number;
+  centerLon?: number;
+  zoom?: number;
+}
+const {
+  markers,
+  centerLat = 50.770,
+  centerLon = 13.140,
+  zoom = 12,
+} = Astro.props;
+
+// Marker-Daten als JSON ins DOM einbetten — der Client liest sie aus.
+const markersJson = JSON.stringify(markers);
+---
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+<section class="grh-spmap" aria-label="Karte der Sperrungen">
+  <div
+    class="grh-spmap__map"
+    data-grh-sperrungen-map
+    data-center-lat={centerLat}
+    data-center-lon={centerLon}
+    data-zoom={zoom}
+    data-markers={markersJson}
+  >
+    <noscript>
+      <p>Diese Karte braucht JavaScript. Die Sperrungen findest Du unten in der Liste.</p>
+    </noscript>
+  </div>
+  {markers.length === 0 && (
+    <p class="grh-spmap__empty">
+      Aktuell sind keine Sperrungen mit bekannter Position eingetragen.
+    </p>
+  )}
+  <p class="grh-spmap__attribution">
+    Karte · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap-Mitwirkende</a>
+  </p>
+</section>
+
+<style>
+  .grh-spmap {
+    margin: 0 0 var(--grh-space-6);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    background: var(--grh-paper-100);
+    box-shadow: 0 12px 32px rgba(26, 61, 39, 0.08);
+  }
+  .grh-spmap__map {
+    width: 100%;
+    height: 460px;
+    background: var(--grh-paper-100);
+  }
+  .grh-spmap__empty {
+    text-align: center;
+    padding: var(--grh-space-4);
+    color: var(--grh-stone-400);
+    font-style: italic;
+    font-family: var(--grh-font-display);
+    margin: 0;
+  }
+  .grh-spmap__attribution {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--grh-stone-400);
+    padding: 6px var(--grh-space-4);
+    text-align: right;
+    background: var(--grh-cream-50);
+    margin: 0;
+  }
+  .grh-spmap__attribution a { color: var(--grh-stone-700); text-decoration: none; }
+
+  /* === Eigene Marker-Optik: rotes Ausrufezeichen ============================ */
+  :global(.grh-marker) {
+    background: #b02f2f;
+    color: #fff;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50%;
+    font-family: 'Inter Variable', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 32px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(176, 47, 47, 0.4),
+                0 0 0 3px rgba(255, 255, 255, 0.9);
+    border: none !important;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+  }
+  :global(.leaflet-popup-content) {
+    margin: 12px 16px !important;
+    font-family: 'Inter Variable', sans-serif;
+  }
+  :global(.leaflet-popup-content strong) {
+    font-family: 'Fraunces Variable', Georgia, serif;
+    font-weight: 500;
+    color: #1A3D27;
+    font-size: 15px;
+    line-height: 1.3;
+    display: block;
+    margin-bottom: 4px;
+  }
+  :global(.leaflet-popup-content time) {
+    font-family: 'Fraunces Variable', Georgia, serif;
+    font-style: italic;
+    font-size: 12px;
+    color: #b02f2f;
+    display: block;
+    margin-bottom: 6px;
+  }
+  :global(.leaflet-popup-content a.grh-marker-link) {
+    display: inline-block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #1A3D27;
+    text-decoration: none;
+    border-bottom: 1.5px solid #D4A55C;
+    padding-bottom: 1px;
+    font-weight: 700;
+  }
+</style>
+
+<script>
+  // Leaflet via CDN nachladen + Karte initialisieren.
+  function initLeafletMap() {
+    const el = document.querySelector<HTMLElement>('[data-grh-sperrungen-map]');
+    if (!el || !(window as any).L) return;
+    const L = (window as any).L;
+
+    const centerLat = parseFloat(el.dataset.centerLat || '50.77');
+    const centerLon = parseFloat(el.dataset.centerLon || '13.14');
+    const zoom      = parseInt(el.dataset.zoom || '12', 10);
+    const markers   = JSON.parse(el.dataset.markers || '[]');
+
+    const map = L.map(el, { scrollWheelZoom: false }).setView([centerLat, centerLon], zoom);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19,
+    }).addTo(map);
+
+    const bounds: [number, number][] = [];
+    for (const m of markers) {
+      const icon = L.divIcon({
+        className: 'grh-marker',
+        html: '!',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+      const marker = L.marker([m.lat, m.lon], { icon }).addTo(map);
+      const popupHtml =
+        `<strong>${escapeHtml(m.title)}</strong>` +
+        `<time>${escapeHtml(m.date)}</time>` +
+        `<a class="grh-marker-link" href="${m.href}">Zum Beitrag →</a>`;
+      marker.bindPopup(popupHtml);
+      bounds.push([m.lat, m.lon]);
+    }
+
+    if (bounds.length >= 2) {
+      map.fitBounds(bounds, { padding: [40, 40] });
+    } else if (bounds.length === 1) {
+      map.setView(bounds[0], 14);
+    }
+  }
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // Leaflet-Bundle laden (cached vom Browser nach erstem Aufruf)
+  const script = document.createElement('script');
+  script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  script.crossOrigin = '';
+  script.onload = initLeafletMap;
+  document.head.appendChild(script);
+</script>

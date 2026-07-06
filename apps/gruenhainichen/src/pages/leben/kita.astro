@@ -1,0 +1,376 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+interface Einrichtung {
+  name: string;
+  type: 'Kita' | 'Hort' | 'Kita + Hort';
+  ortsteil: string;
+  description?: string;
+  leitung?: string;
+  street: string;
+  city: string;
+  phone?: string;
+  email?: string;
+  isNeighbor?: boolean;
+}
+
+const kitas: Einrichtung[] = [
+  {
+    name: 'Kita „Borstel"',
+    type: 'Kita + Hort',
+    ortsteil: 'Borstendorf',
+    description: 'Integrative Kindertageseinrichtung mit angeschlossenem Hort.',
+    leitung: 'Frau Richter',
+    street: 'Gartenstraße 5',
+    city: 'Borstendorf · 09579 Grünhainichen',
+    phone: '037294 / 1541',
+    email: 'kita.borstel.wildenstein@gmail.com',
+  },
+  {
+    name: 'Kindertagesstätte „Holzwürmchen"',
+    type: 'Kita',
+    ortsteil: 'Grünhainichen',
+    leitung: 'Frau Hausdörfer',
+    street: 'Fabrikstraße 6',
+    city: '09579 Grünhainichen',
+    phone: '037294 / 1280',
+    email: 'kita.holzwuermchen@gmail.com',
+  },
+  {
+    name: 'Hort „Waldis Kids"',
+    type: 'Hort',
+    ortsteil: 'Grünhainichen',
+    description: 'Hort der Grundschule „Im Grünen" — Betreuung am Schulstandort.',
+    leitung: 'Frau Hausdörfer',
+    street: 'Chemnitzer Straße 67 b',
+    city: '09579 Grünhainichen',
+    phone: '037294 / 87 99 02',
+    email: 'hort-waldiskids22@web.de',
+  },
+  {
+    name: 'Kindertagesstätte „Mäuseburg"',
+    type: 'Kita',
+    ortsteil: 'Waldkirchen',
+    leitung: 'Frau Wolf',
+    street: 'Dorfstraße 51',
+    city: 'Waldkirchen · 09579 Grünhainichen',
+    phone: '037294 / 87 75 00',
+    email: 'kita.maeuseburg@gmx.de',
+  },
+  {
+    name: 'Kita „Wunderland"',
+    type: 'Kita',
+    ortsteil: 'Börnichen',
+    description: 'Kita der Nachbargemeinde Börnichen im Verwaltungsverband.',
+    leitung: 'Susan Tonat',
+    street: 'Försterweg 2',
+    city: '09437 Börnichen/Erzgeb.',
+    phone: '037294 / 1569',
+    email: 'kita@boernichen.de',
+    isNeighbor: true,
+  },
+];
+
+const ortColor: Record<string, string> = {
+  Borstendorf: 'var(--grh-moss-600)',
+  Grünhainichen: 'var(--grh-candle-500)',
+  Waldkirchen: 'var(--grh-forest-800)',
+  Börnichen: 'var(--grh-stone-700)',
+};
+
+function telHref(p: string): string {
+  return 'tel:' + p.replace(/[^+\d]/g, '');
+}
+---
+<BaseLayout title="Kindertagesstätten & Hort · Gemeinde Grünhainichen" header="compact">
+
+  <header class="grh-kita-head">
+    <div class="grh-container">
+      <p class="grh-kita-crumb">Leben · Kindertagesstätte / Hort</p>
+      <span class="grh-kita-eyebrow">Wo unsere Jüngsten lernen &amp; spielen</span>
+      <h1>Kindertagesstätten &amp; Hort</h1>
+      <p class="grh-kita-lead">
+        Drei Kindertagesstätten in unseren Ortsteilen plus der Hort an der
+        Grundschule — und mit der Kita „Wunderland" in Börnichen
+        eine weitere im Verbund. Alle Standorte mit Leitung und Kontakt
+        auf einen Blick.
+      </p>
+    </div>
+  </header>
+
+  <section class="grh-kita-section">
+    <div class="grh-container">
+      <div class="grh-kita-grid">
+        {kitas.map((k) => (
+          <article class={`grh-kita-card ${k.isNeighbor ? 'grh-kita-card--neighbor' : ''}`}>
+            <header class="grh-kita-card__head">
+              <span class="grh-kita-card__ort" style={`--ort-color: ${ortColor[k.ortsteil] ?? 'var(--grh-moss-600)'}`}>
+                {k.ortsteil}
+              </span>
+              <span class={`grh-kita-card__type grh-kita-card__type--${k.type === 'Hort' ? 'hort' : k.type === 'Kita + Hort' ? 'both' : 'kita'}`}>
+                {k.type}
+              </span>
+            </header>
+            <h2>{k.name}</h2>
+            {k.description && <p class="grh-kita-card__desc">{k.description}</p>}
+
+            <div class="grh-kita-card__contact">
+              {k.leitung && (
+                <p class="grh-kita-card__leitung">
+                  <span>Leitung</span>{k.leitung}
+                </p>
+              )}
+              <p class="grh-kita-card__addr">
+                {k.street}<br />
+                {k.city}
+              </p>
+              <ul>
+                {k.phone && <li><span>Telefon</span><a href={telHref(k.phone)}>{k.phone}</a></li>}
+                {k.email && <li><span>E-Mail</span><a href={`mailto:${k.email}`}>{k.email}</a></li>}
+              </ul>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="grh-kita-foot">
+    <div class="grh-container">
+      <p>
+        <strong>Anmeldung &amp; Formulare:</strong> Aufnahme-Anträge, Schließtage und
+        die Satzungen der Kindertageseinrichtungen erhalten Sie direkt in
+        den Einrichtungen oder über die Gemeindeverwaltung.
+      </p>
+      <a href="/gemeinde/verwaltung/" class="grh-kita-foot__link">Zur Verwaltung →</a>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Kopfzeile ====================================================== */
+  .grh-kita-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.10), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-kita-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-kita-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-kita-head h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-kita-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--grh-forest-800);
+    max-width: 60ch;
+    margin: 0;
+  }
+
+  /* === Karten-Grid ==================================================== */
+  .grh-kita-section { padding: var(--grh-space-7) 0; }
+  .grh-kita-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 720px)  { .grh-kita-grid { grid-template-columns: 1fr 1fr; gap: var(--grh-space-5); } }
+  @media (min-width: 1100px) { .grh-kita-grid { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-6); } }
+
+  .grh-kita-card {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-kita-card:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-3px);
+  }
+  .grh-kita-card--neighbor {
+    background:
+      repeating-linear-gradient(135deg, var(--grh-paper-100) 0 6px, var(--grh-cream-50) 6px 12px);
+    border-style: dashed;
+  }
+  .grh-kita-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--grh-space-3);
+  }
+  .grh-kita-card__ort {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--ort-color, var(--grh-moss-600));
+    font-weight: 700;
+  }
+  .grh-kita-card__type {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: var(--grh-radius-pill);
+  }
+  .grh-kita-card__type--kita {
+    background: rgba(91, 174, 120, 0.15);
+    color: var(--grh-moss-600);
+    border: 1px solid rgba(91, 174, 120, 0.3);
+  }
+  .grh-kita-card__type--hort {
+    background: rgba(212, 165, 92, 0.18);
+    color: var(--grh-candle-500);
+    border: 1px solid rgba(212, 165, 92, 0.4);
+  }
+  .grh-kita-card__type--both {
+    background: rgba(26, 61, 39, 0.10);
+    color: var(--grh-forest-900);
+    border: 1px solid rgba(26, 61, 39, 0.25);
+  }
+  .grh-kita-card h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-kita-card__desc {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .grh-kita-card__contact {
+    border-top: 1px solid var(--grh-line);
+    padding-top: var(--grh-space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+  }
+  .grh-kita-card__leitung {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-kita-card__leitung span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+  }
+  .grh-kita-card__addr {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .grh-kita-card__contact ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .grh-kita-card__contact ul li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-kita-card__contact ul span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+  }
+  .grh-kita-card__contact ul a {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    width: fit-content;
+    padding-bottom: 2px;
+    word-break: break-word;
+  }
+  .grh-kita-card__contact ul a:hover { color: var(--grh-moss-600); }
+
+  /* === Footer ========================================================= */
+  .grh-kita-foot {
+    padding: var(--grh-space-6) 0 var(--grh-space-8);
+    background: var(--grh-paper-100);
+    border-top: 1px solid var(--grh-line);
+    text-align: center;
+  }
+  .grh-kita-foot p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    max-width: 60ch;
+    margin: 0 auto var(--grh-space-4);
+    line-height: 1.6;
+  }
+  .grh-kita-foot strong {
+    font-style: normal;
+    color: var(--grh-forest-900);
+    font-weight: 500;
+  }
+  .grh-kita-foot__link {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+  .grh-kita-foot__link:hover { color: var(--grh-moss-600); }
+</style>

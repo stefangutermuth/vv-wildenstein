@@ -42,8 +42,10 @@ function buildAuthHeader(): Record<string, string> {
   return { Authorization: `Basic ${token}` };
 }
 
-/** Wie viele Posts pro Anfrage maximal (WP-Default ist 10, Max 100) */
-const PER_PAGE = 50;
+/** Wie viele Posts pro Anfrage maximal (WP-Default ist 10, Max 100).
+ *  Auf 100 gesetzt, damit auch ältere Bekanntmachungen (z.B. FNP 07/2022) im
+ *  News-Index landen und für /neuigkeiten/[slug] statisch erzeugt werden. */
+const PER_PAGE = 100;
 
 /** WP-Slugs, die wir im Frontend von Grünhainichen sehen wollen */
 const ORTSTEIL_SLUGS: Record<string, Ortsteil> = {
@@ -95,25 +97,53 @@ function isPlaceholderUrl(url: string): boolean {
   return PLACEHOLDER_PATTERNS.some((p) => p.test(url));
 }
 
-export async function fetchWordPressNews(): Promise<NewsItem[]> {
-  const url = new URL(`${WP_BASE}/posts`);
-  url.searchParams.set('per_page', String(PER_PAGE));
-  url.searchParams.set('_embed', 'wp:featuredmedia,wp:term');
-  url.searchParams.set('orderby', 'date');
-  url.searchParams.set('order', 'desc');
+/** Wieviele Pages à PER_PAGE wir maximal holen. Aktuell 5 = bis zu 500 Posts. */
+const MAX_PAGES = 5;
 
-  const res = await fetch(url.toString(), {
-    headers: {
-      Accept: 'application/json',
-      ...buildAuthHeader(),
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`WP REST ${res.status} ${res.statusText} (${url.pathname})`);
+/** Timeout pro WP-Anfrage (ms). Verhindert, dass der Astro-Dev-Server bei
+ *  langsam reagierender WP-Site komplett hängen bleibt. */
+const FETCH_TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
   }
-  const posts = (await res.json()) as WPPost[];
+}
 
-  return posts
+export async function fetchWordPressNews(): Promise<NewsItem[]> {
+  const all: WPPost[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const url = new URL(`${WP_BASE}/posts`);
+    url.searchParams.set('per_page', String(PER_PAGE));
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('_embed', 'wp:featuredmedia,wp:term');
+    url.searchParams.set('orderby', 'date');
+    url.searchParams.set('order', 'desc');
+
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(url.toString(), {
+        headers: { Accept: 'application/json', ...buildAuthHeader() },
+      });
+    } catch (err) {
+      console.warn(`[cms-wp] page ${page} Timeout/Abort:`, (err as Error).message);
+      break; // bei Timeout bisher gesammelte Posts zurückgeben statt komplett zu scheitern
+    }
+    if (!res.ok) {
+      // WP gibt 400 zurück, wenn page > vorhandene Seiten → Schleife beenden.
+      if (page === 1) throw new Error(`WP REST ${res.status} ${res.statusText} (${url.pathname})`);
+      break;
+    }
+    const batch = (await res.json()) as WPPost[];
+    all.push(...batch);
+    if (batch.length < PER_PAGE) break; // letzte Seite war kürzer
+  }
+
+  return all
     .map(mapWPPostToNewsItem)
     .filter((n): n is NewsItem => n !== null);
 }
@@ -136,10 +166,14 @@ function mapWPPostToNewsItem(p: WPPost): NewsItem | null {
   // 3) Sonst: undefined → Gradient-Fallback in der UI
   const image = pickFeaturedImage(p) ?? pickInlineImage(p.content?.rendered ?? '');
   const title = decodeEntities(p.title.rendered);
-  const excerpt = stripHtml(p.excerpt.rendered).trim();
+  const excerpt = decodeEntities(stripHtml(p.excerpt.rendered)).trim();
+
+  // WP-Slugs können URL-encodierte Sonderzeichen enthalten (z.B. %c2%a7 für „§").
+  // Wir decodieren sie, damit Astros getStaticPaths saubere Routen erzeugt.
+  const decodedSlug = safeDecode(p.slug);
 
   return {
-    slug: p.slug,
+    slug: decodedSlug,
     title,
     date: new Date(p.date),
     category,
@@ -147,8 +181,12 @@ function mapWPPostToNewsItem(p: WPPost): NewsItem | null {
     image,
     excerpt,
     featured: p.sticky ?? false,
-    href: p.link,
+    href: `/neuigkeiten/${decodedSlug}`,
   };
+}
+
+function safeDecode(s: string): string {
+  try { return decodeURIComponent(s); } catch { return s; }
 }
 
 function collectTermSlugs(p: WPPost): Set<string> {
@@ -186,11 +224,13 @@ function pickFeaturedImage(p: WPPost): string | undefined {
   if (media.mime_type && !media.mime_type.startsWith('image/')) return undefined;
 
   const sizes = media.media_details?.sizes ?? {};
+  // Größte verfügbare Variante zuerst — Bilder werden im Mauerwerk-Grid
+  // im Originalformat angezeigt, daher braucht es die volle Qualität.
   const candidate =
-    sizes['medium_large']?.source_url ??
+    media.source_url ??
     sizes['large']?.source_url ??
-    sizes['medium']?.source_url ??
-    media.source_url;
+    sizes['medium_large']?.source_url ??
+    sizes['medium']?.source_url;
   if (!candidate || isPlaceholderUrl(candidate)) return undefined;
   return candidate;
 }
@@ -252,9 +292,16 @@ export async function fetchWordPressEvents(): Promise<EventItem[]> {
   fromDate.setDate(fromDate.getDate() - 14);
   url.searchParams.set('from', fromDate.toISOString().slice(0, 19));
 
-  const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(url.toString(), { headers: { Accept: 'application/json' } });
+  } catch (err) {
+    console.warn('[cms-wp] vw-events Timeout/Abort:', (err as Error).message);
+    return [];
+  }
   if (!res.ok) {
-    throw new Error(`vw-events ${res.status} ${res.statusText} (${url.pathname})`);
+    console.warn(`[cms-wp] vw-events ${res.status} ${res.statusText} → leere Liste`);
+    return [];
   }
   const events = (await res.json()) as VWEvent[];
 
@@ -273,7 +320,18 @@ function mapVWEvent(ev: VWEvent): EventItem | null {
   if (!ev.start) return null;
   const startDate = new Date(ev.start);
   if (Number.isNaN(startDate.valueOf())) return null;
-  const endDate = ev.end ? new Date(ev.end) : undefined;
+  let endDate = ev.end ? new Date(ev.end) : undefined;
+  if (endDate && Number.isNaN(endDate.valueOf())) endDate = undefined;
+  // Tagesgenauer Vergleich (lokal): wenn Start- und End-Datum auf den gleichen
+  // Kalendertag fallen, ist es kein mehrtägiges Event — endDate weglassen,
+  // sonst rendern wir Quatsch wie „23.–23. August".
+  if (endDate) {
+    const sameDay =
+      startDate.getFullYear() === endDate.getFullYear() &&
+      startDate.getMonth()    === endDate.getMonth() &&
+      startDate.getDate()     === endDate.getDate();
+    if (sameDay) endDate = undefined;
+  }
 
   const ortsteil = pickOrtsteilFromSlugs(ev.standort);
   const location = ev.location?.name || ev.location?.address || '';
@@ -282,7 +340,7 @@ function mapVWEvent(ev: VWEvent): EventItem | null {
     slug: ev.slug,
     title: decodeEntities(ev.title),
     startDate,
-    endDate: endDate && !Number.isNaN(endDate.valueOf()) ? endDate : undefined,
+    endDate,
     location,
     ortsteil,
     teaser: stripHtml(ev.description_html).trim().slice(0, 180),
@@ -300,18 +358,43 @@ function pickOrtsteilFromSlugs(slugs: string[]): Ortsteil | undefined {
   return undefined;
 }
 
+// Benannte HTML-Entities, die WP-Titel & Excerpts häufig verwenden
+const NAMED_ENTITIES: Record<string, string> = {
+  amp:    '&',
+  lt:     '<',
+  gt:     '>',
+  quot:   '"',
+  apos:   "'",
+  nbsp:   ' ',
+  hellip: '…',
+  laquo:  '«',
+  raquo:  '»',
+  ndash:  '–',
+  mdash:  '—',
+  lsquo:  '‘',
+  rsquo:  '’',
+  ldquo:  '“',
+  rdquo:  '”',
+  bdquo:  '„',
+  sbquo:  '‚',
+};
+
+/**
+ * Dekodiert HTML-Entities — sowohl benannte (`&amp;`, `&hellip;`) als auch
+ * numerische (`&#8222;`, `&#x201E;`). Behandelt damit auch die deutschen
+ * Anführungszeichen „..." (8222/8220) und alle anderen typischen Sonderzeichen,
+ * die WP automatisch erzeugt.
+ */
 function decodeEntities(html: string): string {
-  return html
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&#8211;/g, '–')
-    .replace(/&#8212;/g, '—')
-    .replace(/&#8216;/g, '‘')
-    .replace(/&#8217;/g, '’')
-    .replace(/&#8220;/g, '“')
-    .replace(/&#8221;/g, '”')
-    .replace(/&hellip;/g, '…');
+  return html.replace(/&(#x[0-9a-fA-F]+|#\d+|[a-zA-Z][a-zA-Z0-9]+);/g, (m, ref: string) => {
+    if (ref.startsWith('#x') || ref.startsWith('#X')) {
+      const code = parseInt(ref.slice(2), 16);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : m;
+    }
+    if (ref.startsWith('#')) {
+      const code = parseInt(ref.slice(1), 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : m;
+    }
+    return NAMED_ENTITIES[ref] ?? m;
+  });
 }

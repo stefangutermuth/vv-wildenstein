@@ -143,7 +143,7 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
 
       <div class="grh-mega__brief-foot">
         <a href="tel:+4937294170-0"><GrhIcon name="phone" size={12} /> 037294 / 170-0</a>
-        <a href="mailto:gemeinde@gruenhainichen.com"><GrhIcon name="mail" size={12} /> gemeinde@gruenhainichen.com</a>
+        <a href="mailto:info@wildenstein.ws"><GrhIcon name="mail" size={12} /> info@wildenstein.ws</a>
       </div>
     </aside>
 
@@ -160,17 +160,28 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
       <nav class="grh-mega__columns" aria-label="Vollständige Navigation">
         {nav.map((item) => (
           <section class="grh-mega__col">
-            <a href={item.href} class="grh-mega__col-head">{item.label}</a>
+            <a href={item.href} class="grh-mega__col-head">
+              {item.label}
+              {item.wip && <span class="grh-mega__wip" title="Inhalt noch in Klärung" aria-label="Inhalt noch nicht final">!</span>}
+            </a>
 
             {item.children && (
               <ul class="grh-mega__sublist">
                 {item.children.map((sub) => (
                   <li>
-                    <a href={sub.href} class="grh-mega__sublink">{sub.label}</a>
+                    <a href={sub.href} class="grh-mega__sublink">
+                      {sub.label}
+                      {sub.wip && <span class="grh-mega__wip" title="Inhalt noch in Klärung" aria-label="Inhalt noch nicht final">!</span>}
+                    </a>
                     {sub.children && (
                       <ul class="grh-mega__sublist3">
                         {sub.children.map((sub3) => (
-                          <li><a href={sub3.href}>{sub3.label}</a></li>
+                          <li>
+                            <a href={sub3.href}>
+                              {sub3.label}
+                              {sub3.wip && <span class="grh-mega__wip" title="Inhalt noch in Klärung" aria-label="Inhalt noch nicht final">!</span>}
+                            </a>
+                          </li>
                         ))}
                       </ul>
                     )}
@@ -594,6 +605,28 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
     text-decoration: none;
   }
   .grh-mega__sublist3 a:hover { color: var(--grh-forest-900); }
+
+  /* === Rotes Ausrufezeichen für WIP-Seiten ============================= */
+  .grh-mega__wip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background: #b02f2f;
+    color: #fff;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    font-style: normal;
+    vertical-align: 0.05em;
+    letter-spacing: 0;
+    flex-shrink: 0;
+  }
+  .grh-mega__col-head .grh-mega__wip { width: 16px; height: 16px; font-size: 11px; }
 
   /* === Feature-Band: Quote + Card =========================== */
   .grh-mega__feature {

@@ -1,0 +1,442 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const imgLogo     = 'https://vv-wildenstein.com/wp-content/uploads/2024/01/Jubilaeums-Logo_final_01_2024.png';
+const imgPlakat   = 'https://vv-wildenstein.com/wp-content/uploads/2024/04/HEIMATFEST-PLAKAT.jpeg';
+const imgUmzug    = 'https://vv-wildenstein.com/wp-content/uploads/2024/04/Stehender-Festumzug.jpeg';
+const imgStroh    = 'https://vv-wildenstein.com/wp-content/uploads/2024/01/Strohpuppenbestellung-Heimatfest.jpg';
+const imgChronik  = 'https://vv-wildenstein.com/wp-content/uploads/2024/06/Kopfteil-Chroniken-HF-.jpeg';
+
+const anniversaries = [
+  { ort: 'Grünhainichen', years: 675, since: 'seit 1349' },
+  { ort: 'Waldkirchen',   years: 675, since: 'seit 1349/50' },
+  { ort: 'Borstendorf',   years: 645, since: 'seit 1379' },
+];
+
+const subPages = [
+  { href: '/veranstaltungen/heimatfest/rueckblick',           title: 'Rückblick & Bilder',  body: 'Was 2024 passiert ist — Eindrücke, Plakate, Chroniken.' },
+  { href: '/veranstaltungen/heimatfest/jubilaeumsprodukte',   title: 'Jubiläumsprodukte',   body: 'Erinnerungsstücke und Sammler-Editionen.' },
+];
+---
+<BaseLayout title="Heimatfest 2024 · Gemeinde Grünhainichen" header="compact">
+
+  {/* === Hero ============================================================ */}
+  <header class="grh-hf-head">
+    <div class="grh-container grh-hf-head__grid">
+      <div class="grh-hf-head__text">
+        <p class="grh-hf-crumb">Veranstaltungen · Heimatfest</p>
+        <span class="grh-hf-eyebrow">07. – 16. Juni 2024</span>
+        <h1>Heimatfest <em>2024</em></h1>
+        <p class="grh-hf-lead">
+          Drei Orte, drei Jubiläen, ein gemeinsames Fest — erstmals haben
+          Borstendorf, Grünhainichen und Waldkirchen ihre Jahresfeiern
+          zusammen begangen. Eine Woche lang mit Outdoor-Restaurant,
+          stehendem Festumzug, geschmückten Grundstücken und Musik bis
+          in jeden Winkel der Gemeinde.
+        </p>
+      </div>
+      <figure class="grh-hf-logo">
+        <img src={imgLogo} alt="Jubiläums-Logo Heimatfest 2024" loading="eager" />
+      </figure>
+    </div>
+  </header>
+
+  {/* === Drei Jubiläen ================================================== */}
+  <section class="grh-hf-jub">
+    <div class="grh-container">
+      <header class="grh-hf-section-head">
+        <span class="grh-hf-section-eyebrow">Drei Jubiläen unter einem Dach</span>
+        <h2>Zusammen 1 995 Jahre Gemeinde-Geschichte</h2>
+      </header>
+      <ul class="grh-hf-jub-grid">
+        {anniversaries.map((a) => (
+          <li>
+            <strong>{a.years}</strong>
+            <span class="grh-hf-jub__ort">{a.ort}</span>
+            <span class="grh-hf-jub__since">{a.since}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  {/* === Plakat ======================================================== */}
+  <section class="grh-hf-plakat">
+    <div class="grh-container grh-hf-plakat__grid">
+      <div>
+        <span class="grh-hf-section-eyebrow">Plakat &amp; Festwoche</span>
+        <h2>Eine Woche lang Heimat feiern</h2>
+        <p>
+          Vom 7. bis 16. Juni 2024 verwandelten sich die drei Ortsteile in
+          einen einzigen Festplatz: Eröffnungs-, Kultur- und Abschluss-Wochenende,
+          dazu ein <em>stehender Festumzug</em> — bei dem die Wagen nicht ziehen,
+          sondern die Besucher von Station zu Station spazieren.
+        </p>
+      </div>
+      <figure class="grh-hf-plakat__img">
+        <img src={imgPlakat} alt="Heimatfest-Plakat 2024" loading="lazy" />
+      </figure>
+    </div>
+  </section>
+
+  {/* === Highlights ===================================================== */}
+  <section class="grh-hf-highlights">
+    <div class="grh-container">
+      <header class="grh-hf-section-head">
+        <span class="grh-hf-section-eyebrow">Höhepunkte</span>
+        <h2>Was diese Woche besonders machte</h2>
+      </header>
+      <div class="grh-hf-h-grid">
+        <article>
+          <figure><img src={imgUmzug} alt="Stehender Festumzug" loading="lazy" /></figure>
+          <div>
+            <h3>Stehender Festumzug am 16. Juni</h3>
+            <p>
+              Statt traditionell zu ziehen, blieben Wagen und Gruppen in
+              den drei Ortsteilen stehen — Besucherinnen und Besucher
+              wanderten von einem Bild zum nächsten.
+            </p>
+          </div>
+        </article>
+        <article>
+          <figure><img src={imgStroh} alt="Strohpuppen-Wettbewerb" loading="lazy" /></figure>
+          <div>
+            <h3>Strohpuppen-Wettbewerb</h3>
+            <p>
+              In allen drei Orten zierten selbstgemachte Strohpuppen
+              Vorgärten, Höfe und Straßenecken. Eine Jury kürte die
+              schönsten geschmückten Grundstücke.
+            </p>
+          </div>
+        </article>
+        <article>
+          <figure><img src={imgChronik} alt="Ortschroniken" loading="lazy" /></figure>
+          <div>
+            <h3>Ortschroniken zum Mitnehmen</h3>
+            <p>
+              Pünktlich zum Fest erschienen die druckfrischen Chroniken
+              für Grünhainichen und Borstendorf — verkauft direkt am
+              Stand und über die Gemeinde.
+            </p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  {/* === Weiterführende Seiten ========================================== */}
+  <section class="grh-hf-more">
+    <div class="grh-container">
+      <header class="grh-hf-section-head">
+        <span class="grh-hf-section-eyebrow">Mehr zum Fest</span>
+        <h2>Vertiefen &amp; Erinnern</h2>
+      </header>
+      <ul class="grh-hf-more__grid">
+        {subPages.map((s) => (
+          <li>
+            <a href={s.href}>
+              <h3>{s.title}</h3>
+              <p>{s.body}</p>
+              <span>Ansehen →</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Hero =========================================================== */
+  .grh-hf-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.18), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-hf-head__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+  }
+  @media (min-width: 880px) {
+    .grh-hf-head__grid { grid-template-columns: 1.4fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-hf-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-hf-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-hf-head__text h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.8rem, 7vw, 5rem);
+    line-height: 1.0;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-hf-head__text h1 em {
+    font-style: italic;
+    color: var(--grh-candle-500);
+  }
+  .grh-hf-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--grh-forest-800);
+    max-width: 56ch;
+    margin: 0;
+  }
+  .grh-hf-logo {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+  }
+  .grh-hf-logo img {
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    filter: drop-shadow(0 12px 36px rgba(26, 61, 39, 0.18));
+  }
+
+  /* === Jubiläen ======================================================= */
+  .grh-hf-jub {
+    padding: var(--grh-space-7) 0;
+    background:
+      radial-gradient(circle at 0% 100%, rgba(91, 174, 120, 0.18), transparent 55%),
+      var(--grh-forest-950);
+    color: var(--grh-cream-50);
+  }
+  .grh-hf-section-head {
+    text-align: center;
+    margin-bottom: var(--grh-space-6);
+  }
+  .grh-hf-section-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-hf-jub .grh-hf-section-eyebrow { color: var(--grh-candle-300); }
+  .grh-hf-section-head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .grh-hf-jub .grh-hf-section-head h2 { color: var(--grh-cream-50); }
+  .grh-hf-jub-grid {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px) { .grh-hf-jub-grid { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-5); } }
+  .grh-hf-jub-grid li {
+    text-align: center;
+    padding: var(--grh-space-5);
+    background: rgba(250, 247, 241, 0.08);
+    border: 1px solid rgba(250, 247, 241, 0.18);
+    border-radius: var(--grh-radius-md);
+  }
+  .grh-hf-jub-grid strong {
+    display: block;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(3rem, 6vw, 5rem);
+    color: var(--grh-candle-300);
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+  .grh-hf-jub__ort {
+    display: block;
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-cream-50);
+    margin-top: var(--grh-space-2);
+    letter-spacing: -0.01em;
+  }
+  .grh-hf-jub__since {
+    display: block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: rgba(250, 247, 241, 0.6);
+    margin-top: 4px;
+  }
+
+  /* === Plakat-Sektion ================================================= */
+  .grh-hf-plakat { padding: var(--grh-space-7) 0; }
+  .grh-hf-plakat__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+  }
+  @media (min-width: 880px) {
+    .grh-hf-plakat__grid { grid-template-columns: 1fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-hf-plakat h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    letter-spacing: -0.02em;
+  }
+  .grh-hf-plakat p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.65;
+    margin: 0;
+    max-width: 50ch;
+  }
+  .grh-hf-plakat p em {
+    font-style: italic;
+    color: var(--grh-moss-600);
+  }
+  .grh-hf-plakat__img {
+    margin: 0;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-3);
+    box-shadow: 0 16px 40px rgba(26, 61, 39, 0.12);
+  }
+  .grh-hf-plakat__img img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--grh-radius-sm);
+  }
+
+  /* === Highlights ===================================================== */
+  .grh-hf-highlights {
+    padding: var(--grh-space-7) 0;
+    background: var(--grh-paper-100);
+  }
+  .grh-hf-h-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 800px) {
+    .grh-hf-h-grid { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-6); }
+  }
+  .grh-hf-h-grid article {
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--grh-line);
+  }
+  .grh-hf-h-grid figure {
+    margin: 0;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--grh-paper-100);
+  }
+  .grh-hf-h-grid figure img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .grh-hf-h-grid > article > div { padding: var(--grh-space-4) var(--grh-space-5) var(--grh-space-5); }
+  .grh-hf-h-grid h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-2);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-hf-h-grid p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* === Weiterführend ================================================== */
+  .grh-hf-more { padding: var(--grh-space-7) 0 var(--grh-space-9); }
+  .grh-hf-more__grid {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 720px) {
+    .grh-hf-more__grid { grid-template-columns: 1fr 1fr; gap: var(--grh-space-6); }
+  }
+  .grh-hf-more__grid a {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+    padding: var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-hf-more__grid a:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-2px);
+  }
+  .grh-hf-more__grid h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+  }
+  .grh-hf-more__grid p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .grh-hf-more__grid span {
+    margin-top: auto;
+    padding-top: var(--grh-space-3);
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    align-self: flex-start;
+    padding-bottom: 2px;
+  }
+</style>

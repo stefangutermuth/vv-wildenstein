@@ -1,0 +1,225 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Gemeinde-Bücherei · Grünhainichen" header="compact">
+
+  <header class="grh-buc-head">
+    <div class="grh-container">
+      <p class="grh-buc-crumb">Leben · Gemeinde-Bücherei</p>
+      <span class="grh-buc-eyebrow">Lesen &amp; Ausleihen</span>
+      <h1>Gemeinde-Bücherei</h1>
+      <p class="grh-buc-lead">
+        Unsere Bücherei im Ortsteil Waldkirchen — Standort der gemeinde­eigenen
+        Medien für alle Generationen.
+      </p>
+    </div>
+  </header>
+
+  <section class="grh-buc-status" aria-label="Aktueller Status">
+    <div class="grh-container">
+      <div class="grh-buc-statusbox">
+        <div class="grh-buc-statusbox__badge">Vorübergehend geschlossen</div>
+        <p>
+          Die Gemeindebücherei im Ortsteil Waldkirchen ist derzeit
+          <strong>vorübergehend geschlossen</strong>.
+        </p>
+      </div>
+
+      <article class="grh-buc-info">
+        <span class="grh-buc-info__label">Bücher-Rückgabe</span>
+        <h2>Während der Schließung</h2>
+        <p>
+          Bitte geben Sie geliehene Bücher im Sekretariat der Grundschule
+          „Im Grünen" in Grünhainichen ab.
+        </p>
+        <div class="grh-buc-addr">
+          <strong>Grundschule „Im Grünen"</strong>
+          <span>Chemnitzer Straße 67 B<br />09579 Grünhainichen</span>
+          <a href="tel:+4937294879901">037294 / 87 99 01</a>
+        </div>
+      </article>
+
+      <article class="grh-buc-future">
+        <span class="grh-buc-info__label">Wenn es wieder losgeht</span>
+        <h2>Bleiben Sie informiert</h2>
+        <p>
+          Sobald die Bücherei wieder öffnet, kündigen wir das hier und im
+          Amtsblatt an. Wer Fragen zum Bestand oder zur Wiedereröffnung hat,
+          erreicht uns über die Gemeindeverwaltung.
+        </p>
+        <a class="grh-buc-future__link" href="/gemeinde/verwaltung/">
+          Zur Verwaltung →
+        </a>
+      </article>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .grh-buc-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.08), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-buc-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-buc-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-buc-head h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-buc-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--grh-forest-800);
+    max-width: 50ch;
+    margin: 0;
+  }
+
+  .grh-buc-status {
+    padding: var(--grh-space-7) 0 var(--grh-space-9);
+    background: var(--grh-paper-100);
+  }
+  .grh-buc-statusbox {
+    background: var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5) var(--grh-space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--grh-space-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--grh-space-6);
+    background-image: radial-gradient(circle at 0% 0%, rgba(212, 165, 92, 0.2), transparent 50%);
+  }
+  .grh-buc-statusbox__badge {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    padding: 6px 12px;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-900);
+    border-radius: var(--grh-radius-pill);
+    flex-shrink: 0;
+  }
+  .grh-buc-statusbox p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.4;
+    margin: 0;
+    color: var(--grh-cream-50);
+  }
+  .grh-buc-statusbox strong {
+    font-style: normal;
+    font-weight: 500;
+    color: var(--grh-candle-300);
+  }
+
+  .grh-buc-info,
+  .grh-buc-future {
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5) var(--grh-space-6);
+    border-left: 3px solid var(--grh-candle-500);
+    margin-bottom: var(--grh-space-4);
+  }
+  .grh-buc-info__label {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    display: block;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-buc-info h2,
+  .grh-buc-future h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.015em;
+  }
+  .grh-buc-info p,
+  .grh-buc-future p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0 0 var(--grh-space-4);
+    max-width: 60ch;
+  }
+  .grh-buc-addr {
+    background: var(--grh-paper-100);
+    border-radius: var(--grh-radius-sm);
+    padding: var(--grh-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 40ch;
+  }
+  .grh-buc-addr strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .grh-buc-addr span {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.5;
+  }
+  .grh-buc-addr a {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+    width: fit-content;
+    margin-top: 4px;
+  }
+  .grh-buc-addr a:hover { color: var(--grh-moss-600); }
+
+  .grh-buc-future__link {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+  .grh-buc-future__link:hover { color: var(--grh-moss-600); }
+</style>

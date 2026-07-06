@@ -1,0 +1,333 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../../components/global/GrhPageHeader.astro';
+import { getAmtsblaetter } from '../../../lib/cms-cpt';
+
+const all = await getAmtsblaetter();
+
+// Gruppiert nach Jahr
+const byYear = new Map<string, typeof all>();
+for (const a of all) {
+  const list = byYear.get(a.jahr) ?? [];
+  list.push(a);
+  byYear.set(a.jahr, list);
+}
+const years = Array.from(byYear.keys()).sort((a, b) => Number(b) - Number(a));
+
+const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
+const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+---
+<BaseLayout title="Amtsblatt · Grünhainichen" header="compact">
+  <GrhPageHeader
+    title="Amtsblatt"
+    breadcrumb="Gemeinde · Amtsblatt"
+    lead="Alle Ausgaben des Amtsblatts zum Herunterladen — Beschlüsse, Bekanntmachungen, Termine."
+    count={all.length}
+    countLabel="Ausgaben"
+  />
+
+  <section class="grh-amtsblatt">
+    <div class="grh-container grh-amtsblatt__grid">
+      <div class="grh-amtsblatt__list">
+        {years.map((year) => (
+          <article class="grh-amtsblatt__year">
+            <h2>{year}</h2>
+            <ul>
+              {byYear.get(year)!.map((a) => (
+                <li>
+                  <span class="grh-amtsblatt__month">{fmtMonth.format(a.date).replace('.', '')}</span>
+                  <div class="grh-amtsblatt__meta">
+                    <h3>{a.title}</h3>
+                    <time>{fmtFull.format(a.date)}</time>
+                  </div>
+                  <a
+                    class={`grh-amtsblatt__dl ${a.pdfUrl ? '' : 'grh-amtsblatt__dl--alt'}`}
+                    href={a.pdfUrl ?? a.link}
+                    target="_blank"
+                    rel="noopener"
+                    aria-label={`Amtsblatt ${a.title} öffnen`}
+                  >
+                    Öffnen
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </article>
+        ))}
+        {all.length === 0 && (
+          <p class="grh-amtsblatt__empty">Aktuell sind keine Amtsblätter verfügbar.</p>
+        )}
+      </div>
+
+      {/* === Info-Sidebar === */}
+      <aside class="grh-amtsblatt__info" aria-labelledby="info-title">
+        <h2 id="info-title">Wissenswertes</h2>
+
+        {/* Wichtige Downloads direkt oben */}
+        <div class="grh-amtsblatt__pdfs">
+          <a
+            class="grh-amtsblatt__pdf"
+            href="https://vv-wildenstein.com/wp-content/uploads/2022/12/Terminplan-2026_Redaktion_fuer-EXTERN_PDF.pdf"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="grh-amtsblatt__pdf-tag">PDF</span>
+            <span class="grh-amtsblatt__pdf-name">Terminplan 2026</span>
+            <span class="grh-amtsblatt__pdf-sub">Redaktionsschluss-Daten</span>
+          </a>
+          <a
+            class="grh-amtsblatt__pdf"
+            href="https://vv-wildenstein.com/wp-content/uploads/2025/01/Anzeigenpreise-ab-01.02.2025.pdf"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="grh-amtsblatt__pdf-tag">PDF</span>
+            <span class="grh-amtsblatt__pdf-name">Anzeigenpreise</span>
+            <span class="grh-amtsblatt__pdf-sub">gültig ab 01.02.2025</span>
+          </a>
+        </div>
+
+        <dl>
+          <dt>Erscheinungsweise</dt>
+          <dd>Monatlich — Anfang jedes Monats.</dd>
+
+          <dt>Auflage</dt>
+          <dd>2.310 Exemplare</dd>
+
+          <dt>Verteilung</dt>
+          <dd>Kostenlose Zustellung an alle Haushalte der Verbandsgemeinden.</dd>
+
+          <dt>Abgabetermin</dt>
+          <dd>Texte, Berichte und Inserate i. d. R. Mitte des Vormonats. Genaue Daten siehe Terminplan.</dd>
+
+          <dt>Herausgeber</dt>
+          <dd>Verwaltungsverband „Wildenstein"<br />vertreten durch den Verbandsvorsitzenden und die Bürgermeister der Verbandsgemeinden</dd>
+        </dl>
+
+        <div class="grh-amtsblatt__contact">
+          <strong>Ansprechpartnerin</strong>
+          <p>Frau Schubert · Verwaltungsverband Wildenstein<br />Chemnitzer Straße 41, 09579 Grünhainichen</p>
+          <a href="tel:+4937294170-32">037294 / 170-32</a>
+          <a href="tel:+4937294170-0">037294 / 170-0</a>
+          <a href="mailto:k.schubert@wildenstein.ws">k.schubert@wildenstein.ws</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .grh-amtsblatt { padding: var(--grh-space-6) 0 var(--grh-space-9); }
+  .grh-amtsblatt__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-7);
+    align-items: start;
+  }
+  @media (min-width: 880px) {
+    .grh-amtsblatt__grid { grid-template-columns: minmax(0, 1fr) 300px; gap: var(--grh-space-7); }
+  }
+
+  /* === Liste — kompakter, mit Monatschip links =========================== */
+  .grh-amtsblatt__year { margin-bottom: var(--grh-space-5); }
+  .grh-amtsblatt__year h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-2);
+    letter-spacing: -0.02em;
+    border-bottom: 2px solid var(--grh-candle-500);
+    display: inline-block;
+    padding-bottom: 2px;
+  }
+  .grh-amtsblatt__year ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-amtsblatt__year li {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    align-items: center;
+    gap: var(--grh-space-3);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-amtsblatt__month {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-candle-500);
+    text-transform: lowercase;
+    text-align: center;
+    letter-spacing: 0;
+    background: var(--grh-paper-100);
+    border-radius: var(--grh-radius-sm);
+    padding: 4px 0;
+  }
+  .grh-amtsblatt__meta {
+    min-width: 0;
+  }
+  .grh-amtsblatt__meta h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    margin: 0;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .grh-amtsblatt__meta time {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+  .grh-amtsblatt__dl {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid var(--grh-forest-800);
+    border-radius: var(--grh-radius-pill);
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+    white-space: nowrap;
+  }
+  .grh-amtsblatt__dl:hover {
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+  }
+  .grh-amtsblatt__dl--alt { color: var(--grh-stone-700); border-color: var(--grh-line); }
+  .grh-amtsblatt__empty {
+    text-align: center;
+    color: var(--grh-stone-400);
+    font-style: italic;
+    font-family: var(--grh-font-display);
+    padding: var(--grh-space-7) 0;
+  }
+
+  /* === Info-Sidebar ===================================================== */
+  .grh-amtsblatt__info {
+    background: var(--grh-paper-100);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    position: sticky;
+    top: var(--grh-space-6);
+  }
+  .grh-amtsblatt__info h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    letter-spacing: -0.01em;
+  }
+
+  .grh-amtsblatt__pdfs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: var(--grh-space-5);
+  }
+  .grh-amtsblatt__pdf {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: var(--grh-space-3);
+    row-gap: 2px;
+    align-items: center;
+    padding: var(--grh-space-3) var(--grh-space-3);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-amtsblatt__pdf:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-1px);
+  }
+  .grh-amtsblatt__pdf-tag {
+    grid-row: 1 / 3;
+    align-self: center;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #b02f2f;
+    background: rgba(176, 47, 47, 0.08);
+    border: 1px solid rgba(176, 47, 47, 0.25);
+    padding: 3px 7px;
+    border-radius: var(--grh-radius-sm);
+  }
+  .grh-amtsblatt__pdf-name {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .grh-amtsblatt__pdf-sub {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    letter-spacing: 0.04em;
+  }
+  .grh-amtsblatt__info dl {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    margin: 0;
+  }
+  .grh-amtsblatt__info dt {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-700);
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .grh-amtsblatt__info dd {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-forest-800);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .grh-amtsblatt__contact {
+    margin-top: var(--grh-space-5);
+    padding-top: var(--grh-space-4);
+    border-top: 1px solid var(--grh-line);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .grh-amtsblatt__contact strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-amtsblatt__contact p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    margin: 0 0 4px;
+    line-height: 1.5;
+  }
+  .grh-amtsblatt__contact a {
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    font-size: var(--grh-fs-sm);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--grh-dur-fast);
+    word-break: break-word;
+  }
+  .grh-amtsblatt__contact a:hover { border-color: var(--grh-candle-500); }
+</style>

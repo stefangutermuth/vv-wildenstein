@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhCPTDetail from '../../components/global/GrhCPTDetail.astro';
+import { getProfile } from '../../lib/cms-cpt';
+
+export async function getStaticPaths() {
+  const list = await getProfile();
+  return list.map((p) => ({
+    params: { slug: p.slug },
+    props: { profil: p },
+  }));
+}
+
+const { profil } = Astro.props as { profil: Awaited<ReturnType<typeof getProfile>>[number] };
+const kategorie = profil.kategorien[0]?.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+---
+<BaseLayout title={`${profil.title} · Gewerbe · Grünhainichen`} header="compact">
+  <GrhCPTDetail
+    title={profil.title}
+    breadcrumb={`Gewerbe${profil.ortsteil ? ' · ' + profil.ortsteil.replace(/^./, c => c.toUpperCase()) : ''}`}
+    eyebrow={kategorie ?? 'Firma'}
+    image={profil.image}
+    contentHtml={profil.contentHtml}
+    kontakt={profil.kontakt}
+    backHref="/gewerbe"
+    backLabel="Alle Firmen"
+  />
+</BaseLayout>

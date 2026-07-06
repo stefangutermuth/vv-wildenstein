@@ -1,0 +1,404 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const photo = 'https://vv-wildenstein.com/wp-content/uploads/2022/11/waldi-04517-1000x667.jpg';
+
+const stats = [
+  { value: '148', label: 'Schülerinnen & Schüler' },
+  { value: '8',   label: 'Klassen, jeweils 2-zügig' },
+  { value: '10',  label: 'Lehrkräfte (+1 in Ausbildung)' },
+  { value: '4',   label: 'Ortsteile als Einzugsgebiet' },
+];
+
+const features = [
+  { title: 'Außenklassenzimmer',    body: 'Bei mildem Wetter wird der Unterricht nach draußen verlegt — Wald, Felder und Wiesen liegen direkt vor der Tür.' },
+  { title: 'Großer Schulgarten',    body: 'Gemüse, Kräuter und Blumen werden gemeinsam gepflanzt und gepflegt — Sachunterricht zum Anfassen.' },
+  { title: 'Hühnerstall',           body: 'Eine Schar Hühner gehört zum Schulalltag — Verantwortung und Naturkunde inklusive.' },
+  { title: 'Vielseitige Angebote',  body: 'Lesewettbewerb, Mathematik-Olympiade, Sportwettkämpfe und jährliche Schul­projekte ergänzen den Stundenplan.' },
+];
+---
+<BaseLayout title={`Grundschule „Im Grünen" · Gemeinde Grünhainichen`} header="compact">
+
+  {/* === Hero mit Schul-Foto ============================================ */}
+  <header class="grh-gs-head">
+    <div class="grh-container grh-gs-head__grid">
+      <div class="grh-gs-head__text">
+        <p class="grh-gs-crumb">Leben · Grundschule</p>
+        <span class="grh-gs-eyebrow">Lernen mit Wald, Garten &amp; Hühnerstall</span>
+        <h1>Grundschule „Im Grünen"</h1>
+        <p class="grh-gs-lead">
+          Seit dem 1. November 2022 lernen die Grundschulkinder aus
+          Borstendorf, Grünhainichen, Waldkirchen und Börnichen in einem
+          frischen Neubau am Ortsrand — buchstäblich „im Grünen".
+        </p>
+        <a class="grh-gs-cta" href="https://grundschule-im-gruenen.net/" target="_blank" rel="noopener">
+          grundschule-im-gruenen.net ↗
+        </a>
+      </div>
+      <figure class="grh-gs-photo">
+        <img src={photo} alt={`Grundschule „Im Grünen"`} loading="eager" />
+      </figure>
+    </div>
+  </header>
+
+  {/* === Stats-Streifen ================================================= */}
+  <section class="grh-gs-stats">
+    <div class="grh-container">
+      <ul>
+        {stats.map((s) => (
+          <li>
+            <strong>{s.value}</strong>
+            <span>{s.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  {/* === Besonderheiten ================================================ */}
+  <section class="grh-gs-block">
+    <div class="grh-container">
+      <header class="grh-gs-section-head">
+        <span class="grh-gs-section-eyebrow">Was unsere Schule auszeichnet</span>
+        <h2>Lernen in besonderer Umgebung</h2>
+      </header>
+      <div class="grh-gs-features">
+        {features.map((f) => (
+          <article>
+            <h3>{f.title}</h3>
+            <p>{f.body}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* === Kontakt & Förderverein ========================================= */}
+  <section class="grh-gs-block grh-gs-block--alt">
+    <div class="grh-container grh-gs-grid">
+      <article class="grh-gs-card">
+        <span class="grh-gs-card__label">Sekretariat</span>
+        <h2>Kontakt &amp; Anmeldung</h2>
+        <p>
+          Anmeldungen für Schulanfänger und alle organisatorischen Fragen
+          laufen über das Sekretariat — Sprechzeiten und genaue Termine
+          finden Sie auf der Schul-Website.
+        </p>
+        <div class="grh-gs-contact">
+          <strong>Grundschule „Im Grünen"</strong>
+          <span>Chemnitzer Straße 67 b<br />09579 Grünhainichen</span>
+          <ul>
+            <li><span>Telefon</span><a href="tel:+493729487991">037294 / 87 99 01</a></li>
+            <li><span>E-Mail</span><a href="mailto:gs-im-gruenen-gruenhainichen@magenta.de">gs-im-gruenen-gruenhainichen@magenta.de</a></li>
+            <li><span>Internet</span><a href="https://grundschule-im-gruenen.net/" target="_blank" rel="noopener">grundschule-im-gruenen.net</a></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="grh-gs-card grh-gs-card--accent">
+        <span class="grh-gs-card__label">Förderverein</span>
+        <h2>Wer die Schule trägt</h2>
+        <p>
+          Der <strong>Förderverein Grundschule im Grünen</strong> unterstützt
+          die Arbeit der Schule mit zusätzlichen Mitteln für Projekte,
+          Ausstattung und besondere Aktionen.
+        </p>
+        <a class="grh-gs-foev" href="/vereine/foerderverein-grundschule-im-gruenen/">
+          Zum Vereinsprofil →
+        </a>
+      </article>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Hero ============================================================ */
+  .grh-gs-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(91, 174, 120, 0.10), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-gs-head__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+  }
+  @media (min-width: 880px) {
+    .grh-gs-head__grid { grid-template-columns: 1.2fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-gs-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-gs-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-gs-head__text h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.2rem, 5.5vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-gs-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--grh-forest-800);
+    max-width: 50ch;
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-gs-cta {
+    display: inline-block;
+    padding: 10px 18px;
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    text-decoration: none;
+    border-radius: var(--grh-radius-pill);
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-gs-cta:hover { background: var(--grh-moss-600); transform: translateY(-2px); }
+
+  .grh-gs-photo {
+    margin: 0;
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(26, 61, 39, 0.15);
+  }
+  .grh-gs-photo img {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* === Stats-Streifen ================================================= */
+  .grh-gs-stats {
+    background: var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    padding: var(--grh-space-5) 0;
+  }
+  .grh-gs-stats ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px) {
+    .grh-gs-stats ul { grid-template-columns: repeat(4, 1fr); }
+  }
+  .grh-gs-stats li {
+    text-align: center;
+  }
+  .grh-gs-stats strong {
+    display: block;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--grh-candle-300);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .grh-gs-stats span {
+    display: block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: rgba(250, 247, 241, 0.7);
+    margin-top: 8px;
+  }
+
+  /* === Block / Section-Heads ========================================== */
+  .grh-gs-block { padding: var(--grh-space-7) 0; }
+  .grh-gs-block--alt { background: var(--grh-paper-100); }
+
+  .grh-gs-section-head { margin-bottom: var(--grh-space-6); }
+  .grh-gs-section-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-gs-section-head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  /* === Feature-Kacheln ================================================ */
+  .grh-gs-features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px) {
+    .grh-gs-features { grid-template-columns: repeat(2, 1fr); gap: var(--grh-space-5); }
+  }
+  .grh-gs-features article {
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    border-left: 3px solid var(--grh-candle-500);
+  }
+  .grh-gs-features h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.015em;
+  }
+  .grh-gs-features p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* === Kontakt + Förderverein ========================================= */
+  .grh-gs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 800px) {
+    .grh-gs-grid { grid-template-columns: 1.5fr 1fr; gap: var(--grh-space-6); }
+  }
+  .grh-gs-card {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5) var(--grh-space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+  }
+  .grh-gs-card--accent {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.12), transparent 60%),
+      var(--grh-cream-50);
+    border-color: var(--grh-candle-500);
+  }
+  .grh-gs-card__label {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+  }
+  .grh-gs-card h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-2xl);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  .grh-gs-card p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .grh-gs-card strong { color: var(--grh-forest-900); font-weight: 600; }
+
+  .grh-gs-contact {
+    margin-top: var(--grh-space-3);
+    padding-top: var(--grh-space-3);
+    border-top: 1px solid var(--grh-line);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .grh-gs-contact strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .grh-gs-contact > span {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.5;
+  }
+  .grh-gs-contact ul {
+    list-style: none;
+    padding: 0;
+    margin: var(--grh-space-3) 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+  }
+  .grh-gs-contact ul li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-gs-contact ul span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+  }
+  .grh-gs-contact ul a {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    width: fit-content;
+    padding-bottom: 2px;
+    word-break: break-word;
+  }
+  .grh-gs-contact ul a:hover { color: var(--grh-moss-600); }
+
+  .grh-gs-foev {
+    margin-top: auto;
+    align-self: flex-start;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+  .grh-gs-foev:hover { color: var(--grh-moss-600); }
+</style>

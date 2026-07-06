@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhCPTDetail from '../../components/global/GrhCPTDetail.astro';
+import { getVereine } from '../../lib/cms-cpt';
+
+export async function getStaticPaths() {
+  const list = await getVereine();
+  return list.map((v) => ({
+    params: { slug: v.slug },
+    props: { verein: v },
+  }));
+}
+
+const { verein } = Astro.props as { verein: Awaited<ReturnType<typeof getVereine>>[number] };
+---
+<BaseLayout title={`${verein.title} · Vereine · Grünhainichen`} header="compact">
+  <GrhCPTDetail
+    title={verein.title}
+    breadcrumb={`Vereine${verein.ortsteil ? ' · ' + verein.ortsteil.replace(/^./, c => c.toUpperCase()) : ''}`}
+    eyebrow="Verein"
+    image={verein.image}
+    contentHtml={verein.contentHtml}
+    kontakt={verein.kontakt}
+    backHref="/vereine"
+    backLabel="Alle Vereine"
+  />
+</BaseLayout>

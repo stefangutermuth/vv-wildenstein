@@ -1,0 +1,424 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getEvents } from '../../lib/cms';
+
+const poster2025 = 'https://vv-wildenstein.com/wp-content/uploads/2025/08/Adventskalender_2025.jpg';
+const poster2024 = 'https://vv-wildenstein.com/wp-content/uploads/2024/11/Plakat-leb.-Adventskalender.jpg';
+
+// Falls in der laufenden Saison schon Termine gepflegt sind, hier abgreifen.
+const events = await getEvents();
+const adventEvents = events.filter((e) => /advent/i.test(e.title));
+
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long' });
+const hasUpcoming = adventEvents.length > 0;
+---
+<BaseLayout title="Lebendiger Adventskalender · Gemeinde Grünhainichen" header="compact">
+
+  <header class="grh-adv-head">
+    <div class="grh-container grh-adv-head__grid">
+      <div class="grh-adv-head__text">
+        <p class="grh-adv-crumb">Leben · Lebendiger Adventskalender</p>
+        <span class="grh-adv-eyebrow">Jeden Abend ein neues Fenster</span>
+        <h1>Lebendiger Adventskalender</h1>
+        <p class="grh-adv-lead">
+          Vom 1. bis 23. Dezember öffnet jeden Abend irgendwo in unserer
+          Gemeinde ein <em>Fenster</em>, ein <em>Tor</em> oder eine
+          <em>Tür</em> — und Nachbarinnen und Nachbarn treffen sich für
+          eine halbe Stunde zu Punsch, Musik und Geschichten.
+        </p>
+        <p class="grh-adv-status">
+          {hasUpcoming
+            ? 'Die Termine der laufenden Saison findest Du in unserem Veranstaltungs-Kalender.'
+            : 'Die Saison 2026 wird ab November vorbereitet — Eindrücke aus 2024/2025 zeigen, was Dich erwartet.'}
+        </p>
+      </div>
+      <figure class="grh-adv-poster">
+        <img src={poster2025} alt="Plakat Lebendiger Adventskalender" loading="eager" />
+        <figcaption>Plakat-Auszug · Saison 2025</figcaption>
+      </figure>
+    </div>
+  </header>
+
+  <section class="grh-adv-how">
+    <div class="grh-container">
+      <header class="grh-adv-section-head">
+        <span class="grh-adv-section-eyebrow">So funktioniert es</span>
+        <h2>23 Abende, 23 Orte</h2>
+      </header>
+      <div class="grh-adv-steps">
+        <article>
+          <span class="grh-adv-step__num">01</span>
+          <h3>Ein Fenster öffnet sich</h3>
+          <p>
+            Jeden Abend ab dem 1. Dezember lädt eine Familie, ein Verein
+            oder ein Geschäft an einem Fenster, einem Tor oder einer Tür
+            für eine halbe Stunde ein.
+          </p>
+        </article>
+        <article>
+          <span class="grh-adv-step__num">02</span>
+          <h3>Punsch, Musik &amp; Geschichten</h3>
+          <p>
+            Was passiert, entscheidet jede Gastgeber-Familie selbst —
+            Lieder mit dem Posaunenchor, Klöppel-Werkstatt, Plätzchen,
+            Adventsgedichte oder schlicht ein warmer Tee.
+          </p>
+        </article>
+        <article>
+          <span class="grh-adv-step__num">03</span>
+          <h3>Gemeinsam unterwegs</h3>
+          <p>
+            Ein Spaziergang durch den Ort, ein neues Gesicht jeden Abend
+            und ein Adventskalender, der nicht auf dem Tisch, sondern
+            in der ganzen Gemeinde steht.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  {adventEvents.length > 0 && (
+    <section class="grh-adv-events">
+      <div class="grh-container">
+        <header class="grh-adv-section-head">
+          <span class="grh-adv-section-eyebrow">Aktuelle Saison</span>
+          <h2>Stationen im Adventskalender</h2>
+        </header>
+        <ol class="grh-adv-list">
+          {adventEvents.map((e) => (
+            <li>
+              <a href={`/veranstaltungen/${e.slug}`}>
+                <time>{fmt.format(e.startDate)}</time>
+                <div>
+                  <strong>{e.title}</strong>
+                  {e.location && <span>{e.location}</span>}
+                </div>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  )}
+
+  <section class="grh-adv-mitmachen">
+    <div class="grh-container grh-adv-mitmachen__grid">
+      <div>
+        <span class="grh-adv-eyebrow grh-adv-eyebrow--light">Mitmachen</span>
+        <h2>Werde Gastgeber:in</h2>
+        <p>
+          Du hast ein schönes Fenster, einen Hof oder ein Tor und Lust,
+          eine halbe Stunde im Advent mit Nachbarn zu teilen?
+          Melde Dich beim <strong>Bürgermeister-Sekretariat</strong> —
+          wir koordinieren die Termine.
+        </p>
+        <a class="grh-adv-cta" href="/gemeinde/verwaltung/">
+          Verwaltung kontaktieren →
+        </a>
+      </div>
+      <figure class="grh-adv-poster grh-adv-poster--alt">
+        <img src={poster2024} alt="Plakat-Archiv 2024" loading="lazy" />
+        <figcaption>Aus dem Archiv · Saison 2024</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="grh-adv-foot">
+    <div class="grh-container">
+      <p>
+        Aktuelle Termine, Mitwirkende und Wegbeschreibungen findest Du
+        ab Mitte November in unserem
+        <a href="/veranstaltungen/">Veranstaltungs-Kalender</a>.
+      </p>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .grh-adv-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-7);
+    background:
+      radial-gradient(circle at 100% 100%, rgba(212, 165, 92, 0.18), transparent 55%),
+      radial-gradient(circle at 0% 0%, rgba(91, 174, 120, 0.12), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-adv-head__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+  }
+  @media (min-width: 880px) {
+    .grh-adv-head__grid { grid-template-columns: 1.4fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-adv-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-adv-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-adv-eyebrow--light { color: var(--grh-candle-300); }
+  .grh-adv-head__text h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    max-width: 14ch;
+  }
+  .grh-adv-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--grh-forest-800);
+    max-width: 55ch;
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-adv-lead em {
+    font-style: italic;
+    color: var(--grh-moss-600);
+    background:
+      linear-gradient(transparent 62%, rgba(212, 165, 92, 0.30) 62%, rgba(212, 165, 92, 0.30) 92%, transparent 92%);
+    padding: 0 3px;
+  }
+  .grh-adv-status {
+    font-family: var(--grh-font-body);
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    margin: 0;
+  }
+
+  .grh-adv-poster {
+    margin: 0;
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-3);
+    border: 1px solid var(--grh-line);
+    box-shadow: 0 16px 40px rgba(26, 61, 39, 0.15);
+    transform: rotate(-1.5deg);
+    transition: transform var(--grh-dur-base);
+  }
+  .grh-adv-poster:hover { transform: rotate(0deg); }
+  .grh-adv-poster img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--grh-radius-sm);
+  }
+  .grh-adv-poster figcaption {
+    text-align: center;
+    margin-top: var(--grh-space-2);
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-400);
+  }
+  .grh-adv-poster--alt {
+    transform: rotate(1.5deg);
+  }
+
+  .grh-adv-how { padding: var(--grh-space-7) 0; }
+  .grh-adv-section-head { margin-bottom: var(--grh-space-6); text-align: center; }
+  .grh-adv-section-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-adv-section-head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .grh-adv-steps {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 800px) {
+    .grh-adv-steps { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-6); }
+  }
+  .grh-adv-steps article {
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    border-top: 3px solid var(--grh-candle-500);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+  }
+  .grh-adv-step__num {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--grh-candle-500);
+    line-height: 1;
+    font-weight: 500;
+  }
+  .grh-adv-steps h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-adv-steps p {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .grh-adv-events {
+    padding: var(--grh-space-7) 0;
+    background: var(--grh-paper-100);
+  }
+  .grh-adv-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-adv-list li { border-top: 1px solid var(--grh-line); }
+  .grh-adv-list li:last-child { border-bottom: 1px solid var(--grh-line); }
+  .grh-adv-list a {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: baseline;
+    gap: var(--grh-space-4);
+    padding: var(--grh-space-3) 0;
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left var(--grh-dur-fast);
+  }
+  .grh-adv-list a:hover { padding-left: 6px; }
+  .grh-adv-list time {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-candle-500);
+  }
+  .grh-adv-list strong {
+    display: block;
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  .grh-adv-list span {
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+
+  .grh-adv-mitmachen {
+    padding: var(--grh-space-7) 0;
+    background:
+      radial-gradient(circle at 0% 100%, rgba(212, 165, 92, 0.22), transparent 55%),
+      var(--grh-forest-950);
+    color: var(--grh-cream-50);
+  }
+  .grh-adv-mitmachen__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+  }
+  @media (min-width: 880px) {
+    .grh-adv-mitmachen__grid { grid-template-columns: 1.4fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-adv-mitmachen h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    color: var(--grh-cream-50);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.02em;
+  }
+  .grh-adv-mitmachen p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+    line-height: 1.6;
+    color: rgba(250, 247, 241, 0.92);
+    max-width: 50ch;
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-adv-mitmachen strong {
+    font-style: normal;
+    color: var(--grh-candle-300);
+    font-weight: 500;
+  }
+  .grh-adv-cta {
+    display: inline-block;
+    padding: 12px 22px;
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    text-decoration: none;
+    border-radius: var(--grh-radius-pill);
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-adv-cta:hover {
+    background: var(--grh-candle-500);
+    transform: translateY(-2px);
+  }
+
+  .grh-adv-foot {
+    padding: var(--grh-space-5) 0 var(--grh-space-7);
+    background: var(--grh-cream-50);
+    border-top: 1px solid var(--grh-line);
+    text-align: center;
+  }
+  .grh-adv-foot p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    max-width: 56ch;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .grh-adv-foot a {
+    color: var(--grh-forest-800);
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    text-decoration: none;
+    font-style: normal;
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    padding-bottom: 2px;
+    margin-left: 4px;
+  }
+  .grh-adv-foot a:hover { color: var(--grh-moss-600); }
+</style>

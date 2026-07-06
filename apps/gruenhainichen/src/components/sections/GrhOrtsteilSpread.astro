@@ -15,10 +15,10 @@ interface Props {
 }
 const { items } = Astro.props;
 
-const iconFor = {
-  borstendorf:    'chess-knight',
-  gruenhainichen: 'angel11',
-  waldkirchen:    'bridge',
+const wappenFor = {
+  borstendorf:    'https://upload.wikimedia.org/wikipedia/commons/2/2d/Wappen_Borstendorf.png',
+  gruenhainichen: 'https://upload.wikimedia.org/wikipedia/commons/e/e6/Wappen-Gr%C3%BCnhainichen.png',
+  waldkirchen:    'https://upload.wikimedia.org/wikipedia/commons/9/9d/Wappen_Waldkirchen_Erz.png',
 } as const;
 ---
 <div class="grh-triptych">
@@ -32,7 +32,7 @@ const iconFor = {
             <div class="grh-triptych__media-fallback" aria-hidden="true"></div>
           )}
           <span class="grh-triptych__icon" aria-hidden="true">
-            <GrhIcon name={iconFor[o.key]} size={24} />
+            <img src={wappenFor[o.key]} alt="" loading="lazy" />
           </span>
           <span class="grh-triptych__num" aria-hidden="true">{String(o.index).padStart(2, '0')}</span>
         </div>
@@ -110,14 +110,19 @@ const iconFor = {
     position: absolute;
     bottom: var(--grh-space-3);
     right: var(--grh-space-3);
-    width: 38px; height: 38px;
+    width: 72px; height: 72px;
     border-radius: 50%;
-    background: rgba(20, 43, 31, 0.55);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    color: var(--grh-candle-300);
+    background: var(--grh-cream-50);
     display: grid; place-items: center;
-    border: 1px solid rgba(250, 247, 241, 0.25);
+    border: 1px solid rgba(250, 247, 241, 0.6);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    overflow: hidden;
+    padding: 6px;
+  }
+  .grh-triptych__icon :global(img) {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
   }
 
   .grh-triptych__body {

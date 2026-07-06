@@ -1,0 +1,517 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+interface Verfahren {
+  tag: 'B-Plan' | 'FNP';
+  title: string;
+  status: string;
+  stand: string;
+  bekanntmacht?: string;
+  body?: string;
+  url: string;
+  active: boolean;
+}
+
+const verfahren: Verfahren[] = [
+  {
+    tag: 'B-Plan',
+    title: 'B-Plan „Am Wildenstein"',
+    status: 'Vorentwurf · öffentliche Bekanntmachung',
+    stand: 'Stand 08/2025',
+    body: 'Bebauungsplan für das Gebiet „Am Wildenstein" — Vorentwurf zur öffentlichen Einsicht und Stellungnahme.',
+    url: '/neuigkeiten/gemeinde-gruenhainichen-b-plan-am-wildenstein-oeffentliche-bekanntmachung-vorentwurf-stand-08-2025',
+    active: true,
+  },
+  {
+    tag: 'FNP',
+    title: 'Flächennutzungsplan VV Wildenstein',
+    status: 'Vorentwurf · öffentliche Beteiligung nach § 3 Abs. 2 BauGB',
+    stand: 'Stand 11/2024',
+    bekanntmacht: '30.01.2025',
+    body: 'Gesamtgemeindlicher Flächennutzungsplan für die Mitgliedsgemeinden des Verwaltungsverbandes Wildenstein.',
+    url: '/neuigkeiten/oeffentliche-bekanntmachung-beteiligung-der-oeffentlichkeit-nach-§-3-abs-2-baugb-zum-flaechennutzungsplan-fnp-des-vv-wildenstein-stand-vorentwurf-11-2024',
+    active: true,
+  },
+  {
+    tag: 'FNP',
+    title: 'Flächennutzungsplan VV Wildenstein (älteres Verfahren)',
+    status: 'Vorentwurf · abgeschlossen',
+    stand: 'Stand 07/2022',
+    bekanntmacht: '15.01.2023',
+    body: 'Vorausgegangener Verfahrensstand des FNP — zur Dokumentation einsehbar.',
+    url: '/neuigkeiten/oeffentliche-bekanntmachung-beteiligung-der-oeffentlichkeit-nach-§-3-abs-2-baugb-zum-flaechennutzungsplan-fnp-des-vv-wildenstein-stand-vorentwurf-07-2022',
+    active: false,
+  },
+];
+
+const active = verfahren.filter((v) => v.active);
+const archiv  = verfahren.filter((v) => !v.active);
+---
+<BaseLayout title="Bauleitplanung · Gemeinde Grünhainichen" header="compact">
+
+  <header class="grh-bl-head">
+    <div class="grh-container">
+      <p class="grh-bl-crumb">Gemeinde · Bauleitplanung</p>
+      <h1 class="grh-bl-title">Bauleitplanung</h1>
+      <p class="grh-bl-lead">
+        Wo darf gebaut werden, wo bleibt Grün stehen? Die Bauleitplanung legt
+        fest, wie sich unsere Gemeinde räumlich entwickelt — und Bürger­innen
+        und Bürger können sich an den Verfahren beteiligen.
+      </p>
+    </div>
+  </header>
+
+  {/* === Grundlagen: FNP vs. B-Plan ====================================== */}
+  <section class="grh-bl-block grh-bl-block--alt">
+    <div class="grh-container">
+      <div class="grh-bl-explain">
+        <article>
+          <span class="grh-bl-tag">FNP</span>
+          <h2>Flächennutzungsplan</h2>
+          <p>
+            Der <strong>Flächennutzungsplan</strong> stellt für das gesamte
+            Verbandsgebiet dar, wie die Flächen grundsätzlich genutzt werden
+            sollen — Wohnen, Gewerbe, Land­wirtschaft, Wald, Grün- und
+            Verkehrsflächen. Er ist die Grundlage für jeden Bebauungsplan
+            und gilt für die Mitgliedsgemeinden des Verwaltungsverbandes
+            Wildenstein gemeinsam.
+          </p>
+        </article>
+        <article>
+          <span class="grh-bl-tag">B-Plan</span>
+          <h2>Bebauungsplan</h2>
+          <p>
+            Der <strong>Bebauungsplan</strong> wird parzellenscharf — er sagt
+            für ein konkretes Gebiet: Wie hoch, wie dicht, mit welchen Dächern,
+            welche Abstände? Bebauungspläne werden für einzelne Vorhaben
+            aufgestellt und durchlaufen ein eigenes Verfahren mit öffentlicher
+            Beteiligung.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  {/* === Aktive Verfahren =============================================== */}
+  <section class="grh-bl-block">
+    <div class="grh-container">
+      <header class="grh-bl-section-head">
+        <h2>Laufende Verfahren</h2>
+        <p>{active.length} öffentliche Bekanntmachungen</p>
+      </header>
+
+      <ul class="grh-bl-list">
+        {active.map((v) => (
+          <li>
+            <a href={v.url} target="_blank" rel="noopener" class="grh-bl-item">
+              <div class="grh-bl-item__head">
+                <span class={`grh-bl-badge grh-bl-badge--${v.tag === 'B-Plan' ? 'bplan' : 'fnp'}`}>{v.tag}</span>
+                <span class="grh-bl-item__stand">{v.stand}</span>
+              </div>
+              <h3>{v.title}</h3>
+              <p class="grh-bl-item__status">{v.status}</p>
+              {v.body && <p class="grh-bl-item__body">{v.body}</p>}
+              <span class="grh-bl-item__cta">
+                Vollständige Bekanntmachung ↗
+                {v.bekanntmacht && <em>veröffentlicht {v.bekanntmacht}</em>}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  {/* === Bauamt-Kontakt ================================================== */}
+  <section class="grh-bl-block grh-bl-block--dark">
+    <div class="grh-container grh-bl-contact">
+      <div>
+        <span class="grh-bl-eyebrow">Fragen oder Stellungnahme</span>
+        <h2>Bauamt · Verwaltungsverband Wildenstein</h2>
+        <p>
+          Pläne, Unterlagen und Begründungen können während der Auslegungs­zeiträume
+          im Rathaus eingesehen werden. Stellungnahmen nehmen wir schriftlich,
+          per E-Mail oder direkt im Bauamt entgegen.
+        </p>
+      </div>
+      <aside class="grh-bl-contact-card">
+        <span class="grh-bl-card-label">Anschrift</span>
+        <strong>Chemnitzer Straße 41<br />09579 Grünhainichen</strong>
+        <hr />
+        <span class="grh-bl-card-label">Direkt</span>
+        <a href="tel:+4937294170-0">037294 / 170-0</a>
+        <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a>
+        <a href="/gemeinde/verwaltung/" class="grh-bl-card-internal">
+          Alle Sachgebiete der Verwaltung →
+        </a>
+      </aside>
+    </div>
+  </section>
+
+  {/* === Archiv ========================================================== */}
+  {archiv.length > 0 && (
+    <section class="grh-bl-block">
+      <div class="grh-container">
+        <header class="grh-bl-section-head">
+          <h2>Abgeschlossene Verfahren</h2>
+          <p>zur Dokumentation einsehbar</p>
+        </header>
+        <ul class="grh-bl-archiv">
+          {archiv.map((v) => (
+            <li>
+              <a href={v.url} target="_blank" rel="noopener">
+                <span class={`grh-bl-badge grh-bl-badge--${v.tag === 'B-Plan' ? 'bplan' : 'fnp'}`}>{v.tag}</span>
+                <div>
+                  <strong>{v.title}</strong>
+                  <span>{v.stand}{v.bekanntmacht && ` · veröffentlicht ${v.bekanntmacht}`}</span>
+                </div>
+                <span class="grh-bl-archiv__arrow">↗</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+</BaseLayout>
+
+<style>
+  /* === Kopfzeile ====================================================== */
+  .grh-bl-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-bl-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-bl-title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.6rem, 7vw, 4.8rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-bl-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--grh-forest-800);
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  /* === Block-Layout =================================================== */
+  .grh-bl-block { padding: var(--grh-space-7) 0; }
+  .grh-bl-block--alt { background: var(--grh-paper-100); }
+  .grh-bl-block--dark {
+    background:
+      radial-gradient(circle at 0% 100%, rgba(91, 174, 120, 0.18), transparent 55%),
+      var(--grh-forest-950);
+    color: var(--grh-cream-50);
+  }
+  .grh-bl-section-head { text-align: center; margin-bottom: var(--grh-space-6); }
+  .grh-bl-section-head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .grh-bl-section-head p {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0;
+  }
+  .grh-bl-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+
+  /* === FNP / B-Plan Erklärung ========================================= */
+  .grh-bl-explain {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 800px) {
+    .grh-bl-explain { grid-template-columns: 1fr 1fr; gap: var(--grh-space-6); }
+  }
+  .grh-bl-explain article {
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    border-left: 3px solid var(--grh-candle-500);
+  }
+  .grh-bl-explain h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-bl-explain p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.65;
+    margin: 0;
+  }
+  .grh-bl-explain strong { color: var(--grh-forest-800); font-weight: 600; }
+
+  /* Tags */
+  .grh-bl-tag {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--grh-radius-pill);
+    background: var(--grh-paper-100);
+    color: var(--grh-moss-600);
+    margin-bottom: var(--grh-space-3);
+  }
+
+  /* === Verfahrens-Liste =============================================== */
+  .grh-bl-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 800px) {
+    .grh-bl-list { grid-template-columns: 1fr 1fr; gap: var(--grh-space-5); }
+  }
+  .grh-bl-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+    padding: var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast), box-shadow var(--grh-dur-base);
+  }
+  .grh-bl-item:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(26, 61, 39, 0.08);
+  }
+  .grh-bl-item__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--grh-space-3);
+  }
+  .grh-bl-badge {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: var(--grh-radius-sm);
+  }
+  .grh-bl-badge--bplan {
+    background: rgba(212, 165, 92, 0.15);
+    color: var(--grh-candle-500);
+    border: 1px solid rgba(212, 165, 92, 0.35);
+  }
+  .grh-bl-badge--fnp {
+    background: rgba(91, 174, 120, 0.12);
+    color: var(--grh-moss-600);
+    border: 1px solid rgba(91, 174, 120, 0.3);
+  }
+  .grh-bl-item__stand {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-400);
+  }
+  .grh-bl-item h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 6px 0 0;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+  .grh-bl-item__status {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-moss-600);
+    font-weight: 600;
+    margin: 0;
+  }
+  .grh-bl-item__body {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.55;
+    margin: 0;
+  }
+  .grh-bl-item__cta {
+    margin-top: auto;
+    padding-top: var(--grh-space-3);
+    border-top: 1px solid var(--grh-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--grh-space-3);
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+  }
+  .grh-bl-item__cta em {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 400;
+  }
+
+  /* === Bauamt-Kontakt (dunkel) ======================================== */
+  .grh-bl-contact {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: start;
+  }
+  @media (min-width: 880px) {
+    .grh-bl-contact { grid-template-columns: 1.4fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-bl-contact h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    color: var(--grh-cream-50);
+    margin: 0 0 var(--grh-space-4);
+    letter-spacing: -0.015em;
+  }
+  .grh-bl-contact p {
+    font-size: var(--grh-fs-md);
+    color: rgba(250, 247, 241, 0.85);
+    line-height: 1.65;
+    margin: 0;
+    max-width: 55ch;
+  }
+  .grh-bl-contact-card {
+    background: rgba(250, 247, 241, 0.06);
+    border: 1px solid rgba(250, 247, 241, 0.18);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .grh-bl-card-label {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-300);
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .grh-bl-contact-card strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-cream-50);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .grh-bl-contact-card hr {
+    border: none;
+    border-top: 1px solid rgba(250, 247, 241, 0.18);
+    margin: var(--grh-space-3) 0 var(--grh-space-2);
+  }
+  .grh-bl-contact-card a {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    color: var(--grh-candle-300);
+    text-decoration: none;
+    border-bottom: 1.5px solid rgba(212, 165, 92, 0.55);
+    width: fit-content;
+    padding-bottom: 2px;
+  }
+  .grh-bl-contact-card a:hover {
+    color: var(--grh-cream-50);
+    border-color: var(--grh-cream-50);
+  }
+  .grh-bl-card-internal {
+    margin-top: var(--grh-space-3);
+    font-style: normal !important;
+    font-family: var(--grh-font-body) !important;
+    font-size: 11px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700 !important;
+    color: var(--grh-cream-50) !important;
+  }
+
+  /* === Archiv ========================================================= */
+  .grh-bl-archiv {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .grh-bl-archiv li {
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-bl-archiv li:last-child { border-bottom: 1px solid var(--grh-line); }
+  .grh-bl-archiv a {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: var(--grh-space-4);
+    align-items: center;
+    padding: var(--grh-space-3) 0;
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left var(--grh-dur-fast);
+  }
+  .grh-bl-archiv a:hover { padding-left: 6px; }
+  .grh-bl-archiv strong {
+    display: block;
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  .grh-bl-archiv span:not(.grh-bl-badge):not(.grh-bl-archiv__arrow) {
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+  .grh-bl-archiv__arrow {
+    color: var(--grh-stone-400);
+    font-size: 16px;
+  }
+</style>

@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
+import GrhCardGrid from '../../components/global/GrhCardGrid.astro';
+import GrhPagination from '../../components/global/GrhPagination.astro';
+import { getNews } from '../../lib/cms';
+
+const PAGE_SIZE = 12;
+
+const all = await getNews();
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+
+function toCard(n: typeof all[number]) {
+  return {
+    href: `/neuigkeiten/${n.slug}`,
+    title: n.title,
+    image: n.image,
+    eyebrow: n.category === 'sperrung' ? 'Sperrung' :
+             n.category === 'veranstaltung' ? 'Veranstaltung' :
+             n.category === 'tourismus' ? 'Tourismus' : 'Aktuelles',
+    meta: fmt.format(n.date),
+    body: n.excerpt,
+  };
+}
+
+const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+const items = all.slice(0, PAGE_SIZE).map(toCard);
+---
+<BaseLayout title="Neuigkeiten · Grünhainichen" header="compact">
+  <GrhPageHeader
+    title="Neuigkeiten"
+    breadcrumb="Startseite · Neuigkeiten"
+    lead="Was unsere Gemeinde gerade beschäftigt — Mitteilungen, Sperrungen, Veranstaltungshinweise."
+    count={all.length}
+    countLabel="Beiträge"
+  />
+  <section>
+    <div class="grh-container">
+      <GrhCardGrid items={items} empty="Aktuell sind keine Neuigkeiten verfügbar." />
+      <GrhPagination
+        currentPage={1}
+        totalPages={totalPages}
+        baseHref="/neuigkeiten"
+        label="Beiträge"
+        total={all.length}
+      />
+    </div>
+  </section>
+</BaseLayout>

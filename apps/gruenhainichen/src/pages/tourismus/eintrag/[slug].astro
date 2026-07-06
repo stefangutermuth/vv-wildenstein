@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhCPTDetail from '../../../components/global/GrhCPTDetail.astro';
+import { getTourism } from '../../../lib/cms-cpt';
+
+export async function getStaticPaths() {
+  const list = await getTourism();
+  return list.map((t) => ({
+    params: { slug: t.slug },
+    props: { item: t },
+  }));
+}
+
+const { item } = Astro.props as { item: Awaited<ReturnType<typeof getTourism>>[number] };
+const kategorie = item.kategorien[0]?.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+---
+<BaseLayout title={`${item.title} · Tourismus · Grünhainichen`} header="compact">
+  <GrhCPTDetail
+    title={item.title}
+    breadcrumb={`Tourismus${kategorie ? ' · ' + kategorie : ''}`}
+    eyebrow={kategorie ?? 'Empfehlung'}
+    image={item.image}
+    contentHtml={item.contentHtml}
+    kontakt={item.kontakt}
+    meta={item.ortsteil ? item.ortsteil.replace(/^./, c => c.toUpperCase()) : undefined}
+    backHref="/tourismus"
+    backLabel="Alle Empfehlungen"
+  />
+</BaseLayout>

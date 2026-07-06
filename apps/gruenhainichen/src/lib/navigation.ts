@@ -3,12 +3,16 @@ export type NavItem = {
   href: string;
   description?: string;
   children?: NavItem[];
+  /** Inhalt noch nicht final geklärt — UI zeigt ein rotes Ausrufezeichen. */
+  wip?: boolean;
 };
 
 /**
  * Master-Navigation der Website. Wird von GrhHeader (klassische Inline-Nav)
  * und GrhMegaMenu (Vollbild-Popup auf der Variante) gemeinsam benutzt.
- * Struktur 1:1 vom bestehenden Webauftritt + Startseite-Eintrag mit Variante.
+ *
+ * `wip: true` markiert Seiten, deren Inhalt noch nicht final entschieden ist —
+ * sie existieren als Platzhalter, das MegaMenu zeigt ein rotes ❗.
  */
 export const navigation: NavItem[] = [
   {
@@ -17,7 +21,7 @@ export const navigation: NavItem[] = [
     children: [
       {
         label: 'Ortsteile',
-        href: '#',
+        href: '/gemeinde/ortsteile',
         children: [
           { label: 'Ortsteil Borstendorf',    href: '/gemeinde/ortsteile/borstendorf' },
           { label: 'Ortsteil Grünhainichen',  href: '/gemeinde/ortsteile/gruenhainichen' },
@@ -26,7 +30,7 @@ export const navigation: NavItem[] = [
       },
       { label: 'Geschichte',          href: '/gemeinde/geschichte' },
       { label: 'Bürgermeister',       href: '/gemeinde/buergermeister' },
-      { label: 'Verwaltung Gemeinde', href: 'https://vv-wildenstein.com/verband/' },
+      { label: 'Verwaltung',          href: '/gemeinde/verwaltung' },
       { label: 'Gemeinderat',         href: '/gemeinde/gemeinderat' },
       { label: 'Amtsblatt',           href: '/gemeinde/amtsblatt' },
       { label: 'Feuerwehren',         href: '/gemeinde/feuerwehren' },
@@ -59,7 +63,7 @@ export const navigation: NavItem[] = [
     href: '/gewerbe',
     children: [
       { label: 'Übersicht',              href: '/gewerbe' },
-      { label: 'Stellenausschreibungen', href: '/gewerbe/stellenausschreibungen' },
+      { label: 'Stellenausschreibungen', href: '/gewerbe/stellenausschreibungen', wip: true },
     ],
   },
   { label: 'Vereine', href: '/vereine' },

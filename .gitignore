@@ -30,6 +30,9 @@ pnpm-debug.log*
 # Misc
 .claude/
 
+# Runtime-Caches (regenerieren sich zur Build-Zeit)
+apps/gruenhainichen/src/lib/geocode-cache.json
+
 # Melder-Bestand: Datenexporte (personenbezogene Daten!) und Fremd-Plugin-Referenz nicht versionieren
 docs/melder-bestand/*-export.json
 docs/melder-bestand/wu_vvmeldungen_map.*

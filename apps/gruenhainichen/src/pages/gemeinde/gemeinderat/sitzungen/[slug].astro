@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import GrhCPTDetail from '../../../../components/global/GrhCPTDetail.astro';
+import { getGemeinderatssitzungen } from '../../../../lib/cms-cpt';
+
+export async function getStaticPaths() {
+  const list = await getGemeinderatssitzungen();
+  return list.map((s) => ({
+    params: { slug: s.slug },
+    props: { sitzung: s },
+  }));
+}
+
+const { sitzung } = Astro.props as { sitzung: Awaited<ReturnType<typeof getGemeinderatssitzungen>>[number] };
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+---
+<BaseLayout title={`Sitzung ${sitzung.title} · Gemeinderat · Grünhainichen`} header="compact">
+  <GrhCPTDetail
+    title={`Sitzung ${sitzung.title}`}
+    breadcrumb="Gemeinde · Gemeinderat · Sitzung"
+    eyebrow="Tagesordnung"
+    meta={fmt.format(sitzung.date)}
+    contentHtml={sitzung.contentHtml}
+    backHref="/gemeinde/gemeinderat"
+    backLabel="Alle Sitzungen"
+  />
+</BaseLayout>

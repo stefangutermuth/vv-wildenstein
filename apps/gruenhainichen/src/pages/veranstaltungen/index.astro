@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
+import GrhCardGrid from '../../components/global/GrhCardGrid.astro';
+import { getEvents } from '../../lib/cms';
+
+const events = await getEvents();
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+const fmtTime = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+const items = events.map((e) => ({
+  href: `/veranstaltungen/${e.slug}`,
+  title: e.title,
+  image: e.image,
+  eyebrow: e.location || (e.ortsteil ? e.ortsteil.replace(/^./, c => c.toUpperCase()) : 'Termin'),
+  meta: `${fmt.format(e.startDate)} · ${fmtTime.format(e.startDate)} Uhr`,
+  body: e.teaser,
+}));
+---
+<BaseLayout title="Veranstaltungen · Grünhainichen" header="compact">
+  <GrhPageHeader
+    title="Veranstaltungen"
+    breadcrumb="Startseite · Veranstaltungen"
+    lead="Heimatfeste, Märkte, Konzerte und vieles mehr — der Kalender unserer Gemeinde."
+    count={items.length}
+    countLabel="Termine"
+  />
+  <section>
+    <div class="grh-container">
+      <GrhCardGrid items={items} empty="Aktuell sind keine Veranstaltungen eingetragen." />
+    </div>
+  </section>
+</BaseLayout>

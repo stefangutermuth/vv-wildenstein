@@ -1,0 +1,768 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import imagesData from '../../../data/heimatfest-images.json';
+
+// Map iso-Datum → Array Bild-URLs. Quelle: migrierte Heimatfest-Fotos
+// auf vv-wildenstein.com (siehe scratchpad/upload-heimatfest.py).
+interface MediaInfo { id: number; source_url: string; sizes?: Record<string, string>; }
+const imagesByDay = imagesData as Record<string, MediaInfo[]>;
+
+function imagesForDay(iso: string): { thumb: string; full: string }[] {
+  const list = imagesByDay[iso] ?? [];
+  return list.map((m) => ({
+    full: m.source_url,
+    thumb: m.sizes?.medium_large ?? m.sizes?.large ?? m.sizes?.medium ?? m.source_url,
+  }));
+}
+
+interface Galerie {
+  src: string;
+  caption: string;
+  span?: 'wide' | 'tall' | 'square';
+}
+
+// Best-of-Auswahl: pro Festtag ein Bild aus der migrierten Sammlung,
+// abwechselnd in unterschiedlicher Größe für Mauerwerk-Optik.
+const bestOf: Array<{ iso: string; n: number; caption: string; span?: Galerie['span'] }> = [
+  { iso: '2024-06-07', n: 1, caption: 'Freitag, 07.06. · Eröffnungs-Abend',                    span: 'wide' },
+  { iso: '2024-06-08', n: 2, caption: 'Samstag, 08.06. · Eröffnungs-Wochenende',               span: 'tall' },
+  { iso: '2024-06-09', n: 3, caption: 'Sonntag, 09.06. · Familientag & Frühschoppen' },
+  { iso: '2024-06-10', n: 1, caption: 'Montag, 10.06. · Werktags-Programm in Grünhainichen' },
+  { iso: '2024-06-11', n: 4, caption: 'Dienstag, 11.06. · Senioren-Nachmittag',                span: 'wide' },
+  { iso: '2024-06-12', n: 2, caption: 'Mittwoch, 12.06. · Wendt & Kühn-Manufaktur' },
+  { iso: '2024-06-13', n: 5, caption: 'Donnerstag, 13.06. · Konzert-Abend',                    span: 'tall' },
+  { iso: '2024-06-14', n: 3, caption: 'Freitag, 14.06. · Auftakt Kultur-Wochenende' },
+  { iso: '2024-06-15', n: 6, caption: 'Samstag, 15.06. · Abend in den Ortsteilen' },
+  { iso: '2024-06-16', n: 1, caption: 'Sonntag, 16.06. · Stehender Festumzug',                  span: 'wide' },
+];
+
+const galerie: Galerie[] = bestOf.map((b) => {
+  const list = (imagesData as Record<string, { source_url: string }[]>)[b.iso] ?? [];
+  const pick = list[Math.min(b.n - 1, list.length - 1)];
+  return { src: pick?.source_url ?? '', caption: b.caption, span: b.span };
+}).filter((g) => g.src);
+
+const facts = [
+  { value: '10', label: 'Festtage' },
+  { value: '3',  label: 'Ortsteile vereint' },
+  { value: '675', label: 'Jahre Grünhainichen & Waldkirchen' },
+  { value: '645', label: 'Jahre Borstendorf' },
+];
+
+interface Festtag {
+  date: string;       // tag.monat
+  weekday: string;    // Freitag, Samstag …
+  iso: string;        // 2024-06-07
+  fotograf: 'Aurich' | 'Caecilia';
+  schwerpunkt: string;
+}
+
+const festtage: Festtag[] = [
+  { date: '07.06.', weekday: 'Freitag',    iso: '2024-06-07', fotograf: 'Aurich',   schwerpunkt: 'Eröffnungs-Abend & Festakt' },
+  { date: '08.06.', weekday: 'Samstag',    iso: '2024-06-08', fotograf: 'Aurich',   schwerpunkt: 'Eröffnungs-Wochenende · große Bühnen' },
+  { date: '09.06.', weekday: 'Sonntag',    iso: '2024-06-09', fotograf: 'Aurich',   schwerpunkt: 'Familientag, Frühschoppen, Kinder­programm' },
+  { date: '10.06.', weekday: 'Montag',     iso: '2024-06-10', fotograf: 'Caecilia', schwerpunkt: 'Werktags-Programm in Grünhainichen' },
+  { date: '11.06.', weekday: 'Dienstag',   iso: '2024-06-11', fotograf: 'Caecilia', schwerpunkt: 'Senioren-Nachmittag & Vereinsabend' },
+  { date: '12.06.', weekday: 'Mittwoch',   iso: '2024-06-12', fotograf: 'Caecilia', schwerpunkt: 'Wendt &amp; Kühn — Manufaktur-Erlebnis' },
+  { date: '13.06.', weekday: 'Donnerstag', iso: '2024-06-13', fotograf: 'Caecilia', schwerpunkt: 'Konzert-Abend & Lichterzauber' },
+  { date: '14.06.', weekday: 'Freitag',    iso: '2024-06-14', fotograf: 'Aurich',   schwerpunkt: 'Auftakt zum Kultur-Wochenende' },
+  { date: '15.06.', weekday: 'Samstag',    iso: '2024-06-15', fotograf: 'Aurich',   schwerpunkt: 'Abend-Veranstaltungen in allen Ortsteilen' },
+  { date: '16.06.', weekday: 'Sonntag',    iso: '2024-06-16', fotograf: 'Aurich',   schwerpunkt: 'Stehender Festumzug — Höhepunkt &amp; Abschluss' },
+];
+
+const fotografen = {
+  Aurich:   { name: 'Lucas Aurich Photography', area: 'Borstendorf' },
+  Caecilia: { name: 'Celina Cäcilia Fotografie', area: 'Grünhainichen' },
+};
+---
+<BaseLayout title="Heimatfest 2024 — Rückblick · Gemeinde Grünhainichen" header="compact">
+
+  <header class="grh-hfr-head">
+    <div class="grh-container">
+      <p class="grh-hfr-crumb">Veranstaltungen · Heimatfest · Rückblick</p>
+      <span class="grh-hfr-eyebrow">Eindrücke 07. – 16. Juni 2024</span>
+      <h1>Rückblick &amp; Bilder</h1>
+      <p class="grh-hfr-lead">
+        Eine Festwoche, drei Orte, unzählige Begegnungen — über 100 Fotos
+        von Lucas Aurich und Celina Cäcilia, geordnet nach Festtag und
+        zum Durchklicken in der Galerie.
+      </p>
+    </div>
+  </header>
+
+  <section class="grh-hfr-facts">
+    <div class="grh-container">
+      <ul>
+        {facts.map((f) => (
+          <li><strong>{f.value}</strong><span>{f.label}</span></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="grh-hfr-gallery-section">
+    <div class="grh-container">
+      <header class="grh-hfr-section-head">
+        <span class="grh-hfr-section-eyebrow">Galerie · Best-Of</span>
+        <h2>Ein Bild aus jedem Festtag</h2>
+      </header>
+
+      <div class="grh-hfr-gallery">
+        {galerie.map((g) => (
+          <figure class={`grh-hfr-item ${g.span ? `grh-hfr-item--${g.span}` : ''}`}>
+            <img src={g.src} alt={g.caption} loading="lazy" />
+            <figcaption>{g.caption}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* === Festtage-Timeline ============================================== */}
+  <section class="grh-hfr-tage">
+    <div class="grh-container">
+      <header class="grh-hfr-section-head">
+        <span class="grh-hfr-section-eyebrow">Tag für Tag</span>
+        <h2>Zehn Festtage im Überblick</h2>
+        <p class="grh-hfr-tage__sub">
+          Die ausführlichen Bildergalerien jedes Festtags werden gerade
+          ins neue System übertragen. Hier die Struktur mit Schwerpunkten
+          und den Fotograf:innen, die unser Heimatfest dokumentiert haben.
+        </p>
+      </header>
+
+      <ol class="grh-hfr-tage__list">
+        {festtage.map((t) => {
+          const imgs = imagesForDay(t.iso);
+          return (
+            <li>
+              <article class="grh-hfr-tag">
+                <header>
+                  <time datetime={t.iso}>
+                    <strong>{t.date}</strong>
+                    <span>{t.weekday}</span>
+                  </time>
+                  <span class={`grh-hfr-tag__photog grh-hfr-tag__photog--${t.fotograf.toLowerCase()}`}>
+                    <em>Fotos</em> {fotografen[t.fotograf].name}
+                  </span>
+                </header>
+                <h3 set:html={t.schwerpunkt} />
+                {imgs.length > 0 ? (
+                  <div
+                    class="grh-hfr-tag__grid"
+                    data-grh-lightbox-gallery
+                    data-day={t.iso}
+                    data-day-label={`${t.date} ${t.weekday}`}
+                    data-fotograf={fotografen[t.fotograf].name}
+                  >
+                    {imgs.map((g, idx) => (
+                      <button
+                        type="button"
+                        class="grh-hfr-tag__cell"
+                        data-full={g.full}
+                        data-index={idx}
+                        aria-label={`Bild ${idx + 1} von ${imgs.length} öffnen`}
+                      >
+                        <img src={g.thumb} alt={`Heimatfest ${t.date} ${t.weekday} · Bild ${idx + 1}`} loading="lazy" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p class="grh-hfr-tag__pending">
+                    Galerie wird ergänzt — Schwerpunkt: {fotografen[t.fotograf].area}
+                  </p>
+                )}
+              </article>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  </section>
+
+  {/* === Lightbox-Overlay (versteckt bis Klick) ========================== */}
+  <div class="grh-lb" data-grh-lightbox hidden role="dialog" aria-modal="true" aria-label="Bildergalerie">
+    <button type="button" class="grh-lb__close" data-grh-lightbox-close aria-label="Galerie schließen">
+      ×
+    </button>
+    <button type="button" class="grh-lb__nav grh-lb__nav--prev" data-grh-lightbox-prev aria-label="Voriges Bild">
+      ‹
+    </button>
+    <button type="button" class="grh-lb__nav grh-lb__nav--next" data-grh-lightbox-next aria-label="Nächstes Bild">
+      ›
+    </button>
+
+    <figure class="grh-lb__stage">
+      <img data-grh-lightbox-img src="" alt="" />
+      <figcaption class="grh-lb__caption">
+        <div>
+          <span class="grh-lb__day"  data-grh-lightbox-day></span>
+          <span class="grh-lb__count" data-grh-lightbox-count></span>
+        </div>
+        <span class="grh-lb__photog" data-grh-lightbox-photog></span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <section class="grh-hfr-back">
+    <div class="grh-container">
+      <p>
+        Du suchst Hauptinfos zum Fest oder die Jubiläumsprodukte?
+      </p>
+      <div class="grh-hfr-back__links">
+        <a href="/veranstaltungen/heimatfest/">← Zur Heimatfest-Übersicht</a>
+        <a href="/veranstaltungen/heimatfest/jubilaeumsprodukte/">Zu den Jubiläumsprodukten →</a>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .grh-hfr-head {
+    padding: clamp(var(--grh-space-7), 10vw, var(--grh-space-9)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.10), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-hfr-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-hfr-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-hfr-head h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-hfr-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--grh-forest-800);
+    max-width: 58ch;
+    margin: 0;
+  }
+
+  /* === Facts-Streifen ================================================= */
+  .grh-hfr-facts {
+    background: var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    padding: var(--grh-space-5) 0;
+  }
+  .grh-hfr-facts ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px) {
+    .grh-hfr-facts ul { grid-template-columns: repeat(4, 1fr); }
+  }
+  .grh-hfr-facts li { text-align: center; }
+  .grh-hfr-facts strong {
+    display: block;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+    color: var(--grh-candle-300);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .grh-hfr-facts span {
+    display: block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: rgba(250, 247, 241, 0.7);
+    margin-top: 8px;
+  }
+
+  /* === Galerie ======================================================== */
+  .grh-hfr-gallery-section { padding: var(--grh-space-7) 0; }
+  .grh-hfr-section-head { text-align: center; margin-bottom: var(--grh-space-6); }
+  .grh-hfr-section-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-hfr-section-head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .grh-hfr-gallery {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px) {
+    .grh-hfr-gallery {
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-flow: dense;
+      gap: var(--grh-space-4);
+    }
+  }
+  .grh-hfr-item {
+    margin: 0;
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    border: 1px solid var(--grh-line);
+    transition: transform var(--grh-dur-fast), box-shadow var(--grh-dur-base);
+  }
+  .grh-hfr-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 36px rgba(26, 61, 39, 0.12);
+  }
+  .grh-hfr-item img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    background: var(--grh-paper-100);
+  }
+  .grh-hfr-item figcaption {
+    padding: var(--grh-space-3) var(--grh-space-4);
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.4;
+  }
+  @media (min-width: 720px) {
+    .grh-hfr-item--wide   { grid-column: span 2; }
+    .grh-hfr-item--wide img { aspect-ratio: 16 / 9; }
+    .grh-hfr-item--tall   { grid-row: span 2; }
+    .grh-hfr-item--tall img { aspect-ratio: 3 / 4; height: auto; }
+    .grh-hfr-item--square img { aspect-ratio: 1 / 1; object-fit: contain; padding: var(--grh-space-4); background: var(--grh-cream-50); }
+  }
+
+  /* === Festtage-Timeline ============================================== */
+  .grh-hfr-tage {
+    padding: var(--grh-space-7) 0;
+    background:
+      radial-gradient(circle at 0% 100%, rgba(91, 174, 120, 0.10), transparent 55%),
+      var(--grh-cream-50);
+  }
+  .grh-hfr-tage__sub {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    max-width: 60ch;
+    margin: var(--grh-space-3) auto 0;
+    line-height: 1.6;
+  }
+  .grh-hfr-tage__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px) {
+    .grh-hfr-tage__list { grid-template-columns: 1fr 1fr; gap: var(--grh-space-4); }
+  }
+  @media (min-width: 1100px) {
+    .grh-hfr-tage__list { grid-template-columns: repeat(2, 1fr); gap: var(--grh-space-5); }
+  }
+  .grh-hfr-tag {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-4) var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-2);
+    border-left: 3px solid var(--grh-candle-500);
+  }
+  .grh-hfr-tag header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--grh-space-3);
+    flex-wrap: wrap;
+  }
+  .grh-hfr-tag time {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .grh-hfr-tag time strong {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .grh-hfr-tag time span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+  }
+  .grh-hfr-tag__photog {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    color: var(--grh-stone-700);
+    letter-spacing: 0.04em;
+  }
+  .grh-hfr-tag__photog em {
+    font-style: normal;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin-right: 4px;
+  }
+  .grh-hfr-tag__photog--aurich   { color: var(--grh-moss-600); }
+  .grh-hfr-tag__photog--caecilia { color: var(--grh-forest-800); }
+  .grh-hfr-tag h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+  .grh-hfr-tag__pending {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-400);
+    margin: 0;
+  }
+  .grh-hfr-tag__grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 4px;
+  }
+  @media (max-width: 720px) {
+    .grh-hfr-tag__grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .grh-hfr-tag__cell {
+    display: block;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: var(--grh-radius-sm);
+    background: var(--grh-paper-100);
+    transition: transform var(--grh-dur-fast);
+    border: none;
+    padding: 0;
+    cursor: zoom-in;
+  }
+  .grh-hfr-tag__cell:hover { transform: scale(1.04); }
+  .grh-hfr-tag__cell:focus-visible {
+    outline: 2px solid var(--grh-candle-500);
+    outline-offset: 2px;
+  }
+  .grh-hfr-tag__cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 600ms var(--grh-ease-out);
+  }
+  .grh-hfr-tag__cell:hover img { transform: scale(1.08); }
+
+  /* === Back/Forward =================================================== */
+  .grh-hfr-back {
+    padding: var(--grh-space-6) 0 var(--grh-space-8);
+    background: var(--grh-paper-100);
+    border-top: 1px solid var(--grh-line);
+    text-align: center;
+  }
+  .grh-hfr-back p {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-hfr-back__links {
+    display: flex;
+    justify-content: center;
+    gap: var(--grh-space-4) var(--grh-space-6);
+    flex-wrap: wrap;
+  }
+  .grh-hfr-back__links a {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+  }
+  .grh-hfr-back__links a:hover { color: var(--grh-moss-600); }
+
+  /* === Lightbox ======================================================== */
+  .grh-lb {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: rgba(20, 43, 31, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(16px, 4vw, 48px);
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+  }
+  .grh-lb[hidden] { display: none; }
+  .grh-lb[data-open] { opacity: 1; }
+
+  .grh-lb__close,
+  .grh-lb__nav {
+    position: absolute;
+    background: rgba(250, 247, 241, 0.12);
+    color: var(--grh-cream-50);
+    border: 1px solid rgba(250, 247, 241, 0.22);
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .grh-lb__close:hover,
+  .grh-lb__nav:hover {
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    transform: scale(1.05);
+  }
+  .grh-lb__close {
+    top: 24px;
+    right: 24px;
+    font-size: 32px;
+    font-weight: 300;
+  }
+  .grh-lb__nav--prev { left: 24px; top: 50%; transform: translateY(-50%); }
+  .grh-lb__nav--next { right: 24px; top: 50%; transform: translateY(-50%); }
+  .grh-lb__nav--prev:hover { transform: translateY(-50%) scale(1.05); }
+  .grh-lb__nav--next:hover { transform: translateY(-50%) scale(1.05); }
+  .grh-lb__nav[disabled] {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  @media (max-width: 720px) {
+    .grh-lb__close { top: 16px; right: 16px; width: 44px; height: 44px; }
+    .grh-lb__nav { width: 44px; height: 44px; font-size: 24px; }
+    .grh-lb__nav--prev { left: 12px; }
+    .grh-lb__nav--next { right: 12px; }
+  }
+
+  .grh-lb__stage {
+    margin: 0;
+    max-width: min(1400px, 100%);
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .grh-lb__stage img {
+    max-width: 100%;
+    max-height: calc(100vh - 180px);
+    object-fit: contain;
+    border-radius: var(--grh-radius-md);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    background: var(--grh-forest-950);
+    transition: opacity 150ms;
+  }
+  .grh-lb__caption {
+    color: var(--grh-cream-50);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--grh-space-4);
+    width: 100%;
+    max-width: 800px;
+    flex-wrap: wrap;
+    padding: 0 8px;
+  }
+  .grh-lb__caption > div {
+    display: flex;
+    align-items: baseline;
+    gap: var(--grh-space-3);
+    flex-wrap: wrap;
+  }
+  .grh-lb__day {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-lg);
+    color: var(--grh-cream-50);
+  }
+  .grh-lb__count {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-300);
+    font-weight: 700;
+  }
+  .grh-lb__photog {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: rgba(250, 247, 241, 0.6);
+  }
+  .grh-lb__photog::before {
+    content: 'Fotos · ';
+    font-weight: 700;
+  }
+
+  body.grh-lb-open { overflow: hidden; }
+</style>
+
+<script>
+  // === Lightbox-Logik =================================================
+  // Click auf eine Thumbnail-Zelle → öffnet die zugehörige Galerie ihres Tages,
+  // mit Tastatur-/Touch-Navigation. Bleibt innerhalb des Tages.
+  const lb       = document.querySelector<HTMLElement>('[data-grh-lightbox]');
+  const imgEl    = lb?.querySelector<HTMLImageElement>('[data-grh-lightbox-img]');
+  const dayEl    = lb?.querySelector<HTMLElement>('[data-grh-lightbox-day]');
+  const countEl  = lb?.querySelector<HTMLElement>('[data-grh-lightbox-count]');
+  const photoEl  = lb?.querySelector<HTMLElement>('[data-grh-lightbox-photog]');
+  const closeBtn = lb?.querySelector<HTMLButtonElement>('[data-grh-lightbox-close]');
+  const prevBtn  = lb?.querySelector<HTMLButtonElement>('[data-grh-lightbox-prev]');
+  const nextBtn  = lb?.querySelector<HTMLButtonElement>('[data-grh-lightbox-next]');
+
+  let currentGallery: HTMLElement | null = null;
+  let currentIndex = 0;
+  let lastTrigger: HTMLElement | null = null;
+
+  function urlsOf(g: HTMLElement): string[] {
+    return Array.from(g.querySelectorAll<HTMLButtonElement>('[data-full]')).map((b) => b.dataset.full || '');
+  }
+
+  function show(index: number) {
+    if (!currentGallery || !imgEl || !dayEl || !countEl || !photoEl) return;
+    const urls = urlsOf(currentGallery);
+    const i = Math.max(0, Math.min(urls.length - 1, index));
+    currentIndex = i;
+    // Vorab-laden des Bildes für sanften Wechsel
+    imgEl.style.opacity = '0';
+    const next = new Image();
+    next.onload = () => {
+      imgEl.src = next.src;
+      imgEl.style.opacity = '1';
+    };
+    next.src = urls[i];
+    imgEl.alt = `Heimatfest ${currentGallery.dataset.dayLabel} · Bild ${i + 1} von ${urls.length}`;
+    dayEl.textContent = currentGallery.dataset.dayLabel || '';
+    countEl.textContent = `Bild ${i + 1} / ${urls.length}`;
+    photoEl.textContent = currentGallery.dataset.fotograf || '';
+    if (prevBtn) prevBtn.disabled = i === 0;
+    if (nextBtn) nextBtn.disabled = i === urls.length - 1;
+  }
+
+  function open(gallery: HTMLElement, index: number, trigger: HTMLElement) {
+    if (!lb) return;
+    currentGallery = gallery;
+    lastTrigger = trigger;
+    lb.removeAttribute('hidden');
+    requestAnimationFrame(() => lb.setAttribute('data-open', ''));
+    document.body.classList.add('grh-lb-open');
+    show(index);
+    setTimeout(() => closeBtn?.focus(), 50);
+    // Nächste Bilder schon vorladen
+    const urls = urlsOf(gallery);
+    if (urls[index + 1]) new Image().src = urls[index + 1];
+    if (urls[index - 1]) new Image().src = urls[index - 1];
+  }
+
+  function close() {
+    if (!lb) return;
+    lb.removeAttribute('data-open');
+    document.body.classList.remove('grh-lb-open');
+    setTimeout(() => {
+      lb.setAttribute('hidden', '');
+      if (imgEl) imgEl.src = '';
+      lastTrigger?.focus();
+    }, 200);
+  }
+
+  function step(delta: number) {
+    if (!currentGallery) return;
+    const urls = urlsOf(currentGallery);
+    const next = currentIndex + delta;
+    if (next < 0 || next >= urls.length) return;
+    show(next);
+    // Vorausladen
+    if (urls[next + delta]) new Image().src = urls[next + delta];
+  }
+
+  // Click auf alle Thumbnails
+  document.querySelectorAll<HTMLElement>('[data-grh-lightbox-gallery]').forEach((gallery) => {
+    gallery.querySelectorAll<HTMLButtonElement>('[data-full]').forEach((btn, idx) => {
+      btn.addEventListener('click', () => open(gallery, idx, btn));
+    });
+  });
+
+  closeBtn?.addEventListener('click', close);
+  prevBtn?.addEventListener('click', () => step(-1));
+  nextBtn?.addEventListener('click', () => step(1));
+  lb?.addEventListener('click', (e) => { if (e.target === lb) close(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (lb?.hasAttribute('hidden')) return;
+    if (e.key === 'Escape')      close();
+    else if (e.key === 'ArrowLeft')  step(-1);
+    else if (e.key === 'ArrowRight') step(1);
+  });
+
+  // Touch-Swipe (mobile)
+  let touchStartX = 0;
+  lb?.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+  lb?.addEventListener('touchend',   (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 60) step(dx > 0 ? -1 : 1);
+  }, { passive: true });
+</script>

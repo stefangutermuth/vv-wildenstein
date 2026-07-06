@@ -1,0 +1,499 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const VERBAND_URL = 'https://vv-wildenstein.com/verband/';
+const PORTRAIT = 'https://vv-wildenstein.com/wp-content/uploads/2022/09/KA_2.jpg';
+
+const aemter = [
+  'Sekretariat',
+  'Hauptamt',
+  'Personalamt',
+  'Finanzwesen',
+  'Bauamt / Liegenschaften',
+  'Standesamt',
+  'Gewerbeamt',
+  'Ordnungsamt',
+  'Soziales',
+  'Kultur / Tourismus',
+  'Kindertagesstätten',
+  'Fördermittelstelle',
+  'Archiv / Datenschutz',
+];
+---
+<BaseLayout title="Verwaltung · Gemeinde Grünhainichen" header="compact">
+
+  {/* === Kopfzeile ====================================================== */}
+  <header class="grh-vw-head">
+    <div class="grh-container">
+      <p class="grh-vw-crumb">Gemeinde · Verwaltung</p>
+      <div class="grh-vw-hero">
+        <div class="grh-vw-hero__text">
+          <span class="grh-vw-eyebrow">Verwaltungsverband „Wildenstein"</span>
+          <h1>Eine Verwaltung für zwei Gemeinden</h1>
+          <p class="grh-vw-lead">
+            Grünhainichen und Börnichen werden gemeinsam vom Verwaltungs­verband
+            „Wildenstein" verwaltet — eine effiziente Lösung für rund 4 500
+            Einwohner und 44 km² Erzgebirge.
+          </p>
+          <a href={VERBAND_URL} target="_blank" rel="noopener" class="grh-vw-mainlink">
+            Zur vollständigen Verbands-Website ↗
+          </a>
+        </div>
+
+        <aside class="grh-vw-portrait">
+          <img src={PORTRAIT} alt="Kathrin Ardelt, Verbandsvorsitzende" loading="eager" />
+          <figcaption>
+            <span>Verbandsvorsitzende</span>
+            <strong>Kathrin Ardelt</strong>
+          </figcaption>
+        </aside>
+      </div>
+    </div>
+  </header>
+
+  {/* === Kontakt + Daten =================================================== */}
+  <section class="grh-vw-block grh-vw-block--dark">
+    <div class="grh-container grh-vw-contact">
+      <article>
+        <span class="grh-vw-eyebrow grh-vw-eyebrow--light">Anschrift</span>
+        <h2>Verwaltungsverband Wildenstein</h2>
+        <p>
+          Chemnitzer Straße 41<br />
+          09579 Grünhainichen
+        </p>
+      </article>
+      <article>
+        <span class="grh-vw-eyebrow grh-vw-eyebrow--light">Direkter Kontakt</span>
+        <ul>
+          <li>
+            <span>Telefon</span>
+            <a href="tel:+4937294170-0">037294 / 170-0</a>
+          </li>
+          <li>
+            <span>E-Mail</span>
+            <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a>
+          </li>
+          <li>
+            <span>Internet</span>
+            <a href={VERBAND_URL} target="_blank" rel="noopener">vv-wildenstein.com</a>
+          </li>
+        </ul>
+      </article>
+      <article>
+        <span class="grh-vw-eyebrow grh-vw-eyebrow--light">Zahlen</span>
+        <dl>
+          <div><dt>Mitgliedsgemeinden</dt><dd>2</dd></div>
+          <div><dt>Einwohner</dt><dd>≈ 4 500</dd></div>
+          <div><dt>Fläche</dt><dd>≈ 44 km²</dd></div>
+        </dl>
+      </article>
+    </div>
+  </section>
+
+  {/* === Mitgliedsgemeinden ============================================== */}
+  <section class="grh-vw-block">
+    <div class="grh-container">
+      <header class="grh-vw-section-head">
+        <h2>Mitgliedsgemeinden</h2>
+        <p>Zwei Gemeinden, eine gemeinsame Verwaltung</p>
+      </header>
+
+      <div class="grh-vw-members">
+        <a class="grh-vw-member grh-vw-member--current" href="/">
+          <span class="grh-vw-member__badge">Diese Website</span>
+          <h3>Grünhainichen</h3>
+          <p>mit den Ortsteilen Borstendorf, Grünhainichen und Waldkirchen/Erzgeb. — Bürgermeister Robert Arnold.</p>
+          <span class="grh-vw-member__cta">Zur Startseite →</span>
+        </a>
+        <a class="grh-vw-member" href="https://www.boernichen.de/" target="_blank" rel="noopener">
+          <span class="grh-vw-member__badge">Externe Website</span>
+          <h3>Börnichen/Erzgeb.</h3>
+          <p>Bürgermeister Martin Trinks. Erzgebirgsgemeinde mit eigenständigem Gemeinderat, gleichberechtigt im Verband.</p>
+          <span class="grh-vw-member__cta">boernichen.de ↗</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  {/* === Verwaltungsämter ================================================ */}
+  <section class="grh-vw-block grh-vw-block--alt">
+    <div class="grh-container">
+      <header class="grh-vw-section-head">
+        <h2>Sachgebiete</h2>
+        <p>{aemter.length} Verwaltungsämter unter einem Dach</p>
+      </header>
+
+      <ul class="grh-vw-aemter">
+        {aemter.map((a) => (
+          <li>{a}</li>
+        ))}
+      </ul>
+
+      <p class="grh-vw-hint">
+        Die konkreten Ansprechpartner, Sprech- und Öffnungszeiten finden Sie
+        auf der Verbands-Website.
+        <a href={VERBAND_URL} target="_blank" rel="noopener">
+          Zum Verband ↗
+        </a>
+      </p>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* === Kopfzeile ====================================================== */
+  .grh-vw-head {
+    padding: clamp(var(--grh-space-6), 9vw, var(--grh-space-8)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.08), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-vw-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-vw-hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+  }
+  @media (min-width: 880px) {
+    .grh-vw-hero { grid-template-columns: 1.6fr 1fr; gap: var(--grh-space-7); }
+  }
+  .grh-vw-eyebrow {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-vw-eyebrow--light { color: var(--grh-candle-300); }
+  .grh-vw-hero h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4);
+    max-width: 16ch;
+  }
+  .grh-vw-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+    color: var(--grh-forest-800);
+    line-height: 1.5;
+    max-width: 50ch;
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-vw-mainlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+    text-decoration: none;
+    border-radius: var(--grh-radius-pill);
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-vw-mainlink:hover {
+    background: var(--grh-moss-600);
+    transform: translateY(-2px);
+  }
+
+  /* Portrait Card */
+  .grh-vw-portrait {
+    margin: 0;
+    background: var(--grh-paper-100);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    box-shadow: 0 16px 36px rgba(26, 61, 39, 0.12);
+  }
+  .grh-vw-portrait img {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+  }
+  .grh-vw-portrait figcaption {
+    padding: var(--grh-space-3) var(--grh-space-4);
+    background: var(--grh-cream-50);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-vw-portrait figcaption span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+  }
+  .grh-vw-portrait figcaption strong {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  /* === Block-Layout =================================================== */
+  .grh-vw-block { padding: var(--grh-space-7) 0; }
+  .grh-vw-block--alt { background: var(--grh-paper-100); }
+  .grh-vw-block--dark {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(91, 174, 120, 0.18), transparent 55%),
+      var(--grh-forest-950);
+    color: var(--grh-cream-50);
+  }
+
+  .grh-vw-section-head {
+    text-align: center;
+    margin-bottom: var(--grh-space-6);
+  }
+  .grh-vw-section-head h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .grh-vw-section-head p {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0;
+  }
+
+  /* === Kontakt-Streifen (dunkel) ====================================== */
+  .grh-vw-contact {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+  }
+  @media (min-width: 880px) {
+    .grh-vw-contact { grid-template-columns: repeat(3, 1fr); gap: var(--grh-space-7); }
+  }
+  .grh-vw-contact h2 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-cream-50);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .grh-vw-contact p {
+    font-size: var(--grh-fs-md);
+    color: rgba(250, 247, 241, 0.85);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .grh-vw-contact ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+  }
+  .grh-vw-contact ul li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .grh-vw-contact ul span {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: rgba(250, 247, 241, 0.55);
+    font-weight: 700;
+  }
+  .grh-vw-contact ul a {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-candle-300);
+    text-decoration: none;
+    border-bottom: 1.5px solid rgba(212, 165, 92, 0.55);
+    width: fit-content;
+    padding-bottom: 2px;
+    word-break: break-word;
+  }
+  .grh-vw-contact ul a:hover { color: var(--grh-cream-50); border-color: var(--grh-cream-50); }
+  .grh-vw-contact dl {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    margin: 0;
+  }
+  .grh-vw-contact dl > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--grh-space-3);
+    border-top: 1px solid rgba(250, 247, 241, 0.18);
+    padding-top: var(--grh-space-3);
+  }
+  .grh-vw-contact dt {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: rgba(250, 247, 241, 0.55);
+  }
+  .grh-vw-contact dd {
+    margin: 0;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-cream-50);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  /* === Mitgliedsgemeinden ============================================== */
+  .grh-vw-members {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 800px) {
+    .grh-vw-members { grid-template-columns: 1fr 1fr; gap: var(--grh-space-6); }
+  }
+  .grh-vw-member {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    padding: var(--grh-space-5) var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+    position: relative;
+  }
+  .grh-vw-member:hover {
+    border-color: var(--grh-candle-500);
+    transform: translateY(-3px);
+  }
+  .grh-vw-member--current {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(91, 174, 120, 0.10), transparent 60%),
+      var(--grh-cream-50);
+    border-color: var(--grh-moss-500);
+  }
+  .grh-vw-member__badge {
+    align-self: flex-start;
+    font-family: var(--grh-font-body);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-700);
+    background: var(--grh-paper-100);
+    padding: 4px 10px;
+    border-radius: var(--grh-radius-pill);
+    font-weight: 700;
+  }
+  .grh-vw-member--current .grh-vw-member__badge {
+    background: var(--grh-moss-500);
+    color: var(--grh-cream-50);
+  }
+  .grh-vw-member h3 {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-2xl);
+    color: var(--grh-forest-900);
+    margin: 0;
+    letter-spacing: -0.015em;
+  }
+  .grh-vw-member p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.55;
+    margin: 0;
+  }
+  .grh-vw-member__cta {
+    margin-top: auto;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-forest-800);
+    font-weight: 700;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    align-self: flex-start;
+    padding-bottom: 2px;
+  }
+
+  /* === Sachgebiete-Tags ================================================ */
+  .grh-vw-aemter {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--grh-space-2);
+    justify-content: center;
+  }
+  .grh-vw-aemter li {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-900);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    padding: 8px 16px;
+    border-radius: var(--grh-radius-pill);
+    transition: border-color var(--grh-dur-fast), background var(--grh-dur-fast);
+  }
+  .grh-vw-aemter li:hover {
+    border-color: var(--grh-candle-500);
+    background: var(--grh-cream-50);
+  }
+  .grh-vw-hint {
+    text-align: center;
+    margin: var(--grh-space-6) auto 0;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    max-width: 50ch;
+    line-height: 1.5;
+  }
+  .grh-vw-hint a {
+    display: inline-block;
+    margin-left: 8px;
+    color: var(--grh-forest-800);
+    font-style: normal;
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 2px;
+    font-weight: 700;
+  }
+  .grh-vw-hint a:hover { color: var(--grh-moss-600); }
+</style>

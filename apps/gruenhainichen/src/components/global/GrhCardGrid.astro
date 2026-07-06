@@ -1,0 +1,169 @@
+---
+/**
+ * Generisches Card-Grid für CPT-Listen.
+ * Items: { href, title, image?, eyebrow?, meta?, body? }
+ */
+interface Item {
+  href: string;
+  title: string;
+  image?: string;
+  eyebrow?: string;
+  meta?: string;
+  body?: string;
+}
+interface Props {
+  items: Item[];
+  empty?: string;
+}
+const { items, empty = 'Hier sind aktuell keine Einträge gepflegt.' } = Astro.props;
+---
+{items.length === 0 ? (
+  <div class="grh-cardgrid-empty">
+    <p>{empty}</p>
+  </div>
+) : (
+  <div class="grh-cardgrid">
+    {items.map((it) => (
+      <a class={`grh-card ${it.image ? '' : 'grh-card--text'}`} href={it.href}>
+        {it.image && (
+          <div class="grh-card__media" aria-hidden="true">
+            <img src={it.image} alt="" loading="lazy" decoding="async" />
+          </div>
+        )}
+        <div class="grh-card__body">
+          {it.eyebrow && <span class="grh-card__eyebrow">{it.eyebrow}</span>}
+          <h3 class="grh-card__title">{it.title}</h3>
+          {it.body && <p class="grh-card__excerpt">{it.body}</p>}
+          {it.meta && <span class="grh-card__meta">{it.meta}</span>}
+        </div>
+      </a>
+    ))}
+  </div>
+)}
+
+<style>
+  .grh-cardgrid {
+    /* Mauerwerk-Layout: CSS Columns sorgt für variable Kartenhöhen
+       ohne Lücken — wie bei Pinterest. Karten fließen oben-nach-unten
+       je Spalte; die Reihenfolge ist „spaltenweise" statt zeilenweise. */
+    columns: 18em;
+    column-gap: var(--grh-space-5);
+    padding: var(--grh-space-6) 0 var(--grh-space-8);
+  }
+  .grh-card {
+    /* Verhindert, dass eine Karte zwischen zwei Spalten umbricht */
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: var(--grh-space-5);
+    width: 100%;
+  }
+  .grh-cardgrid-empty {
+    padding: var(--grh-space-7) 0;
+    text-align: center;
+    color: var(--grh-stone-400);
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-lg);
+  }
+  .grh-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    transition: transform var(--grh-dur-fast), border-color var(--grh-dur-fast), box-shadow var(--grh-dur-base);
+  }
+  .grh-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--grh-candle-500);
+    box-shadow: 0 12px 32px rgba(26, 61, 39, 0.08);
+  }
+  .grh-card__media {
+    /* Kein fixes Seitenverhältnis — Bild bestimmt die Höhe.
+       Hintergrund-Letterbox falls Transparenz im Bild. */
+    background:
+      linear-gradient(135deg, var(--grh-paper-100) 0%, var(--grh-cream-50) 100%);
+    overflow: hidden;
+    position: relative;
+    display: block;
+  }
+  .grh-card__media img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 700ms var(--grh-ease-out);
+  }
+  .grh-card:hover .grh-card__media img { transform: scale(1.02); }
+  .grh-card__body {
+    padding: var(--grh-space-4) var(--grh-space-4) var(--grh-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  /* === Text-only Variante (kein Beitragsbild) ============================ */
+  .grh-card--text {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.08), transparent 55%),
+      var(--grh-paper-100);
+    border-color: transparent;
+  }
+  .grh-card--text .grh-card__body {
+    padding: var(--grh-space-5);
+    gap: 8px;
+  }
+  /* Zierband oben statt Bild */
+  .grh-card--text .grh-card__body::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 2px;
+    background: var(--grh-candle-500);
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-card--text .grh-card__title {
+    font-size: var(--grh-fs-xl);
+  }
+  .grh-card--text .grh-card__excerpt {
+    -webkit-line-clamp: 5;
+  }
+  .grh-card__eyebrow {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+  }
+  .grh-card__title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--grh-forest-900);
+    margin: 0;
+  }
+  .grh-card__excerpt {
+    font-size: var(--grh-fs-sm);
+    line-height: 1.5;
+    color: var(--grh-stone-700);
+    margin: 4px 0 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .grh-card__meta {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    color: var(--grh-stone-400);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-top: 6px;
+  }
+</style>

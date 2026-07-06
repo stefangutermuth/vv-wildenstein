@@ -1,0 +1,328 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const PORTRAIT = 'https://grh.g-konzeption.de//wp-content/uploads/2018/09/IMG_1425.jpg';
+---
+<BaseLayout title="Bürgermeister Robert Arnold · Grünhainichen" header="compact">
+
+  {/* ── Kopfzeile ────────────────────────────────────────────────────── */}
+  <header class="grh-bm-head">
+    <div class="grh-container">
+      <p class="grh-bm-crumb">Gemeinde · Bürgermeister</p>
+      <div class="grh-bm-hero">
+        <figure class="grh-bm-portrait">
+          <img src={PORTRAIT} alt="Robert Arnold, Bürgermeister der Gemeinde Grünhainichen" loading="eager" />
+        </figure>
+        <div class="grh-bm-intro">
+          <span class="grh-bm-role">Ehrenamtlicher Bürgermeister</span>
+          <h1>Robert Arnold</h1>
+          <p class="grh-bm-since">Im Amt seit dem 10. Juni 2018</p>
+          <p class="grh-bm-claim">
+            <em>„Unsere Erzgebirgsgemeinde als lebenswerten Ort erhalten und gemeinsam weiterentwickeln."</em>
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {/* ── Inhalts-Grid ────────────────────────────────────────────────── */}
+  <section class="grh-bm-body">
+    <div class="grh-container grh-bm-grid">
+
+      {/* Sprechzeiten */}
+      <article class="grh-bm-block grh-bm-block--feature">
+        <span class="grh-bm-eyebrow">Sprechzeiten</span>
+        <h2>Ortsteilgespräche</h2>
+        <p class="grh-bm-lead">
+          Wünsche, Sorgen, Zukunftsideen — der Bürgermeister kommt regelmäßig zu Ihnen vor Ort.
+        </p>
+        <dl class="grh-bm-times">
+          <div>
+            <dt>Regulär</dt>
+            <dd>
+              <strong>Jeden Dienstag</strong><br />
+              <span>16:00 – 18:00 Uhr</span><br />
+              <em>in wechselnden Ortsteilen</em>
+            </dd>
+          </div>
+          <div>
+            <dt>Termin nach Absprache</dt>
+            <dd>
+              Außerhalb der mobilen Sprechzeiten gerne nach Vereinbarung
+              über das Sekretariat des Verwaltungsverbandes Wildenstein
+              oder direkt beim Bürgermeister.
+            </dd>
+          </div>
+        </dl>
+      </article>
+
+      {/* Direkter Kontakt */}
+      <aside class="grh-bm-block grh-bm-block--contact">
+        <span class="grh-bm-eyebrow">Direkter Kontakt</span>
+        <h2>Anliegen einreichen</h2>
+        <ul class="grh-bm-contact">
+          <li>
+            <span class="grh-bm-label">Telefon</span>
+            <a href="tel:+493729417015">037294 / 17015</a>
+          </li>
+          <li>
+            <span class="grh-bm-label">E-Mail Bürgermeister</span>
+            <a href="mailto:bm-gruenhainichen@wildenstein.ws">bm-gruenhainichen@wildenstein.ws</a>
+          </li>
+          <li>
+            <span class="grh-bm-label">Sekretariat / Verwaltung</span>
+            <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a>
+          </li>
+          <li>
+            <span class="grh-bm-label">Anschrift</span>
+            <span>Verwaltungsverband Wildenstein<br />Chemnitzer Straße 41<br />09579 Grünhainichen</span>
+          </li>
+        </ul>
+      </aside>
+
+      {/* Schwerpunkte */}
+      <article class="grh-bm-block">
+        <span class="grh-bm-eyebrow">Schwerpunkte</span>
+        <h2>Worum es Robert Arnold geht</h2>
+        <p>
+          Im Mittelpunkt der Arbeit steht der Erhalt und die behutsame
+          Weiterentwicklung unserer Erzgebirgsgemeinde als lebenswerten
+          Ort — für Familien, für Vereine, für das Handwerk und für alle
+          Generationen, die hier verwurzelt sind oder hier eine neue
+          Heimat finden möchten.
+        </p>
+      </article>
+
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .grh-bm-head {
+    padding: clamp(var(--grh-space-6), 9vw, var(--grh-space-8)) 0 var(--grh-space-6);
+    background:
+      radial-gradient(circle at 100% 0%, rgba(212, 165, 92, 0.08), transparent 55%),
+      var(--grh-cream-50);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-bm-crumb {
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin: 0 0 var(--grh-space-5);
+  }
+  .grh-bm-hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: center;
+  }
+  @media (min-width: 720px) {
+    .grh-bm-hero { grid-template-columns: 240px 1fr; gap: var(--grh-space-7); }
+  }
+  @media (min-width: 1100px) {
+    .grh-bm-hero { grid-template-columns: 320px 1fr; gap: var(--grh-space-8); }
+  }
+  .grh-bm-portrait {
+    margin: 0;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    background: var(--grh-paper-100);
+    box-shadow: 0 16px 40px rgba(26, 61, 39, 0.15);
+  }
+  .grh-bm-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Person steht im Original links — Crop so verschieben, dass sie mittig sitzt */
+    object-position: 35% center;
+  }
+  .grh-bm-intro { min-width: 0; }
+  .grh-bm-role {
+    display: inline-block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--grh-candle-500);
+    font-weight: 700;
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-bm-intro h1 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.6rem, 6vw, 4.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-bm-since {
+    font-family: var(--grh-font-body);
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-bm-claim {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.15rem, 2vw, 1.4rem);
+    line-height: 1.45;
+    color: var(--grh-forest-800);
+    max-width: 38ch;
+    margin: 0;
+    padding-left: var(--grh-space-4);
+    border-left: 3px solid var(--grh-candle-500);
+  }
+  .grh-bm-claim em { font-style: italic; }
+
+  /* === Inhalt === */
+  .grh-bm-body {
+    padding: var(--grh-space-7) 0 var(--grh-space-9);
+  }
+  .grh-bm-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 880px) {
+    .grh-bm-grid {
+      grid-template-columns: 1.4fr 1fr;
+      gap: var(--grh-space-6);
+    }
+    .grh-bm-block--feature { grid-row: 1; grid-column: 1; }
+    .grh-bm-block--contact { grid-row: 1; grid-column: 2; }
+    .grh-bm-block:not(.grh-bm-block--feature):not(.grh-bm-block--contact) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .grh-bm-block {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5) var(--grh-space-5);
+  }
+  .grh-bm-block--feature {
+    background:
+      radial-gradient(120% 100% at 0% 0%, rgba(91, 174, 120, 0.08), transparent 60%),
+      var(--grh-cream-50);
+  }
+  .grh-bm-block--contact {
+    background: var(--grh-paper-100);
+    border-color: transparent;
+  }
+  .grh-bm-eyebrow {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .grh-bm-block h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.015em;
+  }
+  .grh-bm-lead {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-forest-800);
+    margin: 0 0 var(--grh-space-4);
+    line-height: 1.5;
+    max-width: 55ch;
+  }
+  .grh-bm-block p {
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.65;
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  .grh-bm-times {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-4);
+    margin: 0;
+  }
+  .grh-bm-times > div {
+    padding-left: var(--grh-space-4);
+    border-left: 2px solid var(--grh-line);
+  }
+  .grh-bm-times dt {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .grh-bm-times dd {
+    margin: 0;
+    font-size: var(--grh-fs-md);
+    color: var(--grh-stone-700);
+    line-height: 1.55;
+  }
+  .grh-bm-times dd strong {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-lg);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-bm-times dd em {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    color: var(--grh-stone-400);
+  }
+
+  .grh-bm-contact {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+  }
+  .grh-bm-contact li {
+    border-bottom: 1px solid var(--grh-line);
+    padding-bottom: var(--grh-space-3);
+  }
+  .grh-bm-contact li:last-child { border-bottom: none; padding-bottom: 0; }
+  .grh-bm-label {
+    display: block;
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-700);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .grh-bm-contact a {
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-size: var(--grh-fs-md);
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    word-break: break-word;
+  }
+  .grh-bm-contact a:hover { color: var(--grh-moss-600); }
+  .grh-bm-contact li > span:not(.grh-bm-label) {
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    line-height: 1.5;
+  }
+</style>
