@@ -1,0 +1,751 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getRooms, getRoomBySlug, type RoomItem } from '../../../lib/cms-cpt';
+
+export async function getStaticPaths() {
+  const rooms = await getRooms();
+  const details = await Promise.all(rooms.map(r => getRoomBySlug(r.slug)));
+  return rooms.map((r, i) => ({
+    params: { slug: r.slug },
+    props: { room: details[i] ?? r },
+  }));
+}
+
+interface Props { room: RoomItem }
+const { room } = Astro.props;
+
+const ORTSTEIL_LABEL: Record<string, string> = {
+  borstendorf:    'Borstendorf',
+  gruenhainichen: 'Grünhainichen',
+  waldkirchen:    'Waldkirchen / Erzgeb.',
+};
+const ortsteilLabel = room.ortsteil ? (ORTSTEIL_LABEL[room.ortsteil] ?? room.ortsteil) : 'Gemeinde';
+
+const AMENITY_LABEL: Record<string, string> = {
+  kueche:       'Küche',
+  buehne:       'Bühne',
+  beamer:       'Beamer',
+  wlan:         'WLAN',
+  barrierefrei: 'Barrierefrei',
+  parkplaetze:  'Parkplätze',
+  umkleiden:    'Umkleiden',
+  dusche:       'Duschen',
+};
+
+const WP_API_BASE =
+  (import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env.PUBLIC_WP_API_BASE : undefined) ??
+  'https://vv-wildenstein.com/wp-json/wp/v2';
+const VVW_API_BASE = WP_API_BASE.replace(/\/wp\/v2\/?$/, '/vvw/v1');
+
+const WEEKDAY_NAMES = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const weekdayLabel = room.availableWeekdays && room.availableWeekdays.length > 0
+  ? room.availableWeekdays.slice().sort().map((n) => WEEKDAY_NAMES[n]).join(' · ')
+  : 'täglich';
+const timeWindow = room.openFrom && room.openTo
+  ? `${room.openFrom}–${room.openTo} Uhr`
+  : null;
+---
+<BaseLayout title={`${room.title} · Räume · Grünhainichen`} header="compact">
+  {room.image && (
+    <div class="grh-room-hero">
+      <img src={room.image} alt={room.title} loading="eager" />
+      <div class="grh-room-hero__veil" aria-hidden="true"></div>
+      <div class="grh-container grh-room-hero__content">
+        <p class="grh-room-hero__crumb">
+          <a href="/">Startseite</a> · <a href="/gemeinde">Gemeinde</a> ·
+          <a href="/gemeinde/raeume">Räume</a>
+        </p>
+        <span class="grh-room-hero__eyebrow">{ortsteilLabel}</span>
+        <h1 class="grh-room-hero__title">{room.title}</h1>
+        {(room.capacity || room.priceDisplay) && (
+          <p class="grh-room-hero__meta">
+            {room.capacity && <span>Kapazität: <strong>{room.capacity} Personen</strong></span>}
+            {room.capacity && room.priceDisplay && <span aria-hidden="true"> · </span>}
+            {room.priceDisplay && <span>{room.priceDisplay}</span>}
+          </p>
+        )}
+      </div>
+    </div>
+  )}
+
+  <section class="grh-room-body">
+    <div class="grh-container grh-room-body__grid">
+      <div class="grh-room-body__main">
+        {/* Info-Block oben links */}
+        <div class="grh-room-info">
+          {room.priceDisplay && (
+            <div class="grh-room-info__block">
+              <span class="grh-room-info__eye">Mietpreis</span>
+              <p>{room.priceDisplay}</p>
+            </div>
+          )}
+          {room.capacity && (
+            <div class="grh-room-info__block">
+              <span class="grh-room-info__eye">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M15 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Kapazität
+              </span>
+              <p>bis {room.capacity} Personen</p>
+            </div>
+          )}
+          {timeWindow && (
+            <div class="grh-room-info__block">
+              <span class="grh-room-info__eye">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Tagesfenster
+              </span>
+              <p>{timeWindow}</p>
+            </div>
+          )}
+          <div class="grh-room-info__block">
+            <span class="grh-room-info__eye">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+              Verfügbar
+            </span>
+            <p>{weekdayLabel}</p>
+          </div>
+        </div>
+
+        {/* Galerie darunter — falls Bilder da sind */}
+        {room.gallery && room.gallery.length > 0 && (
+          <div class="grh-room-gallery">
+            {room.gallery.slice(0, 6).map((g) => (
+              <figure class="grh-room-gallery__item">
+                <img src={g.src} alt={g.alt || room.title} loading="lazy" />
+              </figure>
+            ))}
+          </div>
+        )}
+
+        {room.contentHtml && (
+          <div class="grh-prose" set:html={room.contentHtml} />
+        )}
+
+        {room.amenities.length > 0 && (
+          <div class="grh-room-block">
+            <h2>Ausstattung</h2>
+            <ul class="grh-room-chips">
+              {room.amenities.map(a => (
+                <li>{AMENITY_LABEL[a] ?? a}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {room.address && (
+          <div class="grh-room-block">
+            <h2>Adresse</h2>
+            <p class="grh-room-address">
+              {room.address}
+            </p>
+            <p>
+              <a class="grh-room-maplink" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(room.address)}`} target="_blank" rel="noopener noreferrer">
+                Auf OpenStreetMap ansehen →
+              </a>
+            </p>
+          </div>
+        )}
+
+        <div class="grh-room-block grh-room-notes">
+          <h2>Gut zu wissen</h2>
+          <ul>
+            <li><strong>Vorlaufzeit:</strong> Anfragen bitte spätestens 7 Tage vor dem Wunschtermin einreichen.</li>
+            <li><strong>Bestätigung:</strong> Sie erhalten binnen 3 Werktagen eine Rückmeldung per E-Mail.</li>
+            <li><strong>Hausordnung:</strong> Vor Nutzung wird die Hausordnung ausgehändigt, sie ist Teil der Buchungsbestätigung.</li>
+          </ul>
+        </div>
+      </div>
+
+      <aside class="grh-room-book" id="grh-room-book">
+        <div class="grh-room-book__inner">
+          <span class="grh-room-book__eyebrow">Termin anfragen</span>
+          <h2>Belegung und Buchung</h2>
+          <p class="grh-room-book__hint">Rot markierte Zeiträume sind bereits gebucht. Klicken Sie einen freien Tag an, um eine Anfrage zu stellen.</p>
+
+          <div id="grh-calendar" class="grh-room-book__calendar" data-room-id={room.id} data-api={VVW_API_BASE}></div>
+
+          <form class="grh-room-book__form" data-grh-booking-form>
+            <input type="hidden" name="room_id" value={String(room.id)} />
+
+            {/* Serien-Modus */}
+            <div class="grh-room-book__mode" role="radiogroup" aria-label="Buchungs-Modus">
+              <label>
+                <input type="radio" name="series_kind" value="single" checked />
+                <span>Einzeltermin</span>
+              </label>
+              <label>
+                <input type="radio" name="series_kind" value="multi" />
+                <span>Mehrere Tage</span>
+              </label>
+              <label>
+                <input type="radio" name="series_kind" value="weekly" />
+                <span>Wöchentlich</span>
+              </label>
+            </div>
+
+            {/* Einzeltermin (Standard) + Wöchentlich Startdatum */}
+            <div class="grh-room-book__field" data-modes="single,weekly">
+              <label for="grh-b-date">Datum{/* dynamisch mit JS-Label */}</label>
+              <input id="grh-b-date" type="date" name="date" required />
+            </div>
+
+            {/* Mehrere Tage: bis zu 6 Datumfelder */}
+            <div class="grh-room-book__multi" data-modes="multi" hidden>
+              <label>Mehrere Datumtage (max. 6)</label>
+              <div class="grh-room-book__multi-list" data-grh-multi-list>
+                <input type="date" name="multi_dates[]" />
+                <input type="date" name="multi_dates[]" />
+              </div>
+              <button type="button" class="grh-room-book__add" data-grh-multi-add>+ Datum hinzufügen</button>
+            </div>
+
+            {/* Wöchentlich: End-Datum + Wochentage */}
+            <div class="grh-room-book__field" data-modes="weekly" hidden>
+              <label for="grh-b-until">Wiederholen bis</label>
+              <input id="grh-b-until" type="date" name="until_date" />
+            </div>
+            <div class="grh-room-book__weekdays" data-modes="weekly" hidden>
+              <label>An diesen Wochentagen</label>
+              <div class="grh-room-book__wd-chips">
+                {['Mo','Di','Mi','Do','Fr','Sa','So'].map((w, i) => (
+                  <label class="grh-room-book__wd">
+                    <input type="checkbox" name="weekdays" value={String((i + 1) % 7)} />
+                    <span>{w}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div class="grh-room-book__row">
+              <div class="grh-room-book__field">
+                <label for="grh-b-from">Von</label>
+                <input id="grh-b-from" type="time" name="time_from" required value="10:00" />
+              </div>
+              <div class="grh-room-book__field">
+                <label for="grh-b-to">Bis</label>
+                <input id="grh-b-to" type="time" name="time_to" required value="15:00" />
+              </div>
+            </div>
+
+            <div class="grh-room-book__field">
+              <label for="grh-b-name">Ihr Name</label>
+              <input id="grh-b-name" type="text" name="name" required autocomplete="name" />
+            </div>
+
+            <div class="grh-room-book__field">
+              <label for="grh-b-email">E-Mail</label>
+              <input id="grh-b-email" type="email" name="email" required autocomplete="email" />
+            </div>
+
+            <div class="grh-room-book__field">
+              <label for="grh-b-phone">Telefon (optional)</label>
+              <input id="grh-b-phone" type="tel" name="phone" autocomplete="tel" />
+            </div>
+
+            <div class="grh-room-book__field">
+              <label for="grh-b-org">Verein / Organisation (optional)</label>
+              <input id="grh-b-org" type="text" name="organization" autocomplete="organization" />
+            </div>
+
+            <div class="grh-room-book__field">
+              <label for="grh-b-attendees">Anzahl Personen</label>
+              <input id="grh-b-attendees" type="number" name="attendees" min="1" max={room.capacity ? String(room.capacity) : "1000"} />
+            </div>
+
+            <div class="grh-room-book__field">
+              <label for="grh-b-purpose">Anlass / Zweck</label>
+              <textarea id="grh-b-purpose" name="purpose" rows="3" required placeholder="Familienfeier, Kurs, Vereinsversammlung …"></textarea>
+            </div>
+
+            <label class="grh-room-book__check">
+              <input type="checkbox" name="privacy_consent" required />
+              <span>Ich willige in die Verarbeitung meiner Daten zur Anfrage-Bearbeitung ein <a href="/datenschutz">(Datenschutz)</a>.</span>
+            </label>
+            <label class="grh-room-book__check">
+              <input type="checkbox" name="rules_consent" required />
+              <span>Ich akzeptiere die Hausordnung, die mit der Buchungsbestätigung ausgehändigt wird.</span>
+            </label>
+
+            {/* Honeypot — muss leer bleiben, Bots füllen es aus */}
+            <input type="text" name="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute; left:-9999px" />
+
+            <button type="submit" class="grh-room-book__submit">
+              Anfrage abschicken
+            </button>
+
+            <div class="grh-room-book__result" data-result hidden></div>
+          </form>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js" is:inline></script>
+  <script is:inline define:vars={{ roomId: room.id, api: VVW_API_BASE }}>
+    (() => {
+      const calEl = document.getElementById('grh-calendar');
+      const dateInput = document.getElementById('grh-b-date');
+      const form = document.querySelector('[data-grh-booking-form]');
+      const result = form?.querySelector('[data-result]');
+      const submit = form?.querySelector('.grh-room-book__submit');
+      const formStartedAt = Date.now();
+
+      if (!window.FullCalendar || !calEl) return;
+
+      const isoDate = (d) => {
+        const p = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+      };
+
+      const cal = new FullCalendar.Calendar(calEl, {
+        initialView: 'dayGridMonth',
+        locale: 'de',
+        height: 380,
+        firstDay: 1,
+        headerToolbar: { start: 'prev', center: 'title', end: 'next' },
+        buttonText: { today: 'Heute' },
+        events: async (info, success, failure) => {
+          try {
+            const from = isoDate(info.start);
+            const to = isoDate(info.end);
+            const r = await fetch(`${api}/rooms/${roomId}/availability?from=${from}&to=${to}`);
+            const data = await r.json();
+            const evts = (data || []).map((b) => ({
+              start: `${b.date}T${b.time_from}`,
+              end: `${b.date}T${b.time_to}`,
+              display: 'background',
+              color: '#B02F2F',
+              extendedProps: { blocked: true },
+            }));
+            success(evts);
+          } catch (e) { failure(e); }
+        },
+        dateClick: (info) => {
+          if (dateInput) dateInput.value = info.dateStr;
+          document.getElementById('grh-b-from')?.focus();
+          form?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        },
+      });
+      cal.render();
+
+      // Serien-Modus toggle
+      const modeInputs = form?.querySelectorAll('input[name="series_kind"]');
+      const dateLabel = document.querySelector('label[for="grh-b-date"]');
+      const updateMode = () => {
+        const mode = form?.querySelector('input[name="series_kind"]:checked')?.value || 'single';
+        document.querySelectorAll('[data-modes]').forEach((el) => {
+          const modes = (el.getAttribute('data-modes') || '').split(',');
+          el.hidden = !modes.includes(mode);
+        });
+        if (dateLabel) {
+          dateLabel.textContent = mode === 'weekly' ? 'Startdatum' : 'Wunschtermin';
+        }
+      };
+      modeInputs?.forEach((el) => el.addEventListener('change', updateMode));
+      updateMode();
+
+      // Mehrere-Tage: + Button
+      document.querySelector('[data-grh-multi-add]')?.addEventListener('click', () => {
+        const list = document.querySelector('[data-grh-multi-list]');
+        if (!list) return;
+        if (list.querySelectorAll('input[type="date"]').length >= 6) return;
+        const inp = document.createElement('input');
+        inp.type = 'date';
+        inp.name = 'multi_dates[]';
+        list.appendChild(inp);
+      });
+
+      // Occurrences aus Formular ableiten
+      const buildOccurrences = (fd) => {
+        const mode = fd.get('series_kind');
+        const from = fd.get('time_from');
+        const to = fd.get('time_to');
+        if (mode === 'multi') {
+          const dates = Array.from(form?.querySelectorAll('input[name="multi_dates[]"]') || [])
+            .map((el) => el.value).filter(Boolean);
+          return dates.map((d) => ({ date: d, time_from: from, time_to: to }));
+        }
+        if (mode === 'weekly') {
+          const start = fd.get('date');
+          const until = fd.get('until_date');
+          const wds = Array.from(form?.querySelectorAll('input[name="weekdays"]:checked') || [])
+            .map((el) => Number(el.value));
+          if (!start || !until || wds.length === 0) return [];
+          const out = [];
+          const sd = new Date(start);
+          const ud = new Date(until);
+          for (let d = new Date(sd); d <= ud && out.length < 40; d.setDate(d.getDate() + 1)) {
+            if (wds.includes(d.getDay())) {
+              out.push({ date: isoDate(d), time_from: from, time_to: to });
+            }
+          }
+          return out;
+        }
+        // single
+        return [{ date: fd.get('date'), time_from: from, time_to: to }];
+      };
+
+      form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!result || !submit) return;
+        result.hidden = false;
+        result.className = 'grh-room-book__result grh-room-book__result--loading';
+        result.textContent = 'Wird gesendet …';
+        submit.disabled = true;
+
+        const fd = new FormData(form);
+        const occurrences = buildOccurrences(fd);
+        const seriesKind = fd.get('series_kind') === 'single' ? 'single' : (fd.get('series_kind') === 'weekly' ? 'weekly' : 'custom');
+
+        if (occurrences.length === 0) {
+          result.className = 'grh-room-book__result grh-room-book__result--err';
+          result.textContent = 'Bitte mindestens einen gültigen Termin angeben.';
+          submit.disabled = false;
+          return;
+        }
+
+        const payload = {
+          room_id: Number(fd.get('room_id')),
+          purpose: fd.get('purpose'),
+          attendees: fd.get('attendees') ? Number(fd.get('attendees')) : null,
+          series_kind: seriesKind,
+          occurrences,
+          requester: {
+            name: fd.get('name'),
+            email: fd.get('email'),
+            phone: fd.get('phone') || undefined,
+            organization: fd.get('organization') || undefined,
+          },
+          privacy_consent: !!fd.get('privacy_consent'),
+          rules_consent: !!fd.get('rules_consent'),
+          // Spam-Schutz
+          honeypot: fd.get('honeypot') || '',
+          form_started_at: formStartedAt,
+        };
+
+        try {
+          const r = await fetch(`${api}/bookings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await r.json();
+          if (r.ok) {
+            result.className = 'grh-room-book__result grh-room-book__result--ok';
+            result.innerHTML = `<strong>Danke!</strong> Ihre Anfrage ist eingegangen (Vorgang #${data.booking_id}). Sie erhalten eine Bestätigung per E-Mail.`;
+            form.reset();
+            cal.refetchEvents();
+          } else if (r.status === 409) {
+            result.className = 'grh-room-book__result grh-room-book__result--err';
+            result.innerHTML = `<strong>Termin bereits belegt.</strong> Bitte wählen Sie einen anderen Zeitraum.`;
+          } else if (data.messages) {
+            result.className = 'grh-room-book__result grh-room-book__result--err';
+            result.innerHTML = '<strong>Bitte prüfen:</strong><ul>' + data.messages.map((m) => `<li>${m}</li>`).join('') + '</ul>';
+          } else {
+            result.className = 'grh-room-book__result grh-room-book__result--err';
+            result.textContent = 'Es ist ein Fehler aufgetreten. Bitte später erneut versuchen oder telefonisch anfragen.';
+          }
+        } catch (err) {
+          result.className = 'grh-room-book__result grh-room-book__result--err';
+          result.textContent = 'Verbindung zum Server nicht möglich. Bitte später erneut versuchen.';
+        } finally {
+          submit.disabled = false;
+        }
+      });
+    })();
+  </script>
+</BaseLayout>
+
+<style>
+  .grh-room-hero {
+    position: relative;
+    height: clamp(300px, 45vh, 480px);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .grh-room-hero img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+  .grh-room-hero__veil {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(20,43,31,0.15) 0%, rgba(20,43,31,0.85) 100%);
+    z-index: 1;
+  }
+  .grh-room-hero__content {
+    position: relative; z-index: 2;
+    height: 100%;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: var(--grh-space-6);
+    color: var(--grh-cream-50);
+  }
+  .grh-room-hero__crumb {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    opacity: 0.85;
+    margin: 0 0 var(--grh-space-4);
+  }
+  .grh-room-hero__crumb a { color: inherit; text-decoration: none; border-bottom: 1px solid rgba(232,182,88,0.5); }
+  .grh-room-hero__eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    font-weight: 700;
+    color: var(--grh-candle-500);
+    margin-bottom: 6px;
+  }
+  .grh-room-hero__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(2rem, 4.4vw, 3.4rem);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-room-hero__meta { margin: 0; font-size: 15px; opacity: 0.9; }
+
+  .grh-room-body { padding: var(--grh-space-7) 0 var(--grh-space-8); }
+  .grh-room-body__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: start;
+  }
+  @media (min-width: 960px) {
+    .grh-room-body__grid { grid-template-columns: 7fr 5fr; gap: var(--grh-space-7); }
+  }
+  .grh-room-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--grh-space-3);
+    margin-bottom: var(--grh-space-6);
+  }
+  @media (min-width: 720px) {
+    .grh-room-gallery { grid-template-columns: repeat(3, 1fr); }
+  }
+  .grh-room-gallery__item {
+    margin: 0;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--grh-radius-sm, 6px);
+    background: var(--grh-paper-100);
+  }
+  .grh-room-gallery__item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 700ms var(--grh-ease-out);
+  }
+  .grh-room-gallery__item:hover img { transform: scale(1.04); }
+
+  .grh-room-block { margin-top: var(--grh-space-6); }
+  .grh-room-block h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+    letter-spacing: -0.02em;
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+  }
+  .grh-room-address { font-size: 16px; color: var(--grh-forest-900); line-height: 1.4; margin: 0 0 6px; }
+  .grh-room-maplink { color: var(--grh-forest-800); text-decoration: none; border-bottom: 1px solid var(--grh-candle-500); }
+  .grh-room-maplink:hover { color: var(--grh-moss-600); }
+
+  .grh-room-chips {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    list-style: none; padding: 0; margin: 0;
+  }
+  .grh-room-chips li {
+    padding: 6px 14px;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    font-size: 13px;
+    color: var(--grh-stone-700);
+    font-weight: 500;
+  }
+
+  .grh-room-notes ul { margin: 0; padding-left: 1.2em; }
+  .grh-room-notes li { margin-bottom: 8px; color: var(--grh-stone-700); line-height: 1.55; }
+
+  .grh-room-info {
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    margin-bottom: var(--grh-space-5);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 720px) {
+    .grh-room-info { grid-template-columns: 1fr 1fr; }
+  }
+  .grh-room-info__block {
+    padding: 0;
+    border: 0;
+  }
+  .grh-room-info__eye {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.24em;
+    font-weight: 700; color: var(--grh-moss-600);
+    margin-bottom: 4px;
+  }
+  .grh-room-info__eye svg { color: var(--grh-forest-800); }
+  .grh-room-info__block p {
+    margin: 0; color: var(--grh-forest-900); font-size: 14px; line-height: 1.4;
+    font-weight: 500;
+  }
+
+  .grh-room-book__mode {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;
+    background: var(--grh-cream-50);
+    padding: 4px;
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    margin-bottom: var(--grh-space-3);
+  }
+  .grh-room-book__mode label {
+    display: block; text-align: center;
+    padding: 8px 4px;
+    border-radius: var(--grh-radius-pill);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700;
+    color: var(--grh-stone-700); cursor: pointer;
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-room-book__mode input { position: absolute; opacity: 0; pointer-events: none; }
+  .grh-room-book__mode label:has(input:checked) {
+    background: var(--grh-forest-800); color: var(--grh-cream-50);
+  }
+
+  .grh-room-book__multi { display: flex; flex-direction: column; gap: 8px; }
+  .grh-room-book__multi > label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700; color: var(--grh-moss-600); }
+  .grh-room-book__multi-list { display: flex; flex-direction: column; gap: 6px; }
+  .grh-room-book__multi input {
+    padding: 10px 12px; border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm, 6px); font: inherit;
+    background: var(--grh-cream-50);
+  }
+  .grh-room-book__add {
+    align-self: flex-start;
+    background: transparent; border: 1px dashed var(--grh-line);
+    padding: 6px 12px; border-radius: var(--grh-radius-pill);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700;
+    color: var(--grh-stone-700); cursor: pointer;
+  }
+  .grh-room-book__add:hover { border-color: var(--grh-forest-800); color: var(--grh-forest-900); }
+
+  .grh-room-book__weekdays > label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700; color: var(--grh-moss-600); display: block; margin-bottom: 6px; }
+  .grh-room-book__wd-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .grh-room-book__wd { position: relative; }
+  .grh-room-book__wd input { position: absolute; opacity: 0; pointer-events: none; }
+  .grh-room-book__wd span {
+    display: block; padding: 6px 12px;
+    background: var(--grh-cream-50); border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    color: var(--grh-stone-700);
+    transition: all var(--grh-dur-fast);
+  }
+  .grh-room-book__wd:has(input:checked) span {
+    background: var(--grh-forest-800); border-color: var(--grh-forest-800); color: var(--grh-cream-50);
+  }
+
+  .grh-room-book__inner {
+    position: sticky; top: 96px;
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+  }
+  .grh-room-book__eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-moss-600);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .grh-room-book h2 {
+    font-family: var(--grh-font-display);
+    font-size: 1.4rem;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+  .grh-room-book__hint { font-size: 13px; color: var(--grh-stone-700); margin: 0 0 var(--grh-space-4); line-height: 1.5; }
+
+  .grh-room-book__calendar { margin-bottom: var(--grh-space-4); background: var(--grh-cream-50); border-radius: var(--grh-radius-sm, 6px); padding: 8px; }
+  .grh-room-book__calendar :global(.fc) { font-family: var(--grh-font-body); font-size: 13px; }
+  .grh-room-book__calendar :global(.fc-toolbar-title) { font-family: var(--grh-font-display); font-size: 16px; color: var(--grh-forest-900); }
+  .grh-room-book__calendar :global(.fc-button) {
+    background: var(--grh-forest-800); border-color: var(--grh-forest-800);
+    color: var(--grh-cream-50); text-transform: uppercase; font-size: 10px; letter-spacing: 0.14em; font-weight: 700;
+    padding: 4px 10px;
+  }
+  .grh-room-book__calendar :global(.fc-button:hover) { background: var(--grh-moss-600); border-color: var(--grh-moss-600); }
+  .grh-room-book__calendar :global(.fc-daygrid-day) { cursor: pointer; }
+  .grh-room-book__calendar :global(.fc-daygrid-day.fc-day-past) { opacity: 0.4; cursor: not-allowed; }
+
+  .grh-room-book__form {
+    display: flex; flex-direction: column; gap: var(--grh-space-3);
+    padding-top: var(--grh-space-4);
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-room-book__field { display: flex; flex-direction: column; gap: 4px; }
+  .grh-room-book__field label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em;
+    font-weight: 700; color: var(--grh-moss-600);
+  }
+  .grh-room-book__field input,
+  .grh-room-book__field textarea {
+    font-family: inherit; font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm, 6px);
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    line-height: 1.4;
+  }
+  .grh-room-book__field textarea { resize: vertical; }
+  .grh-room-book__field input:focus,
+  .grh-room-book__field textarea:focus { outline: none; border-color: var(--grh-candle-500); }
+
+  .grh-room-book__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--grh-space-3); }
+
+  .grh-room-book__check {
+    display: grid;
+    grid-template-columns: auto 1fr; gap: 10px;
+    align-items: start;
+    font-size: 12px; color: var(--grh-stone-700); line-height: 1.4;
+  }
+  .grh-room-book__check input { margin-top: 3px; }
+  .grh-room-book__check a { color: var(--grh-forest-800); }
+
+  .grh-room-book__submit {
+    padding: 14px 22px;
+    background: var(--grh-forest-900); color: var(--grh-candle-500);
+    border: 1px solid var(--grh-candle-500);
+    border-radius: var(--grh-radius-pill);
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 700;
+    cursor: pointer;
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-room-book__submit:hover { background: var(--grh-forest-800); }
+  .grh-room-book__submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .grh-room-book__result {
+    padding: 12px 14px;
+    border-radius: var(--grh-radius-sm, 6px);
+    font-size: 13px; line-height: 1.5;
+  }
+  .grh-room-book__result--loading { background: var(--grh-cream-50); border: 1px solid var(--grh-line); }
+  .grh-room-book__result--ok { background: rgba(63, 108, 74, 0.1); border: 1px solid var(--grh-moss-500); color: var(--grh-forest-900); }
+  .grh-room-book__result--err { background: rgba(176, 47, 47, 0.08); border: 1px solid rgba(176, 47, 47, 0.35); color: var(--grh-alert-600, #b02f2f); }
+  .grh-room-book__result ul { margin: 4px 0 0; padding-left: 18px; }
+</style>

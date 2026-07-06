@@ -1,0 +1,391 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../../components/global/GrhPageHeader.astro';
+import { getRooms } from '../../../lib/cms-cpt';
+
+const rooms = await getRooms();
+
+const ORTSTEIL_LABEL: Record<string, string> = {
+  borstendorf:    'Borstendorf',
+  gruenhainichen: 'Grünhainichen',
+  waldkirchen:    'Waldkirchen / Erzgeb.',
+};
+
+const AMENITY_LABEL: Record<string, string> = {
+  kueche:       'Küche',
+  buehne:       'Bühne',
+  beamer:       'Beamer',
+  wlan:         'WLAN',
+  barrierefrei: 'Barrierefrei',
+  parkplaetze:  'Parkplätze',
+  umkleiden:    'Umkleiden',
+  dusche:       'Duschen',
+};
+
+// Union aller vorkommenden Ausstattungen
+const allAmenities = Array.from(new Set(rooms.flatMap((r) => r.amenities))).sort();
+// Union aller vorkommenden Ortsteile
+const allOrtsteile = Array.from(new Set(rooms.map((r) => r.ortsteil).filter(Boolean))) as string[];
+allOrtsteile.sort();
+---
+<BaseLayout title="Räume mieten · Grünhainichen" header="compact">
+  <GrhPageHeader
+    title="Räume mieten"
+    breadcrumb="Startseite · Gemeinde · Räume"
+    lead="Kulturhaus, Turnhalle, Vereinsräume — hier finden Sie alle Räume der Gemeinde, die Sie für Feiern, Kurse oder Veranstaltungen buchen können."
+    count={rooms.length}
+    countLabel={rooms.length === 1 ? 'Raum' : 'Räume'}
+  />
+
+  <section class="grh-rooms">
+    <div class="grh-container grh-rooms__layout">
+      <aside class="grh-rooms__filters" data-grh-rooms-filters>
+        <div class="grh-rooms__filter">
+          <h3>Ortsteil</h3>
+          <div class="grh-rooms__radios">
+            <label>
+              <input type="radio" name="ortsteil" value="" checked />
+              <span>Alle</span>
+            </label>
+            {allOrtsteile.map((o) => (
+              <label>
+                <input type="radio" name="ortsteil" value={o} />
+                <span>{ORTSTEIL_LABEL[o] ?? o}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div class="grh-rooms__filter">
+          <h3>Mindest-Kapazität</h3>
+          <input
+            type="number"
+            name="min_capacity"
+            min="0"
+            step="10"
+            placeholder="z. B. 50"
+            data-grh-rooms-min
+            class="grh-rooms__number"
+          />
+        </div>
+
+        {allAmenities.length > 0 && (
+          <div class="grh-rooms__filter">
+            <h3>Ausstattung</h3>
+            <div class="grh-rooms__checks">
+              {allAmenities.map((a) => (
+                <label>
+                  <input type="checkbox" name="amenity" value={a} />
+                  <span>{AMENITY_LABEL[a] ?? a}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button type="button" class="grh-rooms__reset" data-grh-rooms-reset>Filter zurücksetzen</button>
+      </aside>
+
+      <div class="grh-rooms__list">
+        <p class="grh-rooms__count" data-grh-rooms-count>{rooms.length} von {rooms.length} Räumen sichtbar</p>
+
+        <div class="grh-rooms__grid">
+          {rooms.map((r) => (
+            <a
+              class="grh-room-card"
+              href={`/gemeinde/raeume/${r.slug}`}
+              data-grh-room
+              data-ortsteil={r.ortsteil ?? ''}
+              data-capacity={String(r.capacity ?? 0)}
+              data-amenities={r.amenities.join(',')}
+            >
+              <div class="grh-room-card__media">
+                {r.image
+                  ? <img src={r.image} alt="" loading="lazy" />
+                  : <div class="grh-room-card__ph" aria-hidden="true">🏛️</div>
+                }
+                {r.capacity && <span class="grh-room-card__cap"><strong>bis {r.capacity}</strong> Personen</span>}
+              </div>
+              <div class="grh-room-card__body">
+                {r.ortsteil && <span class="grh-room-card__eyebrow">{ORTSTEIL_LABEL[r.ortsteil] ?? r.ortsteil}</span>}
+                <h3 class="grh-room-card__title">{r.title}</h3>
+                {r.address && <p class="grh-room-card__addr">{r.address}</p>}
+                {r.amenities.length > 0 && (
+                  <ul class="grh-room-card__chips" aria-label="Ausstattung">
+                    {r.amenities.slice(0, 4).map((a) => (
+                      <li>{AMENITY_LABEL[a] ?? a}</li>
+                    ))}
+                    {r.amenities.length > 4 && <li>+{r.amenities.length - 4}</li>}
+                  </ul>
+                )}
+                {r.priceDisplay && (
+                  <p class="grh-room-card__price">{r.priceDisplay}</p>
+                )}
+                <span class="grh-room-card__cta">Verfügbarkeit prüfen →</span>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <p class="grh-rooms__empty" data-grh-rooms-empty hidden>
+          Kein Raum entspricht diesen Filtern. <button type="button" class="grh-rooms__link" data-grh-rooms-reset>Filter zurücksetzen →</button>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="grh-rooms__info">
+    <div class="grh-container">
+      <div class="grh-rooms__info-grid">
+        <div>
+          <h2>So läuft die Buchung</h2>
+          <ol class="grh-rooms__steps">
+            <li><span>1</span><div><strong>Raum auswählen</strong><p>Klicken Sie einen Raum an — dort sehen Sie Ausstattung, Kapazität und den aktuellen Belegungskalender.</p></div></li>
+            <li><span>2</span><div><strong>Termin anfragen</strong><p>Wählen Sie Ihren Wunschtermin und schicken Sie über das Formular Ihre Anfrage ab. Der zuständige Hauswart bekommt eine E-Mail.</p></div></li>
+            <li><span>3</span><div><strong>Bestätigung erhalten</strong><p>Sobald die Verwaltung geprüft hat, erhalten Sie eine Zu- oder Absage per E-Mail. Bei Zusage ist der Termin für andere gesperrt.</p></div></li>
+          </ol>
+        </div>
+        <aside class="grh-rooms__contact">
+          <span class="grh-rooms__contact-eye">Fragen zur Raumnutzung?</span>
+          <h3>Gemeindeverwaltung</h3>
+          <p>Telefon: <a href="tel:+4937294170-0">037294 / 170-0</a><br />
+             E-Mail: <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a></p>
+          <p class="grh-rooms__contact-hint">Für kurzfristige Anfragen (weniger als 7 Tage vor dem Termin) melden Sie sich bitte direkt telefonisch.</p>
+          <p><a class="grh-rooms__contact-link" href="/gemeinde/raeume/belegungsplan">Öffentlicher Belegungsplan →</a></p>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  (() => {
+    const container = document.querySelector<HTMLElement>('[data-grh-rooms-filters]');
+    if (!container) return;
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-room]'));
+    const countEl = document.querySelector<HTMLElement>('[data-grh-rooms-count]');
+    const emptyEl = document.querySelector<HTMLElement>('[data-grh-rooms-empty]');
+    const minEl = document.querySelector<HTMLInputElement>('[data-grh-rooms-min]');
+    const resets = document.querySelectorAll<HTMLElement>('[data-grh-rooms-reset]');
+
+    function apply() {
+      const ortsteil = (document.querySelector<HTMLInputElement>('input[name="ortsteil"]:checked')?.value) || '';
+      const min = Number(minEl?.value || 0);
+      const wantedAmenities = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="amenity"]:checked')).map((c) => c.value);
+
+      let visible = 0;
+      for (const c of cards) {
+        const cO = c.dataset.ortsteil || '';
+        const cCap = Number(c.dataset.capacity || 0);
+        const cA = (c.dataset.amenities || '').split(',').filter(Boolean);
+
+        let show = true;
+        if (ortsteil && cO !== ortsteil) show = false;
+        if (min > 0 && cCap < min) show = false;
+        for (const a of wantedAmenities) {
+          if (!cA.includes(a)) { show = false; break; }
+        }
+        c.style.display = show ? '' : 'none';
+        if (show) visible++;
+      }
+      if (countEl) countEl.textContent = `${visible} von ${cards.length} Räumen sichtbar`;
+      if (emptyEl) emptyEl.hidden = visible > 0;
+    }
+
+    container.addEventListener('change', apply);
+    container.addEventListener('input', apply);
+    resets.forEach((r) => r.addEventListener('click', () => {
+      container.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((el) => { el.checked = el.value === ''; });
+      container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((el) => { el.checked = false; });
+      if (minEl) minEl.value = '';
+      apply();
+    }));
+  })();
+</script>
+
+<style>
+  .grh-rooms { padding: var(--grh-space-6) 0 var(--grh-space-8); }
+  .grh-rooms__layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+  }
+  @media (min-width: 960px) {
+    .grh-rooms__layout { grid-template-columns: 260px 1fr; gap: var(--grh-space-7); }
+  }
+
+  .grh-rooms__filters {
+    position: sticky; top: 96px;
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+    align-self: start;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+  .grh-rooms__filter { padding-bottom: var(--grh-space-4); margin-bottom: var(--grh-space-4); border-bottom: 1px solid var(--grh-line); }
+  .grh-rooms__filter:last-of-type { border-bottom: 0; margin-bottom: 0; }
+  .grh-rooms__filter h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--grh-moss-600); font-weight: 700; margin: 0 0 var(--grh-space-3);
+  }
+  .grh-rooms__radios, .grh-rooms__checks { display: flex; flex-direction: column; gap: 8px; }
+  .grh-rooms__radios label, .grh-rooms__checks label {
+    display: grid; grid-template-columns: 18px 1fr; gap: 8px;
+    align-items: center; cursor: pointer;
+    font-size: 14px; color: var(--grh-forest-900);
+  }
+  .grh-rooms__number {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--grh-line); border-radius: var(--grh-radius-sm, 6px);
+    background: var(--grh-cream-50); font: inherit;
+  }
+  .grh-rooms__reset {
+    margin-top: var(--grh-space-4);
+    padding: 8px 14px;
+    background: transparent; border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700;
+    color: var(--grh-stone-700); cursor: pointer;
+    transition: all var(--grh-dur-fast);
+  }
+  .grh-rooms__reset:hover { border-color: var(--grh-forest-800); color: var(--grh-forest-900); }
+  .grh-rooms__link {
+    background: transparent; border: 0; padding: 0;
+    color: var(--grh-forest-800); text-decoration: none;
+    border-bottom: 1px solid var(--grh-candle-500);
+    cursor: pointer; font: inherit;
+  }
+
+  .grh-rooms__count {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--grh-stone-400); font-weight: 700; margin: 0 0 var(--grh-space-4);
+  }
+
+  .grh-rooms__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 720px)  { .grh-rooms__grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1100px) { .grh-rooms__grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+  .grh-room-card {
+    display: flex; flex-direction: column;
+    text-decoration: none; color: inherit;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    overflow: hidden;
+    transition: border-color var(--grh-dur-fast), box-shadow var(--grh-dur-base);
+  }
+  .grh-room-card:hover { border-color: var(--grh-candle-500); box-shadow: 0 12px 32px rgba(26,61,39,0.08); }
+  .grh-room-card__media { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
+  .grh-room-card__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .grh-room-card__ph {
+    display: grid; place-items: center; height: 100%;
+    background: linear-gradient(160deg, var(--grh-sage-100), var(--grh-paper-100));
+    font-size: 42px;
+  }
+  .grh-room-card__cap {
+    position: absolute; bottom: 10px; right: 10px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em;
+    padding: 4px 10px; border-radius: var(--grh-radius-pill);
+    background: rgba(20, 43, 31, 0.75); color: var(--grh-cream-50);
+    backdrop-filter: blur(6px);
+  }
+  .grh-room-card__cap strong { font-family: var(--grh-font-display); font-style: italic; font-weight: 500; color: var(--grh-candle-500); font-size: 13px; margin-right: 4px; letter-spacing: 0; }
+
+  .grh-room-card__body { padding: var(--grh-space-4); display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .grh-room-card__eyebrow {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em;
+    font-weight: 700; color: var(--grh-moss-600);
+  }
+  .grh-room-card__title {
+    font-family: var(--grh-font-display); font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900); margin: 0; line-height: 1.2; letter-spacing: -0.01em;
+  }
+  .grh-room-card__addr { font-size: 13px; color: var(--grh-stone-700); margin: 0; line-height: 1.4; }
+  .grh-room-card__chips {
+    list-style: none; padding: 0; margin: 2px 0 0;
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .grh-room-card__chips li {
+    font-size: 11px; padding: 3px 8px;
+    background: var(--grh-paper-100); border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill); color: var(--grh-stone-700);
+  }
+  .grh-room-card__price {
+    margin: var(--grh-space-2) 0 0;
+    padding-left: var(--grh-space-3);
+    border-left: 3px solid var(--grh-moss-500);
+    font-size: 13px; color: var(--grh-forest-900); font-weight: 500;
+    line-height: 1.4;
+  }
+  .grh-room-card__cta {
+    margin-top: auto; padding-top: var(--grh-space-3);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 700;
+    color: var(--grh-forest-800);
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 4px; width: fit-content;
+    transition: color var(--grh-dur-fast);
+  }
+  .grh-room-card:hover .grh-room-card__cta { color: var(--grh-moss-600); }
+
+  .grh-rooms__empty {
+    text-align: center; padding: var(--grh-space-6);
+    color: var(--grh-stone-400); font-style: italic;
+  }
+
+  /* === Info-Bereich (bleibt) =============================================== */
+  .grh-rooms__info {
+    padding: var(--grh-space-7) 0;
+    background: var(--grh-paper-100);
+    border-top: 1px solid var(--grh-line);
+    margin-top: var(--grh-space-7);
+  }
+  .grh-rooms__info-grid {
+    display: grid; grid-template-columns: 1fr; gap: var(--grh-space-6);
+  }
+  @media (min-width: 900px) { .grh-rooms__info-grid { grid-template-columns: 2fr 1fr; gap: var(--grh-space-7); } }
+  .grh-rooms__info h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 2.6vw, 2rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-5); letter-spacing: -0.02em;
+  }
+  .grh-rooms__steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--grh-space-4); }
+  .grh-rooms__steps li { display: grid; grid-template-columns: 42px 1fr; gap: var(--grh-space-3); align-items: start; }
+  .grh-rooms__steps span {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--grh-forest-800); color: var(--grh-candle-500);
+    font-family: var(--grh-font-display); font-style: italic; font-size: 20px;
+    display: grid; place-items: center;
+  }
+  .grh-rooms__steps strong { display: block; font-family: var(--grh-font-display); font-weight: 500; font-size: var(--grh-fs-lg); color: var(--grh-forest-900); margin-bottom: 4px; }
+  .grh-rooms__steps p { margin: 0; color: var(--grh-stone-700); line-height: 1.55; }
+
+  .grh-rooms__contact {
+    background: var(--grh-cream-50); border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md); padding: var(--grh-space-5);
+  }
+  .grh-rooms__contact-eye {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em;
+    font-weight: 700; color: var(--grh-moss-600); display: block; margin-bottom: 8px;
+  }
+  .grh-rooms__contact h3 {
+    font-family: var(--grh-font-display); font-size: var(--grh-fs-lg);
+    color: var(--grh-forest-900); margin: 0 0 var(--grh-space-3); letter-spacing: -0.01em;
+  }
+  .grh-rooms__contact p { margin: 0 0 var(--grh-space-2); line-height: 1.6; color: var(--grh-stone-700); }
+  .grh-rooms__contact a { color: var(--grh-forest-800); text-decoration: none; border-bottom: 1px solid var(--grh-candle-500); }
+  .grh-rooms__contact a:hover { color: var(--grh-moss-600); }
+  .grh-rooms__contact-hint {
+    font-size: 13px; color: var(--grh-stone-400); font-style: italic; margin-top: var(--grh-space-3);
+  }
+  .grh-rooms__contact-link {
+    display: inline-block; margin-top: var(--grh-space-3);
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700;
+  }
+</style>

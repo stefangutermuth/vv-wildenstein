@@ -442,3 +442,177 @@ interface WPPost extends WPCPTBase {}
 export async function getPostBySlug(slug: string): Promise<CPTDetail | null> {
   return getCPTBySlug('posts', slug);
 }
+
+/* ============================================================
+ * Räume (vvw_room aus dem VVW-Roombooking-Plugin)
+ * Nur die drei Grünhainichen-Ortsteile (Municipality-Taxonomie).
+ * ============================================================ */
+
+export interface RoomItem {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  contentHtml: string;
+  image?: string;
+  ortsteil?: Ortsteil;
+  capacity?: number;
+  address?: string;
+  priceDisplay?: string;
+  amenities: string[];
+  status?: string;
+  openFrom?: string;
+  openTo?: string;
+  availableWeekdays?: number[];
+  leadDays?: number;
+  maxAdvance?: number;
+  gallery?: Array<{ src: string; alt: string }>;
+  link: string;
+}
+
+/**
+ * Antwort-Schema vom Plugin-eigenen Endpoint `/vvw/v1/rooms`.
+ * Wir nutzen diesen statt `wp/v2/vvw_room`, weil das Plugin dort
+ * die Meta-Felder ohne Prefix und die Terms normalisiert ausliefert
+ * (der Standard-Endpoint liefert `meta: {}` weil `show_in_rest` fehlt).
+ */
+interface VVWv1Room {
+  id: number;
+  title: string;
+  content: string;
+  excerpt: string;
+  permalink: string;
+  thumbnail: string;
+  thumbnail_thumb: string;
+  meta: {
+    capacity?: string | number;
+    address?: string;
+    price_display?: string;
+    open_from?: string;
+    open_to?: string;
+    available_weekdays?: string | number[];
+    lead_days?: string | number;
+    max_advance?: string | number;
+    status?: string;
+  };
+  municipality?: { slug?: string } | null;
+  amenities?: Array<{ slug: string; name: string }>;
+}
+
+function slugFromPermalink(link: string): string {
+  const m = link.match(/\/raum\/([^/]+)\/?/);
+  return m ? m[1] : '';
+}
+
+function toOrtsteil(slug: string | undefined | null): Ortsteil | undefined {
+  if (!slug) return undefined;
+  if (GRH_ORTSTEILE.has(slug)) return slug as Ortsteil;
+  if (slug.startsWith('waldkirchen')) return 'waldkirchen';
+  return undefined;
+}
+
+function hasGrhMunicipalitySlug(slug: string | undefined | null): boolean {
+  if (!slug) return true; // ohne Zuordnung → universal
+  return GRH_ORTSTEILE.has(slug) || slug.startsWith('waldkirchen');
+}
+
+function mapVVWv1Room(r: VVWv1Room): RoomItem {
+  const rawWd = r.meta?.available_weekdays;
+  const weekdays: number[] | undefined = Array.isArray(rawWd)
+    ? rawWd.map((n) => Number(n))
+    : (typeof rawWd === 'string' && rawWd
+        ? rawWd.split(',').map((s) => Number(s.trim())).filter((n) => !Number.isNaN(n))
+        : undefined);
+  const capacity = r.meta?.capacity ? Number(r.meta.capacity) : undefined;
+  const leadDays = r.meta?.lead_days ? Number(r.meta.lead_days) : undefined;
+  const maxAdvance = r.meta?.max_advance ? Number(r.meta.max_advance) : undefined;
+
+  return {
+    id: r.id,
+    slug: slugFromPermalink(r.permalink),
+    title: decodeEntities(r.title),
+    excerpt: decodeEntities(stripHtml(r.excerpt ?? '')),
+    contentHtml: r.content ?? '',
+    image: r.thumbnail || undefined,
+    ortsteil: toOrtsteil(r.municipality?.slug),
+    capacity,
+    address: r.meta?.address || undefined,
+    priceDisplay: r.meta?.price_display || undefined,
+    amenities: (r.amenities ?? []).map((a) => a.slug),
+    status: r.meta?.status || undefined,
+    openFrom: r.meta?.open_from || undefined,
+    openTo: r.meta?.open_to || undefined,
+    availableWeekdays: weekdays,
+    leadDays,
+    maxAdvance,
+    link: r.permalink,
+  };
+}
+
+const VVW_API_BASE =
+  (import.meta.env.PUBLIC_VVW_API_BASE as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env.PUBLIC_VVW_API_BASE : undefined) ??
+  'https://vv-wildenstein.com/wp-json/vvw/v1';
+
+async function fetchVVWRooms(): Promise<VVWv1Room[]> {
+  try {
+    const res = await fetchWithTimeout(`${VVW_API_BASE}/rooms`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as VVWv1Room[];
+  } catch (err) {
+    console.warn('[cms-cpt] vvw/v1/rooms Fehler:', (err as Error).message);
+    return [];
+  }
+}
+
+interface WPMedia {
+  id: number;
+  source_url: string;
+  alt_text?: string;
+  media_details?: { sizes?: Record<string, { source_url: string }> };
+  post?: number;
+}
+
+async function fetchRoomGallery(roomId: number): Promise<Array<{ src: string; alt: string }>> {
+  try {
+    const url = new URL(`${WP_BASE}/media`);
+    url.searchParams.set('parent', String(roomId));
+    url.searchParams.set('per_page', '20');
+    url.searchParams.set('media_type', 'image');
+    const res = await fetchWithTimeout(url.toString(), {
+      headers: { Accept: 'application/json', ...authHeader() },
+    });
+    if (!res.ok) return [];
+    const media = (await res.json()) as WPMedia[];
+    return media.map((m) => ({
+      src: m.media_details?.sizes?.large?.source_url
+         ?? m.media_details?.sizes?.medium_large?.source_url
+         ?? m.source_url,
+      alt: m.alt_text ?? '',
+    }));
+  } catch (err) {
+    console.warn('[cms-cpt] media parent fetch fehler:', (err as Error).message);
+    return [];
+  }
+}
+
+export async function getRoomBySlug(slug: string): Promise<RoomItem | null> {
+  const all = await fetchVVWRooms();
+  const room = all.find((r) => slugFromPermalink(r.permalink) === slug);
+  if (!room) return null;
+  const mapped = mapVVWv1Room(room);
+  const gallery = await fetchRoomGallery(mapped.id);
+  // Hero-Bild rausfiltern, falls es doppelt kommt
+  const heroUrl = mapped.image;
+  mapped.gallery = gallery.filter((g) => !heroUrl || g.src !== heroUrl);
+  return mapped;
+}
+
+export async function getRooms(): Promise<RoomItem[]> {
+  const all = await fetchVVWRooms();
+  return all
+    .map(mapVVWv1Room)
+    .filter((r) => hasGrhMunicipalitySlug(r.ortsteil));
+}

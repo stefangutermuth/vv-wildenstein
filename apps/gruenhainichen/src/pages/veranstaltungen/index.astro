@@ -375,6 +375,7 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
     margin-bottom: var(--grh-space-5);
     break-inside: avoid;
     page-break-inside: avoid;
+    contain: layout paint;
     text-decoration: none;
     color: inherit;
     background: var(--grh-cream-50);
@@ -384,7 +385,6 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
     transition: transform var(--grh-dur-base) var(--grh-ease-out), box-shadow var(--grh-dur-base), border-color var(--grh-dur-base);
   }
   .grh-ev-card:hover {
-    transform: translateY(-3px);
     box-shadow: var(--grh-shadow-md);
     border-color: var(--grh-forest-700);
   }

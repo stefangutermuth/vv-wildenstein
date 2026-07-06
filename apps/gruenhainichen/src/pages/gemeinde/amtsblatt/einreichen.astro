@@ -1,0 +1,730 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../../components/global/GrhPageHeader.astro';
+
+const AMT_API =
+  (import.meta.env.PUBLIC_AMT_API_BASE as string | undefined) ??
+  'https://vv-wildenstein.com/wp-json/vvw-amt/v1';
+---
+<BaseLayout title="Beitrag einreichen · Amtsblatt · Grünhainichen" header="compact">
+  <GrhPageHeader
+    title="Beitrag einreichen"
+    breadcrumb="Startseite · Gemeinde · Amtsblatt · Einreichen"
+    lead="Vereine, Firmen, Bürger:innen — hier können Sie Ihren Beitrag zum nächsten Amtsblatt einreichen. Anmeldung erfolgt passwortlos per E-Mail-Link."
+  />
+
+  <section class="grh-amt">
+    <div class="grh-container">
+      <div class="grh-amt__layout">
+
+        {/* === Stage 1: Login-Formular ===================================== */}
+        <div class="grh-amt__panel" data-grh-amt-panel="login">
+          <h2>Login per E-Mail-Link</h2>
+          <p class="grh-amt__lead">Wir schicken Ihnen einen einmaligen Login-Link. Kein Passwort nötig, der Link ist 1 Stunde gültig.</p>
+
+          <form class="grh-amt__form" data-grh-amt-form-login autocomplete="on">
+            <div class="grh-amt__field">
+              <label for="grh-amt-email">E-Mail-Adresse</label>
+              <input id="grh-amt-email" type="email" name="email" required autocomplete="email" placeholder="name@beispiel.de" />
+            </div>
+            <div class="grh-amt__field">
+              <label for="grh-amt-name">Ihr Name</label>
+              <input id="grh-amt-name" type="text" name="name" required autocomplete="name" placeholder="Vorname Nachname" />
+            </div>
+            <div class="grh-amt__field">
+              <label for="grh-amt-gruppe">Sie sind …</label>
+              <select id="grh-amt-gruppe" name="gruppe_slug" required>
+                <option value="">Bitte auswählen …</option>
+                <option value="verein">Verein</option>
+                <option value="firma">Firma (Anzeige)</option>
+                <option value="buerger">Bürger:in</option>
+                <option value="schule">Schule / Kita</option>
+                <option value="kirche">Kirchgemeinde</option>
+                <option value="fraktion">Politische Fraktion</option>
+                <option value="autor">Autor:in / Chronist:in</option>
+                <option value="redakteur">Redakteur:in</option>
+              </select>
+            </div>
+            <div class="grh-amt__field">
+              <label for="grh-amt-org">Verein / Firma <em>(optional)</em></label>
+              <input id="grh-amt-org" type="text" name="organization" autocomplete="organization" />
+            </div>
+
+            {/* Honeypot */}
+            <input type="text" name="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute; left:-9999px" />
+
+            <button type="submit" class="grh-amt__submit">Login-Link anfordern</button>
+            <p class="grh-amt__notice">Ihre Daten werden ausschließlich für die Amtsblatt-Redaktion verwendet und nicht weitergegeben. <a href="/datenschutz">Datenschutz</a></p>
+            <div class="grh-amt__result" data-grh-amt-result hidden></div>
+          </form>
+        </div>
+
+        {/* === Stage 2: Login-Link versendet ================================ */}
+        <div class="grh-amt__panel" data-grh-amt-panel="sent" hidden>
+          <div class="grh-amt__success">
+            <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12c0 4.4-4 8-9 8-1.4 0-2.7-.3-3.9-.8L3 21l1.6-3.8C3.6 15.8 3 14 3 12c0-4.4 4-8 9-8s9 3.6 9 8Z"/></svg>
+            <h2>Bitte prüfen Sie Ihr Postfach</h2>
+            <p>Wir haben eine E-Mail an <strong data-grh-amt-sent-to></strong> geschickt. Klicken Sie den Link darin, um sich anzumelden.</p>
+            <p class="grh-amt__hint">Nicht angekommen? Bitte auch den Spam-Ordner prüfen. Der Link ist eine Stunde gültig.</p>
+            <button type="button" class="grh-amt__linkbtn" data-grh-amt-back>← Zurück zum Login</button>
+          </div>
+        </div>
+
+        {/* === Stage 3: Beitrags-Formular =================================== */}
+        <div class="grh-amt__panel" data-grh-amt-panel="editor" hidden>
+          <div class="grh-amt__editor-head">
+            <div>
+              <span class="grh-amt__eye">Angemeldet als</span>
+              <p><strong data-grh-amt-user-name>—</strong> · <span data-grh-amt-user-email>—</span></p>
+            </div>
+            <button type="button" class="grh-amt__linkbtn" data-grh-amt-logout>Abmelden</button>
+          </div>
+
+          <h2>Neuer Beitrag</h2>
+
+          <form class="grh-amt__form" data-grh-amt-form-beitrag>
+            <div class="grh-amt__field">
+              <label for="grh-amt-ausgabe">Für welche Ausgabe?</label>
+              <select id="grh-amt-ausgabe" name="ausgabe_id" required data-grh-amt-ausgaben>
+                <option value="">Wird geladen …</option>
+              </select>
+            </div>
+
+            <div class="grh-amt__field">
+              <label for="grh-amt-kategorie">Kategorie</label>
+              <select id="grh-amt-kategorie" name="kategorie">
+                <option value="bericht">Bericht / Reportage</option>
+                <option value="vereinsmeld">Vereinsmeldung</option>
+                <option value="anzeige">Anzeige / Werbung</option>
+                <option value="termin">Terminhinweis</option>
+                <option value="gastbeitrag">Gastbeitrag</option>
+                <option value="foto">Bildbeitrag</option>
+              </select>
+            </div>
+
+            <div class="grh-amt__field">
+              <label for="grh-amt-title">Titel</label>
+              <input id="grh-amt-title" type="text" name="title" required maxlength="120" />
+            </div>
+
+            <div class="grh-amt__field">
+              <label for="grh-amt-body">Text</label>
+              <textarea id="grh-amt-body" name="body" rows="10" required placeholder="Ihr Beitragstext …"></textarea>
+              <p class="grh-amt__hint">Absätze mit Leerzeile trennen. Fett/kursiv über HTML-Tags: &lt;strong&gt;…&lt;/strong&gt;, &lt;em&gt;…&lt;/em&gt;.</p>
+            </div>
+
+            <div class="grh-amt__rights">
+              <h3>Rechteklärung</h3>
+              <p class="grh-amt__hint">Bitte bestätigen Sie die folgenden Punkte, bevor Sie den Beitrag absenden.</p>
+
+              <label class="grh-amt__check">
+                <input type="checkbox" name="rechte_bildrechte" required />
+                <span><strong>Alle Bildrechte sind geklärt.</strong> Ich habe die Erlaubnis, die im Beitrag verwendeten Bilder in der Amtsblatt-Ausgabe zu veröffentlichen.</span>
+              </label>
+
+              <label class="grh-amt__check">
+                <input type="checkbox" name="rechte_personen" required />
+                <span><strong>Abgebildete Personen haben zugestimmt.</strong> Bei erkennbaren Personen liegt das Einverständnis zur Veröffentlichung vor (DSGVO).</span>
+              </label>
+
+              <div class="grh-amt__field">
+                <label for="grh-amt-quelle">Woher stammen die Bilder? <em>(optional)</em></label>
+                <textarea id="grh-amt-quelle" name="rechte_quelle" rows="2" placeholder="z. B. Foto: Vereinsarchiv · Foto: Anna Müller · CC-BY-SA von …"></textarea>
+              </div>
+
+            </div>
+
+            <div class="grh-amt__uploads">
+              <h3>Bilder & Anhänge</h3>
+              <p class="grh-amt__hint">JPG / PNG / WebP / PDF · max. 10 MB pro Datei · optional</p>
+
+              <label class="grh-amt__drop" data-grh-amt-drop>
+                <input type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" data-grh-amt-file />
+                <span class="grh-amt__drop-body">
+                  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <strong>Dateien auswählen</strong>
+                  <em>oder hierher ziehen</em>
+                </span>
+              </label>
+
+              <ul class="grh-amt__thumbs" data-grh-amt-thumbs></ul>
+            </div>
+
+            <input type="text" name="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute; left:-9999px" />
+
+            <button type="submit" class="grh-amt__submit">Beitrag absenden</button>
+            <div class="grh-amt__result" data-grh-amt-editor-result hidden></div>
+          </form>
+
+          <div class="grh-amt__mine" data-grh-amt-mine hidden>
+            <h3>Ihre bisherigen Einreichungen</h3>
+            <ul data-grh-amt-mine-list></ul>
+          </div>
+        </div>
+
+        {/* === Stage 4: Bestätigung ========================================= */}
+        <div class="grh-amt__panel" data-grh-amt-panel="thanks" hidden>
+          <div class="grh-amt__success">
+            <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <h2>Danke, Ihr Beitrag ist eingegangen!</h2>
+            <p>Vorgangsnummer <strong data-grh-amt-thanks-id></strong>. Die Redaktion prüft in den nächsten Tagen und meldet sich per E-Mail bei Rückfragen oder Freigabe.</p>
+            <div class="grh-amt__thanks-actions">
+              <button type="button" class="grh-amt__submit" data-grh-amt-again>Weiteren Beitrag einreichen</button>
+              <button type="button" class="grh-amt__linkbtn" data-grh-amt-logout>Abmelden</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar mit Deadlines */}
+        <aside class="grh-amt__side">
+          <h3>Nächste Ausgaben</h3>
+          <ul data-grh-amt-deadlines>
+            <li class="grh-amt__side-loading">wird geladen …</li>
+          </ul>
+          <p class="grh-amt__side-hint">
+            Bitte reichen Sie Beiträge <strong>bis zum Redaktionsschluss</strong> ein.
+            Anzeigen und Werbebeiträge unterliegen dem gesonderten Anzeigenschluss.
+          </p>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline define:vars={{ AMT_API }}>
+  (() => {
+    const $ = (sel, root) => (root || document).querySelector(sel);
+    const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+    const panels = {
+      login: $('[data-grh-amt-panel="login"]'),
+      sent:  $('[data-grh-amt-panel="sent"]'),
+      editor:$('[data-grh-amt-panel="editor"]'),
+      thanks:$('[data-grh-amt-panel="thanks"]'),
+    };
+    const KEY_SESSION = 'vvw_amt_session';
+    const KEY_UPLOADER = 'vvw_amt_uploader';
+    const formStartedAt = Date.now();
+
+    function showPanel(key) {
+      for (const [k, el] of Object.entries(panels)) el.hidden = k !== key;
+    }
+    function setResult(el, kind, html) {
+      if (!el) return;
+      el.hidden = false;
+      el.className = `grh-amt__result grh-amt__result--${kind}`;
+      el.innerHTML = html;
+    }
+
+    // === API-Wrapper mit Bearer-Auth =====================================
+    async function api(path, opts = {}) {
+      const session = sessionStorage.getItem(KEY_SESSION);
+      const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+      if (session) headers['Authorization'] = 'Bearer ' + session;
+      const res = await fetch(AMT_API + path, { ...opts, headers });
+      let data;
+      try { data = await res.json(); } catch { data = null; }
+      return { ok: res.ok, status: res.status, data };
+    }
+
+    // === Deadlines-Sidebar =============================================
+    async function loadDeadlines() {
+      const list = $('[data-grh-amt-deadlines]');
+      const r = await api('/ausgaben?only_open=1');
+      if (!r.ok || !Array.isArray(r.data)) {
+        list.innerHTML = '<li>Deadlines konnten nicht geladen werden.</li>';
+        return r.data || [];
+      }
+      const fmt = (s) => {
+        if (!s) return '—';
+        const d = new Date(s);
+        return isNaN(d) ? s : d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+      };
+      list.innerHTML = r.data.length === 0
+        ? '<li>Aktuell keine offenen Ausgaben.</li>'
+        : r.data.map((a) => `
+            <li class="grh-amt__side-item">
+              <strong>${escapeHtml(a.title)}</strong>
+              <small>Erscheint: ${fmt(a.erscheinungsdatum)}</small>
+              <small><em>Redaktionsschluss: ${fmt(a.redaktionsschluss)}</em></small>
+              ${a.anzeigenschluss ? `<small>Anzeigenschluss: ${fmt(a.anzeigenschluss)}</small>` : ''}
+            </li>
+          `).join('');
+      return r.data;
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    }
+
+    // === Ausgaben-Dropdown ================================
+    async function populateAusgabenSelect(ausgaben) {
+      const sel = $('[data-grh-amt-ausgaben]');
+      sel.innerHTML = ausgaben.length === 0
+        ? '<option value="">Keine Ausgabe verfügbar</option>'
+        : ausgaben.map((a) => `<option value="${a.id}">${escapeHtml(a.title)} · Redaktionsschluss ${a.redaktionsschluss || '?'}</option>`).join('');
+    }
+
+    // === Session-Handling ================================
+    async function ensureSession() {
+      const session = sessionStorage.getItem(KEY_SESSION);
+      if (!session) return null;
+      const r = await api('/auth/me');
+      if (r.ok && r.data?.uploader) {
+        sessionStorage.setItem(KEY_UPLOADER, JSON.stringify(r.data.uploader));
+        return r.data.uploader;
+      }
+      // Session tot
+      sessionStorage.removeItem(KEY_SESSION);
+      sessionStorage.removeItem(KEY_UPLOADER);
+      return null;
+    }
+
+    function showEditor(uploader) {
+      $('[data-grh-amt-user-name]').textContent = uploader.name || '—';
+      $('[data-grh-amt-user-email]').textContent = uploader.email || '—';
+      showPanel('editor');
+      loadMineList();
+    }
+
+    async function loadMineList() {
+      const wrap = $('[data-grh-amt-mine]');
+      const list = $('[data-grh-amt-mine-list]');
+      const r = await api('/beitraege');
+      if (!r.ok || !Array.isArray(r.data) || r.data.length === 0) {
+        wrap.hidden = true;
+        return;
+      }
+      const label = { pending:'in Prüfung', approved:'freigegeben', needs_revision:'Überarbeitung nötig', rejected:'abgelehnt' };
+      list.innerHTML = r.data.map((b) => `
+        <li>
+          <strong>${escapeHtml(b.title)}</strong>
+          <span class="grh-amt__mine-status grh-amt__mine-status--${b.status}">${label[b.status] || b.status}</span>
+          ${b.note ? `<small>Anmerkung: ${escapeHtml(b.note)}</small>` : ''}
+        </li>
+      `).join('');
+      wrap.hidden = false;
+    }
+
+    // === Handlers ================================
+    $('[data-grh-amt-form-login]').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const fd = new FormData(form);
+      const email = String(fd.get('email') || '').trim();
+      const resultEl = $('[data-grh-amt-result]');
+      setResult(resultEl, 'loading', 'Login-Link wird verschickt …');
+      const payload = {
+        email,
+        name: fd.get('name'),
+        gruppe_slug: fd.get('gruppe_slug'),
+        organization: fd.get('organization') || '',
+        target_url: location.origin + '/gemeinde/amtsblatt/einreichen',
+        honeypot: fd.get('honeypot') || '',
+        form_started_at: formStartedAt,
+      };
+      const r = await api('/auth/request-link', { method: 'POST', body: JSON.stringify(payload) });
+      if (r.ok) {
+        $('[data-grh-amt-sent-to]').textContent = email;
+        showPanel('sent');
+      } else {
+        setResult(resultEl, 'err', escapeHtml(r.data?.message || 'Es ist ein Fehler aufgetreten.'));
+      }
+    });
+
+    // === Bild-Upload: gepickte Files halten wir clientseitig, Upload beim Absenden
+    const uploads = []; // { file, id?: number, url?, thumb?, filename }
+
+    async function uploadFile(entry) {
+      const fd = new FormData();
+      fd.append('file', entry.file);
+      const session = sessionStorage.getItem(KEY_SESSION);
+      const res = await fetch(AMT_API + '/media', {
+        method: 'POST',
+        headers: session ? { 'Authorization': 'Bearer ' + session } : {},
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.status === 201 && data.id) {
+        entry.id = data.id;
+        entry.url = data.url;
+        entry.thumb = data.thumb_url;
+        return { ok: true, entry };
+      }
+      return { ok: false, message: data.message || 'Upload fehlgeschlagen', entry };
+    }
+
+    function renderThumbs() {
+      const list = $('[data-grh-amt-thumbs]');
+      list.innerHTML = uploads.map((u, i) => {
+        const preview = u.thumb || (u.file.type.startsWith('image/') ? URL.createObjectURL(u.file) : '');
+        const state = u.id ? 'ok' : (u.error ? 'err' : 'pending');
+        const label = u.id ? `#${u.id}` : (u.error ? u.error : 'wird gesendet …');
+        return `
+          <li class="grh-amt__thumb grh-amt__thumb--${state}">
+            <div class="grh-amt__thumb-media">
+              ${preview ? `<img src="${preview}" alt="">` : '<span>PDF</span>'}
+              <button type="button" class="grh-amt__thumb-x" data-grh-amt-remove="${i}" aria-label="Datei entfernen">×</button>
+            </div>
+            <small class="grh-amt__thumb-name">${escapeHtml(u.file.name)}</small>
+            <small class="grh-amt__thumb-state">${escapeHtml(label)}</small>
+          </li>`;
+      }).join('');
+      $$('[data-grh-amt-remove]').forEach((btn) => btn.addEventListener('click', () => {
+        const i = Number(btn.dataset.grhAmtRemove);
+        uploads.splice(i, 1);
+        renderThumbs();
+      }));
+    }
+
+    async function handleFileList(fileList) {
+      for (const file of Array.from(fileList)) {
+        const entry = { file };
+        uploads.push(entry);
+        renderThumbs();
+        const r = await uploadFile(entry);
+        if (!r.ok) { entry.error = r.message; }
+        renderThumbs();
+      }
+    }
+
+    $('[data-grh-amt-file]').addEventListener('change', (e) => {
+      handleFileList(e.target.files);
+      e.target.value = '';
+    });
+
+    // Drag&Drop
+    const dropEl = $('[data-grh-amt-drop]');
+    ['dragenter','dragover'].forEach((n) => dropEl.addEventListener(n, (e) => {
+      e.preventDefault(); dropEl.classList.add('is-drop');
+    }));
+    ['dragleave','drop'].forEach((n) => dropEl.addEventListener(n, (e) => {
+      e.preventDefault(); dropEl.classList.remove('is-drop');
+    }));
+    dropEl.addEventListener('drop', (e) => {
+      if (e.dataTransfer?.files?.length) handleFileList(e.dataTransfer.files);
+    });
+
+    $('[data-grh-amt-form-beitrag]').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const fd = new FormData(form);
+      const resultEl = $('[data-grh-amt-editor-result]');
+      setResult(resultEl, 'loading', 'Beitrag wird gesendet …');
+
+      // Nur erfolgreich hochgeladene Attachments mitgeben
+      const gallery_ids = uploads.filter((u) => u.id).map((u) => u.id);
+
+      const payload = {
+        ausgabe_id: Number(fd.get('ausgabe_id')),
+        kategorie: fd.get('kategorie'),
+        title: fd.get('title'),
+        body: fd.get('body'),
+        rechte_bildrechte: !!fd.get('rechte_bildrechte'),
+        rechte_personen: !!fd.get('rechte_personen'),
+        rechte_quelle: fd.get('rechte_quelle') || '',
+        gallery_ids,
+        honeypot: fd.get('honeypot') || '',
+        form_started_at: formStartedAt,
+      };
+      const r = await api('/beitraege', { method: 'POST', body: JSON.stringify(payload) });
+      if (r.status === 201 && r.data?.ok) {
+        $('[data-grh-amt-thanks-id]').textContent = '#' + r.data.beitrag_id;
+        showPanel('thanks');
+        form.reset();
+        return;
+      }
+      if (r.data?.messages) {
+        setResult(resultEl, 'err', '<strong>Bitte prüfen:</strong><ul>' + r.data.messages.map((m) => `<li>${escapeHtml(m)}</li>`).join('') + '</ul>');
+      } else {
+        setResult(resultEl, 'err', escapeHtml(r.data?.message || 'Fehler beim Absenden.'));
+      }
+    });
+
+    $('[data-grh-amt-back]').addEventListener('click', () => showPanel('login'));
+    $('[data-grh-amt-again]').addEventListener('click', () => showPanel('editor'));
+    $$('[data-grh-amt-logout]').forEach((btn) => btn.addEventListener('click', async () => {
+      sessionStorage.removeItem(KEY_SESSION);
+      sessionStorage.removeItem(KEY_UPLOADER);
+      await api('/auth/logout', { method: 'POST' });
+      showPanel('login');
+    }));
+
+    // === Init: falls Token in URL → verifizieren ==========================
+    async function init() {
+      const ausgaben = await loadDeadlines();
+      populateAusgabenSelect(ausgaben);
+
+      const urlToken = new URLSearchParams(location.search).get('token');
+      if (urlToken) {
+        // Verify
+        const r = await api('/auth/verify?token=' + encodeURIComponent(urlToken));
+        if (r.ok && r.data?.session) {
+          sessionStorage.setItem(KEY_SESSION, r.data.session);
+          history.replaceState({}, '', location.pathname);
+          const uploader = await ensureSession();
+          if (uploader) { showEditor(uploader); return; }
+        } else {
+          setResult($('[data-grh-amt-result]'), 'err', 'Login-Link ist abgelaufen oder ungültig. Bitte fordern Sie einen neuen Link an.');
+        }
+      }
+
+      const uploader = await ensureSession();
+      if (uploader) showEditor(uploader);
+      else showPanel('login');
+    }
+    init();
+  })();
+</script>
+
+<style>
+  .grh-amt { padding: var(--grh-space-6) 0 var(--grh-space-8); }
+  .grh-amt__layout {
+    display: grid; grid-template-columns: 1fr; gap: var(--grh-space-6);
+  }
+  @media (min-width: 960px) {
+    .grh-amt__layout { grid-template-columns: minmax(0, 1fr) 320px; gap: var(--grh-space-7); }
+    .grh-amt__side { position: sticky; top: 96px; align-self: start; }
+  }
+
+  .grh-amt__panel {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-6);
+  }
+  .grh-amt__panel h2 {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.6rem, 2.6vw, 2rem);
+    color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3);
+    letter-spacing: -0.02em;
+  }
+  .grh-amt__lead { color: var(--grh-stone-700); font-size: 15px; line-height: 1.55; margin: 0 0 var(--grh-space-5); }
+  .grh-amt__eye { font-size: 10px; text-transform: uppercase; letter-spacing: 0.24em; font-weight: 700; color: var(--grh-moss-600); }
+
+  .grh-amt__form { display: flex; flex-direction: column; gap: var(--grh-space-4); }
+  .grh-amt__field { display: flex; flex-direction: column; gap: 6px; }
+  .grh-amt__field label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700;
+    color: var(--grh-moss-600);
+  }
+  .grh-amt__field label em { text-transform: none; letter-spacing: 0; font-style: italic; color: var(--grh-stone-400); font-weight: 500; }
+  .grh-amt__field input, .grh-amt__field select, .grh-amt__field textarea {
+    font: inherit; font-size: 14px;
+    padding: 12px 14px; border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm, 6px);
+    background: var(--grh-paper-100); color: var(--grh-forest-900);
+  }
+  .grh-amt__field input:focus, .grh-amt__field select:focus, .grh-amt__field textarea:focus {
+    outline: none; border-color: var(--grh-candle-500); background: var(--grh-cream-50);
+  }
+  .grh-amt__field textarea { resize: vertical; min-height: 120px; }
+  .grh-amt__hint { font-size: 12px; color: var(--grh-stone-400); font-style: italic; margin: 0; line-height: 1.5; }
+
+  .grh-amt__rights {
+    margin-top: var(--grh-space-4);
+    padding: var(--grh-space-4);
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm, 6px);
+    display: flex; flex-direction: column; gap: var(--grh-space-3);
+  }
+  .grh-amt__rights h3 {
+    font-family: var(--grh-font-display); font-size: 1.2rem;
+    color: var(--grh-forest-900); margin: 0; letter-spacing: -0.01em;
+  }
+  .grh-amt__check {
+    display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start;
+    font-size: 13px; color: var(--grh-stone-700); line-height: 1.55;
+  }
+  .grh-amt__check input { margin-top: 3px; }
+  .grh-amt__check strong { color: var(--grh-forest-900); }
+  .grh-amt__uploads {
+    margin-top: var(--grh-space-4);
+    padding: var(--grh-space-4);
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm, 6px);
+    display: flex; flex-direction: column; gap: var(--grh-space-3);
+  }
+  .grh-amt__uploads h3 {
+    font-family: var(--grh-font-display); font-size: 1.2rem;
+    color: var(--grh-forest-900); margin: 0; letter-spacing: -0.01em;
+  }
+  .grh-amt__drop {
+    display: block;
+    position: relative;
+    padding: var(--grh-space-5);
+    border: 2px dashed var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    background: var(--grh-cream-50);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--grh-dur-fast), background var(--grh-dur-fast);
+  }
+  .grh-amt__drop:hover,
+  .grh-amt__drop.is-drop {
+    border-color: var(--grh-candle-500);
+    background: rgba(232,182,88,0.06);
+  }
+  .grh-amt__drop input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  }
+  .grh-amt__drop-body {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: var(--grh-stone-700);
+  }
+  .grh-amt__drop-body strong { font-family: var(--grh-font-display); font-weight: 500; color: var(--grh-forest-900); font-size: 15px; }
+  .grh-amt__drop-body em { font-style: italic; color: var(--grh-stone-400); font-size: 12px; }
+  .grh-amt__drop-body svg { color: var(--grh-moss-600); margin-bottom: 4px; }
+
+  .grh-amt__thumbs {
+    list-style: none; padding: 0; margin: 0;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--grh-space-3);
+  }
+  .grh-amt__thumbs:empty { display: none; }
+  .grh-amt__thumb {
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 6px;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm, 6px);
+  }
+  .grh-amt__thumb--pending { border-color: var(--grh-candle-500); }
+  .grh-amt__thumb--ok { border-color: var(--grh-moss-500); }
+  .grh-amt__thumb--err { border-color: var(--grh-alert-600, #b02f2f); }
+  .grh-amt__thumb-media {
+    position: relative; aspect-ratio: 1/1; overflow: hidden; border-radius: var(--grh-radius-sm, 6px);
+    background: var(--grh-paper-100);
+    display: grid; place-items: center;
+  }
+  .grh-amt__thumb-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .grh-amt__thumb-media span { font-family: var(--grh-font-display); color: var(--grh-forest-900); font-size: 22px; }
+  .grh-amt__thumb-x {
+    position: absolute; top: 4px; right: 4px;
+    width: 22px; height: 22px;
+    background: rgba(20,43,31,0.75); color: var(--grh-cream-50);
+    border: 0; border-radius: 50%;
+    font-size: 14px; line-height: 1; cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .grh-amt__thumb-name { font-size: 11px; color: var(--grh-stone-700); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  .grh-amt__thumb-state { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700; }
+  .grh-amt__thumb--pending .grh-amt__thumb-state { color: var(--grh-candle-500); }
+  .grh-amt__thumb--ok .grh-amt__thumb-state { color: var(--grh-moss-600); }
+  .grh-amt__thumb--err .grh-amt__thumb-state { color: var(--grh-alert-600, #b02f2f); }
+
+  .grh-amt__mailimg {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--grh-stone-700);
+    background: var(--grh-cream-50);
+    padding: 10px 12px; border-radius: var(--grh-radius-sm, 6px);
+    border: 1px dashed var(--grh-line);
+    margin: 0;
+  }
+  .grh-amt__mailimg a { color: var(--grh-forest-800); border-bottom: 1px solid var(--grh-candle-500); text-decoration: none; }
+
+  .grh-amt__submit {
+    padding: 14px 24px;
+    background: var(--grh-forest-900); color: var(--grh-candle-500);
+    border: 1px solid var(--grh-candle-500);
+    border-radius: var(--grh-radius-pill);
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 700;
+    cursor: pointer;
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-amt__submit:hover { background: var(--grh-forest-800); }
+  .grh-amt__submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .grh-amt__linkbtn {
+    background: transparent; border: 0; padding: 0;
+    color: var(--grh-forest-800); font: inherit;
+    cursor: pointer; text-decoration: none;
+    border-bottom: 1px solid var(--grh-candle-500);
+  }
+
+  .grh-amt__notice { font-size: 12px; color: var(--grh-stone-400); margin: 0; line-height: 1.5; }
+  .grh-amt__notice a { color: var(--grh-forest-800); }
+
+  .grh-amt__result {
+    padding: 12px 14px; border-radius: var(--grh-radius-sm, 6px);
+    font-size: 13px; line-height: 1.5;
+  }
+  .grh-amt__result--loading { background: var(--grh-paper-100); border: 1px solid var(--grh-line); }
+  .grh-amt__result--err { background: rgba(176, 47, 47, 0.08); border: 1px solid rgba(176, 47, 47, 0.35); color: var(--grh-alert-600, #b02f2f); }
+  .grh-amt__result--ok { background: rgba(63, 108, 74, 0.1); border: 1px solid var(--grh-moss-500); color: var(--grh-forest-900); }
+  .grh-amt__result ul { margin: 4px 0 0; padding-left: 18px; }
+
+  .grh-amt__success {
+    text-align: center; padding: var(--grh-space-6) 0;
+    display: flex; flex-direction: column; align-items: center; gap: var(--grh-space-3);
+  }
+  .grh-amt__success svg { color: var(--grh-moss-600); }
+  .grh-amt__success h2 { margin: 0; }
+  .grh-amt__success p { color: var(--grh-stone-700); font-size: 15px; line-height: 1.55; margin: 0; }
+  .grh-amt__thanks-actions {
+    display: flex; gap: var(--grh-space-3); flex-wrap: wrap; justify-content: center;
+    margin-top: var(--grh-space-3);
+  }
+
+  .grh-amt__editor-head {
+    display: flex; justify-content: space-between; align-items: start; gap: var(--grh-space-3);
+    padding-bottom: var(--grh-space-4);
+    border-bottom: 1px solid var(--grh-line);
+    margin-bottom: var(--grh-space-5);
+  }
+  .grh-amt__editor-head p { margin: 4px 0 0; font-size: 14px; color: var(--grh-stone-700); }
+
+  .grh-amt__mine {
+    margin-top: var(--grh-space-6);
+    padding-top: var(--grh-space-5);
+    border-top: 1px solid var(--grh-line);
+  }
+  .grh-amt__mine h3 {
+    font-family: var(--grh-font-display); font-size: 1.2rem; color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-3); letter-spacing: -0.01em;
+  }
+  .grh-amt__mine ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .grh-amt__mine li {
+    padding: 10px 14px;
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm, 6px);
+    display: flex; flex-direction: column; gap: 4px; font-size: 13px;
+  }
+  .grh-amt__mine-status {
+    align-self: flex-start;
+    padding: 2px 10px; border-radius: var(--grh-radius-pill);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700;
+  }
+  .grh-amt__mine-status--pending { background: rgba(219, 166, 23, 0.18); color: #b48505; }
+  .grh-amt__mine-status--approved { background: rgba(63, 108, 74, 0.18); color: var(--grh-forest-800); }
+  .grh-amt__mine-status--needs_revision { background: rgba(56, 88, 233, 0.15); color: #2a41a8; }
+  .grh-amt__mine-status--rejected { background: rgba(176, 47, 47, 0.15); color: var(--grh-alert-600, #b02f2f); }
+
+  /* Sidebar */
+  .grh-amt__side {
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-5);
+  }
+  .grh-amt__side h3 {
+    font-family: var(--grh-font-display);
+    font-size: 1.3rem; color: var(--grh-forest-900);
+    margin: 0 0 var(--grh-space-4); letter-spacing: -0.01em;
+  }
+  .grh-amt__side ul { list-style: none; padding: 0; margin: 0 0 var(--grh-space-4); display: flex; flex-direction: column; gap: var(--grh-space-3); }
+  .grh-amt__side-item {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: var(--grh-space-3);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-sm, 6px);
+  }
+  .grh-amt__side-item strong { font-family: var(--grh-font-display); font-weight: 500; font-size: 15px; color: var(--grh-forest-900); }
+  .grh-amt__side-item small { font-size: 12px; color: var(--grh-stone-700); }
+  .grh-amt__side-item small em { color: var(--grh-alert-600, #b02f2f); font-style: normal; font-weight: 600; }
+  .grh-amt__side-hint { font-size: 12px; color: var(--grh-stone-400); line-height: 1.5; margin: 0; }
+  .grh-amt__side-loading { color: var(--grh-stone-400); font-style: italic; }
+</style>

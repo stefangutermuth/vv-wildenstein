@@ -56,6 +56,10 @@ const { items, empty = 'Hier sind aktuell keine Einträge gepflegt.' } = Astro.p
     page-break-inside: avoid;
     margin-bottom: var(--grh-space-5);
     width: 100%;
+    /* Isoliert Layout-Änderungen einer Karte vom Column-Balancing:
+       ohne das springen bei Hover Karten in andere Spalten und wirken
+       „ausgeblendet". */
+    contain: layout paint;
   }
   .grh-cardgrid-empty {
     padding: var(--grh-space-7) 0;
@@ -74,10 +78,9 @@ const { items, empty = 'Hier sind aktuell keine Einträge gepflegt.' } = Astro.p
     border: 1px solid var(--grh-line);
     border-radius: var(--grh-radius-md);
     overflow: hidden;
-    transition: transform var(--grh-dur-fast), border-color var(--grh-dur-fast), box-shadow var(--grh-dur-base);
+    transition: border-color var(--grh-dur-fast), box-shadow var(--grh-dur-base);
   }
   .grh-card:hover {
-    transform: translateY(-3px);
     border-color: var(--grh-candle-500);
     box-shadow: 0 12px 32px rgba(26, 61, 39, 0.08);
   }
@@ -94,9 +97,7 @@ const { items, empty = 'Hier sind aktuell keine Einträge gepflegt.' } = Astro.p
     width: 100%;
     height: auto;
     display: block;
-    transition: transform 700ms var(--grh-ease-out);
   }
-  .grh-card:hover .grh-card__media img { transform: scale(1.02); }
   .grh-card__body {
     padding: var(--grh-space-4) var(--grh-space-4) var(--grh-space-5);
     display: flex;

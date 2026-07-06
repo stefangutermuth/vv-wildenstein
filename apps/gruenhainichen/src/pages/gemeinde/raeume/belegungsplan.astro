@@ -1,0 +1,204 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../../components/global/GrhPageHeader.astro';
+import { getRooms } from '../../../lib/cms-cpt';
+
+const rooms = await getRooms();
+
+const WP_API_BASE =
+  (import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env.PUBLIC_WP_API_BASE : undefined) ??
+  'https://vv-wildenstein.com/wp-json/wp/v2';
+const VVW_API_BASE = WP_API_BASE.replace(/\/wp\/v2\/?$/, '/vvw/v1');
+
+// Farbpalette für die verschiedenen Räume (bis zu 8 Räume)
+const ROOM_COLORS = [
+  '#2A6B43', // moss
+  '#B08432', // candle
+  '#B02F2F', // alert
+  '#1A3D27', // forest deep
+  '#5BAE78', // moss light
+  '#E8B658', // candle bright
+  '#6B4E2E', // brown
+  '#3F6C4A', // forest 800
+];
+const roomsWithColor = rooms.map((r, i) => ({ ...r, color: ROOM_COLORS[i % ROOM_COLORS.length] }));
+---
+<BaseLayout title="Belegungsplan · Räume · Grünhainichen" header="compact">
+  <GrhPageHeader
+    title="Belegungsplan"
+    breadcrumb="Startseite · Gemeinde · Räume · Belegungsplan"
+    lead="Übersicht aller bestätigten Buchungen für die Räume der Gemeinde. Für konkrete Anfragen wählen Sie bitte den gewünschten Raum aus."
+    count={rooms.length}
+    countLabel={rooms.length === 1 ? 'Raum' : 'Räume'}
+  />
+
+  <section class="grh-belp">
+    <div class="grh-container">
+      <div class="grh-belp__toolbar">
+        <div class="grh-belp__legend" role="group" aria-label="Räume">
+          {roomsWithColor.map((r) => (
+            <label class="grh-belp__legend-item">
+              <input type="checkbox" checked data-grh-belp-room={String(r.id)} data-color={r.color} />
+              <span class="grh-belp__legend-dot" style={`background: ${r.color}`}></span>
+              <span class="grh-belp__legend-label">{r.title}</span>
+            </label>
+          ))}
+        </div>
+        <div class="grh-belp__views" role="group" aria-label="Ansicht">
+          <button type="button" class="grh-belp__view is-active" data-grh-belp-view="month">Monat</button>
+          <button type="button" class="grh-belp__view" data-grh-belp-view="week">Woche</button>
+          <button type="button" class="grh-belp__view" data-grh-belp-view="list">Liste</button>
+        </div>
+      </div>
+
+      <div id="grh-belp-cal" class="grh-belp__calendar" data-api={VVW_API_BASE}
+        data-rooms={JSON.stringify(roomsWithColor.map((r) => ({ id: r.id, title: r.title, color: r.color, slug: r.slug })))}></div>
+
+      <p class="grh-belp__hint">
+        <strong>Hinweis:</strong> Nur bestätigte Buchungen sind hier sichtbar. Vorreservierungen und Anfragen tauchen nicht auf.
+        Für Buchungen bitte direkt beim jeweiligen Raum anfragen.
+      </p>
+    </div>
+  </section>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js" is:inline></script>
+  <script is:inline>
+    (() => {
+      const calEl = document.getElementById('grh-belp-cal');
+      if (!calEl || !window.FullCalendar) return;
+      const api = calEl.dataset.api;
+      const rooms = JSON.parse(calEl.dataset.rooms || '[]');
+
+      const isoDate = (d) => {
+        const p = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+      };
+
+      const activeRoomIds = () => Array.from(document.querySelectorAll('[data-grh-belp-room]:checked')).map((el) => Number(el.dataset.grhBelpRoom));
+
+      const cal = new FullCalendar.Calendar(calEl, {
+        initialView: 'dayGridMonth',
+        locale: 'de',
+        height: 620,
+        firstDay: 1,
+        headerToolbar: { start: 'prev today next', center: 'title', end: '' },
+        buttonText: { today: 'Heute' },
+        events: async (info, success, failure) => {
+          try {
+            const from = isoDate(info.start);
+            const to = isoDate(info.end);
+            const active = activeRoomIds();
+            const all = await Promise.all(rooms.filter((r) => active.includes(r.id)).map(async (r) => {
+              const res = await fetch(`${api}/rooms/${r.id}/availability?from=${from}&to=${to}`);
+              if (!res.ok) return [];
+              const bookings = await res.json();
+              return (bookings || []).map((b) => ({
+                title: r.title,
+                start: `${b.date}T${b.time_from}`,
+                end: `${b.date}T${b.time_to}`,
+                color: r.color,
+                borderColor: r.color,
+                url: `/gemeinde/raeume/${r.slug}`,
+                extendedProps: { roomTitle: r.title, roomSlug: r.slug },
+              }));
+            }));
+            success(all.flat());
+          } catch (e) { failure(e); }
+        },
+      });
+      cal.render();
+
+      // View-Toggle
+      document.querySelectorAll('[data-grh-belp-view]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[data-grh-belp-view]').forEach((b) => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          const v = btn.dataset.grhBelpView;
+          if (v === 'month') cal.changeView('dayGridMonth');
+          else if (v === 'week') cal.changeView('timeGridWeek');
+          else if (v === 'list') cal.changeView('listWeek');
+        });
+      });
+
+      // Raum-Filter-Checkboxen
+      document.querySelectorAll('[data-grh-belp-room]').forEach((el) => {
+        el.addEventListener('change', () => cal.refetchEvents());
+      });
+    })();
+  </script>
+</BaseLayout>
+
+<style>
+  .grh-belp { padding: var(--grh-space-6) 0 var(--grh-space-8); }
+  .grh-belp__toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+    margin-bottom: var(--grh-space-5);
+    padding: var(--grh-space-4);
+    background: var(--grh-paper-100);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+  }
+  @media (min-width: 900px) {
+    .grh-belp__toolbar { grid-template-columns: 1fr auto; align-items: center; }
+  }
+
+  .grh-belp__legend { display: flex; flex-wrap: wrap; gap: 12px; }
+  .grh-belp__legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    font-size: 12px; color: var(--grh-stone-700);
+    cursor: pointer;
+    transition: opacity var(--grh-dur-fast);
+  }
+  .grh-belp__legend-item input { position: absolute; opacity: 0; pointer-events: none; }
+  .grh-belp__legend-item:has(input:not(:checked)) { opacity: 0.35; }
+  .grh-belp__legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .grh-belp__legend-label { font-weight: 600; }
+
+  .grh-belp__views {
+    display: inline-flex; gap: 4px;
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-pill);
+    padding: 4px;
+  }
+  .grh-belp__view {
+    padding: 6px 14px; background: transparent; border: 0;
+    border-radius: var(--grh-radius-pill);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700;
+    color: var(--grh-stone-700); cursor: pointer;
+    transition: all var(--grh-dur-fast);
+  }
+  .grh-belp__view.is-active { background: var(--grh-forest-800); color: var(--grh-cream-50); }
+
+  .grh-belp__calendar {
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    padding: var(--grh-space-4);
+  }
+  .grh-belp__calendar :global(.fc) { font-family: var(--grh-font-body); font-size: 13px; }
+  .grh-belp__calendar :global(.fc-toolbar-title) { font-family: var(--grh-font-display); font-size: 20px; color: var(--grh-forest-900); letter-spacing: -0.01em; }
+  .grh-belp__calendar :global(.fc-button) {
+    background: var(--grh-forest-800); border-color: var(--grh-forest-800);
+    color: var(--grh-cream-50); text-transform: uppercase; font-size: 10px; letter-spacing: 0.14em; font-weight: 700;
+    padding: 6px 12px;
+  }
+  .grh-belp__calendar :global(.fc-button:hover) { background: var(--grh-moss-600); border-color: var(--grh-moss-600); }
+  .grh-belp__calendar :global(.fc-event) { cursor: pointer; padding: 2px 4px; }
+
+  .grh-belp__hint {
+    margin: var(--grh-space-5) 0 0;
+    padding: var(--grh-space-4);
+    background: var(--grh-paper-100);
+    border-left: 3px solid var(--grh-candle-500);
+    font-size: 13px; color: var(--grh-stone-700); line-height: 1.55;
+  }
+</style>

@@ -32,9 +32,24 @@ export const navigation: NavItem[] = [
       { label: 'Bürgermeister',       href: '/gemeinde/buergermeister' },
       { label: 'Verwaltung',          href: '/gemeinde/verwaltung' },
       { label: 'Gemeinderat',         href: '/gemeinde/gemeinderat' },
-      { label: 'Amtsblatt',           href: '/gemeinde/amtsblatt' },
+      {
+        label: 'Amtsblatt',
+        href: '/gemeinde/amtsblatt',
+        children: [
+          { label: 'Amtsblatt-Archiv', href: '/gemeinde/amtsblatt' },
+          { label: 'Beitrag einreichen', href: '/gemeinde/amtsblatt/einreichen' },
+        ],
+      },
       { label: 'Feuerwehren',         href: '/gemeinde/feuerwehren' },
       { label: 'Bauleitplanung',      href: '/gemeinde/bauleitplanung' },
+      {
+        label: 'Räume buchen',
+        href: '/gemeinde/raeume',
+        children: [
+          { label: 'Alle Räume',       href: '/gemeinde/raeume' },
+          { label: 'Belegungsplan',    href: '/gemeinde/raeume/belegungsplan' },
+        ],
+      },
     ],
   },
   {
