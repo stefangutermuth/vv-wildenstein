@@ -47,6 +47,15 @@ jobs:
       - name: Abhängigkeiten installieren
         run: npm ci
 
+      - name: WP-Cache aus vorherigem Build wiederherstellen
+        id: wpcache
+        uses: actions/cache@v4
+        with:
+          path: apps/gruenhainichen/.wp-cache
+          key: wp-cache-grh-${{ github.run_id }}
+          restore-keys: |
+            wp-cache-grh-
+
       - name: Astro bauen (mit Live-Inhalten aus vv-wildenstein.com)
         run: npm run build:gruenhainichen
         env:

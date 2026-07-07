@@ -32,6 +32,8 @@ pnpm-debug.log*
 
 # Runtime-Caches (regenerieren sich zur Build-Zeit)
 apps/gruenhainichen/src/lib/geocode-cache.json
+apps/gruenhainichen/.wp-cache/
+**/.wp-cache/
 
 # Melder-Bestand: Datenexporte (personenbezogene Daten!) und Fremd-Plugin-Referenz nicht versionieren
 docs/melder-bestand/*-export.json

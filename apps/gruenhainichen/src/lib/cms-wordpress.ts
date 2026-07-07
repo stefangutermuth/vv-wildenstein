@@ -13,6 +13,7 @@
  */
 
 import type { NewsItem, NewsCategory, Ortsteil, EventItem } from './cms';
+import { cachedFetch } from './wp-cache';
 
 const WP_BASE =
   (import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
@@ -108,7 +109,7 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs =
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    return await fetch(url, { ...init, signal: ctrl.signal });
+    return await cachedFetch(url, { ...init, signal: ctrl.signal }, WP_BASE);
   } finally {
     clearTimeout(t);
   }

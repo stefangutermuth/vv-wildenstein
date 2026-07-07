@@ -82,11 +82,13 @@ export interface VVKontakt {
 
 const FETCH_TIMEOUT_MS = 8000;
 
+import { cachedFetch } from './wp-cache';
+
 async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    return await fetch(url, { ...init, signal: ctrl.signal });
+    return await cachedFetch(url, { ...init, signal: ctrl.signal }, WP_BASE);
   } finally {
     clearTimeout(t);
   }
