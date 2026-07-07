@@ -114,6 +114,7 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
         </button>
       </header>
 
+      <div class="grh-mega__content">
       <nav class="grh-mega__columns" aria-label="Vollständige Navigation">
         {nav.map((item) => (
           <section class="grh-mega__col">
@@ -150,8 +151,8 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
         ))}
       </nav>
 
-      {/* === Live-Zeile: 3 Spalten (News / Sperrungen / nächste Termine) ==== */}
-      <div class="grh-mega__live" data-grh-mega-block="live">
+      {/* === Live-Blöcke: vertikal rechts neben der Navigation ================ */}
+      <aside class="grh-mega__live" data-grh-mega-block="live" aria-label="Aktuelle Infos">
         <section class="grh-mega__live-col">
           <h3 class="grh-mega__live-head">Aktuelles</h3>
           <ul>
@@ -199,6 +200,7 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
           </ul>
           <a class="grh-mega__live-more" href="/veranstaltungen">Alle Termine →</a>
         </section>
+      </aside>
       </div>
 
       <aside class="grh-mega__feature">
@@ -522,10 +524,22 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
     .grh-mega__close { padding: 8px; }
   }
 
+  /* Nav-Bereich + Live-Spalte nebeneinander */
+  .grh-mega__content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+    padding: var(--grh-space-6) var(--grh-space-6) var(--grh-space-5);
+  }
+  @media (min-width: 1024px) {
+    .grh-mega__content {
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: var(--grh-space-7);
+    }
+  }
+
   /* Kompakte Navigation — Multi-Column-Flow füllt Lücken automatisch */
   .grh-mega__columns {
-    flex: 1;
-    padding: var(--grh-space-6) var(--grh-space-6) var(--grh-space-5);
     /* min. Spaltenbreite ~18em; Browser ermittelt die optimale Spaltenanzahl */
     columns: 18em;
     column-gap: var(--grh-space-6);
@@ -775,18 +789,20 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
   }
 
   .grh-mega__live {
-    margin: var(--grh-space-6) 0 0;
-    padding: var(--grh-space-5) var(--grh-space-6) var(--grh-space-4);
-    border-top: 1px solid var(--grh-line);
-    border-bottom: 1px solid var(--grh-line);
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: var(--grh-space-5);
+    padding-left: var(--grh-space-5);
+    border-left: 1px solid var(--grh-line);
   }
-  @media (min-width: 768px) {
+  /* Auf Mobile ohne Border/Padding, gestackt unter Nav */
+  @media (max-width: 1023px) {
     .grh-mega__live {
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--grh-space-6);
+      padding-left: 0;
+      border-left: 0;
+      border-top: 1px solid var(--grh-line);
+      padding-top: var(--grh-space-5);
+      margin-top: var(--grh-space-3);
     }
   }
   .grh-mega__live-col {
