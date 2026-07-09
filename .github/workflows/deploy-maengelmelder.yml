@@ -3,22 +3,28 @@ name: Deploy Mängelmelder
 # Deployt das Astro-Frontend nach melder.vv-wildenstein.com.
 #
 # Auslöser:
+#  - repository_dispatch „rebuild-melder": WordPress stößt den Build an, sobald
+#    eine Meldung freigegeben/geändert/gelöscht wird (Plugin vw-melder → Auto-Deploy).
+#    Das ist jetzt der normale Weg — Aktualisierung nahezu sofort.
 #  - Push auf main, wenn sich apps/maengelmelder/ ändert (Code-Änderungen)
-#  - 4× tagsüber per Zeitplan (holt neue/freigegebene Meldungen + Statusänderungen aus WP)
+#  - 1× täglich per Zeitplan als Sicherheitsnetz (falls ein Dispatch mal ausbleibt).
+#    Wenige geplante Läufe = kaum noch GitHub-Runner-Aussetzer ("not acquired"/"cancelled").
 #  - manuell über GitHub → Actions → „Deploy Mängelmelder" → Run workflow
-#    (für sofortige Aktualisierung nach dem Freigeben einer Meldung)
 
 on:
+  # WordPress löst den Build bei Änderungen aus (Plugin vw-melder, Auto-Deploy)
+  repository_dispatch:
+    types: [rebuild-melder]
   push:
     branches: [main]
     paths:
       - 'apps/maengelmelder/**'
       - '.github/workflows/deploy-maengelmelder.yml'
   schedule:
-    # Nur wenige Läufe tagsüber (UTC ~ 8/12/16/19 Uhr lokal) — weniger Runner-
-    # Anfragen = seltener GitHub-Infrastruktur-Aussetzer ("runner not acquired").
-    # Für sofortige Aktualisierung: in GitHub „Run workflow" (manuell) drücken.
-    - cron: '0 6,10,14,17 * * *'
+    # Sicherheitsnetz: 1× täglich (04:00 UTC ≈ 06:00 lokal). Der eigentliche
+    # Auslöser ist jetzt WordPress (repository_dispatch). Wenige geplante Läufe
+    # = kaum noch GitHub-Infrastruktur-Aussetzer-Mails.
+    - cron: '0 4 * * *'
   workflow_dispatch:
 
 jobs:

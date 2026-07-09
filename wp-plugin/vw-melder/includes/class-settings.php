@@ -16,8 +16,10 @@ final class VW_Melder_Settings {
 
     public static function defaults(): array {
         return [
-            'notify_email' => get_option( 'admin_email' ),
-            'frontend_url' => 'https://melder2026.vv-wildenstein.com',
+            'notify_email'   => get_option( 'admin_email' ),
+            'frontend_url'   => 'https://melder2026.vv-wildenstein.com',
+            'deploy_enabled' => 0,
+            'github_token'   => '',
         ];
     }
 
@@ -87,6 +89,31 @@ final class VW_Melder_Settings {
             'vw-melder-settings',
             'vw_melder_frontend'
         );
+
+        add_settings_section(
+            'vw_melder_deploy',
+            __( 'Automatische Aktualisierung (Auto-Deploy)', 'vw-melder' ),
+            static function () {
+                echo '<p>' . esc_html__( 'Wenn aktiv, baut sich die öffentliche App automatisch neu, sobald eine Meldung freigegeben, geändert, depubliziert oder gelöscht wird — meist innerhalb von 1–2 Minuten. Dadurch sind fast keine geplanten Läufe mehr nötig (weniger GitHub-Fehlermails).', 'vw-melder' ) . '</p>';
+            },
+            'vw-melder-settings'
+        );
+
+        add_settings_field(
+            'deploy_enabled',
+            __( 'Auto-Deploy', 'vw-melder' ),
+            [ __CLASS__, 'field_deploy_enabled' ],
+            'vw-melder-settings',
+            'vw_melder_deploy'
+        );
+
+        add_settings_field(
+            'github_token',
+            __( 'GitHub-Token', 'vw-melder' ),
+            [ __CLASS__, 'field_github_token' ],
+            'vw-melder-settings',
+            'vw_melder_deploy'
+        );
     }
 
     public static function field_frontend_url(): void {
@@ -99,6 +126,34 @@ final class VW_Melder_Settings {
         $val = esc_attr( (string) ( self::get()['notify_email'] ?? '' ) );
         echo '<input type="text" name="' . esc_attr( self::OPTION ) . '[notify_email]" value="' . $val . '" class="regular-text" placeholder="' . esc_attr( get_option( 'admin_email' ) ) . '">';
         echo '<p class="description">' . esc_html__( 'Empfänger der Mail bei neuer Meldung. Mehrere Adressen mit Komma trennen. Leer = WordPress-Administrator.', 'vw-melder' ) . '</p>';
+    }
+
+    public static function field_deploy_enabled(): void {
+        $on = ! empty( self::get()['deploy_enabled'] );
+        echo '<label><input type="checkbox" name="' . esc_attr( self::OPTION ) . '[deploy_enabled]" value="1" ' . checked( $on, true, false ) . '> '
+            . esc_html__( 'Bei Änderungen automatisch neu bauen', 'vw-melder' ) . '</label>';
+        echo '<p class="description">' . esc_html__( 'Braucht einen gültigen GitHub-Token (siehe unten). Ohne Token bleibt die Aktualisierung beim geplanten Sicherheits-Lauf (1×/Tag) bzw. dem manuellen Auslösen.', 'vw-melder' ) . '</p>';
+    }
+
+    public static function field_github_token(): void {
+        $has = trim( (string) ( self::get()['github_token'] ?? '' ) ) !== '';
+        $ph  = $has
+            ? __( '•••••••••• gespeichert — zum Ändern neuen Token eingeben', 'vw-melder' )
+            : 'github_pat_…';
+        echo '<input type="password" name="' . esc_attr( self::OPTION ) . '[github_token]" value="" autocomplete="off" spellcheck="false" class="regular-text" placeholder="' . esc_attr( $ph ) . '">';
+        if ( $has ) {
+            echo ' <label style="margin-left:6px"><input type="checkbox" name="' . esc_attr( self::OPTION ) . '[github_token_clear]" value="1"> '
+                . esc_html__( 'gespeicherten Token entfernen', 'vw-melder' ) . '</label>';
+        }
+        $link = 'https://github.com/settings/personal-access-tokens/new';
+        echo '<p class="description">' . wp_kses(
+            sprintf(
+                /* translators: %s: URL zum Erstellen eines Tokens */
+                __( 'Fein-granularer GitHub-Token für <code>stefangutermuth/vv-wildenstein</code> mit der Berechtigung <strong>Contents: Read and write</strong>. Erstellen: <a href="%s" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a> → <em>Resource owner</em>: stefangutermuth · <em>Repository access</em>: nur <code>vv-wildenstein</code> · <em>Permissions → Contents</em>: Read and write. Der Token beginnt mit <code>github_pat_</code> und wird sicher in der Datenbank gespeichert (hier nie wieder angezeigt).', 'vw-melder' ),
+                esc_url( $link )
+            ),
+            [ 'code' => [], 'strong' => [], 'em' => [], 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ]
+        ) . '</p>';
     }
 
     public static function sanitize( $input ): array {
@@ -119,6 +174,16 @@ final class VW_Melder_Settings {
             $out['frontend_url'] = esc_url_raw( trim( (string) $input['frontend_url'] ) );
         }
 
+        $out['deploy_enabled'] = empty( $input['deploy_enabled'] ) ? 0 : 1;
+
+        // GitHub-Token: „entfernen" angehakt = löschen; leer = bestehenden behalten;
+        // sonst neuen speichern (nur die in PATs erlaubten Zeichen).
+        if ( ! empty( $input['github_token_clear'] ) ) {
+            $out['github_token'] = '';
+        } elseif ( isset( $input['github_token'] ) && trim( (string) $input['github_token'] ) !== '' ) {
+            $out['github_token'] = preg_replace( '/[^A-Za-z0-9_]/', '', trim( (string) $input['github_token'] ) );
+        }
+
         return $out;
     }
 
@@ -126,6 +191,10 @@ final class VW_Melder_Settings {
         if ( ! current_user_can( 'manage_options' ) ) {
             return;
         }
+        $deploy_on  = ! empty( self::get()['deploy_enabled'] );
+        $has_token  = trim( (string) ( self::get()['github_token'] ?? '' ) ) !== '';
+        $last_iso   = VW_Melder_Deploy_Hook::last_dispatch();
+        $last_ts    = $last_iso !== '' ? strtotime( $last_iso ) : 0;
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Mängelmelder – Einstellungen', 'vw-melder' ); ?></h1>
@@ -136,6 +205,33 @@ final class VW_Melder_Settings {
                 submit_button();
                 ?>
             </form>
+
+            <hr>
+            <h2><?php esc_html_e( 'Auto-Deploy – Status', 'vw-melder' ); ?></h2>
+            <?php if ( $deploy_on && $has_token ) : ?>
+                <p style="color:#0a5f2b">
+                    <span class="dashicons dashicons-yes-alt" style="vertical-align:text-bottom"></span>
+                    <?php esc_html_e( 'Aktiv — Änderungen an Meldungen lösen automatisch einen Deploy aus.', 'vw-melder' ); ?>
+                </p>
+                <?php if ( $last_ts ) : ?>
+                    <p class="description">
+                        <?php echo esc_html( sprintf(
+                            /* translators: %s: Datum/Uhrzeit */
+                            __( 'Zuletzt automatisch ausgelöst: %s Uhr', 'vw-melder' ),
+                            wp_date( 'd.m.Y H:i', $last_ts )
+                        ) ); ?>
+                    </p>
+                <?php endif; ?>
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:8px">
+                    <input type="hidden" name="action" value="<?php echo esc_attr( VW_Melder_Deploy_Hook::ACTION_TEST ); ?>">
+                    <?php wp_nonce_field( VW_Melder_Deploy_Hook::ACTION_TEST ); ?>
+                    <?php submit_button( __( 'Verbindung testen (löst einen Deploy aus)', 'vw-melder' ), 'secondary', 'submit', false ); ?>
+                </form>
+            <?php elseif ( $has_token && ! $deploy_on ) : ?>
+                <p class="description"><?php esc_html_e( 'Token gespeichert, aber Auto-Deploy ist ausgeschaltet. Oben „Bei Änderungen automatisch neu bauen“ ankreuzen und speichern.', 'vw-melder' ); ?></p>
+            <?php else : ?>
+                <p class="description"><?php esc_html_e( 'Inaktiv. Zum Aktivieren oben „Auto-Deploy“ ankreuzen und einen GitHub-Token speichern.', 'vw-melder' ); ?></p>
+            <?php endif; ?>
         </div>
         <?php
     }
