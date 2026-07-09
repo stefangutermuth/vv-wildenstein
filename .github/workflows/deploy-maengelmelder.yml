@@ -4,8 +4,9 @@ name: Deploy Mängelmelder
 #
 # Auslöser:
 #  - Push auf main, wenn sich apps/maengelmelder/ ändert (Code-Änderungen)
-#  - alle 30 Minuten (holt neue/freigegebene Meldungen + Statusänderungen aus WP)
+#  - 4× tagsüber per Zeitplan (holt neue/freigegebene Meldungen + Statusänderungen aus WP)
 #  - manuell über GitHub → Actions → „Deploy Mängelmelder" → Run workflow
+#    (für sofortige Aktualisierung nach dem Freigeben einer Meldung)
 
 on:
   push:
@@ -14,8 +15,10 @@ on:
       - 'apps/maengelmelder/**'
       - '.github/workflows/deploy-maengelmelder.yml'
   schedule:
-    # Stündlich tagsüber (6–22 Uhr UTC) — kein Lauf im nächtlichen Wartungsfenster
-    - cron: '0 6-22 * * *'
+    # Nur wenige Läufe tagsüber (UTC ~ 8/12/16/19 Uhr lokal) — weniger Runner-
+    # Anfragen = seltener GitHub-Infrastruktur-Aussetzer ("runner not acquired").
+    # Für sofortige Aktualisierung: in GitHub „Run workflow" (manuell) drücken.
+    - cron: '0 6,10,14,17 * * *'
   workflow_dispatch:
 
 jobs:
