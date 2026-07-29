@@ -1,0 +1,131 @@
+/* ============================================================
+   VV Design Tokens – Verwaltungsverband Wildenstein
+   Prefix: --vv-*
+   Farbwelt „nah am Bestand": Impreza-Navy (#13267b) als Primär,
+   Hellblau als Akzent, Wappen-Grün (#0a5f2b) als Sekundär.
+   Schrift: Rubik (wie bisher).
+   ============================================================ */
+
+:root {
+  /* --- Primär: Navyblau (aus #13267b) --------------------- */
+  --vv-navy-950: #0a1240;
+  --vv-navy-900: #0e1c5c;
+  --vv-navy-800: #13267b;   /* Markenblau */
+  --vv-navy-700: #24329b;
+  --vv-navy-600: #3a49b8;
+  --vv-navy-500: #5566cf;
+
+  /* --- Akzent: Hellblau (aus #88c4fc / #cce2ff) ----------- */
+  --vv-sky-500: #4a9bf5;
+  --vv-sky-400: #88c4fc;
+  --vv-sky-200: #cce2ff;
+  --vv-sky-100: #e2eeff;
+  --vv-sky-50:  #eff6ff;
+
+  /* --- Sekundär: Wappen-Grün (aus #0a5f2b) ---------------- */
+  --vv-green-800: #0a5f2b;
+  --vv-green-600: #128a3f;
+  --vv-green-400: #47b06f;
+  --vv-green-100: #e3f2e8;
+
+  /* --- Neutrale Töne -------------------------------------- */
+  --vv-white:    #ffffff;
+  --vv-paper:    #f5f7fb;
+  --vv-gray-100: #eef1f6;
+  --vv-gray-200: #e2e7ef;
+  --vv-gray-300: #d3d9e3;
+  --vv-gray-400: #a7b0c0;
+  --vv-gray-500: #6c757d;
+  --vv-gray-700: #3a4150;
+  --vv-ink:      #1a2138;
+
+  /* --- Statusfarben --------------------------------------- */
+  --vv-alert-600: #b3261e;
+  --vv-warn-600:  #c9770a;
+  --vv-info-600:  #1f6fb2;
+
+  /* --- Semantische Aliase --------------------------------- */
+  --vv-bg:            var(--vv-white);
+  --vv-bg-alt:        var(--vv-paper);
+  --vv-bg-section:    var(--vv-sky-50);
+  --vv-bg-dark:       var(--vv-navy-800);
+  --vv-bg-darker:     var(--vv-navy-900);
+  --vv-text:          var(--vv-ink);
+  --vv-text-muted:    var(--vv-gray-500);
+  --vv-text-on-dark:  var(--vv-white);
+  --vv-heading:       var(--vv-navy-800);
+  --vv-primary:       var(--vv-navy-800);
+  --vv-primary-hover: var(--vv-navy-700);
+  --vv-accent:        var(--vv-green-800);
+  --vv-link:          var(--vv-navy-700);
+  --vv-link-hover:    var(--vv-navy-900);
+  --vv-border:        var(--vv-gray-300);
+  --vv-border-soft:   var(--vv-gray-200);
+  --vv-focus-ring:    var(--vv-sky-500);
+
+  /* --- Typo: Familie (Rubik wie im Bestand) --------------- */
+  --vv-font: 'Rubik Variable', 'Rubik', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* --- Typo: Skala (Major Third 1.25) --------------------- */
+  --vv-fs-xs:   0.75rem;
+  --vv-fs-sm:   0.875rem;
+  --vv-fs-base: 1rem;
+  --vv-fs-md:   1.125rem;
+  --vv-fs-lg:   1.25rem;
+  --vv-fs-xl:   1.563rem;
+  --vv-fs-2xl:  1.953rem;
+  --vv-fs-3xl:  2.441rem;
+  --vv-fs-4xl:  3.052rem;
+  --vv-fs-hero: clamp(2.25rem, 5.2vw, 4rem);
+
+  --vv-lh-tight:  1.15;
+  --vv-lh-snug:   1.3;
+  --vv-lh-normal: 1.65;
+  --vv-tracking-label: 0.08em;
+
+  /* --- Spacing-Scale (4-pt-Basis) ------------------------- */
+  --vv-space-1:  4px;
+  --vv-space-2:  8px;
+  --vv-space-3:  12px;
+  --vv-space-4:  16px;
+  --vv-space-5:  24px;
+  --vv-space-6:  32px;
+  --vv-space-7:  48px;
+  --vv-space-8:  64px;
+  --vv-space-9:  96px;
+  --vv-space-10: 128px;
+
+  /* --- Radii (Impreza: eher weich/gerundet) --------------- */
+  --vv-radius-sm:   6px;
+  --vv-radius-md:  12px;
+  --vv-radius-lg:  20px;
+  --vv-radius-xl:  28px;
+  --vv-radius-pill: 999px;
+
+  /* --- Schatten (bläulich getönt) ------------------------- */
+  --vv-shadow-sm: 0 1px 2px rgba(19, 38, 123, 0.08);
+  --vv-shadow-md: 0 8px 24px -10px rgba(19, 38, 123, 0.22);
+  --vv-shadow-lg: 0 24px 50px -22px rgba(14, 28, 92, 0.34);
+
+  /* --- Layout-Container ----------------------------------- */
+  --vv-container-max: 1240px;
+  --vv-gutter:        var(--vv-space-5);
+
+  /* --- Motion --------------------------------------------- */
+  --vv-ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --vv-dur-fast:    180ms;
+  --vv-dur-base:    320ms;
+  --vv-dur-slow:    650ms;
+
+  /* --- Z-Layer -------------------------------------------- */
+  --vv-z-base:    1;
+  --vv-z-sticky:  100;
+  --vv-z-overlay: 500;
+  --vv-z-modal:   1000;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --vv-gutter: var(--vv-space-6);
+  }
+}

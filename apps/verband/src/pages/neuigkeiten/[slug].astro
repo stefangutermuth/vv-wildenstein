@@ -1,0 +1,79 @@
+---
+/**
+ * Detailseite eines Beitrags (Neuigkeit/Bekanntmachung) aus WordPress.
+ * Wird beim Build aus dem zentralen Backend generiert — Änderungen dort
+ * erscheinen mit dem nächsten Auto-Deploy.
+ */
+import '../../styles/prose.css';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import VvPageHeader from '../../components/global/VvPageHeader.astro';
+import VvLightbox from '../../components/global/VvLightbox.astro';
+import VvIcon from '../../components/primitives/VvIcon.astro';
+import { getNews } from '../../lib/cms';
+import type { NewsItem } from '../../lib/cms';
+
+export async function getStaticPaths() {
+  const news = await getNews();
+  return news.map((item) => ({ params: { slug: item.slug }, props: { item } }));
+}
+
+interface Props { item: NewsItem }
+const { item } = Astro.props;
+
+const categoryLabel: Record<string, string> = {
+  bekanntmachung: 'Bekanntmachung',
+  veranstaltung:  'Veranstaltung',
+  sperrung:       'Sperrung',
+  ausschreibung:  'Ausschreibung',
+};
+const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+---
+<BaseLayout title={`${item.title} — Verwaltungsverband Wildenstein`} description={item.excerpt.slice(0, 160)}>
+  <VvPageHeader
+    title={item.title}
+    breadcrumb={[{ title: 'Neuigkeiten', path: '/neuigkeiten' }]}
+  />
+
+  <div class="vv-post">
+    <div class="vv-container">
+      <p class="vv-post__meta">
+        <span class="vv-post__cat">{categoryLabel[item.category]}</span>
+        <time>{fmtDate.format(item.date)}</time>
+      </p>
+
+      {item.contentHtml
+        ? <article class="vv-prose" set:html={item.contentHtml} />
+        : <article class="vv-prose"><p>{item.excerpt}</p></article>}
+
+      <a href="/neuigkeiten" class="vv-post__back">
+        <VvIcon name="arrow-right" size={14} class="vv-post__back-icon" />
+        Alle Neuigkeiten
+      </a>
+    </div>
+  </div>
+  <VvLightbox />
+</BaseLayout>
+
+<style>
+  .vv-post { padding-block: var(--vv-space-7) var(--vv-space-9); background: var(--vv-white); }
+  .vv-post .vv-container { max-width: 860px; }
+  .vv-post__meta {
+    display: flex; align-items: center; gap: var(--vv-space-3);
+    font-size: var(--vv-fs-sm); color: var(--vv-text-muted);
+    margin-bottom: var(--vv-space-5);
+    padding-bottom: var(--vv-space-3);
+    border-bottom: 1px solid var(--vv-border-soft);
+  }
+  .vv-post__cat {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    font-weight: 700; color: var(--vv-green-800);
+  }
+  .vv-post__back {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: var(--vv-space-7);
+    font-weight: 600; color: var(--vv-navy-700);
+    transition: color var(--vv-dur-fast);
+  }
+  .vv-post__back:hover { color: var(--vv-navy-900); }
+  .vv-post :global(.vv-post__back-icon) { transform: rotate(180deg); }
+</style>

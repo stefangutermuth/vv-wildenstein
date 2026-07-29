@@ -1,0 +1,107 @@
+---
+/**
+ * Detailseite einer Veranstaltung (vw-events Plugin).
+ * Gleicher URL-Pfad wie das Original-Permalink (/veranstaltungen/{slug}).
+ */
+import '../../styles/prose.css';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import VvPageHeader from '../../components/global/VvPageHeader.astro';
+import VvLightbox from '../../components/global/VvLightbox.astro';
+import VvIcon from '../../components/primitives/VvIcon.astro';
+import { getEvents } from '../../lib/cms';
+import type { EventItem } from '../../lib/cms';
+
+export async function getStaticPaths() {
+  const events = await getEvents();
+  return events.map((item) => ({ params: { slug: item.slug }, props: { item } }));
+}
+
+interface Props { item: EventItem }
+const { item } = Astro.props;
+
+// Feste Zeitzone — sonst formatiert der (UTC-)CI-Runner Datum/Uhrzeit falsch
+// (Event 19:30 → 18:30, Mitternacht → Vortag). vw-events liefert offset-behaftete Zeiten.
+const TZ = 'Europe/Berlin';
+const fmtFull = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: TZ });
+const fmtTime = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: TZ });
+const dayKey = (d: Date) => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: TZ }).format(d);
+const sameDay = item.endDate ? dayKey(item.endDate) === dayKey(item.startDate) : false;
+---
+<BaseLayout title={`${item.title} — Verwaltungsverband Wildenstein`} description={item.teaser}>
+  <VvPageHeader
+    title={item.title}
+    breadcrumb={[{ title: 'Veranstaltungen', path: '/veranstaltungen' }]}
+  />
+
+  <div class="vv-event">
+    <div class="vv-container">
+      <ul class="vv-event__facts">
+        <li>
+          <VvIcon name="calendar" size={16} />
+          <span>
+            {fmtFull.format(item.startDate)}
+            {item.endDate && !sameDay && <> – {fmtFull.format(item.endDate)}</>}
+          </span>
+        </li>
+        {!item.allDay && fmtTime.format(item.startDate) !== '00:00' && (
+          <li>
+            <VvIcon name="clock" size={16} />
+            <span>
+              {fmtTime.format(item.startDate)} Uhr
+              {item.endDate && sameDay && <> – {fmtTime.format(item.endDate)} Uhr</>}
+            </span>
+          </li>
+        )}
+        {item.location && (
+          <li><VvIcon name="map-pin" size={16} /> <span>{item.location}</span></li>
+        )}
+        {item.organizer && (
+          <li><VvIcon name="users" size={16} /> <span>{item.organizer}</span></li>
+        )}
+      </ul>
+
+      {item.image && (
+        <img class="vv-event__image" src={item.image} alt="" loading="lazy" decoding="async" />
+      )}
+
+      {item.contentHtml
+        ? <article class="vv-prose" set:html={item.contentHtml} />
+        : <article class="vv-prose"><p>{item.teaser}</p></article>}
+
+      <a href="/veranstaltungen" class="vv-event__back">
+        <VvIcon name="arrow-right" size={14} class="vv-event__back-icon" />
+        Alle Veranstaltungen
+      </a>
+    </div>
+  </div>
+  <VvLightbox />
+</BaseLayout>
+
+<style>
+  .vv-event { padding-block: var(--vv-space-7) var(--vv-space-9); background: var(--vv-white); }
+  .vv-event .vv-container { max-width: 860px; }
+  .vv-event__facts {
+    display: flex; flex-wrap: wrap; gap: var(--vv-space-3) var(--vv-space-6);
+    padding-bottom: var(--vv-space-4);
+    margin-bottom: var(--vv-space-5);
+    border-bottom: 1px solid var(--vv-border-soft);
+  }
+  .vv-event__facts li {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: var(--vv-fs-sm); color: var(--vv-gray-700); font-weight: 500;
+  }
+  .vv-event__facts :global(svg) { color: var(--vv-green-600); flex-shrink: 0; }
+  .vv-event__image {
+    max-width: 100%; height: auto;
+    border-radius: var(--vv-radius-md);
+    margin-bottom: var(--vv-space-5);
+  }
+  .vv-event__back {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: var(--vv-space-7);
+    font-weight: 600; color: var(--vv-navy-700);
+    transition: color var(--vv-dur-fast);
+  }
+  .vv-event__back:hover { color: var(--vv-navy-900); }
+  .vv-event :global(.vv-event__back-icon) { transform: rotate(180deg); }
+</style>

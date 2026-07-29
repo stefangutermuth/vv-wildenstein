@@ -1,0 +1,93 @@
+---
+import VvIcon from './VvIcon.astro';
+
+interface Props {
+  href: string;
+  variant?: 'primary' | 'ghost' | 'light';
+  size?: 'sm' | 'md';
+  icon?: string;
+  external?: boolean;
+  class?: string;
+}
+const {
+  href,
+  variant = 'primary',
+  size = 'md',
+  icon,
+  external = false,
+  class: className,
+} = Astro.props;
+
+const rel = external ? 'noopener noreferrer' : undefined;
+const target = external ? '_blank' : undefined;
+---
+<a
+  href={href}
+  class:list={['vv-btn', `vv-btn--${variant}`, `vv-btn--${size}`, className]}
+  rel={rel}
+  target={target}
+>
+  <span><slot /></span>
+  {icon && <VvIcon name={icon} size={size === 'sm' ? 15 : 17} />}
+</a>
+
+<style>
+  .vv-btn {
+    --_bg: var(--vv-primary);
+    --_fg: var(--vv-white);
+    --_border: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--vv-space-2);
+    padding: 0.72em 1.35em;
+    background: var(--_bg);
+    color: var(--_fg);
+    border: 1.5px solid var(--_border);
+    border-radius: var(--vv-radius-pill);
+    font-weight: 600;
+    font-size: var(--vv-fs-base);
+    line-height: 1;
+    letter-spacing: 0.005em;
+    transition:
+      background var(--vv-dur-fast) var(--vv-ease-out),
+      color var(--vv-dur-fast) var(--vv-ease-out),
+      border-color var(--vv-dur-fast) var(--vv-ease-out),
+      transform var(--vv-dur-fast) var(--vv-ease-out),
+      box-shadow var(--vv-dur-fast) var(--vv-ease-out);
+  }
+  .vv-btn--sm { padding: 0.55em 1.05em; font-size: var(--vv-fs-sm); }
+
+  .vv-btn--primary { box-shadow: var(--vv-shadow-sm); }
+  .vv-btn--primary:hover {
+    --_bg: var(--vv-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--vv-shadow-md);
+  }
+
+  .vv-btn--ghost {
+    --_bg: transparent;
+    --_fg: var(--vv-primary);
+    --_border: var(--vv-border);
+  }
+  .vv-btn--ghost:hover {
+    --_bg: var(--vv-sky-50);
+    --_border: var(--vv-sky-400);
+    --_fg: var(--vv-primary-hover);
+  }
+
+  .vv-btn--light {
+    --_bg: var(--vv-white);
+    --_fg: var(--vv-primary);
+    --_border: var(--vv-border-soft);
+    box-shadow: var(--vv-shadow-sm);
+  }
+  .vv-btn--light:hover {
+    --_bg: var(--vv-sky-100);
+    --_border: var(--vv-sky-400);
+    box-shadow: var(--vv-shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .vv-btn :global(svg) { transition: transform var(--vv-dur-fast) var(--vv-ease-out); }
+  .vv-btn:hover :global(svg) { transform: translateX(3px); }
+</style>

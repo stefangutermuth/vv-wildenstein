@@ -1,0 +1,158 @@
+---
+/**
+ * Catch-all für alle Inhaltsseiten aus WordPress.
+ *
+ * Jede veröffentlichte WP-Seite wird beim Build an ihrem ORIGINAL-Pfad
+ * generiert (URL-Parität mit vv-wildenstein.com → keine kaputten Links
+ * beim Day-X-Umzug). Redaktion pflegt weiter im WP-Backend; jeder
+ * Rebuild (Webhook/Zeitplan) übernimmt Änderungen automatisch.
+ */
+import '../styles/prose.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import VvPageHeader from '../components/global/VvPageHeader.astro';
+import VvLightbox from '../components/global/VvLightbox.astro';
+import VvHubGrid from '../components/global/VvHubGrid.astro';
+import {
+  fetchWordPressPages,
+  fetchWordPressCptPages,
+  fetchHubSources,
+  type WPPageItem,
+  type HubTile,
+  type HubSources,
+} from '../lib/cms-wordpress';
+
+export async function getStaticPaths() {
+  // Hinweis: getStaticPaths läuft in Astro in einem ISOLIERTEN Scope —
+  // Helfer müssen hier drin definiert sein (Frontmatter-Scope ist unsichtbar).
+
+  /** Tourismus-Kategorie-Seiten → passende tourismus_kat-Terms. */
+  const TOURISM_CAT_MAP: Record<string, string[]> = {
+    gastronomie: ['gastronomie'],
+    museum: ['museum'],
+    unterkuenfte: ['unterkuenfte'],
+    aktivitaeten: ['wandern', 'radfahren', 'baden', 'sehenswertes'],
+  };
+
+  /** Kacheln einer Hub-Seite aus den echten Daten auflösen. */
+  function resolveHubTiles(
+    pg: WPPageItem,
+    childrenByParent: Map<number, WPPageItem[]>,
+    hub: HubSources,
+  ): HubTile[] {
+    const p = pg.path;
+    // Tourismus-Übersicht = alle Einträge; Kategorie-Seiten = gefiltert
+    if (p === '/tourismus_uebersicht') return hub.tourismus;
+    if (p.startsWith('/tourismus_uebersicht/')) {
+      const cat = p.split('/').pop() ?? '';
+      const kats = TOURISM_CAT_MAP[cat];
+      return kats ? hub.tourismus.filter((t) => t.kats?.some((k) => kats.includes(k))) : [];
+    }
+    // CPT-Index-Hubs
+    if (p === '/verwaltung') return hub.amter;
+    if (p === '/wirtschaft') return hub.profile;
+    // Sektions-Hubs → echte WP-Kind-Seiten als Kacheln (nach Titel dedupliziert)
+    const kids = childrenByParent.get(pg.id) ?? [];
+    const seen = new Set<string>();
+    return kids
+      .filter((k) => {
+        const key = k.title.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((k) => ({ title: k.title, href: k.path }));
+  }
+
+  function pickHubIcon(path: string): string {
+    if (path.startsWith('/verwaltung')) return 'building';
+    if (path.startsWith('/tourismus')) return 'mountain';
+    if (path.startsWith('/leben-freizeit')) return 'users';
+    if (path.startsWith('/wirtschaft')) return 'building';
+    if (path.startsWith('/projekte')) return 'file-text';
+    return 'arrow-up-right';
+  }
+
+  // Seiten + Custom Post Types (Ämter, Tourismus, Vereine, Profile) + Hub-Quellen
+  const [pages, cpts, hub] = await Promise.all([
+    fetchWordPressPages(),
+    fetchWordPressCptPages(),
+    fetchHubSources(),
+  ]);
+  // Kind-Seiten je Eltern-ID (nur echte WP-Seiten haben eine Hierarchie)
+  const childrenByParent = new Map<number, WPPageItem[]>();
+  for (const pg of pages) {
+    if (!pg.parentId) continue;
+    const list = childrenByParent.get(pg.parentId) ?? [];
+    list.push(pg);
+    childrenByParent.set(pg.parentId, list);
+  }
+  // Reservierte Pfade (eigene Routen) nicht überschreiben; Duplikate (Seite
+  // vs. CPT mit gleichem Pfad) überspringen → sonst bricht der Build hart ab.
+  const RESERVED = new Set(['neuigkeiten', 'veranstaltungen', '404']);
+  const seen = new Set<string>();
+  const routes = [];
+  for (const page of [...pages, ...cpts]) {
+    const slug = page.path.replace(/^\//, '').replace(/\/$/, '');
+    if (!slug || RESERVED.has(slug.split('/')[0]) || seen.has(slug)) continue;
+    seen.add(slug);
+    // Native Kacheln nur, wo ein Impreza-Portalgitter entfernt wurde
+    const hubTiles = page.hadHubGrid ? resolveHubTiles(page, childrenByParent, hub) : [];
+    routes.push({
+      params: { slug },
+      props: { page, hubTiles, hubIcon: pickHubIcon(page.path) },
+    });
+  }
+  return routes;
+}
+
+const { page, hubTiles, hubIcon: tileIcon } = Astro.props;
+
+// Manche alten Seiten waren reine Impreza-Portalgitter oder Redirect-Stubs —
+// nach dem Aufräumen bleibt kein Inhalt. Statt einer leeren Seite ein
+// freundlicher Hinweis mit Weg zurück in die Sektion.
+const contentText = page.contentHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const isEmpty = hubTiles.length === 0 && contentText.length < 40;
+const parentPath = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].path : '/';
+const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].title : 'Startseite';
+---
+<BaseLayout title={`${page.title} — Verwaltungsverband Wildenstein`} description={page.title}>
+  <VvPageHeader title={page.title} breadcrumb={page.breadcrumb} />
+  <div class="vv-pagebody">
+    <div class="vv-container">
+      {hubTiles.length > 0 && <VvHubGrid tiles={hubTiles} icon={tileIcon} />}
+      {isEmpty ? (
+        <div class="vv-emptyhub">
+          <p>Für diese Seite liegen derzeit keine eigenen Inhalte vor.</p>
+          <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>
+        </div>
+      ) : (
+        <article class="vv-prose" set:html={page.contentHtml} />
+      )}
+    </div>
+  </div>
+  <VvLightbox />
+</BaseLayout>
+
+<style>
+  .vv-pagebody {
+    padding-block: var(--vv-space-7) var(--vv-space-9);
+    background: var(--vv-white);
+  }
+  .vv-pagebody .vv-container { max-width: 980px; }
+  .vv-emptyhub {
+    padding: var(--vv-space-6);
+    background: var(--vv-bg-alt);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-lg);
+    text-align: center;
+    color: var(--vv-text-muted);
+  }
+  .vv-emptyhub__link {
+    display: inline-block;
+    margin-top: var(--vv-space-3);
+    font-weight: 600;
+    color: var(--vv-primary);
+    text-decoration: none;
+  }
+  .vv-emptyhub__link:hover { text-decoration: underline; }
+</style>

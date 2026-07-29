@@ -1,0 +1,127 @@
+---
+import VvWappen from './VvWappen.astro';
+import VvIcon from '../primitives/VvIcon.astro';
+
+const columns = [
+  {
+    title: 'Verband',
+    links: [
+      { label: 'Der Verwaltungsverband', href: '/verband' },
+      { label: 'Verbandsversammlung', href: '/verband/verbandsversammlung' },
+      { label: 'Rechtssachen / Satzungen', href: '/verband/rechtssachen-satzungen' },
+      { label: 'Amtsblatt', href: '/amtsblatt' },
+    ],
+  },
+  {
+    title: 'Verwaltung',
+    links: [
+      { label: 'Öffnungszeiten & Ämter', href: '/verwaltung' },
+      { label: 'Dienstleistungen', href: '/dienstleistungen' },
+      { label: 'Heiraten', href: '/heiraten' },
+      { label: 'Kindertagesstätten / Hort', href: '/kindertagesstaetten' },
+    ],
+  },
+  {
+    title: 'Service',
+    links: [
+      { label: 'Neuigkeiten', href: '/neuigkeiten' },
+      { label: 'Sperrungen', href: '/sperrungen' },
+      { label: 'Downloads & Formulare', href: '/downloads' },
+      { label: 'Mängel-Melder', href: 'https://melder.vv-wildenstein.com', external: true },
+    ],
+  },
+];
+---
+<footer class="vv-footer">
+  <div class="vv-container vv-footer__top">
+    <div class="vv-footer__brand">
+      <div class="vv-footer__brand-head">
+        <span class="vv-footer__logo-chip"><VvWappen size={44} /></span>
+        <div>
+          <strong>Verwaltungsverband Wildenstein</strong>
+          <span>Grünhainichen &amp; Börnichen/Erzgeb.</span>
+        </div>
+      </div>
+      <address class="vv-footer__contact">
+        <p><VvIcon name="map-pin" size={16} /> Chemnitzer Straße 41, 09579 Grünhainichen</p>
+        <p><a href="tel:+4937294170-0"><VvIcon name="phone" size={16} /> 037294 / 170-0</a></p>
+        <p><a href="mailto:info@wildenstein.ws"><VvIcon name="mail" size={16} /> info@wildenstein.ws</a></p>
+      </address>
+      <div class="vv-footer__hours">
+        <VvIcon name="clock" size={16} />
+        <div>
+          <strong>Sprechzeiten</strong>
+          <span>Di 9–12 &amp; 14–18 Uhr · Do 9–12 &amp; 14–16 Uhr</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="vv-footer__cols">
+      {columns.map((col) => (
+        <nav class="vv-footer__col" aria-label={col.title}>
+          <h3>{col.title}</h3>
+          <ul>
+            {col.links.map((l) => (
+              <li>
+                <a
+                  href={l.href}
+                  target={l.external ? '_blank' : undefined}
+                  rel={l.external ? 'noopener noreferrer' : undefined}
+                >{l.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))}
+    </div>
+  </div>
+</footer>
+
+<style>
+  .vv-footer { background: var(--vv-navy-900); color: var(--vv-sky-200); margin-top: auto; }
+  .vv-footer__top {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--vv-space-7);
+    padding-block: var(--vv-space-8);
+  }
+  @media (min-width: 900px) {
+    .vv-footer__top { grid-template-columns: 1.1fr 1.4fr; gap: var(--vv-space-8); }
+  }
+
+  .vv-footer__brand-head { display: flex; align-items: center; gap: var(--vv-space-3); }
+  .vv-footer__logo-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 8px 12px; background: var(--vv-white);
+    border-radius: var(--vv-radius-md); flex-shrink: 0;
+  }
+  .vv-footer__brand-head strong { display: block; color: var(--vv-white); font-size: var(--vv-fs-md); }
+  .vv-footer__brand-head span { color: var(--vv-sky-400); font-size: var(--vv-fs-sm); }
+
+  .vv-footer__contact { font-style: normal; margin-top: var(--vv-space-5); display: flex; flex-direction: column; gap: 8px; }
+  .vv-footer__contact p { display: flex; align-items: center; gap: 8px; font-size: var(--vv-fs-sm); }
+  .vv-footer__contact a { color: var(--vv-sky-200); transition: color var(--vv-dur-fast); }
+  .vv-footer__contact a:hover { color: var(--vv-white); }
+  .vv-footer__contact :global(svg) { color: var(--vv-green-400); flex-shrink: 0; }
+
+  .vv-footer__hours { display: flex; align-items: flex-start; gap: 8px; margin-top: var(--vv-space-4); }
+  .vv-footer__hours :global(svg) { color: var(--vv-green-400); margin-top: 2px; flex-shrink: 0; }
+  .vv-footer__hours strong { display: block; color: var(--vv-white); font-size: var(--vv-fs-sm); }
+  .vv-footer__hours span { font-size: var(--vv-fs-sm); }
+
+  .vv-footer__cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--vv-space-6);
+  }
+  .vv-footer__col h3 {
+    color: var(--vv-white);
+    font-size: var(--vv-fs-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: var(--vv-space-3);
+  }
+  .vv-footer__col ul { display: flex; flex-direction: column; gap: 4px; }
+  .vv-footer__col a { display: inline-block; padding: 5px 0; color: var(--vv-sky-200); font-size: var(--vv-fs-sm); transition: color var(--vv-dur-fast); }
+  .vv-footer__col a:hover { color: var(--vv-white); }
+</style>

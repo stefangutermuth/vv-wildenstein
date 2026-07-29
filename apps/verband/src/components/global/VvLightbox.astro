@@ -1,0 +1,155 @@
+---
+/**
+ * Lightbox für Inhalts-Bilder (.vv-prose img).
+ * Vanilla JS: Klick öffnet Großansicht, ←/→ blättert, ESC/Backdrop schließt.
+ * Kleine Icons (z. B. Download-Manager) sind ausgenommen.
+ */
+---
+<div class="vv-lb" data-vv-lightbox hidden role="dialog" aria-modal="true" aria-label="Bildergalerie">
+  <button class="vv-lb__close" data-lb-close aria-label="Schließen">✕</button>
+  <button class="vv-lb__nav vv-lb__nav--prev" data-lb-prev aria-label="Vorheriges Bild">‹</button>
+  <figure class="vv-lb__stage">
+    <img data-lb-img src="" alt="" />
+  </figure>
+  <button class="vv-lb__nav vv-lb__nav--next" data-lb-next aria-label="Nächstes Bild">›</button>
+  <span class="vv-lb__count" data-lb-count></span>
+</div>
+
+<script>
+  (() => {
+    const lb = document.querySelector('[data-vv-lightbox]') as HTMLElement | null;
+    if (!lb) return;
+    const stageImg = lb.querySelector('[data-lb-img]') as HTMLImageElement;
+    const counter = lb.querySelector('[data-lb-count]') as HTMLElement;
+
+    // Alle Inhalts-Bilder außer Mini-Icons und verlinkten Bildern einsammeln
+    const imgs = [...document.querySelectorAll<HTMLImageElement>('.vv-prose img')].filter(
+      (img) => !img.classList.contains('wpdm_icon') && !img.closest('a') && img.clientWidth >= 120 && img.clientHeight >= 90
+    );
+    if (!imgs.length) return;
+
+    let idx = 0;
+    let trigger: HTMLElement | null = null;
+    const closeBtn = lb.querySelector('[data-lb-close]') as HTMLButtonElement;
+
+    /** WP-Thumbnail-Suffix (-300x225.jpg) entfernen → Original in groß */
+    const fullSrc = (src: string) => src.replace(/-\d+x\d+(\.\w+)(\?.*)?$/, '$1$2');
+
+    function show(i: number) {
+      idx = (i + imgs.length) % imgs.length;
+      const thumb = imgs[idx].currentSrc || imgs[idx].src;
+      stageImg.onerror = () => { stageImg.onerror = null; stageImg.src = thumb; };
+      stageImg.src = fullSrc(thumb);
+      stageImg.alt = imgs[idx].alt || '';
+      counter.textContent = imgs.length > 1 ? `${idx + 1} / ${imgs.length}` : '';
+    }
+    function open(i: number, from: HTMLElement) {
+      trigger = from;
+      show(i);
+      lb.hidden = false;
+      document.body.style.overflow = 'hidden';
+      closeBtn?.focus(); // Fokus in den Dialog
+    }
+    function close() {
+      lb.hidden = true;
+      document.body.style.overflow = '';
+      trigger?.focus(); // Fokus zurück zum auslösenden Bild
+      trigger = null;
+    }
+
+    imgs.forEach((img, i) => {
+      // Per Tastatur bedienbar machen (BITV): fokussierbar + Button-Rolle
+      img.style.cursor = 'zoom-in';
+      img.tabIndex = 0;
+      img.setAttribute('role', 'button');
+      if (!img.getAttribute('aria-label')) img.setAttribute('aria-label', 'Bild vergrößern');
+      img.addEventListener('click', (e) => { e.preventDefault(); open(i, img); });
+      img.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(i, img); }
+      });
+    });
+
+    closeBtn?.addEventListener('click', close);
+    lb.querySelector('[data-lb-prev]')?.addEventListener('click', () => show(idx - 1));
+    lb.querySelector('[data-lb-next]')?.addEventListener('click', () => show(idx + 1));
+    lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
+    document.addEventListener('keydown', (e) => {
+      if (lb.hidden) return;
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key === 'ArrowLeft') show(idx - 1);
+      if (e.key === 'ArrowRight') show(idx + 1);
+      // Fokus im Dialog halten (Tab-Trap)
+      if (e.key === 'Tab') {
+        const f = [...lb.querySelectorAll<HTMLElement>('button')].filter((b) => b.offsetParent !== null);
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        else if (!lb.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      }
+    });
+  })();
+</script>
+
+<style>
+  .vv-lb {
+    position: fixed;
+    inset: 0;
+    z-index: var(--vv-z-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5, 10, 38, 0.92);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    animation: vv-lb-in 180ms var(--vv-ease-out);
+  }
+  @keyframes vv-lb-in { from { opacity: 0; } to { opacity: 1; } }
+  .vv-lb[hidden] { display: none; }
+
+  .vv-lb__stage { max-width: min(92vw, 1400px); max-height: 86vh; margin: 0; }
+  .vv-lb__stage img {
+    max-width: 100%;
+    max-height: 86vh;
+    display: block;
+    border-radius: var(--vv-radius-md);
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.7);
+  }
+
+  .vv-lb__close,
+  .vv-lb__nav {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    color: var(--vv-white);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background var(--vv-dur-fast), transform var(--vv-dur-fast);
+  }
+  .vv-lb__close:hover,
+  .vv-lb__nav:hover { background: rgba(255, 255, 255, 0.22); transform: scale(1.06); }
+
+  .vv-lb__close { top: 20px; right: 20px; width: 44px; height: 44px; font-size: 18px; }
+  .vv-lb__nav { top: 50%; translate: 0 -50%; width: 52px; height: 52px; font-size: 34px; line-height: 1; padding-bottom: 4px; }
+  .vv-lb__nav--prev { left: 18px; }
+  .vv-lb__nav--next { right: 18px; }
+
+  .vv-lb__count {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    translate: -50% 0;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: var(--vv-fs-sm);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  @media (max-width: 640px) {
+    .vv-lb__nav { width: 42px; height: 42px; font-size: 26px; }
+    .vv-lb__nav--prev { left: 8px; }
+    .vv-lb__nav--next { right: 8px; }
+  }
+</style>

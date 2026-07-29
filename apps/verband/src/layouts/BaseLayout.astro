@@ -1,0 +1,134 @@
+---
+import '@fontsource-variable/rubik';
+import '../styles/tokens.css';
+import '../styles/reset.css';
+import '../styles/typography.css';
+import '../styles/utilities.css';
+
+import VvHeader from '../components/global/VvHeader.astro';
+import VvFooter from '../components/global/VvFooter.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const {
+  title = 'Verwaltungsverband Wildenstein',
+  description = 'Offizielle Website des Verwaltungsverbands Wildenstein — gemeinsame Verwaltung der Gemeinden Grünhainichen und Börnichen/Erzgeb. Bürgerservice, Bekanntmachungen, Ansprechpartner.',
+  ogImage = '/images/hero/verband-hero.jpg',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const isStaging = import.meta.env.PUBLIC_STAGING === 'true';
+
+const orgJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'GovernmentOrganization',
+  name: 'Verwaltungsverband Wildenstein',
+  url: 'https://vv-wildenstein.com',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Chemnitzer Straße 41',
+    postalCode: '09579',
+    addressLocality: 'Grünhainichen',
+    addressRegion: 'Sachsen',
+    addressCountry: 'DE',
+  },
+  telephone: '+49 37294 170-0',
+  email: 'info@wildenstein.ws',
+  areaServed: ['Grünhainichen', 'Börnichen/Erzgeb.'],
+};
+
+const year = new Date().getFullYear();
+---
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    {isStaging && <meta name="robots" content="noindex,nofollow" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/images/logos/wappen-vv.svg" />
+    <link rel="apple-touch-icon" href="/images/logos/wappen-vv.svg" />
+    <meta name="theme-color" content="#13267b" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="de_DE" />
+
+    <title>{title}</title>
+
+    <script type="application/ld+json" set:html={JSON.stringify(orgJsonLd)} />
+  </head>
+  <body>
+    <a href="#main" class="vv-skip-link">Zum Hauptinhalt springen</a>
+    <VvHeader />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <VvFooter />
+
+    {/* Partner-/Auszeichnungs-Logoreihe — weißes Band unter dem Footer */}
+    <aside class="vv-partners" aria-label="Partner und Auszeichnungen">
+      <div class="vv-container">
+        <img src="/images/logos/asskomm-reihe.svg" alt="Partner & Auszeichnungen des Verwaltungsverbands Wildenstein" loading="lazy" decoding="async" />
+      </div>
+    </aside>
+
+    {/* Copyright + Rechtliches — weiße Zeile ganz unten */}
+    <div class="vv-legalbar">
+      <div class="vv-container vv-legalbar__inner">
+        <p>© {year} Verwaltungsverband Wildenstein</p>
+        <nav class="vv-legalbar__links" aria-label="Rechtliches">
+          <a href="/impressum">Impressum</a>
+          <a href="/datenschutzerklaerung">Datenschutz</a>
+          <a href="/datenschutzbeauftragte">Datenschutzbeauftragte</a>
+        </nav>
+      </div>
+    </div>
+
+    <script>
+      const reveals = document.querySelectorAll('.vv-reveal');
+      if (reveals.length && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              io.unobserve(entry.target);
+            }
+          }
+        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+        reveals.forEach((el) => io.observe(el));
+      } else {
+        reveals.forEach((el) => el.classList.add('is-visible'));
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+  main { flex: 1 0 auto; }
+
+  /* Partner-/Auszeichnungs-Logoreihe unter dem Footer */
+  .vv-partners { background: #fff; padding: var(--vv-space-6) 0 var(--vv-space-5); }
+  .vv-partners img { display: block; width: 100%; height: auto; margin: 0 auto; }
+
+  /* Copyright + Rechtliches — weiße Zeile ganz unten */
+  .vv-legalbar { background: #fff; border-top: 1px solid var(--vv-border-soft); }
+  .vv-legalbar__inner {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: var(--vv-space-3); padding-block: var(--vv-space-4);
+    font-size: var(--vv-fs-sm); color: var(--vv-text-muted);
+  }
+  .vv-legalbar__links { display: flex; flex-wrap: wrap; gap: var(--vv-space-2); }
+  .vv-legalbar__links a { padding: 6px 8px; color: var(--vv-navy-700); transition: color var(--vv-dur-fast); }
+  .vv-legalbar__links a:hover { color: var(--vv-navy-900); }
+</style>

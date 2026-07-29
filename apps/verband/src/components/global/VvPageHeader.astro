@@ -1,0 +1,83 @@
+---
+import VvIcon from '../primitives/VvIcon.astro';
+
+interface Crumb { title: string; path: string }
+interface Props {
+  title: string;
+  breadcrumb?: Crumb[];
+  intro?: string;
+}
+const { title, breadcrumb = [], intro } = Astro.props;
+---
+<header class="vv-pagehead">
+  <div class="vv-pagehead__topo" aria-hidden="true"></div>
+  <div class="vv-container">
+    <nav class="vv-pagehead__crumbs" aria-label="Brotkrumen">
+      <a href="/">Startseite</a>
+      {breadcrumb.map((c) => (
+        <>
+          <VvIcon name="arrow-right" size={12} class="vv-pagehead__sep" />
+          <a href={c.path}>{c.title}</a>
+        </>
+      ))}
+    </nav>
+    <h1 class="vv-pagehead__title">{title}</h1>
+    {intro && <p class="vv-pagehead__intro">{intro}</p>}
+  </div>
+</header>
+
+<style>
+  .vv-pagehead {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background:
+      linear-gradient(120deg, var(--vv-navy-900) 0%, var(--vv-navy-800) 55%, var(--vv-navy-700) 100%);
+    color: var(--vv-white);
+    padding-block: var(--vv-space-7) var(--vv-space-7);
+  }
+  /* Echte Höhenlinien des Verbandsgebiets — als helle Kontur auf Navy.
+     invert(1) macht aus den navyfarbenen Strichen des SVG helle Linien. */
+  .vv-pagehead__topo {
+    position: absolute;
+    inset: -20% 0;
+    z-index: -1;
+    background: url('/images/patterns/verband-topo.svg') center / cover no-repeat;
+    filter: invert(1) brightness(1.6);
+    opacity: 0.35;
+    -webkit-mask-image: linear-gradient(100deg, rgba(0,0,0,0.25) 25%, rgba(0,0,0,1) 70%);
+    mask-image: linear-gradient(100deg, rgba(0,0,0,0.25) 25%, rgba(0,0,0,1) 70%);
+    pointer-events: none;
+  }
+  .vv-pagehead .vv-container { position: relative; }
+  .vv-pagehead__crumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: var(--vv-fs-sm);
+    margin-bottom: var(--vv-space-3);
+  }
+  .vv-pagehead__crumbs a {
+    display: inline-block;
+    padding: 4px 2px;
+    color: var(--vv-sky-200);
+    transition: color var(--vv-dur-fast);
+  }
+  .vv-pagehead__crumbs a:hover { color: var(--vv-white); }
+  .vv-pagehead :global(.vv-pagehead__sep) { color: var(--vv-sky-400); opacity: 0.7; flex-shrink: 0; }
+  .vv-pagehead__title {
+    color: var(--vv-white);
+    font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    hyphens: auto;
+    overflow-wrap: break-word;
+  }
+  .vv-pagehead__intro {
+    margin-top: var(--vv-space-3);
+    max-width: 62ch;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: var(--vv-fs-md);
+  }
+</style>

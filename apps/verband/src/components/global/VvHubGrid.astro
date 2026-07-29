@@ -1,0 +1,123 @@
+---
+/**
+ * Natives Kachelgitter für Übersichts-/Hub-Seiten.
+ *
+ * Ersetzt die dynamischen Impreza-`us_grid`-Portalgitter, die den statischen
+ * REST-Schnappschuss nicht überstehen (falsche/leere Kacheln). Die Kacheln
+ * kommen aus den echten Daten (CPT-Einträge oder WP-Kind-Seiten) — siehe
+ * `fetchHubSources()` + Auflösung in `[...slug].astro`.
+ */
+import type { HubTile } from '../../lib/cms-wordpress';
+import VvIcon from '../primitives/VvIcon.astro';
+
+interface Props {
+  tiles: HubTile[];
+  /** Icon für bildlose Kacheln (Ämter, Kind-Seiten) */
+  icon?: string;
+}
+const { tiles, icon = 'arrow-up-right' } = Astro.props;
+---
+{tiles.length > 0 && (
+  <ul class="vv-hubgrid" role="list">
+    {tiles.map((t) => (
+      <li>
+        <a class="vv-hubtile" href={t.href}>
+          <div class="vv-hubtile__media">
+            <span class="vv-hubtile__ph" aria-hidden="true"><VvIcon name={icon} size={26} /></span>
+            {t.image && (
+              <img src={t.image} alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" />
+            )}
+          </div>
+          <div class="vv-hubtile__body">
+            <span class="vv-hubtile__title">{t.title}</span>
+            <VvIcon name="arrow-right" size={16} class="vv-hubtile__arrow" />
+          </div>
+        </a>
+      </li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .vv-hubgrid {
+    list-style: none;
+    margin: 0 0 var(--vv-space-5);
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+    gap: var(--vv-space-4);
+  }
+  .vv-hubtile {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--vv-white);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-lg);
+    overflow: hidden;
+    text-decoration: none;
+    box-shadow: var(--vv-shadow-sm);
+    transition: transform var(--vv-dur-fast), box-shadow var(--vv-dur-fast), border-color var(--vv-dur-fast);
+  }
+  .vv-hubtile:hover,
+  .vv-hubtile:focus-visible {
+    transform: translateY(-3px);
+    border-color: var(--vv-sky-400);
+    box-shadow: var(--vv-shadow-md);
+  }
+  /* Medienfläche = immer gebrandetes Navy-Panel mit Höhenlinien (Platzhalter).
+     Ein vorhandenes Bild liegt darüber; scheitert es (onerror), bleibt das
+     Panel mit Icon sichtbar — nie ein leerer grauer Kasten. */
+  .vv-hubtile__media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--vv-navy-800) 0%, var(--vv-navy-700) 100%);
+  }
+  .vv-hubtile__media::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/images/patterns/verband-topo.svg') center / cover no-repeat;
+    filter: invert(1) brightness(1.6);
+    opacity: 0.22;
+  }
+  .vv-hubtile__ph {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--vv-sky-200);
+  }
+  .vv-hubtile__media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--vv-dur-base) var(--vv-ease-out);
+  }
+  .vv-hubtile:hover .vv-hubtile__media img { transform: scale(1.05); }
+  .vv-hubtile__body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--vv-space-3);
+    padding: var(--vv-space-3) var(--vv-space-4);
+  }
+  .vv-hubtile__title {
+    font-weight: 600;
+    color: var(--vv-navy-800);
+    line-height: 1.3;
+  }
+  .vv-hubtile :global(.vv-hubtile__arrow) {
+    flex-shrink: 0;
+    color: var(--vv-sky-500);
+    transition: transform var(--vv-dur-fast), color var(--vv-dur-fast);
+  }
+  .vv-hubtile:hover :global(.vv-hubtile__arrow) {
+    transform: translateX(3px);
+    color: var(--vv-primary);
+  }
+</style>

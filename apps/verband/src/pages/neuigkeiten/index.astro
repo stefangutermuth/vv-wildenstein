@@ -1,0 +1,106 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import VvPageHeader from '../../components/global/VvPageHeader.astro';
+import VvIcon from '../../components/primitives/VvIcon.astro';
+import { getNews } from '../../lib/cms';
+
+// Detailseiten existieren für alle Beiträge (Permalink-Parität); die Liste
+// zeigt die neuesten 60 (ältere bleiben über Direktlinks erreichbar).
+const news = (await getNews()).slice(0, 60);
+
+const categoryLabel: Record<string, string> = {
+  bekanntmachung: 'Bekanntmachung',
+  veranstaltung:  'Veranstaltung',
+  sperrung:       'Sperrung',
+  ausschreibung:  'Ausschreibung',
+};
+const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+---
+<BaseLayout
+  title="Neuigkeiten & Bekanntmachungen — Verwaltungsverband Wildenstein"
+  description="Aktuelle Neuigkeiten, amtliche Bekanntmachungen, Sperrungen und Ausschreibungen des Verwaltungsverbands Wildenstein."
+>
+  <VvPageHeader
+    title="Neuigkeiten & Bekanntmachungen"
+    intro="Aktuelles aus dem Verwaltungsverband und den Gemeinden Grünhainichen und Börnichen/Erzgeb."
+  />
+
+  <div class="vv-newsindex">
+    <div class="vv-container">
+      {news.length === 0 && <p class="vv-newsindex__empty">Aktuell keine Meldungen.</p>}
+      <ul class="vv-newsindex__list">
+        {news.map((n) => (
+          <li>
+            <a href={n.href} class="vv-newsindex__item">
+              <span class="vv-newsindex__media" data-cat={n.category}>
+                {n.image
+                  ? <img src={n.image} alt="" loading="lazy" decoding="async" />
+                  : <span class="vv-newsindex__fallback" aria-hidden="true"></span>}
+              </span>
+              <span class="vv-newsindex__body">
+                <span class="vv-newsindex__meta">
+                  <span class="vv-newsindex__cat">{categoryLabel[n.category]}</span>
+                  <time>{fmtDate.format(n.date)}</time>
+                </span>
+                <span class="vv-newsindex__title">{n.title}</span>
+                {n.excerpt && <span class="vv-newsindex__excerpt">{n.excerpt.slice(0, 180)}{n.excerpt.length > 180 ? ' …' : ''}</span>}
+              </span>
+              <VvIcon name="arrow-right" size={17} class="vv-newsindex__arrow" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .vv-newsindex { padding-block: var(--vv-space-7) var(--vv-space-9); background: var(--vv-bg-alt); }
+  .vv-newsindex .vv-container { max-width: 980px; }
+  .vv-newsindex__empty { color: var(--vv-text-muted); font-style: italic; }
+  .vv-newsindex__list { display: flex; flex-direction: column; gap: var(--vv-space-3); }
+
+  .vv-newsindex__item {
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    gap: var(--vv-space-4);
+    align-items: center;
+    padding: var(--vv-space-4);
+    background: var(--vv-white);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+    box-shadow: var(--vv-shadow-sm);
+    color: inherit;
+    transition: transform var(--vv-dur-fast), box-shadow var(--vv-dur-fast), border-color var(--vv-dur-fast);
+  }
+  .vv-newsindex__item:hover { transform: translateY(-2px); border-color: var(--vv-sky-400); box-shadow: var(--vv-shadow-md); }
+  @media (max-width: 560px) {
+    .vv-newsindex__item { grid-template-columns: 1fr auto; }
+    .vv-newsindex__media { display: none; }
+  }
+
+  .vv-newsindex__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--vv-radius-sm);
+    overflow: hidden;
+    background: var(--vv-gray-100);
+  }
+  .vv-newsindex__media img { width: 100%; height: 100%; object-fit: cover; }
+  .vv-newsindex__fallback { position: absolute; inset: 0; background: linear-gradient(150deg, var(--vv-navy-700), var(--vv-navy-900)); }
+  [data-cat='veranstaltung'] .vv-newsindex__fallback { background: linear-gradient(150deg, var(--vv-green-600), var(--vv-green-800)); }
+  [data-cat='ausschreibung'] .vv-newsindex__fallback { background: linear-gradient(150deg, var(--vv-sky-500), var(--vv-navy-700)); }
+  [data-cat='sperrung'] .vv-newsindex__fallback { background: linear-gradient(150deg, #c9770a, var(--vv-alert-600)); }
+
+  .vv-newsindex__body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .vv-newsindex__meta {
+    display: inline-flex; gap: var(--vv-space-3); align-items: center;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--vv-text-muted); font-weight: 700;
+  }
+  .vv-newsindex__cat { color: var(--vv-green-800); }
+  .vv-newsindex__title { font-weight: 700; color: var(--vv-navy-800); line-height: 1.3; font-size: var(--vv-fs-md); }
+  .vv-newsindex__excerpt { font-size: var(--vv-fs-sm); color: var(--vv-gray-700); line-height: 1.5; }
+  .vv-newsindex__item :global(.vv-newsindex__arrow) { color: var(--vv-gray-400); transition: transform var(--vv-dur-fast), color var(--vv-dur-fast); }
+  .vv-newsindex__item:hover :global(.vv-newsindex__arrow) { color: var(--vv-green-600); transform: translateX(3px); }
+</style>

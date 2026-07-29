@@ -1,0 +1,312 @@
+---
+import { navigation } from '../../lib/navigation';
+import VvWappen from './VvWappen.astro';
+import VvIcon from '../primitives/VvIcon.astro';
+---
+<header class="vv-header" data-vv-header>
+  {/* --- Utility-Leiste (Kontakt) ------------------------------------ */}
+  <div class="vv-header__utility">
+    <div class="vv-container vv-header__utility-inner">
+      <p class="vv-header__utility-tag">Verwaltungsverband der Gemeinden Grünhainichen &amp; Börnichen</p>
+      <div class="vv-header__utility-links">
+        <a href="mailto:info@wildenstein.ws"><VvIcon name="mail" size={14} /> info@wildenstein.ws</a>
+        <a href="tel:+4937294170-0"><VvIcon name="phone" size={14} /> 037294 / 170-0</a>
+      </div>
+    </div>
+  </div>
+
+  {/* --- Hauptleiste ------------------------------------------------- */}
+  <div class="vv-header__bar">
+    <div class="vv-container vv-header__bar-inner">
+      <a href="/" class="vv-header__brand" aria-label="Verwaltungsverband Wildenstein — Startseite">
+        <VvWappen size={54} class="vv-header__logo" />
+      </a>
+
+      <nav class="vv-header__nav" aria-label="Hauptnavigation">
+        <ul class="vv-header__nav-list">
+          {navigation.map((item) => (
+            <li class:list={['vv-header__nav-item', item.children && 'has-children']}>
+              <a
+                href={item.href}
+                class="vv-header__nav-link"
+                target={item.external ? '_blank' : undefined}
+                rel={item.external ? 'noopener noreferrer' : undefined}
+              >
+                {item.label}
+                {item.children && <VvIcon name="chevron-down" size={15} class="vv-header__nav-caret" />}
+              </a>
+              {item.children && (
+                <div class="vv-header__dropdown">
+                  <ul>
+                    {item.children.map((child) => (
+                      <li>
+                        <a
+                          href={child.href}
+                          target={child.external ? '_blank' : undefined}
+                          rel={child.external ? 'noopener noreferrer' : undefined}
+                        >
+                          {child.label}
+                          {child.external && <VvIcon name="arrow-up-right" size={13} />}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <button class="vv-header__burger" data-vv-burger aria-label="Menü öffnen" aria-expanded="false">
+        <VvIcon name="menu" size={26} />
+      </button>
+    </div>
+  </div>
+
+  {/* --- Mobile-Panel ------------------------------------------------ */}
+  <div class="vv-header__mobile" data-vv-mobile hidden>
+    <div class="vv-header__mobile-head vv-container">
+      <span>Menü</span>
+      <button data-vv-burger-close aria-label="Menü schließen"><VvIcon name="x" size={24} /></button>
+    </div>
+    <nav class="vv-container" aria-label="Mobile Navigation">
+      <ul class="vv-header__mobile-list">
+        {navigation.map((item) => (
+          <li>
+            {item.children ? (
+              <details>
+                <summary>{item.label}<VvIcon name="chevron-down" size={16} /></summary>
+                <ul>
+                  {item.children.map((child) => (
+                    <li>
+                      <a
+                        href={child.href}
+                        target={child.external ? '_blank' : undefined}
+                        rel={child.external ? 'noopener noreferrer' : undefined}
+                      >{child.label}</a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : (
+              <a class="vv-header__mobile-top" href={item.href}>{item.label}</a>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div class="vv-header__mobile-contact">
+        <a href="tel:+4937294170-0"><VvIcon name="phone" size={16} /> 037294 / 170-0</a>
+        <a href="mailto:info@wildenstein.ws"><VvIcon name="mail" size={16} /> info@wildenstein.ws</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const burgerOpen = document.querySelector('[data-vv-burger]');
+  const burgerClose = document.querySelector('[data-vv-burger-close]');
+  const panel = document.querySelector('[data-vv-mobile]') as HTMLElement | null;
+
+  function setOpen(open: boolean) {
+    if (!panel) return;
+    panel.hidden = !open;
+    burgerOpen?.setAttribute('aria-expanded', String(open));
+    document.body.style.overflow = open ? 'hidden' : '';
+    // Fokus in das Panel bzw. zurück zum Burger (BITV: Tastaturführung)
+    if (open) (burgerClose as HTMLElement | null)?.focus();
+    else (burgerOpen as HTMLElement | null)?.focus();
+  }
+  burgerOpen?.addEventListener('click', () => setOpen(true));
+  burgerClose?.addEventListener('click', () => setOpen(false));
+  panel?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+
+  // Escape schließt, Tab bleibt im offenen Panel gefangen
+  document.addEventListener('keydown', (e) => {
+    if (!panel || panel.hidden) return;
+    if (e.key === 'Escape') { setOpen(false); return; }
+    if (e.key === 'Tab') {
+      const f = [...panel.querySelectorAll<HTMLElement>('a, button, summary')].filter((el) => el.offsetParent !== null);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      else if (!panel.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // Header verdichtet sich beim Scrollen
+  const header = document.querySelector('[data-vv-header]');
+  const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 40);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+</script>
+
+<style>
+  .vv-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--vv-z-sticky);
+    background: var(--vv-white);
+    box-shadow: 0 1px 0 var(--vv-border-soft);
+  }
+
+  /* Utility-Leiste */
+  .vv-header__utility {
+    background: var(--vv-navy-900);
+    color: var(--vv-sky-200);
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-header__utility-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--vv-space-4);
+    min-height: 38px;
+    padding-block: 6px;
+  }
+  .vv-header__utility-tag { color: var(--vv-sky-200); opacity: 0.85; margin: 0; }
+  .vv-header__utility-links { display: flex; gap: var(--vv-space-5); }
+  .vv-header__utility-links a {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--vv-white);
+    transition: color var(--vv-dur-fast);
+  }
+  .vv-header__utility-links a:hover { color: var(--vv-sky-400); }
+  @media (max-width: 720px) {
+    .vv-header__utility-tag { display: none; }
+    .vv-header__utility-inner { justify-content: center; }
+    .vv-header__utility-links { gap: var(--vv-space-4); }
+  }
+
+  /* Hauptleiste */
+  .vv-header__bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--vv-space-5);
+    min-height: 74px;
+    transition: min-height var(--vv-dur-base) var(--vv-ease-out);
+  }
+  .vv-header.is-scrolled .vv-header__bar-inner { min-height: 60px; }
+
+  .vv-header__brand { display: flex; align-items: center; }
+  .vv-header__brand :global(.vv-header__logo) {
+    height: 54px !important;
+    width: auto !important;
+    transition: height var(--vv-dur-base) var(--vv-ease-out);
+  }
+  .vv-header.is-scrolled .vv-header__brand :global(.vv-header__logo) { height: 44px !important; }
+  @media (max-width: 560px) {
+    .vv-header__brand :global(.vv-header__logo) { height: 44px !important; }
+  }
+
+  /* Desktop-Nav */
+  .vv-header__nav { display: none; }
+  @media (min-width: 1024px) { .vv-header__nav { display: block; } }
+  .vv-header__nav-list { display: flex; align-items: center; gap: var(--vv-space-2); }
+  .vv-header__nav-item { position: relative; }
+  .vv-header__nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 14px;
+    font-weight: 500;
+    color: var(--vv-gray-700);
+    border-radius: var(--vv-radius-sm);
+    transition: color var(--vv-dur-fast), background var(--vv-dur-fast);
+  }
+  .vv-header__nav-item:hover > .vv-header__nav-link,
+  .vv-header__nav-item:focus-within > .vv-header__nav-link {
+    color: var(--vv-navy-800);
+    background: var(--vv-sky-50);
+  }
+  .vv-header__nav-link :global(.vv-header__nav-caret) { transition: transform var(--vv-dur-fast); opacity: 0.7; }
+  .vv-header__nav-item:hover :global(.vv-header__nav-caret) { transform: rotate(180deg); }
+
+  /* Dropdown */
+  .vv-header__dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 260px;
+    max-height: min(70vh, 460px);
+    overflow-y: auto;
+    background: var(--vv-white);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+    box-shadow: var(--vv-shadow-lg);
+    padding: var(--vv-space-2);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transition: opacity var(--vv-dur-fast), transform var(--vv-dur-fast), visibility var(--vv-dur-fast);
+  }
+  /* Die letzten beiden Menüpunkte klappen nach LINKS auf (kein Rechts-Overflow) */
+  .vv-header__nav-item:nth-last-child(-n + 2) .vv-header__dropdown { left: auto; right: 0; }
+  .vv-header__nav-item:hover .vv-header__dropdown,
+  .vv-header__nav-item:focus-within .vv-header__dropdown {
+    opacity: 1; visibility: visible; transform: translateY(0);
+  }
+  .vv-header__dropdown a {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--vv-space-3);
+    padding: 9px 12px;
+    font-size: var(--vv-fs-sm);
+    color: var(--vv-gray-700);
+    border-radius: var(--vv-radius-sm);
+    transition: background var(--vv-dur-fast), color var(--vv-dur-fast);
+  }
+  .vv-header__dropdown a:hover { background: var(--vv-sky-50); color: var(--vv-navy-800); }
+  .vv-header__dropdown :global(svg) { color: var(--vv-green-600); flex-shrink: 0; }
+
+  /* Burger */
+  .vv-header__burger { display: inline-flex; color: var(--vv-navy-800); padding: 6px; }
+  @media (min-width: 1024px) { .vv-header__burger { display: none; } }
+
+  /* Mobile-Panel */
+  .vv-header__mobile {
+    position: fixed;
+    inset: 0;
+    top: 0;
+    z-index: var(--vv-z-modal);
+    background: var(--vv-white);
+    overflow-y: auto;
+    padding-bottom: var(--vv-space-8);
+  }
+  .vv-header__mobile-head {
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 64px;
+    border-bottom: 1px solid var(--vv-border-soft);
+    font-weight: 700; color: var(--vv-navy-800);
+  }
+  .vv-header__mobile-head button { color: var(--vv-navy-800); }
+  .vv-header__mobile-list { margin-top: var(--vv-space-3); }
+  .vv-header__mobile-list > li { border-bottom: 1px solid var(--vv-border-soft); }
+  .vv-header__mobile-top,
+  .vv-header__mobile-list summary {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 15px 4px;
+    font-size: var(--vv-fs-md);
+    font-weight: 600;
+    color: var(--vv-navy-800);
+    cursor: pointer;
+    list-style: none;
+  }
+  .vv-header__mobile-list summary::-webkit-details-marker { display: none; }
+  .vv-header__mobile-list summary :global(svg) { transition: transform var(--vv-dur-fast); }
+  .vv-header__mobile-list details[open] summary :global(svg) { transform: rotate(180deg); }
+  .vv-header__mobile-list details ul { padding: 0 0 var(--vv-space-3) var(--vv-space-3); }
+  .vv-header__mobile-list details ul a {
+    display: block; padding: 10px 4px;
+    color: var(--vv-gray-700); font-size: var(--vv-fs-base);
+  }
+  .vv-header__mobile-list details ul a:hover { color: var(--vv-navy-800); }
+  .vv-header__mobile-contact {
+    display: flex; flex-direction: column; gap: var(--vv-space-3);
+    margin-top: var(--vv-space-6);
+  }
+  .vv-header__mobile-contact a {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--vv-navy-700); font-weight: 500;
+  }
+</style>

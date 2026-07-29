@@ -1,0 +1,68 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import VvIcon from '../components/primitives/VvIcon.astro';
+
+const quick = [
+  { label: 'Startseite', href: '/', icon: 'arrow-right' },
+  { label: 'Neuigkeiten', href: '/neuigkeiten', icon: 'megaphone' },
+  { label: 'Verwaltung & Ämter', href: '/verwaltung', icon: 'building' },
+  { label: 'Sperrungen', href: '/sperrungen', icon: 'alert-triangle' },
+];
+---
+<BaseLayout title="Seite nicht gefunden — Verwaltungsverband Wildenstein" description="Die aufgerufene Seite existiert nicht.">
+  <section class="vv-404">
+    <div class="vv-container">
+      <p class="vv-404__code">404</p>
+      <h1 class="vv-404__title">Diese Seite konnten wir nicht finden.</h1>
+      <p class="vv-404__lead">
+        Vielleicht wurde sie verschoben oder umbenannt. Nutzen Sie die Navigation
+        oben oder einen der folgenden Einstiege:
+      </p>
+      <ul class="vv-404__links">
+        {quick.map((q) => (
+          <li>
+            <a href={q.href}>
+              <span class="vv-404__link-icon"><VvIcon name={q.icon} size={18} /></span>
+              {q.label}
+              <VvIcon name="arrow-right" size={15} class="vv-404__arrow" />
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p class="vv-404__contact">
+        Sie suchen etwas Bestimmtes? Rufen Sie uns an: <a href="tel:+4937294170-0">037294 / 170-0</a>
+        oder schreiben Sie an <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .vv-404 { padding-block: var(--vv-space-9) var(--vv-space-10); background: var(--vv-white); }
+  .vv-404 .vv-container { max-width: 720px; }
+  .vv-404__code {
+    font-size: clamp(3.5rem, 12vw, 6rem); font-weight: 800; line-height: 1;
+    color: var(--vv-sky-200); letter-spacing: -0.03em; margin-bottom: var(--vv-space-2);
+  }
+  .vv-404__title { font-size: var(--vv-fs-2xl); color: var(--vv-navy-800); margin-bottom: var(--vv-space-4); }
+  .vv-404__lead { font-size: var(--vv-fs-md); color: var(--vv-gray-700); line-height: 1.6; max-width: 52ch; }
+  .vv-404__links {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+    gap: var(--vv-space-3); margin: var(--vv-space-6) 0;
+  }
+  .vv-404__links a {
+    display: flex; align-items: center; gap: var(--vv-space-3);
+    padding: var(--vv-space-4);
+    background: var(--vv-bg-alt); border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md); color: var(--vv-navy-800); font-weight: 600;
+    transition: transform var(--vv-dur-fast), border-color var(--vv-dur-fast), box-shadow var(--vv-dur-fast);
+  }
+  .vv-404__links a:hover { transform: translateY(-2px); border-color: var(--vv-sky-400); box-shadow: var(--vv-shadow-sm); }
+  .vv-404__link-icon {
+    display: grid; place-items: center; width: 38px; height: 38px; flex-shrink: 0;
+    background: var(--vv-sky-50); color: var(--vv-navy-700); border-radius: var(--vv-radius-sm);
+  }
+  .vv-404 :global(.vv-404__arrow) { margin-left: auto; color: var(--vv-gray-400); }
+  .vv-404__contact { font-size: var(--vv-fs-sm); color: var(--vv-gray-700); }
+  .vv-404__contact a { color: var(--vv-navy-700); font-weight: 600; }
+</style>

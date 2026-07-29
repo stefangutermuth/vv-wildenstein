@@ -1,0 +1,239 @@
+/* ============================================================
+   VV Prose — Typografie für Inhalte aus WordPress (REST).
+   Muss mit dem HTML klarkommen, das Impreza/WPBakery rendert:
+   vc_row/wpb_column-Wrapper, w-grid-Listen, w-btn-Buttons, iframes.
+   ============================================================ */
+
+.vv-prose {
+  font-size: var(--vv-fs-base);
+  line-height: var(--vv-lh-normal);
+  color: var(--vv-text);
+  overflow-wrap: anywhere;
+}
+
+/* --- Grund-Typografie ------------------------------------- */
+.vv-prose h1, .vv-prose h2, .vv-prose h3, .vv-prose h4, .vv-prose h5, .vv-prose h6 {
+  color: var(--vv-heading);
+  margin: 1.6em 0 0.5em;
+  line-height: var(--vv-lh-snug);
+}
+.vv-prose > :first-child,
+.vv-prose h1:first-child, .vv-prose h2:first-child { margin-top: 0; }
+.vv-prose h1 { font-size: var(--vv-fs-2xl); }
+.vv-prose h2 { font-size: var(--vv-fs-xl); }
+.vv-prose h3 { font-size: var(--vv-fs-lg); }
+.vv-prose h4 { font-size: var(--vv-fs-md); }
+
+.vv-prose p { margin: 0 0 1em; }
+.vv-prose strong { color: var(--vv-heading); }
+
+.vv-prose a:not(.w-btn) {
+  color: var(--vv-link);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--vv-sky-400);
+  text-underline-offset: 2px;
+  transition: color var(--vv-dur-fast);
+}
+.vv-prose a:not(.w-btn):hover { color: var(--vv-link-hover); }
+
+.vv-prose ul, .vv-prose ol { margin: 0 0 1.2em; padding-left: 1.4em; }
+.vv-prose ul { list-style: disc; }
+.vv-prose ol { list-style: decimal; }
+.vv-prose li { margin-bottom: 0.35em; }
+
+.vv-prose blockquote {
+  margin: 1.5em 0;
+  padding: var(--vv-space-4) var(--vv-space-5);
+  border-left: 3px solid var(--vv-green-600);
+  background: var(--vv-bg-alt);
+  border-radius: 0 var(--vv-radius-md) var(--vv-radius-md) 0;
+}
+
+.vv-prose hr {
+  border: 0;
+  border-top: 1px solid var(--vv-border-soft);
+  margin: var(--vv-space-6) 0;
+}
+
+/* --- Medien ------------------------------------------------ */
+.vv-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--vv-radius-md);
+}
+.vv-prose figure { margin: 1.5em 0; }
+.vv-prose figcaption { font-size: var(--vv-fs-sm); color: var(--vv-text-muted); margin-top: 6px; }
+/* iframes (YouTube/Maps): responsiv statt fixer Höhe → keine Verzerrung mobil */
+.vv-prose iframe {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 0;
+  border-radius: var(--vv-radius-md);
+}
+
+/* --- Tabellen ---------------------------------------------- */
+/* Breite WP-Tabellen (Gebühren, Satzungen) horizontal in sich scrollen
+   lassen, statt die ganze Seite auf Mobil aufzuschieben. */
+.vv-prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: var(--vv-fs-sm);
+  -webkit-overflow-scrolling: touch;
+}
+.vv-prose th, .vv-prose td {
+  border: 1px solid var(--vv-border-soft);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.vv-prose th { background: var(--vv-bg-alt); color: var(--vv-heading); }
+
+/* --- WPBakery-Wrapper zähmen -------------------------------- */
+/* Reihen als flexible Spalten-Container, Spalten brechen mobil um.
+   Impreza nutzt je nach Version .vc_row, .wpb_row oder .g-cols als
+   Spalten-Wrapper — alle drei abdecken. */
+.vv-prose .vc_row,
+.vv-prose .g-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vv-space-6);
+  margin: 0 0 var(--vv-space-5);
+}
+.vv-prose .vc_row:last-child,
+.vv-prose .g-cols:last-child { margin-bottom: 0; }
+.vv-prose [class*='vc_col-sm-'] { flex: 1 1 300px; min-width: 0; }
+/* Grobe Breitenverhältnisse der Original-Spalten erhalten */
+.vv-prose [class*='vc_col-sm-3'] { flex-grow: 1; }
+.vv-prose [class*='vc_col-sm-4'] { flex-grow: 2; }
+.vv-prose [class*='vc_col-sm-6'] { flex-grow: 3; }
+.vv-prose [class*='vc_col-sm-8'] { flex-grow: 4; }
+.vv-prose .vc_column-inner { padding: 0; }
+.vv-prose .wpb_wrapper > :last-child { margin-bottom: 0; }
+/* Impreza-Sections: Innenabstände neutralisieren */
+.vv-prose .l-section { padding: 0; margin: 0 0 var(--vv-space-5); }
+.vv-prose .l-section-h { padding: 0; }
+
+/* --- RoyalSlider (Impreza-Bildslider, ohne JS) --------------- */
+/* Ohne Slider-JS stapeln sich die Slides unbrauchbar — stattdessen
+   als Magazin-Bildraster: erstes Bild groß (2×2), Rest kachelt sich
+   dicht darum, Hover-Zoom, Klick öffnet die Lightbox. */
+.vv-prose .royalSlider {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-auto-rows: 150px;
+  grid-auto-flow: dense;
+  gap: var(--vv-space-3);
+  height: auto !important;
+  width: 100% !important;
+  margin: 1em 0;
+}
+.vv-prose .vv-gal-item {
+  position: static;
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--vv-radius-md);
+  box-shadow: var(--vv-shadow-sm);
+}
+.vv-prose .royalSlider .vv-gal-item:first-of-type { grid-column: span 2; grid-row: span 2; }
+.vv-prose .royalSlider .vv-gal-item:nth-of-type(6n) { grid-row: span 2; }
+.vv-prose .vv-gal-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  margin: 0;
+  cursor: zoom-in;
+  transition: transform var(--vv-dur-base) var(--vv-ease-out);
+}
+.vv-prose .vv-gal-item:hover img { transform: scale(1.06); }
+/* Slider-Chrome, das nicht Galerie-Item ist, ausblenden */
+.vv-prose .royalSlider > *:not(.vv-gal-item) { display: none; }
+/* Slider-Bedienelemente (Pfeile, Bullets, Thumbs) ausblenden */
+.vv-prose .rsNav,
+.vv-prose .rsArrow,
+.vv-prose .rsBullets,
+.vv-prose .rsThumbsContainer,
+.vv-prose .rsPreloader { display: none !important; }
+
+/* --- Impreza-Grids (Beitrags-/Personen-Listen) -------------- */
+.vv-prose .w-grid-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  gap: var(--vv-space-4);
+  margin: var(--vv-space-4) 0;
+}
+.vv-prose article.w-grid-item {
+  background: var(--vv-white);
+  border: 1px solid var(--vv-border-soft);
+  border-radius: var(--vv-radius-md);
+  padding: var(--vv-space-4);
+  box-shadow: var(--vv-shadow-sm);
+  transition: transform var(--vv-dur-fast), box-shadow var(--vv-dur-fast), border-color var(--vv-dur-fast);
+}
+.vv-prose article.w-grid-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--vv-sky-400);
+  box-shadow: var(--vv-shadow-md);
+}
+.vv-prose .w-grid-item h2 {
+  font-size: var(--vv-fs-base);
+  margin: 0.4em 0 0;
+  line-height: 1.3;
+}
+.vv-prose .w-grid-item a { text-decoration: none; }
+.vv-prose .w-grid-item img { width: 100%; object-fit: cover; }
+
+/* --- Impreza-Buttons → Markenknopf --------------------------- */
+.vv-prose a.w-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.65em 1.3em;
+  margin: 0.3em 0;
+  background: var(--vv-primary);
+  color: var(--vv-white);
+  border-radius: var(--vv-radius-pill);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--vv-dur-fast), transform var(--vv-dur-fast);
+}
+.vv-prose a.w-btn:hover { background: var(--vv-primary-hover); transform: translateY(-2px); }
+
+/* --- Download-Manager (PDF-/Datei-Downloads) ----------------- */
+.vv-prose .wpdm_icon {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 0;
+}
+.vv-prose .link-template-default.card,
+.vv-prose [class*='link-template'] {
+  display: block;
+  background: var(--vv-bg-alt);
+  border: 1px solid var(--vv-border-soft);
+  border-radius: var(--vv-radius-md);
+  padding: var(--vv-space-3) var(--vv-space-4);
+  margin: 0 0 var(--vv-space-3);
+  transition: border-color var(--vv-dur-fast), box-shadow var(--vv-dur-fast);
+}
+.vv-prose [class*='link-template']:hover { border-color: var(--vv-sky-400); box-shadow: var(--vv-shadow-sm); }
+.vv-prose [class*='link-template'] .card-body { padding: 0; }
+.vv-prose [class*='link-template'] .media { display: flex; align-items: center; gap: var(--vv-space-4); }
+.vv-prose [class*='link-template'] .media > div:first-child { flex-shrink: 0; }
+.vv-prose [class*='link-template'] .media-body { min-width: 0; }
+.vv-prose [class*='link-template'] a { text-decoration: none; font-weight: 600; color: var(--vv-navy-800); }
+.vv-prose [class*='link-template'] a:hover { color: var(--vv-navy-900); }
+.vv-prose [class*='link-template'] .text-muted,
+.vv-prose [class*='link-template'] small { color: var(--vv-text-muted); font-size: var(--vv-fs-sm); }
+
+/* --- Kleinkram --------------------------------------------- */
+.vv-prose .w-separator { height: var(--vv-space-5); }
+.vv-prose .w-image { margin: 1em 0; }
+.vv-prose .wpb_text_column { margin-bottom: 1em; }

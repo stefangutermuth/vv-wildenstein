@@ -1,0 +1,52 @@
+---
+interface Props {
+  tone?: 'white' | 'alt' | 'sky' | 'dark';
+  padding?: 'md' | 'lg';
+  eyebrow?: string;
+  title?: string;
+  intro?: string;
+  align?: 'left' | 'center';
+  id?: string;
+}
+const {
+  tone = 'white',
+  padding = 'lg',
+  eyebrow,
+  title,
+  intro,
+  align = 'left',
+  id,
+} = Astro.props;
+---
+<section
+  id={id}
+  class:list={['vv-section', `vv-section--${tone}`, `vv-section--pad-${padding}`, `vv-section--${align}`]}
+>
+  <div class="vv-container">
+    {(eyebrow || title || intro) && (
+      <header class="vv-section__head vv-reveal">
+        {eyebrow && <p class="vv-eyebrow">{eyebrow}</p>}
+        {title && <h2 class="vv-section__title">{title}</h2>}
+        {intro && <p class="vv-section__intro vv-lead">{intro}</p>}
+      </header>
+    )}
+    <slot />
+  </div>
+</section>
+
+<style>
+  .vv-section--pad-md { padding-block: var(--vv-space-7); }
+  .vv-section--pad-lg { padding-block: var(--vv-space-9); }
+  .vv-section--white { background: var(--vv-white); }
+  .vv-section--alt   { background: var(--vv-bg-alt); }
+  .vv-section--sky   { background: var(--vv-bg-section); }
+  .vv-section--dark  { background: var(--vv-navy-800); color: var(--vv-text-on-dark); }
+  .vv-section--dark :global(h2),
+  .vv-section--dark .vv-section__intro { color: var(--vv-white); }
+  .vv-section--dark .vv-eyebrow { color: var(--vv-sky-400); }
+
+  .vv-section__head { max-width: 720px; margin-bottom: var(--vv-space-7); }
+  .vv-section--center .vv-section__head { margin-inline: auto; text-align: center; }
+  .vv-section__title { margin-top: var(--vv-space-2); font-size: var(--vv-fs-2xl); color: var(--vv-heading); }
+  .vv-section__intro { margin-top: var(--vv-space-3); }
+</style>

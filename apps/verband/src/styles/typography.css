@@ -1,0 +1,33 @@
+body {
+  font-family: var(--vv-font);
+  font-size: var(--vv-fs-base);
+  color: var(--vv-text);
+  background: var(--vv-bg);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--vv-font);
+  color: var(--vv-heading);
+  font-weight: 700;
+  line-height: var(--vv-lh-tight);
+}
+
+h1 { font-size: var(--vv-fs-4xl); }
+h2 { font-size: var(--vv-fs-3xl); line-height: var(--vv-lh-snug); }
+h3 { font-size: var(--vv-fs-xl); line-height: var(--vv-lh-snug); }
+h4 { font-size: var(--vv-fs-lg); line-height: var(--vv-lh-snug); }
+
+.vv-eyebrow {
+  font-size: var(--vv-fs-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--vv-tracking-label);
+  color: var(--vv-green-800); /* BITV: dunkleres Grün für ausreichenden Kontrast */
+}
+
+.vv-lead {
+  font-size: var(--vv-fs-md);
+  color: var(--vv-text);
+  line-height: var(--vv-lh-normal);
+  max-width: 62ch;
+}
