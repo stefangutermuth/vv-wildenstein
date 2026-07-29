@@ -27,7 +27,7 @@ const currentStep = steps.findIndex((s) => s.slug === status);
 ---
 
 <BaseLayout title={`${meldung.title} – Mängelmelder VV Wildenstein`}>
-  <article class="detail container">
+  <article class="detail container" data-meldung-id={meldung.id}>
     <a class="detail__back" href="/">← Zur Karte</a>
     <h1 class="detail__title">{meldung.title}</h1>
 
@@ -65,22 +65,24 @@ const currentStep = steps.findIndex((s) => s.slug === status);
 
         <section class="panel">
           <h2 class="panel__title">Updates</h2>
-          {meldung.public_notes.length > 0 ? (
-            <>
-              <p class="panel__sub">
-                <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zM5 9h14v10H5V9z"/></svg>
-                Letztes Update <time data-rel datetime={lastUpdate}>am {formatDate(lastUpdate)}</time>
-              </p>
-              {meldung.public_notes.map((note) => (
-                <article class="update">
-                  {note.date && <time class="update__date" datetime={note.date}>{formatDate(note.date)}</time>}
-                  <p class="update__text">{note.text}</p>
-                </article>
-              ))}
-            </>
-          ) : (
-            <p class="panel__body muted">Noch keine Updates der Verwaltung.</p>
-          )}
+          <div data-updates-body>
+            {meldung.public_notes.length > 0 ? (
+              <>
+                <p class="panel__sub">
+                  <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zM5 9h14v10H5V9z"/></svg>
+                  Letztes Update <time data-rel datetime={lastUpdate}>am {formatDate(lastUpdate)}</time>
+                </p>
+                {meldung.public_notes.map((note) => (
+                  <article class="update">
+                    {note.date && <time class="update__date" datetime={note.date}>{formatDate(note.date)}</time>}
+                    <p class="update__text">{note.text}</p>
+                  </article>
+                ))}
+              </>
+            ) : (
+              <p class="panel__body muted">Noch keine Updates der Verwaltung.</p>
+            )}
+          </div>
         </section>
       </div>
 
@@ -141,6 +143,93 @@ const currentStep = steps.findIndex((s) => s.slug === status);
       const r = rel(t.getAttribute('datetime') || '');
       if (r) t.textContent = r;
     });
+  </script>
+
+  <script>
+    /**
+     * Live-Aktualisierung: Status + Updates direkt aus der REST-API nachladen.
+     * Der statische Build bleibt als Fallback (No-JS/Offline) — aber Antworten
+     * der Verwaltung erscheinen damit SOFORT, ohne auf den nächsten
+     * Site-Rebuild (Webhook/Zeitplan) warten zu müssen.
+     */
+    const API =
+      (import.meta.env.PUBLIC_MELDER_API_BASE as string | undefined) ??
+      'https://vv-wildenstein.com/wp-json/vw-melder/v1';
+
+    interface LiveNote { date: string; text: string }
+    interface LiveMeldung {
+      status: { slug: string; label: string } | null;
+      public_notes: LiveNote[];
+    }
+
+    const fmtDate = (iso: string): string => {
+      const d = new Date(iso);
+      return isNaN(d.getTime())
+        ? ''
+        : d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
+    const rootEl = document.querySelector<HTMLElement>('[data-meldung-id]');
+
+    async function refresh(): Promise<void> {
+      if (!rootEl) return;
+      let m: LiveMeldung;
+      try {
+        const res = await fetch(`${API}/meldungen/${rootEl.dataset.meldungId}`, {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+        if (!res.ok) return;
+        m = (await res.json()) as LiveMeldung;
+      } catch {
+        return; // offline o. Ä. → eingebauter Stand bleibt
+      }
+
+      // 1) Status-Badge + Stepper
+      const slug = m.status?.slug ?? 'neu';
+      const badge = rootEl.querySelector<HTMLElement>('.badge');
+      if (badge && m.status) {
+        badge.className = `badge badge--${slug}`;
+        badge.textContent = m.status.label;
+      }
+      const steps = [...rootEl.querySelectorAll<HTMLElement>('.stepper__step')];
+      const current = steps.findIndex((s) => s.dataset.status === slug);
+      steps.forEach((s, i) => {
+        s.classList.toggle('is-done', current >= 0 && i < current);
+        s.classList.toggle('is-current', i === current);
+      });
+
+      // 2) Updates-Panel neu aufbauen (Texte sicher als textContent)
+      const body = rootEl.querySelector<HTMLElement>('[data-updates-body]');
+      if (!body) return;
+      if (m.public_notes.length === 0) {
+        body.innerHTML = '<p class="panel__body muted">Noch keine Updates der Verwaltung.</p>';
+        return;
+      }
+      body.textContent = '';
+      const sub = document.createElement('p');
+      sub.className = 'panel__sub';
+      sub.textContent = `Letztes Update am ${fmtDate(m.public_notes[0]?.date ?? '')}`;
+      body.append(sub);
+      for (const note of m.public_notes) {
+        const art = document.createElement('article');
+        art.className = 'update';
+        if (note.date) {
+          const t = document.createElement('time');
+          t.className = 'update__date';
+          t.dateTime = note.date;
+          t.textContent = fmtDate(note.date);
+          art.append(t);
+        }
+        const p = document.createElement('p');
+        p.className = 'update__text';
+        p.textContent = note.text;
+        art.append(p);
+        body.append(art);
+      }
+    }
+
+    refresh();
   </script>
 
   <script>
