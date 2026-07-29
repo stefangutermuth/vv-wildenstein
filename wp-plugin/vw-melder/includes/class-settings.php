@@ -16,10 +16,12 @@ final class VW_Melder_Settings {
 
     public static function defaults(): array {
         return [
-            'notify_email'   => get_option( 'admin_email' ),
-            'frontend_url'   => 'https://melder2026.vv-wildenstein.com',
-            'deploy_enabled' => 0,
-            'github_token'   => '',
+            'notify_email'        => get_option( 'admin_email' ),
+            'frontend_url'        => 'https://melder2026.vv-wildenstein.com',
+            'deploy_enabled'      => 0,
+            'github_token'        => '',
+            'forward_test_mode'   => 1,
+            'forward_test_email'  => 'stefan@gumu-agentur.de',
         ];
     }
 
@@ -40,6 +42,17 @@ final class VW_Melder_Settings {
         $parts = array_filter( array_map( 'trim', explode( ',', $raw ) ) );
         $valid = array_values( array_filter( $parts, 'is_email' ) );
         return $valid !== [] ? $valid : [ get_option( 'admin_email' ) ];
+    }
+
+    /** Test-Modus für die Weiterleitung an Zuständige (alle Mails an Test-Adresse). */
+    public static function forward_test_mode(): bool {
+        return ! empty( self::get()['forward_test_mode'] );
+    }
+
+    /** Test-Empfänger der Weiterleitung (Fallback: interne Test-Adresse). */
+    public static function forward_test_email(): string {
+        $e = trim( (string) ( self::get()['forward_test_email'] ?? '' ) );
+        return ( $e !== '' && is_email( $e ) ) ? $e : 'stefan@gumu-agentur.de';
     }
 
     public static function menu(): void {
@@ -114,6 +127,31 @@ final class VW_Melder_Settings {
             'vw-melder-settings',
             'vw_melder_deploy'
         );
+
+        add_settings_section(
+            'vw_melder_forward',
+            __( 'Weiterleitung an Zuständige', 'vw-melder' ),
+            static function () {
+                echo '<p>' . esc_html__( 'Aus einer Meldung heraus kann sie an die zuständige Fachkraft weitergeleitet werden (Empfänger je Kategorie unter „Anliegen“ hinterlegt). Solange der Test-Modus aktiv ist, gehen ALLE Weiterleitungen an die Test-Adresse statt an die echten Zuständigen.', 'vw-melder' ) . '</p>';
+            },
+            'vw-melder-settings'
+        );
+
+        add_settings_field(
+            'forward_test_mode',
+            __( 'Test-Modus', 'vw-melder' ),
+            [ __CLASS__, 'field_forward_test_mode' ],
+            'vw-melder-settings',
+            'vw_melder_forward'
+        );
+
+        add_settings_field(
+            'forward_test_email',
+            __( 'Test-Empfänger', 'vw-melder' ),
+            [ __CLASS__, 'field_forward_test_email' ],
+            'vw-melder-settings',
+            'vw_melder_forward'
+        );
     }
 
     public static function field_frontend_url(): void {
@@ -133,6 +171,19 @@ final class VW_Melder_Settings {
         echo '<label><input type="checkbox" name="' . esc_attr( self::OPTION ) . '[deploy_enabled]" value="1" ' . checked( $on, true, false ) . '> '
             . esc_html__( 'Bei Änderungen automatisch neu bauen', 'vw-melder' ) . '</label>';
         echo '<p class="description">' . esc_html__( 'Braucht einen gültigen GitHub-Token (siehe unten). Ohne Token bleibt die Aktualisierung beim geplanten Sicherheits-Lauf (1×/Tag) bzw. dem manuellen Auslösen.', 'vw-melder' ) . '</p>';
+    }
+
+    public static function field_forward_test_mode(): void {
+        $on = ! empty( self::get()['forward_test_mode'] );
+        echo '<label><input type="checkbox" name="' . esc_attr( self::OPTION ) . '[forward_test_mode]" value="1" ' . checked( $on, true, false ) . '> '
+            . esc_html__( 'Test-Modus aktiv — Weiterleitungen gehen an den Test-Empfänger', 'vw-melder' ) . '</label>';
+        echo '<p class="description">' . esc_html__( 'Zum Ausprobieren anlassen. Erst ausschalten, wenn alles passt — dann gehen Weiterleitungen an die echten Zuständigen (je Kategorie unter „Anliegen“).', 'vw-melder' ) . '</p>';
+    }
+
+    public static function field_forward_test_email(): void {
+        $val = esc_attr( self::forward_test_email() );
+        echo '<input type="email" name="' . esc_attr( self::OPTION ) . '[forward_test_email]" value="' . $val . '" class="regular-text" placeholder="stefan@gumu-agentur.de">';
+        echo '<p class="description">' . esc_html__( 'An diese Adresse gehen alle Weiterleitungen, solange der Test-Modus aktiv ist.', 'vw-melder' ) . '</p>';
     }
 
     public static function field_github_token(): void {
@@ -182,6 +233,12 @@ final class VW_Melder_Settings {
             $out['github_token'] = '';
         } elseif ( isset( $input['github_token'] ) && trim( (string) $input['github_token'] ) !== '' ) {
             $out['github_token'] = preg_replace( '/[^A-Za-z0-9_]/', '', trim( (string) $input['github_token'] ) );
+        }
+
+        $out['forward_test_mode'] = empty( $input['forward_test_mode'] ) ? 0 : 1;
+        if ( isset( $input['forward_test_email'] ) ) {
+            $e = sanitize_email( trim( (string) $input['forward_test_email'] ) );
+            $out['forward_test_email'] = ( $e && is_email( $e ) ) ? $e : '';
         }
 
         return $out;
