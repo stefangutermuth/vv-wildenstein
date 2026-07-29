@@ -92,6 +92,7 @@ final class VW_Melder_Admin_UI {
             'vw_meldung_communication',
             'vw_meldung_public_notes',
             'vw_meldung_export',
+            'vw_meldung_forward',
         ];
         foreach ( $wp_meta_boxes['vw_meldung'] as $context => $priorities ) {
             foreach ( $priorities as $boxes ) {
