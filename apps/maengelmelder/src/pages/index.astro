@@ -94,9 +94,12 @@ const STATUS_TEXT: Record<string, string> = {
     import 'leaflet.markercluster/dist/MarkerCluster.css';
     import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
     import gebiet from '~/data/gebiet.json';
+    import { getMeldungen, getGeoJSON, cardHTML, ANLIEGEN_META, STATUS_LABELS, type Meldung, type GeoCollection } from '~/lib/melder';
 
     const geoEl = document.getElementById('melder-geo');
-    const geo = geoEl ? JSON.parse(geoEl.textContent || '{"features":[]}') : { features: [] };
+    const embeddedGeo: GeoCollection = geoEl
+      ? JSON.parse(geoEl.textContent || '{"type":"FeatureCollection","features":[]}')
+      : { type: 'FeatureCollection', features: [] };
 
     const icon = (status: string) =>
       L.icon({
@@ -135,20 +138,26 @@ const STATUS_TEXT: Record<string, string> = {
     map.addLayer(clusters);
 
     type MarkerEntry = { marker: L.Marker; status: string; anliegen: string[] };
-    const markers: MarkerEntry[] = [];
-    const bounds = L.latLngBounds([]);
+    let markers: MarkerEntry[] = [];
+    let bounds = L.latLngBounds([]);
 
-    for (const f of geo.features) {
-      const [lng, lat] = f.geometry.coordinates;
-      const status = f.properties.status || 'neu';
-      const anliegen = Array.isArray(f.properties.anliegen) ? f.properties.anliegen : [];
-      const marker = L.marker([lat, lng], { icon: icon(status) });
-      marker.bindPopup(
-        `<strong>${f.properties.title}</strong><br><a href="/meldung/${f.properties.id}">Zur Meldung</a>`
-      );
-      markers.push({ marker, status, anliegen });
-      bounds.extend([lat, lng]);
-    }
+    // Marker aus GeoJSON-Features (neu) aufbauen — für Build-Stand UND Live-Stand.
+    const buildMarkers = (features: GeoCollection['features']) => {
+      markers = [];
+      bounds = L.latLngBounds([]);
+      for (const f of features) {
+        const [lng, lat] = f.geometry.coordinates;
+        if (typeof lat !== 'number' || typeof lng !== 'number') continue;
+        const status = f.properties.status || 'neu';
+        const anliegen = Array.isArray(f.properties.anliegen) ? f.properties.anliegen : [];
+        const marker = L.marker([lat, lng], { icon: icon(status) });
+        marker.bindPopup(
+          `<strong>${f.properties.title}</strong><br><a href="/meldung/${f.properties.id}">Zur Meldung</a>`
+        );
+        markers.push({ marker, status, anliegen });
+        bounds.extend([lat, lng]);
+      }
+    };
 
     const state = { status: 'all', anliegen: 'all' };
     const matches = (e: MarkerEntry) =>
@@ -159,6 +168,8 @@ const STATUS_TEXT: Record<string, string> = {
       clusters.clearLayers();
       clusters.addLayers(markers.filter(matches).map((e) => e.marker));
     };
+
+    buildMarkers(embeddedGeo.features);
     renderMarkers();
 
     // Alle Marker einpassen. invalidateSize stellt sicher, dass der Container
@@ -180,9 +191,9 @@ const STATUS_TEXT: Record<string, string> = {
 
     // Filter (Status + Anliegen) — wirkt auf Karte UND Raster
     const grid = document.getElementById('melder-grid');
-    const cards = grid ? Array.from(grid.querySelectorAll<HTMLElement>('.card')) : [];
+    const cardEls = () => (grid ? Array.from(grid.querySelectorAll<HTMLElement>('.card')) : []);
     const applyCards = () => {
-      cards.forEach((c) => {
+      cardEls().forEach((c) => {
         const okS = state.status === 'all' || c.dataset.status === state.status;
         const okA = state.anliegen === 'all' || (c.dataset.anliegen || '').split(' ').includes(state.anliegen);
         c.style.display = okS && okA ? '' : 'none';
@@ -201,6 +212,37 @@ const STATUS_TEXT: Record<string, string> = {
         })
       );
     });
+
+    // Live-Stand aus der REST-API holen: Karte (GeoJSON) + Desktop-Raster (Meldungen)
+    // sofort aktualisieren, ohne Rebuild. Fällt der Abruf aus, bleibt der Build-Stand.
+    const updateCounts = (list: Meldung[]) => {
+      const c: Record<string, number> = { all: list.length, neu: 0, 'in-bearbeitung': 0, erledigt: 0 };
+      list.forEach((m) => { const s = m.status?.slug; if (s && c[s] != null) c[s]++; });
+      document.querySelectorAll<HTMLElement>('.filterbar[data-group="status"] .filterbar__btn').forEach((btn) => {
+        const f = btn.dataset.filter || 'all';
+        const label = f === 'all' ? 'Alle' : (STATUS_LABELS[f as keyof typeof STATUS_LABELS] ?? '');
+        if (c[f] != null) btn.textContent = `${label} (${c[f]})`;
+      });
+      document.querySelectorAll<HTMLElement>('.filterbar[data-group="anliegen"] .filterbar__btn').forEach((btn) => {
+        const f = btn.dataset.filter || 'all';
+        if (f === 'all') return;
+        const n = list.filter((m) => (m.anliegen || []).includes(f)).length;
+        btn.textContent = `${ANLIEGEN_META[f]?.label ?? ''} (${n})`;
+      });
+    };
+
+    (async () => {
+      const [liveGeo, liveList] = await Promise.all([getGeoJSON(), getMeldungen()]);
+      if (liveGeo && Array.isArray(liveGeo.features) && liveGeo.features.length) {
+        buildMarkers(liveGeo.features);
+        renderMarkers();
+      }
+      if (grid && Array.isArray(liveList) && liveList.length) {
+        grid.innerHTML = liveList.map(cardHTML).join('');
+        applyCards();
+      }
+      if (Array.isArray(liveList) && liveList.length) updateCounts(liveList);
+    })();
 
     // „Mein Standort" — Browser fragt um Erlaubnis
     const locateBtn = document.getElementById('locate-btn');

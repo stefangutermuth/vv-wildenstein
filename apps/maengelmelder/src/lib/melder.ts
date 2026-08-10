@@ -123,6 +123,44 @@ export function formatDate(iso: string): string {
   return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+/** HTML-Escaping (Text + Attribute) — Daten stammen aus dem Backend, aber sicher ist sicher. */
+function esc(s: unknown): string {
+  return String(s ?? '').replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string
+  );
+}
+
+/**
+ * Markup einer Meldungs-Kachel — EINZIGE Quelle für Build (MeldungCard.astro via
+ * set:html) UND Live-Nachladen (Karten-/Listen-Script). Styles liegen global in
+ * tokens.css (nicht scoped), damit auch clientseitig erzeugte Kacheln passen.
+ */
+export function cardHTML(m: Meldung): string {
+  const status = m.status?.slug ?? 'neu';
+  const statusLabel = m.status?.label ?? 'Neue Meldung';
+  const anliegenSlug = m.anliegen?.[0] ?? '';
+  const meta = ANLIEGEN_META[anliegenSlug];
+  const context = [meta?.label ?? '', m.location?.city ?? ''].filter(Boolean).join(' · ');
+  const href = `/meldung/${m.id}`;
+  const media = m.image
+    ? `<img src="${esc(m.image.url)}" alt="${esc(m.image.alt || m.title)}" loading="lazy" />`
+    : `<span class="card__placeholder" aria-hidden="true"${meta ? ` style="--tile:${meta.color}"` : ''}>` +
+      `<svg viewBox="0 0 24 24"><path d="${meta?.icon ?? 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'}" /></svg></span>`;
+
+  return (
+    `<article class="card" data-status="${esc(status)}" data-anliegen="${esc((m.anliegen ?? []).join(' '))}">` +
+    `<a class="card__media" href="${href}">${media}</a>` +
+    `<div class="card__body">` +
+    `<h3 class="card__title"><a href="${href}">${esc(m.title)}</a></h3>` +
+    (context ? `<p class="card__context">${esc(context)}</p>` : '') +
+    `<div class="card__meta">` +
+    `<span class="badge badge--${esc(status)}">${esc(statusLabel)}</span>` +
+    `<time datetime="${esc(m.created)}">${esc(formatDate(m.created))}</time>` +
+    `</div></div></article>`
+  );
+}
+
 /** Relative deutsche Zeitangabe („vor 9 Stunden"). Build-Zeit-Fallback; clientseitig aktualisiert. */
 export function relativeTime(iso: string): string {
   if (!iso) return '';

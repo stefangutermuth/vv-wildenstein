@@ -45,12 +45,16 @@ const anliegenCounts = Object.fromEntries(
   </section>
 
   <script>
+    import { getMeldungen, cardHTML, ANLIEGEN_META, STATUS_LABELS, type Meldung } from '~/lib/melder';
+
     const grid = document.getElementById('melder-grid');
-    const cards = grid ? Array.from(grid.querySelectorAll<HTMLElement>('.card')) : [];
     const noresult = document.getElementById('noresult');
     const state = { status: 'all', anliegen: 'all' };
 
+    const cardEls = () => (grid ? Array.from(grid.querySelectorAll<HTMLElement>('.card')) : []);
+
     const apply = () => {
+      const cards = cardEls();
       let visible = 0;
       cards.forEach((c) => {
         const okStatus = state.status === 'all' || c.dataset.status === state.status;
@@ -59,9 +63,10 @@ const anliegenCounts = Object.fromEntries(
         c.style.display = show ? '' : 'none';
         if (show) visible++;
       });
-      if (noresult) noresult.hidden = visible !== 0;
+      if (noresult) noresult.hidden = visible !== 0 || cards.length === 0;
     };
 
+    // Filter-Buttons liegen außerhalb des Grids → Listener überleben das Neu-Rendern.
     document.querySelectorAll<HTMLElement>('.filterbar[data-group]').forEach((bar) => {
       const group = bar.dataset.group as 'status' | 'anliegen';
       const btns = Array.from(bar.querySelectorAll<HTMLButtonElement>('.filterbar__btn'));
@@ -74,6 +79,33 @@ const anliegenCounts = Object.fromEntries(
         })
       );
     });
+    apply();
+
+    // Live-Stand aus der REST-API holen und Kacheln neu aufbauen (sofort aktuell,
+    // ohne Rebuild). Bei Fehler bleibt der statische Build-Stand stehen.
+    const updateCounts = (list: Meldung[]) => {
+      const c: Record<string, number> = { all: list.length, neu: 0, 'in-bearbeitung': 0, erledigt: 0 };
+      list.forEach((m) => { const s = m.status?.slug; if (s && c[s] != null) c[s]++; });
+      document.querySelectorAll<HTMLElement>('.filterbar[data-group="status"] .filterbar__btn').forEach((btn) => {
+        const f = btn.dataset.filter || 'all';
+        const label = f === 'all' ? 'Alle' : (STATUS_LABELS[f as keyof typeof STATUS_LABELS] ?? '');
+        if (c[f] != null) btn.textContent = `${label} (${c[f]})`;
+      });
+      document.querySelectorAll<HTMLElement>('.filterbar[data-group="anliegen"] .filterbar__btn').forEach((btn) => {
+        const f = btn.dataset.filter || 'all';
+        if (f === 'all') return;
+        const n = list.filter((m) => (m.anliegen || []).includes(f)).length;
+        btn.textContent = `${ANLIEGEN_META[f]?.label ?? ''} (${n})`;
+      });
+    };
+
+    (async () => {
+      const live = await getMeldungen();
+      if (!grid || !Array.isArray(live) || live.length === 0) return;
+      grid.innerHTML = live.map(cardHTML).join('');
+      updateCounts(live);
+      apply();
+    })();
   </script>
 
   <style>
