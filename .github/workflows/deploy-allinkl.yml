@@ -70,16 +70,29 @@ jobs:
           ssh-private-key: ${{ secrets.ALLINKL_SSH_KEY }}
 
       - name: All-Inkl-Host bekannt machen
+        env:
+          KNOWN_HOSTS: ${{ secrets.ALLINKL_KNOWN_HOSTS }}
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.ALLINKL_SSH_HOST }} >> ~/.ssh/known_hosts
+          # Server-Schlüssel fest aus dem Secret schreiben — kein fehleranfälliger
+          # Netzwerk-Keyscan bei jedem Lauf mehr.
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Per rsync zu grh.vv-wildenstein.com hochladen
         run: |
-          rsync -avz --delete --human-readable \
-            --exclude='.htaccess.local' \
-            apps/gruenhainichen/dist/ \
-            ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/grh.vv-wildenstein.com/
+          # Bis zu 3 Versuche gegen vorübergehende Verbindungsprobleme
+          for i in 1 2 3; do
+            if rsync -avz --delete --human-readable \
+              --exclude='.htaccess.local' \
+              -e "ssh -o ConnectTimeout=30" \
+              apps/gruenhainichen/dist/ \
+              ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/grh.vv-wildenstein.com/; then
+              echo "Upload erfolgreich (Versuch $i)"; exit 0
+            fi
+            echo "rsync Versuch $i fehlgeschlagen — neuer Versuch in 15s…"; sleep 15
+          done
+          echo "rsync nach 3 Versuchen fehlgeschlagen"; exit 1
 
       - name: Erfolg
         run: |
@@ -118,16 +131,29 @@ jobs:
           ssh-private-key: ${{ secrets.ALLINKL_SSH_KEY }}
 
       - name: All-Inkl-Host bekannt machen
+        env:
+          KNOWN_HOSTS: ${{ secrets.ALLINKL_KNOWN_HOSTS }}
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.ALLINKL_SSH_HOST }} >> ~/.ssh/known_hosts
+          # Server-Schlüssel fest aus dem Secret schreiben — kein fehleranfälliger
+          # Netzwerk-Keyscan bei jedem Lauf mehr.
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Per rsync zu boernichen.de hochladen
         run: |
-          rsync -avz --delete --human-readable \
-            --exclude='.htaccess.local' \
-            apps/boernichen/dist/ \
-            ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/boernichen.de/
+          # Bis zu 3 Versuche gegen vorübergehende Verbindungsprobleme
+          for i in 1 2 3; do
+            if rsync -avz --delete --human-readable \
+              --exclude='.htaccess.local' \
+              -e "ssh -o ConnectTimeout=30" \
+              apps/boernichen/dist/ \
+              ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/boernichen.de/; then
+              echo "Upload erfolgreich (Versuch $i)"; exit 0
+            fi
+            echo "rsync Versuch $i fehlgeschlagen — neuer Versuch in 15s…"; sleep 15
+          done
+          echo "rsync nach 3 Versuchen fehlgeschlagen"; exit 1
 
       - name: Erfolg
         run: |
