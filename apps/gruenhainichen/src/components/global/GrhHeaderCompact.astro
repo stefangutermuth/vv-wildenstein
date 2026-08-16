@@ -43,6 +43,35 @@ import GrhIcon from '../primitives/GrhIcon.astro';
         </span>
       </div>
 
+      {/* Freibad Borstendorf — steht neben dem Wetter, weil beides dieselbe
+          Frage beantwortet: Lohnt sich der Weg heute?
+          Wie das Wetter erst versteckt und per Abruf gefüllt; so ist die
+          Angabe auf allen Seiten aktuell, ohne dass jede Seite neu gebaut
+          werden muss. Ohne laufende oder kommende Öffnung bleibt sie weg. */}
+      <a
+        class="grh-headerc__fb"
+        href="/tourismus/baden/"
+        data-grh-fb-pill
+        hidden
+      >
+        {/* Wellen-Symbol statt eines bloßen Punktes: Auf dem Handy bleibt nur
+            dieses Zeichen übrig, und ein farbiger Punkt allein sagt niemandem,
+            worum es geht. Die Färbung trägt den Status. */}
+        <span class="grh-headerc__fb-icon" data-grh-fb-icon aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+               stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 16.5c1.8 0 1.8-1.6 3.7-1.6s1.8 1.6 3.7 1.6 1.8-1.6 3.7-1.6 1.8 1.6 3.6 1.6 1.8-1.6 3.7-1.6" />
+            <path d="M2 20.5c1.8 0 1.8-1.6 3.7-1.6s1.8 1.6 3.7 1.6 1.8-1.6 3.7-1.6 1.8 1.6 3.6 1.6 1.8-1.6 3.7-1.6" />
+            <circle cx="16" cy="5.5" r="1.9" fill="currentColor" stroke="none" />
+            <path d="M6.5 12.5l3-2.6 3.2 2.2" />
+          </svg>
+        </span>
+        <span class="grh-headerc__fb-text">
+          <span class="grh-headerc__fb-lage" data-grh-fb-lage></span>
+          <span class="grh-headerc__fb-ort">Freibad</span>
+        </span>
+      </a>
+
       <a class="grh-headerc__social" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Gemeinde Grünhainichen auf Instagram">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -227,6 +256,83 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     .grh-headerc__weather-icon { width: 32px; height: 32px; }
   }
 
+  /* --- Freibad-Plakette ------------------------------------------------ */
+  .grh-headerc__fb {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: var(--grh-radius-pill);
+    border: 1px solid var(--grh-line);
+    color: var(--grh-forest-900);
+    text-decoration: none;
+    margin-right: var(--grh-space-2);
+    transition: border-color var(--grh-dur-fast, 160ms) ease,
+                background-color var(--grh-dur-fast, 160ms) ease;
+  }
+  .grh-headerc__fb[hidden] { display: none; }
+  .grh-headerc__fb:hover {
+    border-color: var(--grh-forest-700);
+    background: var(--grh-sage-100);
+  }
+  .grh-headerc__fb:focus-visible {
+    outline: 3px solid var(--grh-candle-500);
+    outline-offset: 2px;
+  }
+
+  .grh-headerc__fb-icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    background: var(--grh-paper-100);
+    color: var(--grh-stone-400);
+  }
+  /* Grün ausschließlich bei „geöffnet" — „voraussichtlich" bekommt Gelb,
+     damit niemand bei zweifelhafter Lage umsonst hinfährt. */
+  .grh-headerc__fb-icon--geoeffnet {
+    background: var(--grh-sage-100);
+    color: #2F7046;
+  }
+  .grh-headerc__fb-icon--voraussichtlich {
+    background: #FBF0D8;
+    color: #8A6410;
+  }
+  .grh-headerc__fb-icon--geschlossen,
+  .grh-headerc__fb-icon--abgesagt {
+    background: #FAE7E1;
+    color: #A8401E;
+  }
+
+  .grh-headerc__fb-text {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+  .grh-headerc__fb-lage {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .grh-headerc__fb-ort {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--grh-stone-400);
+    margin-top: 2px;
+  }
+
+  /* Anders als das Wetter bleibt die Plakette auf dem Handy sichtbar —
+     nur auf den farbigen Punkt reduziert. „Hat das Bad offen?" ist genau
+     die Frage, die unterwegs gestellt wird. */
+  @media (max-width: 720px) {
+    .grh-headerc__fb { padding: 6px; margin-right: 4px; }
+    .grh-headerc__fb-text { display: none; }
+  }
+
   .grh-headerc__burger {
     position: relative;
     display: inline-flex;
@@ -360,5 +466,81 @@ import GrhIcon from '../primitives/GrhIcon.astro';
         try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ temp, code, ts: Date.now() })); } catch {}
       })
       .catch(() => { /* Bei Fehler bleibt das Widget einfach hidden — niemand sieht 8° Lüge */ });
+  })();
+
+  /* ---------------------------------------------------------------------
+     Freibad Borstendorf
+     Gepflegt im WordPress des Verbands, geliefert von vv-rest-freibad.php.
+     Bewusst clientseitig wie das Wetter: Die Seiten liegen fertig gebaut
+     auf dem Server, teils tagelang. Würde der Status mitgebaut, stünde
+     nach einer Schließung womöglich noch „offen" da — und jemand führe
+     bei 30 Grad vor ein verschlossenes Tor.
+  --------------------------------------------------------------------- */
+  (() => {
+    const pill = document.querySelector<HTMLElement>('[data-grh-fb-pill]');
+    const icon = document.querySelector<HTMLElement>('[data-grh-fb-icon]');
+    const lage = document.querySelector<HTMLElement>('[data-grh-fb-lage]');
+    if (!pill || !icon || !lage) return;
+
+    const API = 'https://vv-wildenstein.com/wp-json/vvw/v1/freibad';
+    const KEY = 'grh-freibad-v1';
+    const MAX_AGE = 10 * 60 * 1000; // 10 Minuten — häufiger ändert sich nichts
+
+    const zeit = (t: string) => (t || '').replace(/:00$/, '');
+
+    const kurz = (iso: string) => {
+      const [y, m, d] = (iso || '').split('-').map(Number);
+      if (!y) return '';
+      return new Date(y, m - 1, d).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+    };
+
+    interface Zeitraum {
+      von: string; bis: string; zeitVon: string; zeitBis: string;
+      status: string; label: string; hinweis: string; offen: boolean;
+    }
+
+    const render = (d: { aktuell: Zeitraum | null; kommend: Zeitraum[] }) => {
+      const jetzt = d.aktuell;
+      const z = jetzt ?? d.kommend?.[0];
+      if (!z) { pill.setAttribute('hidden', ''); return; }
+
+      icon.className = 'grh-headerc__fb-icon grh-headerc__fb-icon--' + z.status;
+
+      if (jetzt) {
+        // Läuft heute: Die Uhrzeit ist die eigentliche Information.
+        const bis = zeit(z.zeitBis);
+        lage.textContent = z.offen
+          ? (bis ? 'bis ' + bis + ' Uhr' : 'geöffnet')
+          : z.label;
+      } else {
+        lage.textContent = 'ab ' + kurz(z.von);
+      }
+
+      pill.setAttribute(
+        'aria-label',
+        'Freibad Borstendorf: ' + (jetzt ? z.label : 'ab ' + kurz(z.von)) +
+        (z.hinweis ? ' — ' + z.hinweis : '') + '. Zur Seite Baden.'
+      );
+      if (z.hinweis) pill.title = z.hinweis;
+
+      pill.removeAttribute('hidden');
+    };
+
+    try {
+      const c = sessionStorage.getItem(KEY);
+      if (c) {
+        const { data, ts } = JSON.parse(c);
+        if (Date.now() - ts < MAX_AGE) render(data);
+      }
+    } catch {}
+
+    fetch(API, { headers: { Accept: 'application/json' } })
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((d) => {
+        if (!d?.verfuegbar) { pill.setAttribute('hidden', ''); return; }
+        render(d);
+        try { sessionStorage.setItem(KEY, JSON.stringify({ data: d, ts: Date.now() })); } catch {}
+      })
+      .catch(() => { /* Nicht erreichbar: lieber gar keine Angabe als eine falsche. */ });
   })();
 </script>
