@@ -1,0 +1,221 @@
+---
+/**
+ * Öffnungsstatus des Freibads Borstendorf — Leiste im Hero.
+ *
+ * Zwei Wege zu denselben Daten:
+ *  1. Beim Bauen der Seite, damit sofort etwas dasteht (auch ohne JavaScript).
+ *  2. Beim Aufruf im Browser noch einmal, weil eine fertig gebaute Seite
+ *     tagelang unverändert ausgeliefert wird. Das Bad hat aber gestern
+ *     vielleicht geschlossen. Ohne diesen zweiten Weg stünde hier
+ *     womöglich „Geöffnet", während das Tor zu ist — schlimmer als gar
+ *     keine Angabe.
+ *
+ * Gepflegt wird der Status im WordPress des Verbands über das Dashboard-
+ * Widget „Freibad-Öffnung"; ein Klick genügt.
+ */
+import type { FreibadStatus } from '../../lib/cms-cpt';
+
+interface Props {
+  status: FreibadStatus | null;
+}
+const { status } = Astro.props;
+
+const VVW_API =
+  (import.meta.env.PUBLIC_VVW_API_BASE as string | undefined) ??
+  'https://vv-wildenstein.com/wp-json/vvw/v1';
+
+/** „13:00" → „13", „13:30" bleibt. Volle Stunden liest sich niemand gern. */
+function zeit(t: string): string {
+  return (t ?? '').replace(/:00$/, '');
+}
+
+function spanne(z: { zeitVon: string; zeitBis: string }): string {
+  const a = zeit(z.zeitVon);
+  const b = zeit(z.zeitBis);
+  return a && b ? `${a}–${b} Uhr` : '';
+}
+
+function datum(iso: string): string {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y) return '';
+  return new Date(y, m - 1, d).toLocaleDateString('de-DE', {
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
+const jetzt = status?.aktuell ?? null;
+const naechster = !jetzt ? (status?.kommend?.[0] ?? null) : null;
+const zeige = jetzt ?? naechster;
+---
+
+{zeige && (
+  <div
+    class="grh-fb"
+    data-grh-freibad
+    data-api={`${VVW_API}/freibad`}
+    data-zustand={jetzt ? 'aktuell' : 'kommend'}
+  >
+    <a href="/tourismus/baden/" class="grh-fb__link">
+      <span class={`grh-fb__dot grh-fb__dot--${zeige.status}`} aria-hidden="true"></span>
+
+      <span class="grh-fb__text">
+        <span class="grh-fb__ort">Freibad Borstendorf</span>
+        <span class="grh-fb__lage" data-grh-freibad-lage>
+          {jetzt
+            ? <>
+                <strong>{zeige.offen ? 'Heute geöffnet' : zeige.label}</strong>
+                {zeige.offen && spanne(zeige) && <> · {spanne(zeige)}</>}
+              </>
+            : <>
+                <strong>Ab {datum(zeige.von)}</strong>
+                {spanne(zeige) && <> · {spanne(zeige)}</>}
+              </>
+          }
+        </span>
+      </span>
+
+      {zeige.hinweis && (
+        <span class="grh-fb__hinweis" data-grh-freibad-hinweis>{zeige.hinweis}</span>
+      )}
+    </a>
+  </div>
+)}
+
+<script is:inline>
+  (function () {
+    var box = document.querySelector('[data-grh-freibad]');
+    if (!box) return;
+
+    function zeit(t) { return (t || '').replace(/:00$/, ''); }
+    function spanne(z) {
+      var a = zeit(z.zeitVon), b = zeit(z.zeitBis);
+      return a && b ? a + '–' + b + ' Uhr' : '';
+    }
+    function datum(iso) {
+      if (!iso) return '';
+      var p = iso.split('-');
+      return new Date(+p[0], +p[1] - 1, +p[2])
+        .toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+    }
+
+    fetch(box.dataset.api, { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.verfuegbar) { box.remove(); return; }
+
+        var jetzt = d.aktuell;
+        var z = jetzt || (d.kommend && d.kommend[0]);
+        if (!z) { box.remove(); return; }
+
+        var punkt = box.querySelector('.grh-fb__dot');
+        punkt.className = 'grh-fb__dot grh-fb__dot--' + z.status;
+
+        var lage = box.querySelector('[data-grh-freibad-lage]');
+        var kopf = jetzt
+          ? (z.offen ? 'Heute geöffnet' : z.label)
+          : 'Ab ' + datum(z.von);
+        var rest = spanne(z);
+        lage.innerHTML = '<strong></strong>';
+        lage.firstChild.textContent = kopf;
+        if (rest) lage.append(' · ' + rest);
+
+        var hin = box.querySelector('[data-grh-freibad-hinweis]');
+        if (z.hinweis) {
+          if (hin) { hin.textContent = z.hinweis; }
+          else {
+            var s = document.createElement('span');
+            s.className = 'grh-fb__hinweis';
+            s.setAttribute('data-grh-freibad-hinweis', '');
+            s.textContent = z.hinweis;
+            box.querySelector('.grh-fb__link').appendChild(s);
+          }
+        } else if (hin) {
+          hin.remove();
+        }
+      })
+      .catch(function () {
+        /* Bleibt beim gebauten Stand — besser als eine leere Leiste. */
+      });
+  })();
+</script>
+
+<style>
+  .grh-fb {
+    margin-top: clamp(1.1rem, 2.5vw, 1.75rem);
+    max-width: 30rem;
+  }
+
+  .grh-fb__link {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--grh-cream-50);
+    background: rgba(250, 247, 241, 0.09);
+    border: 1px solid rgba(250, 247, 241, 0.18);
+    transition: background-color var(--grh-dur-fast, 160ms) ease,
+                border-color var(--grh-dur-fast, 160ms) ease;
+  }
+  .grh-fb__link:hover {
+    background: rgba(250, 247, 241, 0.15);
+    border-color: rgba(250, 247, 241, 0.32);
+  }
+
+  .grh-fb__dot {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--grh-stone-400);
+    box-shadow: 0 0 0 3px rgba(250, 247, 241, 0.12);
+  }
+  /* Grün nur, wenn wirklich offen ist. „Voraussichtlich" bekommt Gelb,
+     damit niemand umsonst hinfährt. */
+  .grh-fb__dot--geoeffnet       { background: #5BAE78; }
+  .grh-fb__dot--voraussichtlich { background: var(--grh-candle-500); }
+  .grh-fb__dot--geschlossen,
+  .grh-fb__dot--abgesagt        { background: #C86B52; }
+
+  .grh-fb__text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .grh-fb__ort {
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(250, 247, 241, 0.7);
+  }
+  .grh-fb__lage {
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+  .grh-fb__lage strong { font-weight: 600; }
+
+  .grh-fb__hinweis {
+    margin-left: auto;
+    padding-left: 0.7rem;
+    font-size: 0.8rem;
+    color: rgba(250, 247, 241, 0.72);
+    border-left: 1px solid rgba(250, 247, 241, 0.2);
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 560px) {
+    .grh-fb { max-width: none; }
+    .grh-fb__hinweis { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grh-fb__link { transition: none; }
+  }
+</style>

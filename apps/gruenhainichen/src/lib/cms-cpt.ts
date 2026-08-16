@@ -618,3 +618,51 @@ export async function getRooms(): Promise<RoomItem[]> {
     .map(mapVVWv1Room)
     .filter((r) => hasGrhMunicipalitySlug(r.ortsteil));
 }
+
+/* ------------------------------------------------------------------ */
+/*  Freibad Borstendorf — Öffnungsstatus                              */
+/*                                                                     */
+/*  Kommt aus dem mu-Plugin wuw-freibad-oeffnung.php auf               */
+/*  vv-wildenstein.com. Dessen Inhaltstyp ist bewusst nicht öffentlich, */
+/*  deshalb liefert vv-rest-freibad.php die Daten unter vvw/v1/freibad  */
+/*  (Quelle im Repo: docs/wordpress/vv-rest-freibad.php).              */
+/* ------------------------------------------------------------------ */
+
+export interface FreibadZeitraum {
+  von: string;
+  bis: string;
+  zeitVon: string;
+  zeitBis: string;
+  status: 'geoeffnet' | 'voraussichtlich' | 'geschlossen' | 'abgesagt';
+  label: string;
+  hinweis: string;
+  offen: boolean;
+}
+
+export interface FreibadStatus {
+  verfuegbar: boolean;
+  aktuell: FreibadZeitraum | null;
+  kommend: FreibadZeitraum[];
+  stand: string;
+}
+
+export async function getFreibadStatus(): Promise<FreibadStatus | null> {
+  try {
+    const res = await fetchWithTimeout(`${VVW_API_BASE}/freibad`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as FreibadStatus;
+    // Ohne laufenden und ohne kommenden Zeitraum gibt es nichts zu zeigen —
+    // dann bleibt der Baustein auf der Startseite ganz weg, statt eine leere
+    // Fläche zu hinterlassen.
+    if (!data.verfuegbar) return null;
+    if (!data.aktuell && data.kommend.length === 0) return null;
+    return data;
+  } catch (err) {
+    // Ein nicht erreichbares Freibad darf niemals den Build der ganzen
+    // Website scheitern lassen.
+    console.warn('[cms-cpt] vvw/v1/freibad Fehler:', (err as Error).message);
+    return null;
+  }
+}
