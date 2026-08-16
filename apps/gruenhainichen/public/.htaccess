@@ -36,6 +36,15 @@ RewriteRule (.*) https://www.gruenhainichen.com%{REQUEST_URI} [R=301,L]
 # ACHTUNG: Diese Regel erst entfernen, wenn die Tafeln woanders leben.
 RewriteRule ^tafel/(.*)$ https://alt.gruenhainichen.com/tafel/$1 [R=301,L]
 
+# --- Vorübergehend stillgelegte Bereiche ---------------------------
+# Raumbuchung und Amtsblatt-Einreichung sind seit dem 16.08.2026 aus der
+# Navigation genommen, weil die Abläufe mit der Verwaltung noch nicht stehen.
+# Die Adressen standen aber schon in der bei Google eingereichten Sitemap —
+# ohne diese Regeln liefen Lesezeichen und Suchtreffer auf 404.
+# ACHTUNG: Beim Wiedereinschalten der Bereiche wieder entfernen.
+RewriteRule ^gemeinde/amtsblatt/einreichen/?$  /gemeinde/amtsblatt/ [R=302,L]
+RewriteRule ^gemeinde/raeume(/.*)?$            /gemeinde/ [R=302,L]
+
 # --- Gemeinde ------------------------------------------------------
 RewriteRule ^gemeinde-gruenhainichen/amtsblatt/?$        /gemeinde/amtsblatt/ [R=301,L]
 RewriteRule ^gemeinde-gruenhainichen/feuerwehren/?$      /gemeinde/feuerwehren/ [R=301,L]

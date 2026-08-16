@@ -229,9 +229,12 @@ const monShort = (d: Date) => fmtMon.format(d).replace('.', '');
       <GrhIcon name="calendar" size={14} />
       Vollständiger Kalender
     </a>
-    <a class="grh-evs__cta" href="/veranstaltungen/einreichen">
+    {/* Zeigte auf /veranstaltungen/einreichen — eine Seite, die es nie gab
+        (404 auf der Live-Seite). Bis es ein Formular gibt, führt der Weg
+        über die Verwaltung. */}
+    <a class="grh-evs__cta" href="mailto:info@wildenstein.ws?subject=Veranstaltung%20f%C3%BCr%20den%20Kalender">
       <GrhIcon name="arrow-right" size={14} />
-      Termin einreichen
+      Termin melden
     </a>
   </div>
 

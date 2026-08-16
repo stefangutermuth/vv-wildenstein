@@ -32,24 +32,19 @@ export const navigation: NavItem[] = [
       { label: 'Bürgermeister',       href: '/gemeinde/buergermeister' },
       { label: 'Verwaltung',          href: '/gemeinde/verwaltung' },
       { label: 'Gemeinderat',         href: '/gemeinde/gemeinderat' },
-      {
-        label: 'Amtsblatt',
-        href: '/gemeinde/amtsblatt',
-        children: [
-          { label: 'Amtsblatt-Archiv', href: '/gemeinde/amtsblatt' },
-          { label: 'Beitrag einreichen', href: '/gemeinde/amtsblatt/einreichen' },
-        ],
-      },
+      { label: 'Amtsblatt',           href: '/gemeinde/amtsblatt' },
       { label: 'Feuerwehren',         href: '/gemeinde/feuerwehren' },
       { label: 'Bauleitplanung',      href: '/gemeinde/bauleitplanung' },
-      {
-        label: 'Räume buchen',
-        href: '/gemeinde/raeume',
-        children: [
-          { label: 'Alle Räume',       href: '/gemeinde/raeume' },
-          { label: 'Belegungsplan',    href: '/gemeinde/raeume/belegungsplan' },
-        ],
-      },
+
+      /* Vorübergehend herausgenommen, bis die Abläufe mit der Verwaltung
+         stehen (Stand 16.08.2026):
+           • „Räume buchen" mit Belegungsplan
+           • „Beitrag einreichen" unter Amtsblatt
+         Die Seiten liegen weiterhin im Repo, aber mit Unterstrich davor
+         (src/pages/gemeinde/_raeume/ und _einreichen.astro) — so baut Astro
+         sie nicht mit. Zum Wiedereinschalten: Unterstriche entfernen, diese
+         Einträge zurückholen und die beiden Weiterleitungen in
+         public/.htaccess löschen. */
     ],
   },
   {
