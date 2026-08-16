@@ -29,10 +29,13 @@ concurrency:
 
 jobs:
   # ───────────────────────────────────────────────────────────────────
-  # Grünhainichen → grh.vv-wildenstein.com
+  # Grünhainichen → www.gruenhainichen.com (live seit 16.08.2026)
+  #
+  # Die frühere Testadresse grh.vv-wildenstein.com leitet seitdem per
+  # 301 hierher um und wird nicht mehr beliefert.
   # ───────────────────────────────────────────────────────────────────
   deploy-gruenhainichen:
-    name: Grünhainichen → grh.vv-wildenstein.com
+    name: Grünhainichen → www.gruenhainichen.com
     runs-on: ubuntu-latest
     steps:
       - name: Code auschecken
