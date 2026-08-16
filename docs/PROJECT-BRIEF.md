@@ -17,13 +17,22 @@ Kopiere das Dokument in den neuen Chat, dann kann er ohne Kontextverlust weitera
 
 ## 2. Hosting & Domains
 
+Stand seit dem Go-Live am 16.08.2026 — Ablauf und Details im
+[Go-Live-Protokoll](GO-LIVE-2026-08-16.md).
+
 | Zweck | URL |
 |---|---|
-| **Neue Astro-Seite (live)** | https://grh.vv-wildenstein.com |
+| **Astro-Seite (live)** | https://www.gruenhainichen.com |
 | **WordPress-Master (Content-Quelle)** | https://vv-wildenstein.com |
-| **Alte WP-Seite (wird abgelöst)** | https://gruenhainichen.com |
+| **Altes WP (Archiv, `noindex`)** | https://alt.gruenhainichen.com |
 | **Redaktion** | https://vv-wildenstein.com/wp-admin |
-| **Ziel-Domain nach Go-Live** | www.gruenhainichen.com (Redirect + DNS-Switch, noch offen) |
+
+Die frühere Testadresse `grh.vv-wildenstein.com` gibt es nicht mehr.
+
+Auf den Häusertafeln im Ort sind QR-Codes aufgedruckt, die über eine
+`.htaccess`-Regel (`^tafel/(.*)$`) auf das Archiv-WordPress laufen.
+**Diese Regel nicht anfassen**, solange die Tafeln nicht umgezogen sind —
+siehe [MIGRATION-TAFELN.md](MIGRATION-TAFELN.md).
 
 **All-Inkl-Konto:** w01f6038 · SSH-Alias `vv-wildenstein` in `~/.ssh/config`, Key `~/.ssh/vv_wildenstein`.
 Server-Pfade: `/www/htdocs/w01f6038/{domain}/`
@@ -218,10 +227,14 @@ User `mrmek` = Stefan im WP.
 
 ---
 
-## 11. Zwei Sachen die noch offen sind
+## 11. Was noch offen ist
 
 1. **Detail-Seiten-Fallback** bei brandneuen Posts: 404 statt Client-side Nachrenderer. Aktuell trägt der Live-Banner das ab.
-2. **Menü-Sublink Verwaltungsverband/Ortsteile** in Header-Bar zeigt noch alte alte Struktur — geklärt und live seit vorletzter Session, aber falls Änderungen kommen, in `apps/gruenhainichen/src/lib/navigation.ts`.
+2. **Menü-Sublink Verwaltungsverband/Ortsteile** in Header-Bar zeigt noch alte Struktur — geklärt und live seit vorletzter Session, aber falls Änderungen kommen, in `apps/gruenhainichen/src/lib/navigation.ts`.
+3. **Tafeln umziehen** (198 Einträge) → [MIGRATION-TAFELN.md](MIGRATION-TAFELN.md). Erst danach lässt sich die Multisite abbauen.
+4. **Google Search Console** für die neue Domain einrichten, Sitemap einreichen.
+
+Vollständige Liste mit Begründungen im [Go-Live-Protokoll](GO-LIVE-2026-08-16.md), Abschnitt 4.
 
 ---
 
