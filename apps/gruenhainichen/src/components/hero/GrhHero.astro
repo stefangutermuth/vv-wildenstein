@@ -2,6 +2,8 @@
 import type { Season } from '../../lib/seasons';
 import GrhFeaturedSlot from './GrhFeaturedSlot.astro';
 import GrhIcon from '../primitives/GrhIcon.astro';
+import GrhFreibadStatus from '../global/GrhFreibadStatus.astro';
+import type { FreibadStatus } from '../../lib/cms-cpt';
 
 interface CTA { label: string; href: string; variant?: 'primary' | 'secondary' | 'ghost' }
 interface Featured {
@@ -26,6 +28,8 @@ interface Props {
   subline?: string;
   featured?: Featured;
   slides?: Slide[];
+  /** Öffnungsstatus des Freibads; ohne Daten bleibt die Leiste weg. */
+  freibad?: FreibadStatus | null;
 }
 const {
   preTitle = 'Erzgebirge',
@@ -34,6 +38,7 @@ const {
   subline = 'Zwischen Zschopau und Flöha — wo Holz noch riecht, der Schach­wanderweg ruft und im Advent jedes Fenster leuchtet.',
   featured,
   slides = [],
+  freibad = null,
 } = Astro.props;
 ---
 <section class="grh-hero" data-grh-hero>
@@ -59,6 +64,14 @@ const {
         </a>
       </div>
 
+      {/* Freibad-Status — saisonale Angabe, die im Sommer viele suchen.
+          Steht bewusst hier: direkt unter den Schnelllinks, noch oberhalb
+          der Fläche für die hervorgehobene Veranstaltung. */}
+      {freibad && (
+        <div class="grh-text-reveal" style="transition-delay: 620ms;">
+          <GrhFreibadStatus status={freibad} />
+        </div>
+      )}
 
       <span class="grh-hero__sidetag" aria-hidden="true">09579 Grünhainichen — Sachsen / Erzgebirge</span>
 
