@@ -18,6 +18,88 @@ RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
+# Kanonische Domain: www.gruenhainichen.com
+# (so ist es in astro.config.mjs und der Sitemap hinterlegt)
+# Greift nur auf der Live-Domain, nicht auf Testumgebungen.
+RewriteCond %{HTTP_HOST} ^gruenhainichen\.com$ [NC]
+RewriteRule (.*) https://www.gruenhainichen.com%{REQUEST_URI} [R=301,L]
+
+# =================================================================
+#  UMSTELLUNG WordPress → Astro (August 2026)
+#  Diese Regeln müssen VOR dem Pretty-URL-Block stehen.
+# =================================================================
+
+# --- Historische Häusertafeln --------------------------------------
+# Auf den Tafeln im Ort sind QR-Codes physisch aufgedruckt, die auf
+# gruenhainichen.com/tafel/{kürzel}/ zeigen. Bis die Inhalte migriert
+# sind, gehen sie an das umgezogene WordPress.
+# ACHTUNG: Diese Regel erst entfernen, wenn die Tafeln woanders leben.
+RewriteRule ^tafel/(.*)$ https://alt.gruenhainichen.com/tafel/$1 [R=301,L]
+
+# --- Gemeinde ------------------------------------------------------
+RewriteRule ^gemeinde-gruenhainichen/amtsblatt/?$        /gemeinde/amtsblatt/ [R=301,L]
+RewriteRule ^gemeinde-gruenhainichen/feuerwehren/?$      /gemeinde/feuerwehren/ [R=301,L]
+RewriteRule ^gemeinde-gruenhainichen/geschichte/?$       /gemeinde/geschichte/ [R=301,L]
+RewriteRule ^gemeinde-gruenhainichen/gemeinderat[^/]*/?$ /gemeinde/gemeinderat/ [R=301,L]
+RewriteRule ^gemeinde-gruenhainichen/?$                  /gemeinde/ [R=301,L]
+RewriteRule ^buergermeister/?$                           /gemeinde/buergermeister/ [R=301,L]
+RewriteRule ^bauleitplanung/?$                           /gemeinde/bauleitplanung/ [R=301,L]
+
+# --- Ortsteile -----------------------------------------------------
+RewriteRule ^ortsteil-borstendorf/?$      /gemeinde/ortsteile/borstendorf/ [R=301,L]
+RewriteRule ^ortsteil-gruenhainichen/?$   /gemeinde/ortsteile/gruenhainichen/ [R=301,L]
+RewriteRule ^ortsteil-waldkirchen/?$      /gemeinde/ortsteile/waldkirchen/ [R=301,L]
+
+# --- Leben ---------------------------------------------------------
+RewriteRule ^gemeinde-buecherei/?$              /leben/buecherei/ [R=301,L]
+RewriteRule ^kindertagesstaette/?$              /leben/kita/ [R=301,L]
+RewriteRule ^formulare-der-kindertageseinrichtungen-gruenhainichen/?$ /leben/kita/ [R=301,L]
+RewriteRule ^grundschule/?$                     /leben/grundschule/ [R=301,L]
+RewriteRule ^neubau-grundschule/?$              /leben/grundschule/ [R=301,L]
+RewriteRule ^gesundheit/?$                      /leben/gesundheit/ [R=301,L]
+RewriteRule ^einkaufen/?$                       /leben/einkaufen/ [R=301,L]
+RewriteRule ^heiraten/?$                        /leben/heiraten/ [R=301,L]
+RewriteRule ^kirche/?$                          /leben/kirche/ [R=301,L]
+RewriteRule ^lebendiger-adventskalender/?$      /leben/lebendiger-adventskalender/ [R=301,L]
+
+# --- Tourismus (alte Übersichts-Struktur) --------------------------
+RewriteRule ^tourismus_ubersicht/sehenswuerdigkeiten-ubersicht/?$ /tourismus/sehenswuerdigkeiten/ [R=301,L]
+RewriteRule ^tourismus_ubersicht/radfahren_ubersicht/?$ /tourismus/radfahren/ [R=301,L]
+RewriteRule ^tourismus_ubersicht/wandern_ubersicht/?$   /tourismus/wandern/ [R=301,L]
+RewriteRule ^tourismus_ubersicht/baden/?$               /tourismus/baden/ [R=301,L]
+RewriteRule ^tourismus_ubersicht/gastronomie/?$         /tourismus/gastronomie/ [R=301,L]
+RewriteRule ^tourismus_ubersicht/museum/?$              /tourismus/museum/ [R=301,L]
+RewriteRule ^tourismus_ubersicht/unterkuenfte/?$        /tourismus/unterkuenfte/ [R=301,L]
+RewriteRule ^tourismus_ubersicht/?$                     /tourismus/ [R=301,L]
+
+# --- Heimatfest 2024 -----------------------------------------------
+RewriteRule ^heimatfest-2024/rueckblick-bilder/?$    /veranstaltungen/heimatfest/rueckblick/ [R=301,L]
+RewriteRule ^heimatfest-2024/jubilaeumsprodukte/?$   /veranstaltungen/heimatfest/jubilaeumsprodukte/ [R=301,L]
+RewriteRule ^heimatfest-2024(/.*)?$                  /veranstaltungen/heimatfest/ [R=301,L]
+
+# --- Veranstaltungen (altes Event-Plugin) --------------------------
+RewriteRule ^events(/.*)?$        /veranstaltungen/ [R=301,L]
+
+# --- Gewerbe -------------------------------------------------------
+RewriteRule ^stellenausschreibungen/?$  /gewerbe/stellenausschreibungen/ [R=301,L]
+
+# --- Rechtliches ---------------------------------------------------
+RewriteRule ^datenschutzerklaerung/?$   /datenschutz/ [R=301,L]
+RewriteRule ^cookie-richtlinie-eu/?$    /datenschutz/ [R=301,L]
+
+# --- Entfallene Seiten → sinnvollstes Ziel -------------------------
+RewriteRule ^parkleitsystem/?$   /tourismus/ [R=301,L]
+RewriteRule ^wartungsmodus/?$    / [R=301,L]
+
+# --- WordPress-Reste ins Leere laufen lassen -----------------------
+# Alte Feeds, XML-RPC, Login: sauber auf die Startseite statt 404-Flut.
+RewriteRule ^(wp-login\.php|xmlrpc\.php|wp-admin/?)$  / [R=301,L]
+RewriteRule ^feed/?$                                   / [R=301,L]
+
+# =================================================================
+#  Ende Umstellungs-Weiterleitungen
+# =================================================================
+
 # .html-Endung aus URLs entfernen (Astro generiert /pfad/index.html)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
