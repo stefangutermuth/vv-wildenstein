@@ -56,11 +56,13 @@ jobs:
           restore-keys: |
             wp-cache-grh-
 
-      - name: Astro bauen (mit Live-Inhalten aus vv-wildenstein.com)
+      - name: Astro bauen (LIVE — Inhalte aus vv-wildenstein.com, indexierbar)
         run: npm run build:gruenhainichen
         env:
           PUBLIC_CMS_SOURCE: wordpress
-          PUBLIC_STAGING: 'true'
+          # Kein PUBLIC_STAGING mehr → kein noindex.
+          # Die Seite ist seit 16.08.2026 unter www.gruenhainichen.com live
+          # und soll von Suchmaschinen gefunden werden.
           WP_AUTH_USER: ${{ secrets.WP_AUTH_USER }}
           WP_AUTH_PASS: ${{ secrets.WP_AUTH_PASS }}
 
@@ -79,7 +81,7 @@ jobs:
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Per rsync zu grh.vv-wildenstein.com hochladen
+      - name: Per rsync zu gruenhainichen.com hochladen (LIVE)
         run: |
           # Bis zu 3 Versuche gegen vorübergehende Verbindungsprobleme
           for i in 1 2 3; do
@@ -87,7 +89,7 @@ jobs:
               --exclude='.htaccess.local' \
               -e "ssh -o ConnectTimeout=30" \
               apps/gruenhainichen/dist/ \
-              ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/grh.vv-wildenstein.com/; then
+              ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/gruenhainichen.com/; then
               echo "Upload erfolgreich (Versuch $i)"; exit 0
             fi
             echo "rsync Versuch $i fehlgeschlagen — neuer Versuch in 15s…"; sleep 15
@@ -96,7 +98,7 @@ jobs:
 
       - name: Erfolg
         run: |
-          echo "✅ Deploy fertig: https://grh.vv-wildenstein.com"
+          echo "✅ Deploy fertig: https://www.gruenhainichen.com"
 
   # ───────────────────────────────────────────────────────────────────
   # Börnichen → boernichen.vv-wildenstein.com
