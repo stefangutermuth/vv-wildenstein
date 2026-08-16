@@ -62,8 +62,8 @@ const roomsWithColor = rooms.map((r, i) => ({ ...r, color: ROOM_COLORS[i % ROOM_
     </div>
   </section>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js" is:inline></script>
+  {/* Lokal ausgeliefert statt über ein CDN — siehe Begründung in [slug].astro */}
+  <script src="/vendor/fullcalendar/index.global.min.js" is:inline></script>
   <script is:inline>
     (() => {
       const calEl = document.getElementById('grh-belp-cal');

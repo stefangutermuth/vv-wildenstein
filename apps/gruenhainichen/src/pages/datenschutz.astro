@@ -1,12 +1,371 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import GrhPagePlaceholder from '../components/global/GrhPagePlaceholder.astro';
+
+/**
+ * Datenschutzerklärung
+ *
+ * Der Text beschreibt ausschließlich das, was diese Website tatsächlich tut.
+ * Wird eine externe Einbindung ergänzt oder entfernt, gehört diese Seite
+ * mit angepasst — siehe die Abschnitte 4 bis 6.
+ *
+ * Offen und von der Gemeinde zu ergänzen: Name und Anschrift des behördlichen
+ * Datenschutzbeauftragten sowie die verbindlichen Aufbewahrungsfristen.
+ */
+
+const stand = '16. August 2026';
 ---
-<BaseLayout title="Datenschutz · Grünhainichen" header="compact">
-  <GrhPagePlaceholder
-    title="Datenschutz"
-    breadcrumb="Service · Datenschutz"
-    description="Wie wir mit personenbezogenen Daten umgehen."
-    hints={["DSGVO-Pflichtangaben","Server-Logs","Cookies / Tracking","Auskunfts-Anfragen"]}
-  />
+
+<BaseLayout
+  title="Datenschutzerklärung · Grünhainichen"
+  description="Wie die Gemeinde Grünhainichen mit personenbezogenen Daten auf dieser Website umgeht."
+  header="compact"
+>
+  <header class="grh-ds-head">
+    <div class="grh-container">
+      <p class="grh-ds-crumb">Service · Datenschutz</p>
+      <h1 class="grh-ds-title">Datenschutzerklärung</h1>
+      <p class="grh-ds-lead">
+        Wir erheben so wenige Daten wie möglich. Diese Seite erklärt, welche das
+        sind, warum wir sie brauchen und welche Rechte Sie haben.
+      </p>
+      <p class="grh-ds-stand">Stand: {stand}</p>
+    </div>
+  </header>
+
+  <div class="grh-container grh-ds">
+
+    <section class="grh-ds-sec">
+      <h2>1. Wer für die Verarbeitung verantwortlich ist</h2>
+      <p>
+        Gemeinde Grünhainichen<br />
+        Chemnitzer Straße 41<br />
+        09579 Grünhainichen
+      </p>
+      <p>
+        Telefon: <a href="tel:+49372941700">03 72 94 / 170-0</a><br />
+        E-Mail: <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a>
+      </p>
+      <p>
+        Die Verwaltungsgeschäfte führt der Verwaltungsverband Wildenstein. Die
+        Website wird technisch von dort betreut.
+      </p>
+      <div class="grh-ds-todo">
+        <strong>Noch zu ergänzen:</strong> Name und Kontakt des behördlichen
+        Datenschutzbeauftragten. Öffentliche Stellen müssen diesen nach
+        Art. 37 DSGVO benennen und hier angeben.
+      </div>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>2. Der Grundsatz vorweg</h2>
+      <p>
+        Diese Website ist eine Sammlung fertiger Seiten. Sie brauchen kein Konto,
+        wir legen kein Profil über Sie an, und für das bloße Lesen setzen wir
+        keine Cookies. Alles, was darüber hinausgeht, geschieht nur mit Ihrer
+        ausdrücklichen Zustimmung — und Sie können diese jederzeit widerrufen.
+      </p>
+      <p>
+        Schriftarten, Bilder, Wappen und alle Programmbestandteile liegen auf
+        unserem eigenen Server. Sie werden nicht von fremden Anbietern
+        nachgeladen. Damit erfährt niemand außer uns, dass Sie diese Seite
+        besuchen.
+      </p>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>3. Beim Aufruf der Seite: Server-Protokolle</h2>
+      <p>
+        Wie jeder Webserver hält auch unserer fest, dass eine Seite abgerufen
+        wurde. Gespeichert werden Datum und Uhrzeit, die aufgerufene Adresse,
+        die zuvor besuchte Seite, Browser und Betriebssystem sowie Ihre
+        IP-Adresse.
+      </p>
+      <p>
+        Ohne diese Angaben ließe sich die Seite nicht ausliefern und ein Angriff
+        nicht erkennen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. e DSGVO in
+        Verbindung mit § 3 SächsDSG — die Wahrnehmung einer öffentlichen Aufgabe.
+        Eine Zusammenführung dieser Daten mit anderen Quellen findet nicht statt.
+      </p>
+      <p>
+        Die Website liegt bei der ALL-INKL.COM — Neue Medien Münnich,
+        Hauptstraße 68, 02742 Friedersdorf. Die Server stehen in Deutschland. Mit
+        dem Anbieter besteht ein Vertrag zur Auftragsverarbeitung nach
+        Art. 28 DSGVO.
+      </p>
+    </section>
+
+    <section class="grh-ds-sec" id="cookies">
+      <h2>4. Cookies und Ihre Einwilligung</h2>
+      <p>
+        Für den Betrieb der Seite setzen wir keine Cookies. Gespeichert wird
+        allein Ihre Entscheidung über die beiden folgenden Angebote — damit wir
+        Sie nicht bei jedem Besuch erneut fragen müssen. Dieser Eintrag liegt
+        in Ihrem Browser und wird nicht übertragen.
+      </p>
+      <table class="grh-ds-table">
+        <thead>
+          <tr><th>Eintrag</th><th>Zweck</th><th>Dauer</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>grh-consent</code></td>
+            <td>Speichert, ob Sie Statistik und Videos erlaubt haben</td>
+            <td>bis Sie ihn löschen</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        <button type="button" class="grh-ds-btn" data-grh-consent-open>
+          Einstellungen jetzt ändern
+        </button>
+      </p>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>5. Statistik — nur mit Ihrer Zustimmung</h2>
+      <p>
+        Wir möchten wissen, welche Inhalte gelesen werden, um die Seite zu
+        verbessern. Dafür nutzen wir Google Analytics 4 der Google Ireland
+        Limited, Gordon House, Barrow Street, Dublin 4, Irland.
+      </p>
+      <p>
+        <strong>Ohne Ihre Einwilligung wird davon nichts geladen.</strong>
+        Stimmen Sie zu, setzt Google Cookies und verarbeitet Ihre gekürzte
+        IP-Adresse. Dabei können Daten in die USA gelangen. Für die USA besteht
+        ein Angemessenheitsbeschluss der EU-Kommission (EU-US Data Privacy
+        Framework); dennoch lässt sich ein Zugriff dortiger Behörden nicht
+        vollständig ausschließen.
+      </p>
+      <p>
+        Werbefunktionen und die Zusammenführung mit Google-Konten haben wir
+        abgeschaltet. Rechtsgrundlage ist Ihre Einwilligung nach
+        Art. 6 Abs. 1 lit. a DSGVO und § 25 Abs. 1 TDDDG. Ein Widerruf wirkt
+        sofort und für die Zukunft.
+      </p>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>6. Eingebettete Videos</h2>
+      <p>
+        Auf einzelnen Seiten sind Videos von YouTube eingebunden (Google Ireland
+        Limited, Anschrift wie oben). Solange Sie nicht zugestimmt haben, sehen
+        Sie an dieser Stelle nur eine Vorschau — es wird nichts von Google
+        geladen.
+      </p>
+      <p>
+        Erst wenn Sie auf „Video laden" klicken, wird die Verbindung
+        hergestellt. Dabei erfährt Google Ihre IP-Adresse und welche Seite Sie
+        aufgerufen haben. Wir verwenden durchgängig den erweiterten
+        Datenschutzmodus, bei dem YouTube erst beim Abspielen Cookies setzt.
+        Rechtsgrundlage ist Ihre Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO.
+      </p>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>7. Wetteranzeige im Seitenkopf</h2>
+      <p>
+        Oben auf jeder Seite steht die aktuelle Temperatur für Grünhainichen.
+        Diese Angabe holt Ihr Browser bei Open-Meteo, einem Wetterdienst mit
+        Sitz in der Schweiz. Dabei wird Ihre IP-Adresse an diesen Dienst
+        übermittelt.
+      </p>
+      <p>
+        Open-Meteo setzt keine Cookies und legt nach eigenen Angaben keine
+        Nutzerprofile an. Abgefragt werden ausschließlich die Koordinaten von
+        Grünhainichen, nicht Ihr Standort. Rechtsgrundlage ist unser berechtigtes
+        Interesse an einer nützlichen Ortsinformation nach
+        Art. 6 Abs. 1 lit. f DSGVO.
+      </p>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>8. Aktuelle Inhalte</h2>
+      <p>
+        Nachrichten, Termine und Straßensperrungen lädt die Seite beim Aufruf
+        von <code>vv-wildenstein.com</code> nach, damit Sie stets den neuesten
+        Stand sehen. Das ist unser eigenes Redaktionssystem beim selben
+        Anbieter — die Daten verlassen unsere Infrastruktur nicht.
+      </p>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>9. Räume mieten</h2>
+      <p>
+        Wenn Sie eine Anfrage für einen gemeindlichen Raum stellen, erheben wir:
+        Name, Anschrift oder Verein, E-Mail-Adresse, Telefonnummer, den
+        gewünschten Zeitraum, den Zweck der Nutzung und die Zahl der Gäste.
+      </p>
+      <p>
+        Wir brauchen diese Angaben, um die Belegung zu planen, Ihnen zu
+        antworten und die Nutzung abzurechnen. Rechtsgrundlage ist
+        Art. 6 Abs. 1 lit. e DSGVO (öffentliche Aufgabe) beziehungsweise
+        Art. 6 Abs. 1 lit. b DSGVO, sobald ein Mietverhältnis zustande kommt.
+      </p>
+      <p>
+        Im öffentlichen Belegungsplan erscheint <strong>nur</strong>, dass ein
+        Raum belegt ist — weder Ihr Name noch der Anlass.
+      </p>
+      <div class="grh-ds-todo">
+        <strong>Noch zu ergänzen:</strong> die Aufbewahrungsfrist. Für
+        abgerechnete Vorgänge gelten die kommunalen Aufbewahrungsvorschriften;
+        die zutreffende Frist muss die Gemeinde benennen.
+      </div>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>10. Beiträge fürs Amtsblatt einreichen</h2>
+      <p>
+        Für das Einreichen von Beiträgen melden Sie sich über einen Link an, den
+        wir Ihnen per E-Mail schicken — ein Passwort brauchen Sie nicht.
+        Gespeichert werden Ihre E-Mail-Adresse, Ihr Name, die Einrichtung, für
+        die Sie schreiben, sowie Ihr Beitrag mit den hochgeladenen Bildern.
+      </p>
+      <p>
+        Der Anmeldelink ist eine Stunde gültig, die Anmeldung selbst acht
+        Stunden. Rechtsgrundlage ist Art. 6 Abs. 1 lit. e DSGVO — die
+        Herausgabe des Amtsblatts ist eine gemeindliche Aufgabe.
+      </p>
+      <p>
+        <strong>Wichtig zu Bildern:</strong> Laden Sie nur Aufnahmen hoch, für
+        die Sie die Rechte besitzen. Sind Personen erkennbar abgebildet, müssen
+        diese der Veröffentlichung zugestimmt haben. Bei Kindern brauchen Sie
+        die Zustimmung der Erziehungsberechtigten.
+      </p>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>11. Ihre Rechte</h2>
+      <p>Sie können jederzeit von uns verlangen:</p>
+      <ul class="grh-ds-list">
+        <li><strong>Auskunft</strong> darüber, welche Daten wir über Sie gespeichert haben (Art. 15 DSGVO)</li>
+        <li><strong>Berichtigung</strong>, wenn etwas falsch ist (Art. 16 DSGVO)</li>
+        <li><strong>Löschung</strong>, sofern keine Aufbewahrungspflicht entgegensteht (Art. 17 DSGVO)</li>
+        <li><strong>Einschränkung</strong> der Verarbeitung (Art. 18 DSGVO)</li>
+        <li><strong>Herausgabe</strong> Ihrer Daten in einem gängigen Format (Art. 20 DSGVO)</li>
+        <li><strong>Widerspruch</strong> gegen Verarbeitungen, die auf einer Aufgabenwahrnehmung oder berechtigtem Interesse beruhen (Art. 21 DSGVO)</li>
+      </ul>
+      <p>
+        Eine formlose Nachricht an
+        <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a> genügt.
+        Erteilte Einwilligungen können Sie jederzeit widerrufen; die
+        Rechtmäßigkeit der bis dahin erfolgten Verarbeitung bleibt davon
+        unberührt.
+      </p>
+      <p>
+        Sind Sie mit unserem Umgang nicht einverstanden, können Sie sich
+        beschweren bei:
+      </p>
+      <p>
+        Sächsischer Datenschutzbeauftragter<br />
+        Devrientstraße 5, 01067 Dresden<br />
+        <a href="https://www.saechsdsb.de" rel="noopener">www.saechsdsb.de</a>
+      </p>
+    </section>
+
+    <section class="grh-ds-sec">
+      <h2>12. Änderungen</h2>
+      <p>
+        Ändert sich etwas an der Website, passen wir diese Erklärung an. Es gilt
+        jeweils die hier veröffentlichte Fassung; das Datum oben zeigt den
+        aktuellen Stand.
+      </p>
+    </section>
+
+  </div>
 </BaseLayout>
+
+<style>
+  .grh-ds-head {
+    background: var(--grh-bg-section, #E4F0E6);
+    padding: clamp(2rem, 5vw, 3.5rem) 0 clamp(1.5rem, 3vw, 2.5rem);
+  }
+  .grh-ds-crumb {
+    margin: 0 0 0.5rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--grh-forest-700, #2A6B43);
+  }
+  .grh-ds-title {
+    margin: 0 0 0.75rem;
+    color: var(--grh-forest-900, #1A3D27);
+  }
+  .grh-ds-lead {
+    margin: 0;
+    max-width: 60ch;
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    line-height: 1.65;
+    color: var(--grh-stone-700, #3D423A);
+  }
+  .grh-ds-stand {
+    margin: 1rem 0 0;
+    font-size: 0.85rem;
+    color: var(--grh-stone-400, #8D9388);
+  }
+
+  .grh-ds {
+    padding: clamp(2rem, 5vw, 3.5rem) 0 clamp(3rem, 7vw, 5rem);
+  }
+  /* Die Zeilenlänge pro Abschnitt begrenzen statt am Container — sonst würde
+     der schmalere Block innerhalb des Containers zentriert und stünde nicht
+     mehr bündig unter der Überschrift. */
+  .grh-ds-sec { max-width: 48rem; }
+  .grh-ds-sec + .grh-ds-sec { margin-top: clamp(2rem, 4vw, 3rem); }
+  .grh-ds-sec h2 {
+    margin: 0 0 0.9rem;
+    font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+    color: var(--grh-forest-900, #1A3D27);
+  }
+  .grh-ds-sec p {
+    margin: 0 0 0.9rem;
+    line-height: 1.7;
+    color: var(--grh-stone-700, #3D423A);
+  }
+  .grh-ds-sec a { color: var(--grh-forest-700, #2A6B43); }
+  .grh-ds-sec code {
+    background: var(--grh-paper-100, #F2EDE3);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  .grh-ds-list { margin: 0 0 0.9rem; padding-left: 1.2rem; }
+  .grh-ds-list li { margin-bottom: 0.45rem; line-height: 1.6; color: var(--grh-stone-700, #3D423A); }
+
+  .grh-ds-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+  }
+  .grh-ds-table th,
+  .grh-ds-table td {
+    text-align: left;
+    padding: 0.6rem 0.7rem;
+    border-bottom: 1px solid var(--grh-line, #D8D2C4);
+  }
+  .grh-ds-table th { color: var(--grh-forest-900, #1A3D27); }
+
+  /* Hinweis auf Angaben, die nur die Gemeinde liefern kann. */
+  .grh-ds-todo {
+    margin: 1rem 0 0;
+    padding: 0.85rem 1rem;
+    border-left: 3px solid var(--grh-candle-500, #E8B658);
+    background: var(--grh-paper-100, #F2EDE3);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .grh-ds-btn {
+    font: inherit;
+    padding: 0.65rem 1.3rem;
+    border: 1px solid var(--grh-forest-900, #1A3D27);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--grh-forest-900, #1A3D27);
+    cursor: pointer;
+  }
+  .grh-ds-btn:hover { background: var(--grh-forest-900, #1A3D27); color: var(--grh-cream-50, #FAF7F1); }
+  .grh-ds-btn:focus-visible { outline: 3px solid var(--grh-candle-500, #E8B658); outline-offset: 2px; }
+</style>

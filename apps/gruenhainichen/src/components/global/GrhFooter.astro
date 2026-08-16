@@ -72,7 +72,9 @@ const year = new Date().getFullYear();
       <ul>
         <li><a href="/impressum">Impressum</a></li>
         <li><a href="/datenschutz">Datenschutz</a></li>
-        <li><a href="/cookie-einstellungen">Cookies</a></li>
+        {/* Öffnet den Einwilligungsdialog erneut — die Wahl muss jederzeit
+            widerrufbar sein. Zeigte vorher auf eine Seite, die es nie gab (404). */}
+        <li><a href="/datenschutz#cookies" data-grh-consent-open>Cookie-Einstellungen</a></li>
         <li><a href="/barrierefreiheit">Barrierefreiheit</a></li>
       </ul>
     </div>

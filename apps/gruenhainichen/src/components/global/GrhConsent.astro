@@ -1,0 +1,370 @@
+---
+/**
+ * Einwilligungsbanner (DSGVO / TDDDG § 25)
+ *
+ * Grundsatz: Vor einer Einwilligung verlässt kein Byte die eigene Infrastruktur.
+ * Deshalb wird das Analyse-Skript erst nach Zustimmung nachgeladen und
+ * Video-Einbettungen werden bis dahin durch eine Vorschau ersetzt.
+ *
+ * Bewusst ohne fremde Consent-Bibliothek: Die üblichen Dienste laden ihrerseits
+ * von externen Servern und würden das Problem verlagern statt lösen.
+ *
+ * Gleichwertigkeit der Wahl: „Nur notwendige" ist genauso prominent wie
+ * „Alle akzeptieren" — beides gleich große Schaltflächen, keine Vorauswahl.
+ */
+const GA_ID = 'G-53WWV26GSF';
+---
+
+<div id="grh-consent" class="grh-consent" hidden aria-live="polite">
+  <div class="grh-consent__box" role="dialog" aria-modal="false"
+       aria-labelledby="grh-consent-title" aria-describedby="grh-consent-desc">
+
+    <h2 id="grh-consent-title" class="grh-consent__title">Ihre Entscheidung über Cookies</h2>
+
+    <p id="grh-consent-desc" class="grh-consent__text">
+      Damit diese Seite funktioniert, brauchen wir keine Cookies — und setzen deshalb auch keine.
+      Nur zwei Dinge möchten wir Ihnen anbieten, und beide nur mit Ihrer Zustimmung:
+      eine anonyme Auswertung, welche Seiten gelesen werden, und das Abspielen
+      eingebetteter Videos. Sie können beides einzeln erlauben und Ihre Wahl
+      jederzeit ändern.
+    </p>
+
+    <div id="grh-consent-details" class="grh-consent__details" hidden>
+      <label class="grh-consent__option">
+        <input type="checkbox" checked disabled />
+        <span>
+          <strong>Notwendig</strong>
+          <em>Ihre Cookie-Entscheidung selbst wird lokal in Ihrem Browser gespeichert,
+          damit wir nicht bei jedem Besuch erneut fragen. Sie verlässt Ihr Gerät nicht.</em>
+        </span>
+      </label>
+
+      <label class="grh-consent__option">
+        <input type="checkbox" id="grh-consent-stats" />
+        <span>
+          <strong>Statistik</strong>
+          <em>Google Analytics zeigt uns, welche Inhalte gefragt sind. Dabei wird Ihre
+          IP-Adresse gekürzt und an Google übertragen, auch in die USA.
+          Ohne Ihre Zustimmung wird nichts geladen.</em>
+        </span>
+      </label>
+
+      <label class="grh-consent__option">
+        <input type="checkbox" id="grh-consent-media" />
+        <span>
+          <strong>Externe Videos</strong>
+          <em>Einzelne Seiten enthalten YouTube-Videos. Beim Abspielen erhält Google
+          Ihre IP-Adresse. Ohne Zustimmung zeigen wir stattdessen eine Vorschau,
+          die Sie einzeln freigeben können.</em>
+        </span>
+      </label>
+    </div>
+
+    <div class="grh-consent__actions">
+      <button type="button" id="grh-consent-all"  class="grh-consent__btn grh-consent__btn--primary">
+        Alle akzeptieren
+      </button>
+      <button type="button" id="grh-consent-none" class="grh-consent__btn grh-consent__btn--primary">
+        Nur notwendige
+      </button>
+      <button type="button" id="grh-consent-save" class="grh-consent__btn grh-consent__btn--ghost" hidden>
+        Auswahl speichern
+      </button>
+      <button type="button" id="grh-consent-more" class="grh-consent__btn grh-consent__btn--ghost">
+        Einstellungen
+      </button>
+    </div>
+
+    <p class="grh-consent__legal">
+      <a href="/datenschutz/">Datenschutzerklärung</a> · <a href="/impressum/">Impressum</a>
+    </p>
+  </div>
+</div>
+
+<script is:inline define:vars={{ GA_ID }}>
+  (function () {
+    var KEY = 'grh-consent';
+    var VERSION = 1;
+
+    function read() {
+      try {
+        var v = JSON.parse(localStorage.getItem(KEY) || 'null');
+        return v && v.v === VERSION ? v : null;
+      } catch (e) { return null; }
+    }
+
+    function write(stats, media) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify({
+          v: VERSION, stats: !!stats, media: !!media, ts: new Date().toISOString(),
+        }));
+      } catch (e) { /* Privater Modus o. Ä. — dann gilt die Wahl nur für diesen Besuch. */ }
+    }
+
+    // ---- Statistik ------------------------------------------------------
+    var gaLoaded = false;
+    function loadAnalytics() {
+      if (gaLoaded || !GA_ID) return;
+      gaLoaded = true;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { window.dataLayer.push(arguments); }
+      window.gtag = gtag;
+      gtag('js', new Date());
+      // IP-Kürzung und keine Werbe-Funktionen — die Gemeinde wirbt nicht.
+      gtag('config', GA_ID, { anonymize_ip: true, allow_google_signals: false });
+    }
+
+    // ---- Externe Videos --------------------------------------------------
+    // Vor der Einwilligung wird jedes Video durch eine Vorschau ersetzt. Ein
+    // Klick darauf lädt genau dieses eine Video — auch ohne Dauer-Zustimmung.
+    function shieldVideos() {
+      var frames = document.querySelectorAll('iframe[src*="youtube.com"], iframe[src*="youtube-nocookie.com"], iframe[src*="youtu.be"]');
+      Array.prototype.forEach.call(frames, function (f) {
+        if (f.dataset.grhShielded) return;
+        var src = f.getAttribute('src');
+        if (!src) return;
+
+        var ph = document.createElement('div');
+        ph.className = 'grh-video-shield';
+        ph.style.aspectRatio = (f.getAttribute('width') || 16) + ' / ' + (f.getAttribute('height') || 9);
+        ph.innerHTML =
+          '<p class="grh-video-shield__text">Hier liegt ein Video bei YouTube.<br>' +
+          'Beim Abspielen erhält Google Ihre IP-Adresse.</p>' +
+          '<button type="button" class="grh-video-shield__btn">Video laden</button>' +
+          '<p class="grh-video-shield__hint"><a href="/datenschutz/">Mehr dazu in der Datenschutzerklärung</a></p>';
+
+        ph.querySelector('button').addEventListener('click', function () {
+          var real = document.createElement('iframe');
+          // Immer die cookiefreie Variante verwenden, auch wenn im Inhalt anders hinterlegt.
+          real.src = src.replace('www.youtube.com', 'www.youtube-nocookie.com') +
+                     (src.indexOf('?') > -1 ? '&' : '?') + 'autoplay=1';
+          real.width = f.getAttribute('width') || '560';
+          real.height = f.getAttribute('height') || '315';
+          real.title = f.getAttribute('title') || 'Video';
+          real.loading = 'lazy';
+          real.setAttribute('frameborder', '0');
+          real.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; picture-in-picture');
+          real.setAttribute('allowfullscreen', '');
+          ph.replaceWith(real);
+        });
+
+        f.dataset.grhShielded = '1';
+        f.replaceWith(ph);
+      });
+    }
+
+    function releaseVideos() {
+      // Bei erteilter Zustimmung die Vorschauen gar nicht erst einsetzen.
+      document.querySelectorAll('.grh-video-shield').forEach(function (ph) {
+        var b = ph.querySelector('button');
+        if (b) b.click();
+      });
+    }
+
+    // ---- Anwenden --------------------------------------------------------
+    function apply(c) {
+      if (c && c.stats) loadAnalytics();
+      if (!c || !c.media) shieldVideos(); else releaseVideos();
+    }
+
+    // ---- Banner ----------------------------------------------------------
+    var el = document.getElementById('grh-consent');
+    var details = document.getElementById('grh-consent-details');
+    var cbStats = document.getElementById('grh-consent-stats');
+    var cbMedia = document.getElementById('grh-consent-media');
+    var btnSave = document.getElementById('grh-consent-save');
+    var btnMore = document.getElementById('grh-consent-more');
+
+    function show() {
+      var c = read();
+      if (cbStats) cbStats.checked = !!(c && c.stats);
+      if (cbMedia) cbMedia.checked = !!(c && c.media);
+      el.hidden = false;
+    }
+    function hide() { el.hidden = true; }
+
+    function decide(stats, media) {
+      write(stats, media);
+      hide();
+      apply({ stats: stats, media: media });
+    }
+
+    document.getElementById('grh-consent-all').addEventListener('click', function () { decide(true, true); });
+    document.getElementById('grh-consent-none').addEventListener('click', function () { decide(false, false); });
+    btnSave.addEventListener('click', function () { decide(cbStats.checked, cbMedia.checked); });
+    btnMore.addEventListener('click', function () {
+      details.hidden = false;
+      btnMore.hidden = true;
+      btnSave.hidden = false;
+    });
+
+    // Aus der Datenschutzerklärung oder dem Fuß heraus erneut aufrufbar.
+    window.grhOpenConsent = function () {
+      details.hidden = false;
+      btnMore.hidden = true;
+      btnSave.hidden = false;
+      show();
+    };
+    document.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-grh-consent-open]');
+      if (t) { e.preventDefault(); window.grhOpenConsent(); }
+    });
+
+    var stored = read();
+    if (stored) apply(stored); else { shieldVideos(); show(); }
+
+    // Inhalte, die erst nachträglich aus WordPress kommen, ebenfalls absichern.
+    document.addEventListener('DOMContentLoaded', function () {
+      var c = read();
+      if (!c || !c.media) shieldVideos();
+    });
+  })();
+</script>
+
+<style>
+  .grh-consent {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    background: rgba(20, 43, 31, 0.28);
+    backdrop-filter: blur(2px);
+  }
+  .grh-consent[hidden] { display: none; }
+
+  .grh-consent__box {
+    width: min(58rem, 100%);
+    background: var(--grh-cream-50, #FAF7F1);
+    border: 1px solid var(--grh-line, #D8D2C4);
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(20, 43, 31, 0.22);
+    padding: clamp(1.1rem, 2.5vw, 1.75rem);
+  }
+
+  .grh-consent__title {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.1rem, 2.2vw, 1.35rem);
+    color: var(--grh-forest-900, #1A3D27);
+  }
+
+  .grh-consent__text {
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--grh-stone-700, #3D423A);
+    max-width: 62ch;
+  }
+
+  .grh-consent__details {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0 0 1.1rem;
+    padding: 0.9rem;
+    background: var(--grh-paper-100, #F2EDE3);
+    border-radius: 10px;
+  }
+  /* Muss nach der display-Regel stehen, sonst gewinnt „display: grid"
+     gegen das hidden-Attribut und die Auswahl klappt sofort auf. */
+  .grh-consent__details[hidden] { display: none; }
+  .grh-consent__btn[hidden] { display: none; }
+  .grh-consent__option {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem;
+    align-items: start;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  .grh-consent__option input { margin-top: 0.25rem; width: 1.05rem; height: 1.05rem; accent-color: var(--grh-forest-700, #2A6B43); }
+  .grh-consent__option strong { display: block; color: var(--grh-forest-900, #1A3D27); }
+  .grh-consent__option em {
+    display: block;
+    font-style: normal;
+    color: var(--grh-stone-700, #3D423A);
+    line-height: 1.5;
+    margin-top: 0.15rem;
+  }
+
+  .grh-consent__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .grh-consent__btn {
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.7rem 1.25rem;
+    border-radius: 999px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color 160ms ease, border-color 160ms ease;
+  }
+  /* Annehmen und Ablehnen sind bewusst gleich gestaltet — keine Nudges. */
+  .grh-consent__btn--primary {
+    background: var(--grh-forest-900, #1A3D27);
+    color: var(--grh-cream-50, #FAF7F1);
+    flex: 1 1 14rem;
+  }
+  .grh-consent__btn--primary:hover { background: var(--grh-forest-700, #2A6B43); }
+  .grh-consent__btn--ghost {
+    background: transparent;
+    color: var(--grh-forest-900, #1A3D27);
+    border-color: var(--grh-line, #D8D2C4);
+  }
+  .grh-consent__btn--ghost:hover { border-color: var(--grh-forest-700, #2A6B43); }
+  .grh-consent__btn:focus-visible { outline: 3px solid var(--grh-candle-500, #E8B658); outline-offset: 2px; }
+
+  .grh-consent__legal {
+    margin: 0.9rem 0 0;
+    font-size: 0.82rem;
+    color: var(--grh-stone-400, #8D9388);
+  }
+  .grh-consent__legal a { color: inherit; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grh-consent__btn { transition: none; }
+  }
+</style>
+
+<style is:global>
+  /* Vorschau anstelle eines noch nicht freigegebenen Videos. */
+  .grh-video-shield {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 100%;
+    padding: 1.5rem;
+    text-align: center;
+    background: var(--grh-paper-100, #F2EDE3);
+    border: 1px dashed var(--grh-line, #D8D2C4);
+    border-radius: 12px;
+  }
+  .grh-video-shield__text {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--grh-stone-700, #3D423A);
+  }
+  .grh-video-shield__btn {
+    font: inherit;
+    padding: 0.6rem 1.4rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--grh-forest-900, #1A3D27);
+    color: var(--grh-cream-50, #FAF7F1);
+    cursor: pointer;
+  }
+  .grh-video-shield__btn:hover { background: var(--grh-forest-700, #2A6B43); }
+  .grh-video-shield__hint { margin: 0; font-size: 0.8rem; }
+  .grh-video-shield__hint a { color: var(--grh-stone-400, #8D9388); }
+</style>

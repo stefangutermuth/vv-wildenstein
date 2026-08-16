@@ -281,8 +281,10 @@ const timeWindow = room.openFrom && room.openTo
     </div>
   </section>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js" is:inline></script>
+  {/* Lokal ausgeliefert statt über ein CDN — sonst ginge die IP jedes Besuchers
+      an einen Dritten, und der Kalender wäre einwilligungspflichtig.
+      FullCalendar 6 bringt seine Styles im JavaScript mit; eine CSS-Datei gibt es nicht. */}
+  <script src="/vendor/fullcalendar/index.global.min.js" is:inline></script>
   <script is:inline define:vars={{ roomId: room.id, api: VVW_API_BASE }}>
     (() => {
       const calEl = document.getElementById('grh-calendar');
