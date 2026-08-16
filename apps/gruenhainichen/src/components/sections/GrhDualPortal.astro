@@ -71,7 +71,10 @@ const linkSvgs = Object.fromEntries(await Promise.all(allSlugs.map(async s => [s
         <div class="grh-dualportal__icon-wrap" set:html={headSvgs[p.fa]} />
         <div>
           <span class="grh-eyebrow">{p.eyebrow}</span>
-          <h3 class="grh-dualportal__title">{p.title}</h3>
+          {/* h2, nicht h3: Dieser Block folgt auf der Startseite direkt der h1.
+              Eine übersprungene Ebene lässt Screenreader-Nutzer vermuten, sie
+              hätten einen Abschnitt überhört. Die Größe steuert die Klasse. */}
+          <h2 class="grh-dualportal__title">{p.title}</h2>
         </div>
       </div>
 

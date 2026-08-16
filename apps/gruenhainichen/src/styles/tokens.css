@@ -11,7 +11,11 @@
   --grh-forest-900: #1A3D27;
   --grh-forest-800: #1B4A2F;
   --grh-forest-700: #2A6B43;
-  --grh-moss-600:   #3E8C5A;
+  /* Abgedunkelt von #3E8C5A auf 5,57:1 gegen Creme (vorher 3,85:1).
+     Dieser Ton wird 117-mal als Textfarbe eingesetzt und verfehlte damit
+     durchgehend die für BITV 2.0 nötigen 4,5:1. Als Fläche kommt er nur
+     siebenmal vor — dort ist die Abdunklung unkritisch. */
+  --grh-moss-600:   #2F7046;
   --grh-moss-500:   #5BAE78;
   --grh-sage-300:   #A8CDB3;
   --grh-sage-100:   #E4F0E6;
@@ -21,12 +25,19 @@
   --grh-wood-500:      #A6794E;
   --grh-sandstone-300: #D9C4A3;
   --grh-candle-500:    #E8B658;
+  /* Lichtergold ist auf dunklem Grund richtig, auf hellem aber unlesbar:
+     #E8B658 erreicht auf Papier nur 1,60:1. Dieser dunklere Ton kommt auf
+     4,69:1 und ist für Text auf hellen Flächen gedacht. */
+  --grh-candle-700:    #8A6210;
   --grh-candle-300:    #F6DDA0;
 
   /* --- Neutrale Töne -------------------------------------- */
   --grh-cream-50:   #FAF7F1;
   --grh-paper-100:  #F2EDE3;
-  --grh-stone-400:  #8D9388;
+  /* Abgedunkelt von #8D9388 auf 5,11:1 gegen Creme (vorher 2,95:1).
+     Trägt als --grh-text-muted 116 Textstellen und lag deutlich unter der
+     Anforderung. Der Grauton bleibt derselbe, nur dunkler. */
+  --grh-stone-400:  #666B61;
   --grh-stone-700:  #3D423A;
   --grh-line:       #D8D2C4;
 

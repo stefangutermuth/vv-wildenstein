@@ -417,7 +417,9 @@ const aemter = [
     font-weight: 700;
   }
   .grh-vw-member--current .grh-vw-member__badge {
-    background: var(--grh-moss-500);
+    /* moss-500 war zu hell: Creme darauf ergab nur 2,53:1. Mit moss-600
+       sind es 5,57:1 — bei 9px Schrift nötig. */
+    background: var(--grh-moss-600);
     color: var(--grh-cream-50);
   }
   .grh-vw-member h3 {

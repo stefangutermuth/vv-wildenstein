@@ -14,8 +14,21 @@ interface Item {
 interface Props {
   items: Item[];
   empty?: string;
+  /**
+   * Überschrift der Kachelgruppe, nur für Vorlesesoftware.
+   * Die Kacheltitel sind h3. Auf den Listenseiten folgen sie direkt der h1,
+   * wodurch die Ebene h2 übersprungen wird — Screenreader-Nutzer vermuten
+   * dann einen überhörten Abschnitt. Diese Überschrift schließt die Lücke,
+   * ohne die Gestaltung zu verändern. Mit `null` lässt sie sich abschalten,
+   * wenn auf der Seite bereits eine sichtbare h2 darübersteht.
+   */
+  gruppenTitel?: string | null;
 }
-const { items, empty = 'Hier sind aktuell keine Einträge gepflegt.' } = Astro.props;
+const {
+  items,
+  empty = 'Hier sind aktuell keine Einträge gepflegt.',
+  gruppenTitel = 'Übersicht',
+} = Astro.props;
 ---
 {items.length === 0 ? (
   <div class="grh-cardgrid-empty">
@@ -23,6 +36,7 @@ const { items, empty = 'Hier sind aktuell keine Einträge gepflegt.' } = Astro.p
   </div>
 ) : (
   <div class="grh-cardgrid">
+    {gruppenTitel && <h2 class="grh-visually-hidden grh-cardgrid__label">{gruppenTitel}</h2>}
     {items.map((it) => (
       <a class={`grh-card ${it.image ? '' : 'grh-card--text'}`} href={it.href}>
         {it.image && (

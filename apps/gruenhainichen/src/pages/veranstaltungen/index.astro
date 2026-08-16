@@ -132,6 +132,11 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
       </div>
 
       {/* Card-View (default) */}
+      {/* Die Kartentitel sind h3, ohne dass eine h2 dazwischenliegt. Für
+          Screenreader-Nutzer wirkt das wie ein übersprungener Abschnitt.
+          Die Monatsansicht hat solche Zwischenüberschriften bereits sichtbar;
+          hier trägt sie nur die Vorlesesoftware. */}
+      <h2 class="grh-visually-hidden">Veranstaltungen als Kacheln</h2>
       <div class="grh-ev-cards" data-grh-ev-pane="cards">
         {enriched.map((e) => (
           <a
@@ -165,6 +170,7 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
       </div>
 
       {/* List-View */}
+      <h2 class="grh-visually-hidden">Veranstaltungen als Liste</h2>
       <div class="grh-ev-list" data-grh-ev-pane="list" hidden>
         {enriched.map((e) => (
           <a

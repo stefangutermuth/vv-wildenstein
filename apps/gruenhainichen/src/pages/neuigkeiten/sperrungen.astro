@@ -102,6 +102,8 @@ const rows: Row[] = sperrungen.map((n, i) => ({
         </p>
       )}
 
+      {/* Die Titel der Sperrungen sind h3 und folgen direkt auf die h1. */}
+      <h2 class="grh-visually-hidden">Liste der Sperrungen</h2>
       <ol class="grh-spliste" aria-label="Sperrungen-Liste">
         {rows.map((r) => (
           <li>

@@ -21,10 +21,33 @@ p { text-wrap: pretty; }
 a { color: inherit; text-decoration: none; }
 ul, ol { list-style: none; padding: 0; }
 
+/* Fokusring für Tastaturbedienung.
+   Zweifarbig, weil ein einfarbiger Ring nicht überall erkennbar wäre: Das
+   Lichtergold erreicht auf hellem Untergrund nur 1,74:1 — WCAG 1.4.11
+   verlangt 3,0:1. Der dunkle Saum darunter sorgt für den Kontrast auf
+   hellen Flächen, das Gold für den auf dunklen. */
 :focus-visible {
   outline: 3px solid var(--grh-focus-ring);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--grh-forest-900);
   border-radius: var(--grh-radius-sm);
+}
+
+/* Mehrere Komponenten setzen auf :focus ein `outline: none` und zeigen
+   stattdessen nur einen eingefärbten Rahmen. Wegen der höheren Spezifität
+   schlägt das die Regel oben — Tastaturnutzer verlieren dort den Ring.
+   Diese Regel holt ihn zurück. Das !important ist hier bewusst gesetzt:
+   Die Erreichbarkeit per Tastatur darf nicht davon abhängen, dass jede
+   künftige Komponente daran denkt. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--grh-focus-ring) !important;
+  outline-offset: 2px !important;
 }
 
 ::selection {

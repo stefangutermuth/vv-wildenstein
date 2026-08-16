@@ -1,12 +1,284 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import GrhPagePlaceholder from '../components/global/GrhPagePlaceholder.astro';
+
+/**
+ * Erklärung zur Barrierefreiheit (BITV 2.0 / § 3 SächsInklusG)
+ *
+ * Grundlage ist eine Selbstbewertung vom 16.08.2026: automatisierte Prüfung
+ * von 30 Seiten aller Vorlagen auf Kontrastwerte, Überschriftenhierarchie,
+ * Alternativtexte, Formularbeschriftungen und Bedienbarkeit per Tastatur.
+ *
+ * Was dabei gefunden und behoben wurde, ist im Abschnitt „Was wir geprüft
+ * haben" beschrieben. Der Text nennt bewusst auch, was NICHT geprüft wurde —
+ * eine Erklärung, die Vollständigkeit behauptet, wäre falsch.
+ *
+ * Bei Änderungen an Farben, Formularen oder eingebetteten Inhalten gehört
+ * diese Seite überarbeitet und das Datum der Bewertung angepasst.
+ */
+
+const stand = '16. August 2026';
 ---
-<BaseLayout title="Barrierefreiheit · Grünhainichen" header="compact">
-  <GrhPagePlaceholder
-    title="Barrierefreiheit"
-    breadcrumb="Service · Barrierefreiheit"
-    description="Erklärung zur Barrierefreiheit dieser Website."
-    hints={["Konformität WCAG","Bekannte Hürden","Feedback-Adresse","Schlichtungsstelle"]}
-  />
+
+<BaseLayout
+  title="Erklärung zur Barrierefreiheit · Grünhainichen"
+  description="Wie barrierefrei die Website der Gemeinde Grünhainichen ist, was geprüft wurde und wo es noch hakt."
+  header="compact"
+>
+  <header class="grh-bf-head">
+    <div class="grh-container">
+      <p class="grh-bf-crumb">Service · Barrierefreiheit</p>
+      <h1 class="grh-bf-title">Erklärung zur Barrierefreiheit</h1>
+      <p class="grh-bf-lead">
+        Diese Website soll für alle nutzbar sein — auch mit Vorlesesoftware,
+        per Tastatur oder bei eingeschränktem Sehvermögen. Hier steht, wie weit
+        wir damit sind.
+      </p>
+      <p class="grh-bf-stand">Stand: {stand}</p>
+    </div>
+  </header>
+
+  <div class="grh-container grh-bf">
+
+    <section class="grh-bf-sec">
+      <h2>Geltungsbereich</h2>
+      <p>
+        Diese Erklärung gilt für die Website
+        <strong>www.gruenhainichen.com</strong> der Gemeinde Grünhainichen.
+      </p>
+      <p>
+        Sie gilt <em>nicht</em> für das frühere Internetangebot unter
+        <code>alt.gruenhainichen.com</code>, das nur noch als Archiv erreichbar
+        ist, und nicht für Websites Dritter, auf die wir verlinken.
+      </p>
+    </section>
+
+    <section class="grh-bf-sec">
+      <h2>Stand der Vereinbarkeit</h2>
+      <p>
+        Die Website ist mit der Barrierefreie-Informationstechnik-Verordnung
+        (BITV 2.0) nach unserer Einschätzung <strong>weitgehend
+        vereinbar</strong>. Die unten genannten Punkte sind noch offen.
+      </p>
+      <p>
+        Grundlage ist eine Selbstbewertung, keine Prüfung durch eine
+        unabhängige Stelle. Sie wurde am {stand} durchgeführt.
+      </p>
+    </section>
+
+    <section class="grh-bf-sec">
+      <h2>Was wir geprüft haben</h2>
+      <p>
+        Automatisiert untersucht wurden 30 Seiten, die alle Seitenvorlagen des
+        Angebots abdecken — Startseite, Übersichten, Detailseiten, Formulare
+        und Rechtstexte. Geprüft wurde auf:
+      </p>
+      <ul class="grh-bf-list">
+        <li>Kontrast zwischen Text und Hintergrund</li>
+        <li>Reihenfolge und Vollständigkeit der Überschriften</li>
+        <li>Alternativtexte bei Bildern</li>
+        <li>Beschriftung von Formularfeldern</li>
+        <li>Erkennbare Namen für Links und Schaltflächen</li>
+        <li>Sichtbarkeit der Tastaturmarkierung</li>
+      </ul>
+      <p>
+        Dabei gefundene Mängel haben wir behoben, unter anderem:
+      </p>
+      <ul class="grh-bf-list">
+        <li>
+          Zwei durchgehend verwendete Textfarben waren zu hell. Sie erreichten
+          2,95:1 beziehungsweise 3,85:1, verlangt sind 4,5:1. Beide wurden
+          abgedunkelt und liegen nun bei 5,11:1 und 5,57:1.
+        </li>
+        <li>
+          Datums- und Kapazitätsangaben stehen über Fotos. Bei hellen
+          Aufnahmen waren sie kaum lesbar; sie haben jetzt eine ausreichend
+          deckende Unterlegung.
+        </li>
+        <li>
+          Die Markierung des Tastaturfokus war goldfarben und hob sich auf
+          hellem Grund nur mit 1,74:1 ab. Sie hat jetzt zusätzlich einen
+          dunklen Saum. An einigen Stellen war sie ganz abgeschaltet.
+        </li>
+        <li>
+          Auf mehreren Übersichtsseiten fehlte eine Gliederungsebene, sodass
+          Vorlesesoftware einen übersprungenen Abschnitt vermuten ließ.
+        </li>
+        <li>
+          Zwei Formularfelder waren nicht mit ihrer sichtbaren Beschriftung
+          verknüpft.
+        </li>
+      </ul>
+    </section>
+
+    <section class="grh-bf-sec">
+      <h2>Nicht barrierefreie Inhalte</h2>
+
+      <h3>Veröffentlichte PDF-Dokumente</h3>
+      <p>
+        Amtsblätter, Formulare, Satzungen und Bekanntmachungen stellen wir als
+        PDF bereit. Diese Dateien sind überwiegend <strong>nicht
+        barrierefrei</strong>: Es fehlen Verschlagwortung, Lesereihenfolge und
+        Alternativtexte, und ältere Ausgaben sind eingescannt und damit für
+        Vorlesesoftware nicht erfassbar.
+      </p>
+      <p>
+        Wir arbeiten daran, künftige Ausgaben barrierefrei anzulegen. Ältere
+        Dokumente lassen sich nachträglich nur mit erheblichem Aufwand
+        umarbeiten. <strong>Brauchen Sie ein bestimmtes Dokument in
+        zugänglicher Form, melden Sie sich — wir stellen es Ihnen zur
+        Verfügung.</strong>
+      </p>
+
+      <h3>Inhalte aus dem Redaktionssystem</h3>
+      <p>
+        Nachrichten und Veranstaltungshinweise pflegen Mitarbeitende und
+        Vereine selbst ein. Trotz Schulung kann es vorkommen, dass ein Bild
+        ohne Alternativtext oder eine unklare Linkbeschriftung veröffentlicht
+        wird. Wir prüfen das laufend und bessern nach.
+      </p>
+
+      <h3>Eingebettete Videos</h3>
+      <p>
+        Auf einzelnen Seiten sind Videos von YouTube eingebunden. Ob sie
+        Untertitel haben, entscheidet der jeweilige Urheber; auf fremde
+        Aufnahmen haben wir keinen Einfluss.
+      </p>
+
+      <h3>Kartendarstellung der Straßensperrungen</h3>
+      <p>
+        Die Karte auf der Seite zu Sperrungen ist visuell. Alle darauf
+        verzeichneten Sperrungen stehen aber <strong>zusätzlich als Liste</strong>
+        darunter — mit Ort, Zeitraum und Beschreibung. Die Karte enthält keine
+        Angaben, die nicht auch in der Liste stehen.
+      </p>
+
+      <h3>Leichte Sprache und Gebärdensprache</h3>
+      <p>
+        Erklärungen in Leichter Sprache und in Deutscher Gebärdensprache haben
+        wir noch nicht. Sie sind vorgesehen.
+      </p>
+    </section>
+
+    <section class="grh-bf-sec">
+      <h2>Was diese Prüfung nicht abdeckt</h2>
+      <p>
+        Der Vollständigkeit halber: Die Bewertung war überwiegend
+        automatisiert. Nicht oder nur stichprobenhaft geprüft wurden
+        Verständlichkeit der Sprache, Aussagekraft der vorhandenen
+        Alternativtexte, die Bedienung mit echten Hilfsmitteln wie NVDA,
+        JAWS oder VoiceOver sowie das Verhalten bei starker Vergrößerung.
+      </p>
+      <p>
+        Eine Prüfung durch eine unabhängige Stelle würde deshalb
+        möglicherweise weitere Punkte finden.
+      </p>
+    </section>
+
+    <section class="grh-bf-sec">
+      <h2>Sie stoßen auf eine Hürde?</h2>
+      <p>
+        Dann sagen Sie uns bitte Bescheid. Beschreiben Sie kurz, welche Seite
+        es betrifft und was nicht funktioniert hat — das hilft uns beim
+        Nachvollziehen.
+      </p>
+      <p>
+        Gemeinde Grünhainichen<br />
+        Chemnitzer Straße 41, 09579 Grünhainichen<br />
+        Telefon: <a href="tel:+49372941700">03 72 94 / 170-0</a><br />
+        E-Mail: <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a>
+      </p>
+      <p>
+        Wir antworten so schnell wie möglich, spätestens innerhalb eines Monats.
+      </p>
+    </section>
+
+    <section class="grh-bf-sec">
+      <h2>Schlichtungsverfahren</h2>
+      <p>
+        Wenn Sie mit unserer Antwort nicht zufrieden sind oder gar keine
+        erhalten, können Sie die Schlichtungsstelle anrufen. Das Verfahren ist
+        <strong>kostenlos</strong>, und Sie brauchen keinen Rechtsbeistand.
+      </p>
+      <p>
+        Sächsische Schlichtungsstelle nach § 15 SächsInklusG<br />
+        beim Beauftragten der Sächsischen Staatsregierung für die Belange von
+        Menschen mit Behinderungen<br />
+        Albertstraße 10, 01097 Dresden<br />
+        Telefon: <a href="tel:+493515645961">03 51 / 564-5961</a><br />
+        E-Mail: <a href="mailto:info.behindertenbeauftragter@sk.sachsen.de">info.behindertenbeauftragter@sk.sachsen.de</a>
+      </p>
+      <div class="grh-bf-todo">
+        <strong>Bitte bestätigen:</strong> Anschrift und Erreichbarkeit der
+        Schlichtungsstelle vor der Veröffentlichung noch einmal abgleichen —
+        solche Angaben ändern sich gelegentlich.
+      </div>
+    </section>
+
+  </div>
 </BaseLayout>
+
+<style>
+  .grh-bf-head {
+    background: var(--grh-bg-section, #E4F0E6);
+    padding: clamp(2rem, 5vw, 3.5rem) 0 clamp(1.5rem, 3vw, 2.5rem);
+  }
+  .grh-bf-crumb {
+    margin: 0 0 0.5rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--grh-forest-700, #2A6B43);
+  }
+  .grh-bf-title { margin: 0 0 0.75rem; color: var(--grh-forest-900, #1A3D27); }
+  .grh-bf-lead {
+    margin: 0;
+    max-width: 60ch;
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    line-height: 1.65;
+    color: var(--grh-stone-700, #3D423A);
+  }
+  .grh-bf-stand { margin: 1rem 0 0; font-size: 0.85rem; color: var(--grh-stone-400, #666B61); }
+
+  .grh-bf { padding: clamp(2rem, 5vw, 3.5rem) 0 clamp(3rem, 7vw, 5rem); }
+  .grh-bf-sec { max-width: 48rem; }
+  .grh-bf-sec + .grh-bf-sec { margin-top: clamp(2rem, 4vw, 3rem); }
+  .grh-bf-sec h2 {
+    margin: 0 0 0.9rem;
+    font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+    color: var(--grh-forest-900, #1A3D27);
+  }
+  .grh-bf-sec h3 {
+    margin: 1.6rem 0 0.6rem;
+    font-size: 1.02rem;
+    color: var(--grh-forest-800, #1B4A2F);
+  }
+  .grh-bf-sec p {
+    margin: 0 0 0.9rem;
+    line-height: 1.7;
+    color: var(--grh-stone-700, #3D423A);
+  }
+  .grh-bf-sec a { color: var(--grh-forest-700, #2A6B43); }
+  .grh-bf-sec code {
+    background: var(--grh-paper-100, #F2EDE3);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  .grh-bf-list { margin: 0 0 0.9rem; padding-left: 1.2rem; list-style: disc; }
+  .grh-bf-list li {
+    margin-bottom: 0.5rem;
+    line-height: 1.65;
+    color: var(--grh-stone-700, #3D423A);
+  }
+
+  .grh-bf-todo {
+    margin: 1rem 0 0;
+    padding: 0.85rem 1rem;
+    border-left: 3px solid var(--grh-candle-500, #E8B658);
+    background: var(--grh-paper-100, #F2EDE3);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+</style>

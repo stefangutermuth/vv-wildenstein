@@ -157,7 +157,8 @@ const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long
     font-family: var(--grh-font-display);
     font-style: italic;
     font-size: var(--grh-fs-sm);
-    color: var(--grh-candle-500);
+    /* Steht auf hellem Papier — dort ist candle-500 mit 1,60:1 unlesbar. */
+    color: var(--grh-candle-700);
     text-transform: lowercase;
     text-align: center;
     letter-spacing: 0;

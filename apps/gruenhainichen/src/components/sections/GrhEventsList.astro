@@ -723,6 +723,15 @@ const monShort = (d: Date) => fmtMon.format(d).replace('.', '');
     display: flex;
     flex-direction: column;
     line-height: 0.9;
+    /* Das Datum liegt über dem Veranstaltungsplakat. Welche Farben dort
+       auftreten, wissen wir nicht — bei einem hellen Plakat wäre die helle
+       Schrift unlesbar.
+       Gleichmäßige Deckung statt Verlauf: Bei einem Verlauf hätte der Monat
+       am helleren Ende nur 2,4:1 erreicht. 88 % ergeben selbst über einem
+       rein weißen Plakat 9,7:1 für die Tageszahl und 5,5:1 für den Monat. */
+    padding: 6px 12px 8px;
+    border-radius: 10px;
+    background: rgba(20, 43, 31, 0.88);
   }
   .grh-evs__poster-day {
     font-family: var(--grh-font-display);

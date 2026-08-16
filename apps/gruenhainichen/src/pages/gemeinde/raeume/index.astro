@@ -39,7 +39,10 @@ allOrtsteile.sort();
 
   <section class="grh-rooms">
     <div class="grh-container grh-rooms__layout">
-      <aside class="grh-rooms__filters" data-grh-rooms-filters>
+      <aside class="grh-rooms__filters" data-grh-rooms-filters aria-label="Räume filtern">
+        {/* Die Filterüberschriften sind h3 und folgen direkt auf die h1 der
+            Seite. Diese h2 schließt die Lücke, ohne die Gestaltung zu ändern. */}
+        <h2 class="grh-visually-hidden">Filter</h2>
         <div class="grh-rooms__filter">
           <h3>Ortsteil</h3>
           <div class="grh-rooms__radios">
@@ -57,13 +60,17 @@ allOrtsteile.sort();
         </div>
 
         <div class="grh-rooms__filter">
-          <h3>Mindest-Kapazität</h3>
+          <h3 id="grh-rooms-cap-label">Mindest-Kapazität</h3>
+          {/* Die Überschrift ist zwar sichtbar die Beschriftung, war aber nicht
+              mit dem Feld verknüpft — eine Vorlesesoftware kündigte nur
+              „Eingabefeld, Zahl" an. aria-labelledby stellt den Bezug her. */}
           <input
             type="number"
             name="min_capacity"
             min="0"
             step="10"
             placeholder="z. B. 50"
+            aria-labelledby="grh-rooms-cap-label"
             data-grh-rooms-min
             class="grh-rooms__number"
           />
@@ -292,7 +299,9 @@ allOrtsteile.sort();
     position: absolute; bottom: 10px; right: 10px;
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em;
     padding: 4px 10px; border-radius: var(--grh-radius-pill);
-    background: rgba(20, 43, 31, 0.75); color: var(--grh-cream-50);
+    /* 0.75 reichte nicht: Über einem hellen Raumfoto kam die goldene Zahl
+       nur auf 3,59:1. Mit 0.88 sind es 5,56:1. */
+    background: rgba(20, 43, 31, 0.88); color: var(--grh-cream-50);
     backdrop-filter: blur(6px);
   }
   .grh-room-card__cap strong { font-family: var(--grh-font-display); font-style: italic; font-weight: 500; color: var(--grh-candle-500); font-size: 13px; margin-right: 4px; letter-spacing: 0; }
