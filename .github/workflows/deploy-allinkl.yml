@@ -1,7 +1,9 @@
 name: Deploy zu All-Inkl
 
-# Wird bei jedem Push auf main automatisch ausgeführt
-# (Cloudflare-Build läuft parallel weiter).
+# Wird bei jedem Push auf main automatisch ausgeführt.
+#
+# Einziger Auslieferungsweg. Der frühere parallele Cloudflare-Worker wurde am
+# 16.08.2026 gelöscht — er hielt eine öffentliche Zweitkopie der Seite vor.
 #
 # Manueller Trigger über GitHub → Actions → „Deploy zu All-Inkl" → Run workflow.
 #
