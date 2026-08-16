@@ -314,8 +314,10 @@ Bei Problemen: DB-Dump und Uploads-Archiv aus Schritt 0 zurückspielen.
 
 ## 8. Kontext, der beim Verstehen hilft
 
-- `gruenhainichen.com` ist **keine eigenständige Installation**, sondern Site 2 im Multisite-Netzwerk von `vv-wildenstein.com`. Ein Eingriff dort kann Site 1 beeinflussen — dort läuft das CMS für die neue Astro-Website sowie zwei selbst entwickelte Plugins (`vvw-roombooking`, `vvw-amtsblatt`).
-- Die neue Astro-Website steht bereits unter `https://grh.vv-wildenstein.com` und soll auf `gruenhainichen.com` umziehen.
+- **Achtung, seit dem 16.08.2026 geänderte Adressen** (siehe [GO-LIVE-2026-08-16.md](GO-LIVE-2026-08-16.md)): Das alte WordPress mit den Tafeln erreichst du unter **`alt.gruenhainichen.com`**, nicht mehr unter `gruenhainichen.com`. Unter `www.gruenhainichen.com` liegt seither die neue Astro-Website (statische Dateien, kein WordPress).
+- Das alte WordPress ist **keine eigenständige Installation**, sondern Site 2 im Multisite-Netzwerk von `vv-wildenstein.com` (Tabellen `snS6v_2_*`). Ein Eingriff dort kann Site 1 beeinflussen — dort läuft das CMS für die neue Astro-Website sowie zwei selbst entwickelte Plugins (`vvw-roombooking`, `vvw-amtsblatt`).
+- Site 2 steht auf `blog_public = 0` und ist damit für Suchmaschinen gesperrt. Das ist so gewollt und sollte so bleiben.
+- Die QR-Codes auf den Tafeln zeigen physisch auf `gruenhainichen.com/tafel/{kürzel}/`. Eine `.htaccess`-Regel der neuen Seite leitet sie auf `alt.gruenhainichen.com` weiter. **Nach dem Umzug muss diese Regel auf das neue Ziel umgebogen werden** — sie steht in `apps/gruenhainichen/public/.htaccess` im Repo `gruenhainichen`, nicht auf dem Server.
 - `entdecke-gruenhainichen.de` ist eine **separate** WordPress-Installation bei einem anderen Hoster. Sie zeigt die *Tafeltexte* (die Geschichte auf der Tafel), während Site 2 die *Zusatzmaterialien hinter dem QR-Code* enthält (Brandkataster, historische Ansichten, Audios). Beide Bestände sind inhaltlich verschieden — eine Zusammenführung ist möglich, aber ein eigenes Projekt.
 - Beim Titel-Abgleich beider Bestände ließen sich **178 von 198** Tafeln automatisch zuordnen, **20 nicht** (abweichende Titel). Diese Liste liegt nicht vor und müsste bei Bedarf neu erzeugt werden.
 

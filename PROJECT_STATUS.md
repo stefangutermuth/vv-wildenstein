@@ -1,5 +1,18 @@
 # Project Status — VV-Wildenstein Web-Monorepo
 
+> ## ⚠️ Teilweise überholt (Stand 29. Juni 2026)
+>
+> Für **Grünhainichen** gilt dieses Dokument nicht mehr. Die Seite ging am
+> 16.08.2026 unter `www.gruenhainichen.com` live; die hier genannte Testadresse
+> `grh.vv-wildenstein.com` existiert nicht mehr, und `PUBLIC_STAGING` wird beim
+> Deploy nicht mehr gesetzt.
+>
+> **Aktuelle Quellen:**
+> [docs/PROJECT-BRIEF.md](docs/PROJECT-BRIEF.md) für den Aufbau ·
+> [docs/GO-LIVE-2026-08-16.md](docs/GO-LIVE-2026-08-16.md) für Domains, Server und offene Punkte
+>
+> Für Börnichen und den Mängelmelder stimmt der Inhalt weiterhin.
+
 > **Letztes Update:** 29. Juni 2026
 > **Aktuelle Phase:** Phase 3 — **Börnichen ist LIVE** unter boernichen.de, Inhalte dynamisch aus WordPress, Auto-Deploy aktiv & getestet.
 

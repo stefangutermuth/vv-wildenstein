@@ -164,7 +164,7 @@ User `mrmek` = Stefan im WP.
 - Taxonomien `vvw_amt_kategorie` (7 Kats), `vvw_amt_gruppe` (8 Zielgruppen: Firma/Verein/Redakteur/Bürger/Schule/Kirche/Fraktion/Autor)
 - Custom Tables `vvw_amt_uploader`, `vvw_amt_tokens`
 - Magic-Link-Auth (Token 1h, Session-Cookie 8h HMAC-signiert)
-- Bearer-Token für Cross-Origin von `grh.vv-wildenstein.com`
+- Bearer-Token für Cross-Origin von `www.gruenhainichen.com`
 - CORS-Header für Subdomains
 - 3 Demo-Ausgaben angelegt (August/September/Oktober 2026)
 - **Astro-Frontend:** `/gemeinde/amtsblatt/einreichen/` mit 4-Stage-SPA (Login → Mail-Versand → Editor → Danke)
@@ -190,7 +190,7 @@ User `mrmek` = Stefan im WP.
 2. WP-Cache aus vorherigem Run laden (via `actions/cache@v4`, Key `wp-cache-grh-*`)
 3. `npm run build:gruenhainichen` (Astro-Build)
 4. SSH-Agent starten, All-Inkl-Host in known_hosts
-5. rsync dist/ nach `/www/htdocs/w01f6038/grh.vv-wildenstein.com/`
+5. rsync dist/ nach `/www/htdocs/w01f6038/gruenhainichen.com/` (mit bis zu 3 Versuchen)
 
 **Deploy-Zeiten:**
 - Vor A+B-Umbau: ~40 min pro Deploy
