@@ -12,7 +12,7 @@
  * Default ist die Live-Installation.
  */
 
-import type { NewsItem, NewsCategory, Ortsteil, EventItem, AmtsblattItem, CptEntry, CptKontakt } from './cms';
+import type { NewsItem, NewsCategory, Ortsteil, EventItem, AmtsblattItem, CptEntry, CptKontakt, CptGalleryImage } from './cms';
 
 const WP_BASE =
   (import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
@@ -469,6 +469,7 @@ interface WPCpt {
   content?: { rendered: string };
   profilkategorie?: number[];
   vv_kontakt?: CptKontakt;
+  vv_gallery?: CptGalleryImage[];
   featured_media?: number;
   _embedded?: WPPost['_embedded'];
 }
@@ -480,6 +481,7 @@ function mapCpt(p: WPCpt): CptEntry {
     contentHtml: p.content?.rendered ?? '',
     image: pickFeaturedImage(p as unknown as WPPost),
     kontakt: p.vv_kontakt ?? {},
+    gallery: Array.isArray(p.vv_gallery) ? p.vv_gallery.filter((g) => g && g.url) : [],
     kategorie: Array.isArray(p.profilkategorie) ? p.profilkategorie : [],
     link: p.link,
   };

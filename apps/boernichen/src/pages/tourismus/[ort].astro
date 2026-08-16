@@ -33,6 +33,24 @@ const showKontakt = hasKontakt && !contentHasContact;
 
   {item.contentHtml && <Fragment set:html={item.contentHtml} />}
 
+  {item.gallery.length > 0 && (
+    <section class="grh-gallery-sec" aria-label="Fotogalerie">
+      <h2>Impressionen</h2>
+      <div class="grh-gallery">
+        {item.gallery.map((g, n) => (
+          <a class="grh-gallery__item" href={g.full} aria-label={g.alt || `${item.title} – Bild ${n + 1}`}>
+            <img
+              src={g.url}
+              alt={g.alt || `${item.title} – Bild ${n + 1}`}
+              loading="lazy"
+              decoding="async"
+            />
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
   {showKontakt && (
     <div class="grh-contactcard">
       <h2>Kontakt</h2>
@@ -64,54 +82,66 @@ const showKontakt = hasKontakt && !contentHasContact;
   }
   .grh-detail__img img { width: 100%; height: auto; display: block; }
 
-  /* === Foto-Galerie (kommt aus dem WP-Inhalt via set:html) ============ */
-  .grh-prose :global(.grh-gallery__item) {
-    box-shadow: var(--grh-shadow-sm);
-    transition: box-shadow var(--grh-dur-fast), transform var(--grh-dur-fast);
-    cursor: zoom-in;
+  /* === Foto-Galerie (aus us_tile_additional_image über vv_gallery) ==== */
+  .grh-gallery-sec { margin-top: var(--grh-space-7); }
+  .grh-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: var(--grh-space-4) 0 0;
   }
-  .grh-prose :global(.grh-gallery__item img) {
+  @media (min-width: 560px) { .grh-gallery { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+
+  .grh-gallery__item {
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--grh-sage-100, #e9efe9);
+    box-shadow: var(--grh-shadow-sm);
+    cursor: zoom-in;
+    transition: box-shadow var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-gallery__item img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
     transition: transform 500ms var(--grh-ease-out);
   }
-  .grh-prose :global(.grh-gallery__item:hover) { box-shadow: var(--grh-shadow-md); }
-  .grh-prose :global(.grh-gallery__item:hover img) { transform: scale(1.06); }
-  .grh-prose :global(.grh-gallery__item:focus-visible) {
-    outline: 3px solid var(--grh-candle-500);
-    outline-offset: 2px;
-  }
+  .grh-gallery__item:hover { box-shadow: var(--grh-shadow-md); }
+  .grh-gallery__item:hover img { transform: scale(1.06); }
+  .grh-gallery__item:focus-visible { outline: 3px solid var(--grh-candle-500); outline-offset: 2px; }
 
-  /* === Lightbox ======================================================= */
-  .grh-lb {
+  /* === Lightbox (per JS an <body> gehängt → global) =================== */
+  :global(.grh-lb) {
     position: fixed; inset: 0; z-index: 1000;
     display: flex; align-items: center; justify-content: center;
     background: rgba(12, 16, 24, 0.92);
     opacity: 0; visibility: hidden;
-    transition: opacity 220ms var(--grh-ease-out), visibility 220ms;
+    transition: opacity 220ms ease, visibility 220ms;
   }
-  .grh-lb[data-open] { opacity: 1; visibility: visible; }
-  .grh-lb__img {
+  :global(.grh-lb[data-open]) { opacity: 1; visibility: visible; }
+  :global(.grh-lb__img) {
     max-width: 92vw; max-height: 86vh;
     border-radius: 10px;
     box-shadow: 0 12px 48px rgba(0,0,0,.5);
     user-select: none;
   }
-  .grh-lb__btn {
+  :global(.grh-lb__btn) {
     position: absolute; top: 50%; transform: translateY(-50%);
     width: 52px; height: 52px; border-radius: 999px;
     border: none; background: rgba(255,255,255,.14); color: #fff;
     font-size: 26px; line-height: 1; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: background var(--grh-dur-fast);
+    transition: background 150ms ease;
   }
-  .grh-lb__btn:hover { background: rgba(255,255,255,.28); }
-  .grh-lb__prev { left: max(12px, 3vw); }
-  .grh-lb__next { right: max(12px, 3vw); }
-  .grh-lb__close { top: max(12px, 3vh); right: max(12px, 3vw); transform: none; width: 46px; height: 46px; font-size: 22px; }
-  .grh-lb__count {
+  :global(.grh-lb__btn:hover) { background: rgba(255,255,255,.28); }
+  :global(.grh-lb__prev) { left: max(12px, 3vw); }
+  :global(.grh-lb__next) { right: max(12px, 3vw); }
+  :global(.grh-lb__close) { top: max(12px, 3vh); right: max(12px, 3vw); transform: none; width: 46px; height: 46px; font-size: 22px; }
+  :global(.grh-lb__count) {
     position: absolute; bottom: max(12px, 3vh); left: 0; right: 0;
     text-align: center; color: rgba(255,255,255,.85); font-size: 14px; letter-spacing: .04em;
   }
-  @media (max-width: 640px) { .grh-lb__btn { width: 44px; height: 44px; font-size: 22px; } }
+  @media (max-width: 640px) { :global(.grh-lb__btn) { width: 44px; height: 44px; font-size: 22px; } }
 </style>
 
 <script>

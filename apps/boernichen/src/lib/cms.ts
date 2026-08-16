@@ -214,6 +214,13 @@ export interface CptKontakt {
   email?: string;
   website?: string;
 }
+export interface CptGalleryImage {
+  /** Anzeigegröße (Grid-Kachel). */
+  url: string;
+  /** Originalgröße (Lightbox). */
+  full: string;
+  alt: string;
+}
 export interface CptEntry {
   /** Original-Slug aus WordPress (für URL-Zuordnung). */
   cptSlug: string;
@@ -222,6 +229,8 @@ export interface CptEntry {
   contentHtml: string;
   image?: string;
   kontakt: CptKontakt;
+  /** Foto-Galerie aus den „Erweiterten Einstellungen" (us_tile_additional_image). */
+  gallery: CptGalleryImage[];
   /** profilkategorie-Term-IDs (nur bei Profilen relevant). */
   kategorie: number[];
   /** WordPress-Permalink (Fallback/Referenz). */
