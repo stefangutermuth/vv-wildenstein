@@ -18,11 +18,8 @@ import GrhIcon from '../components/primitives/GrhIcon.astro';
 
 import { getCurrentSeason } from '../lib/seasons';
 import { getNews } from '../lib/cms';
-import { getFreibadStatus } from '../lib/cms-cpt';
 
 const newsAll = await getNews();
-// Freibad-Öffnung aus dem Verbands-WordPress; null, wenn nichts ansteht.
-const freibad = await getFreibadStatus();
 const newsCards = newsAll.filter((n) => n.category !== 'sperrung').slice(0, 10);
 const sperrungen = newsAll.filter((n) => n.category === 'sperrung').slice(0, 3);
 
@@ -93,7 +90,6 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
   <GrhHero
     season={season}
     featured={featured}
-    freibad={freibad}
     slides={[
       {
         src: '/images/hero/floeha-antje-wolfeil.jpeg',
