@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getDownloadListe } from '../../lib/cms-cpt';
 
 interface Einrichtung {
   name: string;
@@ -12,6 +13,12 @@ interface Einrichtung {
   phone?: string;
   email?: string;
   isNeighbor?: boolean;
+  /**
+   * Kurzname des Profils im Redaktionssystem. Führt auf die Detailseite mit
+   * Kapazität, Team und pädagogischem Ansatz. Die Kontaktdaten hier bleiben
+   * gepflegt, damit die Übersicht auch ohne Rückfrage beim Verband steht.
+   */
+  profil?: string;
 }
 
 const kitas: Einrichtung[] = [
@@ -25,6 +32,9 @@ const kitas: Einrichtung[] = [
     city: 'Borstendorf · 09579 Grünhainichen',
     phone: '037294 / 1541',
     email: 'kita.borstel.wildenstein@gmail.com',
+    // Der Kurzname im Redaktionssystem passt nicht zum Namen — dort wurde das
+    // Profil offenbar aus dem Holzwürmchen-Eintrag heraus angelegt.
+    profil: 'kindertagesstaette-holzwuermchen-2',
   },
   {
     name: 'Kindertagesstätte „Holzwürmchen"',
@@ -35,6 +45,7 @@ const kitas: Einrichtung[] = [
     city: '09579 Grünhainichen',
     phone: '037294 / 1280',
     email: 'kita.holzwuermchen@gmail.com',
+    profil: 'kindertagesstaette-holzwuermchen',
   },
   {
     name: 'Hort „Waldis Kids"',
@@ -46,6 +57,7 @@ const kitas: Einrichtung[] = [
     city: '09579 Grünhainichen',
     phone: '037294 / 87 99 02',
     email: 'hort-waldiskids22@web.de',
+    profil: 'hort-waldis-kids',
   },
   {
     name: 'Kindertagesstätte „Mäuseburg"',
@@ -56,6 +68,7 @@ const kitas: Einrichtung[] = [
     city: 'Waldkirchen · 09579 Grünhainichen',
     phone: '037294 / 87 75 00',
     email: 'kita.maeuseburg@gmx.de',
+    profil: 'kindertagesstaette-maeuseburg-e-v',
   },
   {
     name: 'Kita „Wunderland"',
@@ -67,6 +80,7 @@ const kitas: Einrichtung[] = [
     city: '09437 Börnichen/Erzgeb.',
     phone: '037294 / 1569',
     email: 'kita@boernichen.de',
+    profil: 'kita-wunderland',
     isNeighbor: true,
   },
 ];
@@ -80,6 +94,18 @@ const ortColor: Record<string, string> = {
 
 function telHref(p: string): string {
   return 'tel:' + p.replace(/[^+\d]/g, '');
+}
+
+/** Formulare aus dem Redaktionssystem — Voranmeldung, Verträge, Satzungen.
+ *  Bislang stand hier nur der Hinweis, sie „in den Einrichtungen oder über die
+ *  Gemeindeverwaltung" zu erhalten; auf vv-wildenstein.com lagen sie längst
+ *  zum Herunterladen bereit. */
+const formulare = await getDownloadListe('kita-formulare');
+
+function kb(bytes: number): string {
+  if (!bytes) return '';
+  const mb = bytes / 1024 / 1024;
+  return mb >= 1 ? `${mb.toFixed(1).replace('.', ',')} MB` : `${Math.round(bytes / 1024)} KB`;
 }
 ---
 <BaseLayout title="Kindertagesstätten & Hort · Gemeinde Grünhainichen" header="compact">
@@ -129,22 +155,53 @@ function telHref(p: string): string {
                 {k.email && <li><span>E-Mail</span><a href={`mailto:${k.email}`}>{k.email}</a></li>}
               </ul>
             </div>
+
+            {k.profil && (
+              <a class="grh-kita-card__more" href={`/leben/kita/${k.profil}/`}>
+                Kapazität, Team &amp; Konzept
+                <span aria-hidden="true">→</span>
+              </a>
+            )}
           </article>
         ))}
       </div>
     </div>
   </section>
 
-  <section class="grh-kita-foot">
-    <div class="grh-container">
-      <p>
-        <strong>Anmeldung &amp; Formulare:</strong> Aufnahme-Anträge, Schließtage und
-        die Satzungen der Kindertageseinrichtungen erhalten Sie direkt in
-        den Einrichtungen oder über die Gemeindeverwaltung.
-      </p>
-      <a href="/gemeinde/verwaltung/" class="grh-kita-foot__link">Zur Verwaltung →</a>
-    </div>
-  </section>
+  {formulare.length > 0 && (
+    <section class="grh-kita-dl" id="formulare">
+      <div class="grh-container">
+        <h2 class="grh-kita-dl__title">Anmeldung &amp; Formulare</h2>
+        <p class="grh-kita-dl__lead">
+          Voranmeldung, Betreuungsvertrag, Änderungen und die geltenden Satzungen —
+          alles zum Ausfüllen und Mitbringen. Bei Fragen hilft die Einrichtung
+          oder die <a href="/gemeinde/verwaltung/">Gemeindeverwaltung</a> weiter.
+        </p>
+
+        {formulare.map((g) => (
+          <div class="grh-kita-dl__group">
+            <h3>{g.titel}</h3>
+            <ul>
+              {g.dateien.map((d) => (
+                <li>
+                  <a href={d.url} class="grh-kita-dl__file">
+                    <span class="grh-kita-dl__ext" aria-hidden="true">{d.typ}</span>
+                    <span class="grh-kita-dl__name">{d.titel}</span>
+                    <span class="grh-kita-dl__meta">
+                      {kb(d.groesse)}
+                      {/* Datum der letzten Fassung: Bei Verträgen und Satzungen
+                          ist entscheidend, ob man das gültige Formular hat. */}
+                      {d.stand && <> · Stand {d.stand.split('-').reverse().join('.')}</>}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
 
 </BaseLayout>
 
@@ -339,38 +396,112 @@ function telHref(p: string): string {
   }
   .grh-kita-card__contact ul a:hover { color: var(--grh-moss-600); }
 
-  /* === Footer ========================================================= */
-  .grh-kita-foot {
-    padding: var(--grh-space-6) 0 var(--grh-space-8);
+  /* === Weiterführender Link in der Kachel ============================= */
+  .grh-kita-card__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: var(--grh-space-4);
+    font-family: var(--grh-font-body);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+    color: var(--grh-forest-800);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--grh-candle-500);
+    padding-bottom: 3px;
+    align-self: flex-start;
+    transition: color var(--grh-dur-fast, 160ms) ease;
+  }
+  .grh-kita-card__more:hover { color: var(--grh-moss-600); }
+  .grh-kita-card__more span { transition: transform var(--grh-dur-fast, 160ms) ease; }
+  .grh-kita-card__more:hover span { transform: translateX(3px); }
+
+  /* === Formulare ====================================================== */
+  .grh-kita-dl {
+    padding: var(--grh-space-7) 0 var(--grh-space-8);
     background: var(--grh-paper-100);
     border-top: 1px solid var(--grh-line);
-    text-align: center;
   }
-  .grh-kita-foot p {
+  .grh-kita-dl__title {
     font-family: var(--grh-font-display);
-    font-style: italic;
-    font-size: var(--grh-fs-md);
-    color: var(--grh-stone-700);
-    max-width: 60ch;
-    margin: 0 auto var(--grh-space-4);
-    line-height: 1.6;
-  }
-  .grh-kita-foot strong {
-    font-style: normal;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
     color: var(--grh-forest-900);
-    font-weight: 500;
+    margin: 0 0 var(--grh-space-3);
   }
-  .grh-kita-foot__link {
-    display: inline-block;
+  .grh-kita-dl__lead {
+    max-width: 62ch;
+    line-height: 1.65;
+    color: var(--grh-stone-700);
+    margin: 0 0 var(--grh-space-6);
+  }
+  .grh-kita-dl__lead a { color: var(--grh-forest-700); }
+
+  .grh-kita-dl__group + .grh-kita-dl__group { margin-top: var(--grh-space-6); }
+  .grh-kita-dl__group h3 {
     font-family: var(--grh-font-body);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.22em;
     font-weight: 700;
     color: var(--grh-forest-800);
-    text-decoration: none;
-    border-bottom: 1.5px solid var(--grh-candle-500);
-    padding-bottom: 2px;
+    margin: 0 0 var(--grh-space-3);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--grh-line);
   }
-  .grh-kita-foot__link:hover { color: var(--grh-moss-600); }
+  .grh-kita-dl__group ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+
+  .grh-kita-dl__file {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--grh-space-3);
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--grh-cream-50);
+    border: 1px solid transparent;
+    text-decoration: none;
+    color: var(--grh-stone-700);
+    transition: border-color var(--grh-dur-fast, 160ms) ease;
+  }
+  .grh-kita-dl__file:hover { border-color: var(--grh-candle-500); }
+  .grh-kita-dl__file:focus-visible {
+    outline: 3px solid var(--grh-candle-500);
+    outline-offset: 2px;
+  }
+
+  .grh-kita-dl__ext {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--grh-cream-50);
+    background: var(--grh-forest-800);
+    padding: 4px 7px;
+    border-radius: 5px;
+  }
+  .grh-kita-dl__name {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--grh-forest-900);
+  }
+  .grh-kita-dl__meta {
+    font-size: 0.8rem;
+    color: var(--grh-stone-400);
+    white-space: nowrap;
+  }
+
+  /* Auf schmalen Bildschirmen unter den Titel statt daneben — sonst wird der
+     Dateiname auf wenige Zeichen zusammengequetscht. */
+  @media (max-width: 560px) {
+    .grh-kita-dl__file { grid-template-columns: auto 1fr; }
+    .grh-kita-dl__meta { grid-column: 2; }
+  }
 </style>

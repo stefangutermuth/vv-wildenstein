@@ -1,0 +1,49 @@
+---
+/**
+ * Detailseite je Kindertagesstätte.
+ *
+ * Inhalt kommt aus dem Profil im Redaktionssystem des Verbands — dort pflegen
+ * die Einrichtungen selbst Kapazität, Team, pädagogischen Ansatz und Leitziele.
+ * Die Übersicht unter /leben/kita/ verlinkt hierher.
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhCPTDetail from '../../../components/global/GrhCPTDetail.astro';
+import { getKitaProfile } from '../../../lib/cms-cpt';
+
+export async function getStaticPaths() {
+  const list = await getKitaProfile();
+  return list.map((p) => ({
+    params: { slug: p.slug },
+    props: { profil: p },
+  }));
+}
+
+const { profil } = Astro.props as {
+  profil: Awaited<ReturnType<typeof getKitaProfile>>[number];
+};
+
+const ort = profil.ortsteil
+  ? profil.ortsteil.replace(/^./, (c) => c.toUpperCase())
+  : undefined;
+
+// Die Kita „Wunderland" liegt in Börnichen — einer eigenen Gemeinde im selben
+// Verwaltungsverband. Ohne Hinweis wirkte sie wie eine Grünhainichener Einrichtung.
+const istNachbar = profil.slug === 'kita-wunderland';
+---
+
+<BaseLayout
+  title={`${profil.title} · Kindertagesstätten · Grünhainichen`}
+  description={`${profil.title} — Kapazität, Team und pädagogischer Ansatz der Einrichtung.`}
+  header="compact"
+>
+  <GrhCPTDetail
+    title={profil.title}
+    breadcrumb={`Leben · Kindertagesstätten${ort ? ' · ' + ort : ''}`}
+    eyebrow={istNachbar ? 'Einrichtung im Verwaltungsverband' : 'Kindertagesstätte'}
+    image={profil.image}
+    contentHtml={profil.contentHtml}
+    kontakt={profil.kontakt}
+    backHref="/leben/kita"
+    backLabel="Alle Einrichtungen"
+  />
+</BaseLayout>

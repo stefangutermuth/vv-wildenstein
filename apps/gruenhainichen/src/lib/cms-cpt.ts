@@ -680,3 +680,95 @@ export async function getFreibadStatus(): Promise<FreibadStatus | null> {
     return null;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Kindertagesstätten                                                 */
+/*                                                                     */
+/*  Eigener Loader statt getProfile(): Dort greift ein Filter auf die   */
+/*  Grünhainichener Ortsteile — die Kita „Wunderland" in Börnichen      */
+/*  fiele damit heraus, obwohl sie auf der Seite bewusst mitläuft, weil */
+/*  beide Gemeinden im selben Verwaltungsverband sind.                  */
+/* ------------------------------------------------------------------ */
+
+/** Kennung der Taxonomie „profilkategorie" für Kindergärten auf vv-wildenstein.com */
+const KITA_KATEGORIE_ID = '182';
+
+/**
+ * Entfernt Reste des alten Themes aus übernommenen Inhalten.
+ *
+ * Im Profil des Horts steckt ein Dateibaum-Widget des Download-Managers: ein
+ * leerer Container, ein Stylesheet von vv-wildenstein.com und ein jQuery-
+ * Skript. Auf unseren Seiten gibt es kein jQuery — sichtbar bliebe nur die
+ * Überschrift „Downloads:" über einer leeren Fläche. Das Stylesheet wäre
+ * zudem ein unnötiger Abruf bei einem Dritten.
+ *
+ * Bewusst im Loader und nicht in der Seite: So greift es überall, wo diese
+ * Inhalte auftauchen, auch bei künftigen Einträgen.
+ */
+function entferneThemeReste(html: string): string {
+  return html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<link\b[^>]*>/gi, '')
+    .replace(/<div\b[^>]*id=["'](?:wpdmtree|tree[0-9a-f]+)["'][^>]*>\s*<\/div>/gi, '')
+    // Die verwaiste Überschrift, die nun über nichts mehr steht. Nur entfernen,
+    // wenn wirklich nichts Inhaltliches folgt — der alte Seitenbaukasten lässt
+    // am Ende eine Reihe schließender Tags zurück, die nicht zählen.
+    .replace(
+      /<p[^>]*>\s*(?:<strong>|<b>)?\s*Downloads?:?\s*(?:<\/strong>|<\/b>)?\s*<\/p>(?=(?:\s|<\/(?:div|section|p|span)>)*$)/i,
+      '',
+    )
+    .trim();
+}
+
+export async function getKitaProfile(): Promise<ProfilItem[]> {
+  const data = await fetchJson<WPCPTBase>('profile', { profilkategorie: KITA_KATEGORIE_ID });
+  return data.map((p) => ({
+    slug: p.slug,
+    title: decodeEntities(p.title.rendered),
+    contentHtml: entferneThemeReste(p.content?.rendered ?? ''),
+    image: pickImage(p),
+    ortsteil: pickOrtsteil(termSlugs(p, 'gemeindeteil')),
+    kategorien: termSlugs(p, 'profilkategorie'),
+    kontakt: p.vv_kontakt,
+    link: p.link,
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/*  Download-Listen                                                    */
+/*                                                                     */
+/*  Der Inhaltstyp des Download-Managers ist nicht über wp/v2          */
+/*  erreichbar (404). vv-rest-downloads.php liest stattdessen die       */
+/*  vorhandene Redaktionsseite aus und liefert die Dateien gruppiert.   */
+/*  Quelle im Repo: docs/wordpress/vv-rest-downloads.php               */
+/* ------------------------------------------------------------------ */
+
+export interface DownloadDatei {
+  id: number;
+  titel: string;
+  url: string;
+  typ: string;
+  /** Bytes; 0, wenn die Datei auf dem Server nicht lesbar war */
+  groesse: number;
+  /** JJJJ-MM-TT der letzten Änderung, leer wenn unbekannt */
+  stand: string;
+}
+
+export interface DownloadGruppe {
+  titel: string;
+  dateien: DownloadDatei[];
+}
+
+export async function getDownloadListe(name: string): Promise<DownloadGruppe[]> {
+  try {
+    const res = await fetchWithTimeout(`${VVW_API_BASE}/downloads/${name}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { gruppen?: DownloadGruppe[] };
+    return data.gruppen ?? [];
+  } catch (err) {
+    console.warn('[cms-cpt] vvw/v1/downloads Fehler:', (err as Error).message);
+    return [];
+  }
+}
