@@ -276,16 +276,21 @@ final class VV_Statusleiste {
 				animation:vvstspin 1s linear infinite}
 			@keyframes vvstspin{to{transform:rotate(360deg)}}
 
-			/* Untermenü: klar getrennte Karten-Zeilen */
-			#wp-admin-bar-vv-status .ab-sub-wrapper{min-width:280px}
-			#wp-admin-bar-vv-status .ab-sub-wrapper .ab-item{height:auto;line-height:1.5;
-				padding-top:8px;padding-bottom:8px}
-			#wp-admin-bar-vv-status li.vv-st-row + li.vv-st-row .ab-item{border-top:1px solid rgba(255,255,255,.10)}
-			#wp-admin-bar-vv-status .vv-st-name{font-weight:600;color:#fff}
-			#wp-admin-bar-vv-status .vv-st-detail{display:block;color:#a7aaad;font-size:11px;
-				line-height:1.5;margin-left:18px}
-			#wp-admin-bar-vv-status li.vv-st-github .ab-item{border-top:1px solid rgba(255,255,255,.22);
-				margin-top:4px;color:#9ec2e6;font-size:12px}
+			/* Untermenü: klar getrennte Karten-Zeilen.
+			   WICHTIG: #wpadminbar voranstellen + !important — die Kern-CSS der
+			   Admin-Bar erzwingt sonst eine feste Zeilenhöhe (26px) und die
+			   Detailzeile läuft über die Trennlinien hinweg. */
+			#wpadminbar #wp-admin-bar-vv-status .ab-sub-wrapper{min-width:300px}
+			#wpadminbar #wp-admin-bar-vv-status .ab-sub-wrapper li .ab-item{
+				display:block !important;height:auto !important;line-height:1.45 !important;
+				padding:9px 14px !important;white-space:normal}
+			#wpadminbar #wp-admin-bar-vv-status li.vv-st-row + li.vv-st-row > .ab-item{
+				border-top:1px solid rgba(255,255,255,.12)}
+			#wpadminbar #wp-admin-bar-vv-status .vv-st-name{font-weight:600;color:#fff}
+			#wpadminbar #wp-admin-bar-vv-status .vv-st-detail{display:block;color:#a7aaad;
+				font-size:11px;line-height:1.5;margin:2px 0 0 18px}
+			#wpadminbar #wp-admin-bar-vv-status li.vv-st-github > .ab-item{
+				border-top:1px solid rgba(255,255,255,.25);margin-top:6px;color:#9ec2e6;font-size:12px}
 		</style>
 		<script>
 		(function(){
