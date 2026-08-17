@@ -89,6 +89,32 @@ async function ensureFreshness(wpBase: string): Promise<boolean> {
   }
 
   const m = await readMeta();
+
+  /*
+   * Höchstalter — unabhängig vom Änderungsdatum.
+   *
+   * Der Vergleich oben erkennt nur Änderungen, die `post_modified` bewegen.
+   * Am 17.08.2026 änderte der Verband die Leitung einer Kita über ein
+   * Zusatzfeld; das Änderungsdatum des Beitrags blieb dabei auf dem 29. Juli
+   * stehen. Ein solcher Eingriff bliebe hier für immer unsichtbar, und die
+   * Website zeigte dauerhaft den alten Namen — ohne dass irgendwo ein Fehler
+   * aufträte.
+   *
+   * Sechs Stunden begrenzen den Schaden: Spätestens beim nächtlichen Bau ist
+   * jede Änderung drin, auch die, die niemand melden kann.
+   */
+  const MAX_ALTER_MS = 6 * 60 * 60 * 1000;
+  if (m.cachedAt && Date.now() - Date.parse(m.cachedAt) > MAX_ALTER_MS) {
+    console.log(`[wp-cache] Invalidiere Cache (älter als 6 h, angelegt ${m.cachedAt})`);
+    await invalidateAll();
+    await writeMeta({
+      lastWpModified: latest || m.lastWpModified,
+      lastCheckAt: new Date().toISOString(),
+      cachedAt: new Date().toISOString(),
+    });
+    return false;
+  }
+
   if (latest && (!m.lastWpModified || latest > m.lastWpModified)) {
     // Etwas hat sich geändert → alte Cache-Files löschen
     console.log(`[wp-cache] Invalidiere Cache (WP-modified ${latest} > cached ${m.lastWpModified ?? 'never'})`);

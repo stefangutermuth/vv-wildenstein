@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getDownloadListe } from '../../lib/cms-cpt';
+import { getDownloadListe, getKitaProfile } from '../../lib/cms-cpt';
 
 interface Einrichtung {
   name: string;
@@ -14,9 +14,11 @@ interface Einrichtung {
   email?: string;
   isNeighbor?: boolean;
   /**
-   * Kurzname des Profils im Redaktionssystem. Führt auf die Detailseite mit
-   * Kapazität, Team und pädagogischem Ansatz. Die Kontaktdaten hier bleiben
-   * gepflegt, damit die Übersicht auch ohne Rückfrage beim Verband steht.
+   * Kurzname des Profils im Redaktionssystem. Liefert die Kontaktdaten und
+   * führt auf die Detailseite mit Kapazität, Team und pädagogischem Ansatz.
+   *
+   * Die Angaben unten sind nur der Rückfall, falls ein Feld im
+   * Redaktionssystem leer bleibt oder es nicht erreichbar ist.
    */
   profil?: string;
 }
@@ -96,6 +98,37 @@ function telHref(p: string): string {
   return 'tel:' + p.replace(/[^+\d]/g, '');
 }
 
+/**
+ * Kontaktdaten aus dem Redaktionssystem übernehmen.
+ *
+ * Vorher standen sie hier fest im Quelltext. Als der Verband die Leitung der
+ * Mäuseburg wechselte, zog die Detailseite nach — die Kachel daneben zeigte
+ * weiter den alten Namen. Genau diese halbe Aktualisierung ist schlimmer als
+ * gar keine, weil auf einer Seite zwei Angaben widersprechen.
+ *
+ * Wer im Verband etwas ändert, soll es einmal tun müssen.
+ */
+const profile = await getKitaProfile();
+const profilNach = new Map(profile.map((p) => [p.slug, p]));
+
+/** „Leiterin: Frau Richter" → „Frau Richter" — die Bezeichnung steht schon daneben. */
+function ohneAnrede(text?: string): string | undefined {
+  const t = text?.replace(/^\s*(Leiterin|Leiter|Leitung)\s*:\s*/i, '').trim();
+  return t || undefined;
+}
+
+const einrichtungen = kitas.map((k) => {
+  const kontakt = k.profil ? profilNach.get(k.profil)?.kontakt : undefined;
+  return {
+    ...k,
+    leitung: ohneAnrede(kontakt?.fuehrende_person) ?? k.leitung,
+    street:  kontakt?.strasse_hausnummer?.trim() || k.street,
+    city:    kontakt?.plz_ort?.trim()            || k.city,
+    phone:   kontakt?.telefon?.trim()            || k.phone,
+    email:   kontakt?.email?.trim()              || k.email,
+  };
+});
+
 /** Formulare aus dem Redaktionssystem — Voranmeldung, Verträge, Satzungen.
  *  Bislang stand hier nur der Hinweis, sie „in den Einrichtungen oder über die
  *  Gemeindeverwaltung" zu erhalten; auf vv-wildenstein.com lagen sie längst
@@ -127,7 +160,7 @@ function kb(bytes: number): string {
   <section class="grh-kita-section">
     <div class="grh-container">
       <div class="grh-kita-grid">
-        {kitas.map((k) => (
+        {einrichtungen.map((k) => (
           <article class={`grh-kita-card ${k.isNeighbor ? 'grh-kita-card--neighbor' : ''}`}>
             <header class="grh-kita-card__head">
               <span class="grh-kita-card__ort" style={`--ort-color: ${ortColor[k.ortsteil] ?? 'var(--grh-moss-600)'}`}>
