@@ -18,17 +18,58 @@ interface Props {
 }
 const { image, imageAlt = '', credit, boxes, chips } = Astro.props;
 
-// Freibad-Öffnungsstatus. WICHTIG: dieselbe Logik steckt im <script> unten
-// (clientseitig für die echte Uhrzeit) — bei Änderungen BEIDE anpassen.
-function freibadStatus(d: Date) {
-  const y = d.getFullYear();
-  const inSeason = d >= new Date(y, 4, 15, 0, 0) && d <= new Date(y, 8, 8, 23, 59); // 15.5.–8.9.
-  const h = d.getHours();
-  const open = inSeason && h >= 9 && h < 20; // täglich 9–20 Uhr
-  const text = open ? 'Geöffnet' : !inSeason ? 'Winterpause' : h < 9 ? 'Öffnet 9 Uhr' : 'Geschlossen';
-  return { state: open ? 'open' : 'closed', text };
+// Freibad-Öffnungsstatus aus dem zentralen WordPress (Redaktion pflegt die
+// Zeiträume unter „Freibad-Öffnung"; mu-Plugin vv-rest-freibad liefert sie als
+// /wp-json/vvw/v1/freibad). Hier der Build-Zeit-Stand; das <script> unten
+// holt denselben Endpoint im Browser — bei Logik-Änderungen BEIDE anpassen.
+interface FreibadZeitraum {
+  von: string;      // JJJJ-MM-TT
+  bis: string;
+  zeitVon: string;  // HH:MM
+  zeitBis: string;
+  label: string;
+  offen: boolean;   // Status „geöffnet" (nur dann kann man wirklich hin)
 }
-const freibad = freibadStatus(new Date());
+interface FreibadData {
+  verfuegbar: boolean;
+  aktuell: FreibadZeitraum | null;
+  kommend: FreibadZeitraum[];
+}
+
+function freibadStatus(data: FreibadData | null, minutesNow: number) {
+  const a = data?.aktuell;
+  if (!a) return { state: 'closed', text: 'Geschlossen' };
+  if (!a.offen) return { state: 'closed', text: a.label || 'Geschlossen' };
+  const toMin = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+  if (minutesNow < toMin(a.zeitVon)) return { state: 'closed', text: `Öffnet ${a.zeitVon.replace(/^0/, '')} Uhr` };
+  if (minutesNow < toMin(a.zeitBis)) return { state: 'open', text: 'Geöffnet' };
+  return { state: 'closed', text: 'Geschlossen' };
+}
+
+const VVW_BASE =
+  ((import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
+    (typeof process !== 'undefined' ? process.env.PUBLIC_WP_API_BASE : undefined) ??
+    'https://vv-wildenstein.com/wp-json/wp/v2').replace(/\/wp\/v2\/?$/, '/vvw/v1');
+
+let freibadData: FreibadData | null = null;
+try {
+  const res = await fetch(`${VVW_BASE}/freibad`, { headers: { Accept: 'application/json' } });
+  if (res.ok) freibadData = (await res.json()) as FreibadData;
+} catch {
+  /* Endpoint nicht erreichbar → „Geschlossen" als sicherer Build-Stand */
+}
+
+// „Jetzt" in Europe/Berlin (CI-Runner laufen in UTC)
+const berlinNow = new Intl.DateTimeFormat('de-DE', {
+  hour: 'numeric', minute: 'numeric', hour12: false, timeZone: 'Europe/Berlin',
+}).formatToParts(new Date());
+const nowMin =
+  Number(berlinNow.find((p) => p.type === 'hour')?.value ?? 0) * 60 +
+  Number(berlinNow.find((p) => p.type === 'minute')?.value ?? 0);
+const freibad = freibadStatus(freibadData, nowMin);
 ---
 <section class="vv-hero vv-hero--stack">
   <div class="vv-hero__media">
@@ -93,19 +134,42 @@ const freibad = freibadStatus(new Date());
 </section>
 
 <script>
-  // Live-Status Freibad — im Browser berechnet (immer aktuell, nicht nur zum Build).
-  // Anpassbar: Saison + Öffnungszeiten. Muss zur Logik im Frontmatter passen.
-  (function () {
+  // Live-Status Freibad — holt die gepflegten Öffnungszeiten aus dem zentralen
+  // WordPress (vvw/v1/freibad) und bewertet sie mit der ECHTEN Uhrzeit des
+  // Besuchers. Muss zur Logik im Frontmatter passen (dort: Build-Zeit-Stand).
+  const API =
+    ((import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
+      'https://vv-wildenstein.com/wp-json/wp/v2').replace(/\/wp\/v2\/?$/, '/vvw/v1');
+
+  interface Zeitraum { von: string; bis: string; zeitVon: string; zeitBis: string; label: string; offen: boolean }
+
+  (async function () {
     const els = document.querySelectorAll('[data-freibad-status]');
     if (!els.length) return;
+    let aktuell: Zeitraum | null = null;
+    try {
+      const res = await fetch(`${API}/freibad`, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      if (!res.ok) return; // eingebauter Build-Stand bleibt
+      aktuell = ((await res.json()) as { aktuell: Zeitraum | null }).aktuell;
+    } catch {
+      return;
+    }
     const now = new Date();
-    const y = now.getFullYear();
-    const inSeason = now >= new Date(y, 4, 15, 0, 0) && now <= new Date(y, 8, 8, 23, 59);
-    const h = now.getHours();
-    const open = inSeason && h >= 9 && h < 20;
-    const text = open ? 'Geöffnet' : !inSeason ? 'Winterpause' : h < 9 ? 'Öffnet 9 Uhr' : 'Geschlossen';
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const toMin = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return (h || 0) * 60 + (m || 0);
+    };
+    let state = 'closed';
+    let text = 'Geschlossen';
+    if (aktuell && aktuell.offen) {
+      if (nowMin < toMin(aktuell.zeitVon)) text = `Öffnet ${aktuell.zeitVon.replace(/^0/, '')} Uhr`;
+      else if (nowMin < toMin(aktuell.zeitBis)) { state = 'open'; text = 'Geöffnet'; }
+    } else if (aktuell && !aktuell.offen && aktuell.label) {
+      text = aktuell.label;
+    }
     els.forEach((el) => {
-      el.setAttribute('data-state', open ? 'open' : 'closed');
+      el.setAttribute('data-state', state);
       const t = el.querySelector('[data-text]');
       if (t) t.textContent = text;
     });

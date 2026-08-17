@@ -1,0 +1,86 @@
+name: Deploy Verband (Staging)
+
+# Deployt das Astro-Frontend des Verwaltungsverbands nach 2026.vv-wildenstein.com.
+#
+# Auslöser:
+#  - repository_dispatch "vv-content-updated": WordPress stößt den Build an,
+#    sobald die Redaktion Inhalte ändert (mu-Plugin vv-deploy-webhook auf
+#    vv-wildenstein.com — derselbe Auslöser wie für Grünhainichen/Börnichen).
+#  - Push auf main, wenn sich apps/verband/ ändert (Code-Änderungen)
+#  - 1× täglich per Zeitplan als Sicherheitsnetz
+#  - manuell über GitHub → Actions → "Deploy Verband (Staging)" → Run workflow
+#
+# WICHTIG: Staging baut mit PUBLIC_STAGING=true → noindex (Google ignoriert
+# die Testseite). Beim späteren Day-X-Umzug auf die Apex-Domain entfällt das.
+
+on:
+  repository_dispatch:
+    types: [vv-content-updated]
+  push:
+    branches: [main]
+    paths:
+      - 'apps/verband/**'
+      - '.github/workflows/deploy-verband.yml'
+  schedule:
+    - cron: '30 4 * * *' # täglich 04:30 UTC (Versatz zu den anderen Jobs)
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-verband
+  cancel-in-progress: false
+
+jobs:
+  deploy-verband:
+    name: Verband → 2026.vv-wildenstein.com
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v7
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Astro bauen (Live-Inhalte aus vv-wildenstein.com, Staging = noindex)
+        run: npm run build:verband
+        env:
+          PUBLIC_STAGING: 'true'
+          WP_AUTH_USER: ${{ secrets.WP_AUTH_USER }}
+          WP_AUTH_PASS: ${{ secrets.WP_AUTH_PASS }}
+
+      - name: SSH-Schlüssel laden
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.ALLINKL_SSH_KEY }}
+
+      - name: Known-Hosts hinterlegen
+        env:
+          KNOWN_HOSTS: ${{ secrets.ALLINKL_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Per rsync zu 2026.vv-wildenstein.com hochladen
+        run: |
+          # Bis zu 3 Versuche gegen vorübergehende Verbindungsprobleme
+          for i in 1 2 3; do
+            if rsync -avz --delete --human-readable \
+              --exclude='.well-known' \
+              -e "ssh -o ConnectTimeout=30" \
+              apps/verband/dist/ \
+              ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/2026.vv-wildenstein.com/; then
+              echo "Upload erfolgreich (Versuch $i)"; exit 0
+            fi
+            echo "rsync Versuch $i fehlgeschlagen — neuer Versuch in 15s…"; sleep 15
+          done
+          echo "rsync nach 3 Versuchen fehlgeschlagen"; exit 1
+
+      - name: Erfolg
+        run: |
+          echo "Deploy fertig -> https://2026.vv-wildenstein.com"

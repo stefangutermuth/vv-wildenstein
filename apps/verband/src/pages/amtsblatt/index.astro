@@ -1,0 +1,159 @@
+---
+/**
+ * Amtsblatt — alle Ausgaben mit PDF, gruppiert nach Jahr.
+ * Quelle: mu-Plugin-Endpoint /wp-json/vvw/v1/amtsblatt (liest die ACF-Metas
+ * des CPT amtsblatt_download aus — wp/v2 liefert die PDF-URLs nicht).
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import VvPageHeader from '../../components/global/VvPageHeader.astro';
+import VvIcon from '../../components/primitives/VvIcon.astro';
+
+const VVW_BASE =
+  ((import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
+    (typeof process !== 'undefined' ? process.env.PUBLIC_WP_API_BASE : undefined) ??
+    'https://vv-wildenstein.com/wp-json/wp/v2').replace(/\/wp\/v2\/?$/, '/vvw/v1');
+
+interface AmtsblattItem {
+  id: number;
+  titel: string;
+  datum: string;
+  jahr: string;
+  pdfUrl: string;
+}
+
+let items: AmtsblattItem[] = [];
+try {
+  const res = await fetch(`${VVW_BASE}/amtsblatt`, { headers: { Accept: 'application/json' } });
+  if (res.ok) items = ((await res.json()) as { items: AmtsblattItem[] }).items ?? [];
+} catch {
+  /* Endpoint nicht erreichbar → leere Liste, Seite bleibt baubar */
+}
+
+const byYear = new Map<string, AmtsblattItem[]>();
+for (const it of items) {
+  const list = byYear.get(it.jahr) ?? [];
+  list.push(it);
+  byYear.set(it.jahr, list);
+}
+const years = [...byYear.keys()].sort((a, b) => Number(b) - Number(a));
+
+const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short', timeZone: 'Europe/Berlin' });
+const fmtFull = new Intl.DateTimeFormat('de-DE', {
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Europe/Berlin',
+});
+---
+<BaseLayout
+  title="Amtsblatt — Verwaltungsverband Wildenstein"
+  description="Alle Ausgaben des Amtsblatts des Verwaltungsverbands Wildenstein zum Herunterladen — Beschlüsse, Bekanntmachungen, Termine."
+>
+  <VvPageHeader
+    title="Amtsblatt"
+    intro={`Alle ${items.length} Ausgaben zum Herunterladen — amtliche Bekanntmachungen, Beschlüsse und Termine des Verwaltungsverbands.`}
+  />
+  <div class="vv-pagebody">
+    <div class="vv-container">
+      {years.map((year) => (
+        <section class="vv-ab__year">
+          <h2>{year}</h2>
+          <ul class="vv-ab__list" role="list">
+            {byYear.get(year)!.map((it) => (
+              <li>
+                <a class="vv-ab__row" href={it.pdfUrl} target="_blank" rel="noopener">
+                  <span class="vv-ab__month" aria-hidden="true">{fmtMonth.format(new Date(it.datum)).replace('.', '')}</span>
+                  <span class="vv-ab__meta">
+                    <span class="vv-ab__title">{it.titel}</span>
+                    <time datetime={it.datum}>{fmtFull.format(new Date(it.datum))}</time>
+                  </span>
+                  <span class="vv-ab__open">
+                    <span>PDF öffnen</span>
+                    <VvIcon name="arrow-up-right" size={14} />
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+      {items.length === 0 && (
+        <p class="vv-ab__empty">Aktuell sind keine Amtsblatt-Ausgaben verfügbar.</p>
+      )}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .vv-pagebody { padding-block: var(--vv-space-7) var(--vv-space-9); background: var(--vv-white); }
+  .vv-pagebody .vv-container { max-width: 860px; }
+
+  .vv-ab__year { margin-bottom: var(--vv-space-6); }
+  .vv-ab__year h2 {
+    font-size: var(--vv-fs-xl);
+    color: var(--vv-navy-800);
+    margin: 0 0 var(--vv-space-3);
+    padding-bottom: var(--vv-space-2);
+    border-bottom: 2px solid var(--vv-sky-200);
+  }
+  .vv-ab__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--vv-space-2); }
+
+  .vv-ab__row {
+    display: flex;
+    align-items: center;
+    gap: var(--vv-space-4);
+    padding: var(--vv-space-3) var(--vv-space-4);
+    background: var(--vv-white);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+    text-decoration: none;
+    transition: border-color var(--vv-dur-fast), box-shadow var(--vv-dur-fast), transform var(--vv-dur-fast);
+  }
+  .vv-ab__row:hover,
+  .vv-ab__row:focus-visible {
+    border-color: var(--vv-sky-400);
+    box-shadow: var(--vv-shadow-sm);
+    transform: translateY(-1px);
+  }
+
+  .vv-ab__month {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--vv-radius-md);
+    background: linear-gradient(135deg, var(--vv-navy-800), var(--vv-navy-700));
+    color: var(--vv-sky-200);
+    font-weight: 700;
+    font-size: var(--vv-fs-sm);
+    text-transform: uppercase;
+  }
+  .vv-ab__meta { flex: 1; min-width: 0; display: grid; gap: 2px; }
+  .vv-ab__title { font-weight: 600; color: var(--vv-navy-800); }
+  .vv-ab__meta time { color: var(--vv-text-muted); font-size: var(--vv-fs-sm); }
+
+  .vv-ab__open {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: var(--vv-fs-sm);
+    color: var(--vv-primary);
+  }
+  .vv-ab__row:hover .vv-ab__open { text-decoration: underline; }
+
+  .vv-ab__empty {
+    padding: var(--vv-space-6);
+    background: var(--vv-bg-alt);
+    border-radius: var(--vv-radius-lg);
+    text-align: center;
+    color: var(--vv-text-muted);
+  }
+
+  @media (max-width: 560px) {
+    .vv-ab__open span { display: none; } /* nur Icon auf sehr schmalen Screens */
+    .vv-ab__row { gap: var(--vv-space-3); }
+  }
+</style>

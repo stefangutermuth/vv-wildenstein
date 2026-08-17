@@ -88,7 +88,8 @@ export async function getStaticPaths() {
   }
   // Reservierte Pfade (eigene Routen) nicht überschreiben; Duplikate (Seite
   // vs. CPT mit gleichem Pfad) überspringen → sonst bricht der Build hart ab.
-  const RESERVED = new Set(['neuigkeiten', 'veranstaltungen', '404']);
+  // 'amtsblatt' hat eine eigene Route (PDF-Ausgaben via vvw/v1/amtsblatt)
+  const RESERVED = new Set(['neuigkeiten', 'veranstaltungen', 'amtsblatt', '404']);
   const seen = new Set<string>();
   const routes = [];
   for (const page of [...pages, ...cpts]) {
