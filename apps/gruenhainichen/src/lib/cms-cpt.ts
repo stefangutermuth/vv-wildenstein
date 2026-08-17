@@ -648,9 +648,23 @@ export interface FreibadStatus {
 
 export async function getFreibadStatus(): Promise<FreibadStatus | null> {
   try {
-    const res = await fetchWithTimeout(`${VVW_API_BASE}/freibad`, {
-      headers: { Accept: 'application/json' },
-    });
+    // Bewusst ohne den Platten-Zwischenspeicher: Dessen Erneuerung hängt an
+    // Änderungen im Redaktionssystem. Ob das Bad heute offen hat, ändert sich
+    // aber allein durch den Kalender — ein gestern zwischengespeicherter
+    // „geöffnet"-Stand wäre heute schlicht falsch, ohne dass jemand etwas
+    // bearbeitet hätte. Genau das ist am 17.08.2026 passiert.
+    // Es ist eine einzige kleine Anfrage pro Bauvorgang.
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    let res: Response;
+    try {
+      res = await fetch(`${VVW_API_BASE}/freibad`, {
+        headers: { Accept: 'application/json' },
+        signal: ctrl.signal,
+      });
+    } finally {
+      clearTimeout(t);
+    }
     if (!res.ok) return null;
     const data = (await res.json()) as FreibadStatus;
     // Ohne laufenden und ohne kommenden Zeitraum gibt es nichts zu zeigen —
