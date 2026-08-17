@@ -105,6 +105,14 @@ jobs:
         run: |
           echo "✅ Deploy fertig: https://www.gruenhainichen.com"
 
+      # Läuft NACH dem Hochladen und darf nie blockieren: Eine widersprüchliche
+      # Telefonnummer ist ärgerlich, aber kein Grund, eine funktionierende
+      # Website nicht zu veröffentlichen. Das Ergebnis erscheint in der
+      # Zusammenfassung des Laufs und als Warnung an der betroffenen Zeile.
+      - name: Fest eingetragene Kontaktdaten gegen das Redaktionssystem prüfen
+        continue-on-error: true
+        run: npm run pruefe:daten
+
   # ───────────────────────────────────────────────────────────────────
   # Börnichen → boernichen.vv-wildenstein.com
   # ───────────────────────────────────────────────────────────────────

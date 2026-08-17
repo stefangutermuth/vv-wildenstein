@@ -17,7 +17,8 @@
     "dev:maengelmelder": "npm run dev --workspace=@vv/maengelmelder",
     "build:maengelmelder": "npm run build --workspace=@vv/maengelmelder",
     "dev:verband": "npm run dev --workspace=@vv/verband",
-    "build:verband": "npm run build --workspace=@vv/verband"
+    "build:verband": "npm run build --workspace=@vv/verband",
+    "pruefe:daten": "node scripts/pruefe-doppelte-daten.mjs"
   },
   "engines": {
     "node": ">=20"
