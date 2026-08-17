@@ -268,6 +268,12 @@ function rewriteContentUrls(html: string, postSlugs: Set<string>): string {
   //  - verwaiste [vc_*]/[/vc_*]-Tags
   out = out.replace(/\[vc_raw_(?:html|js)\][\s\S]*?\[\/vc_raw_(?:html|js)\]/gi, '');
   out = out.replace(/\[\/?vc_[a-z_]*[^\]]*\]/gi, '');
+  // Skripte/Stylesheets aus dem WP-Inhalt: laufen im statischen Build ohne die
+  // Plugin-Abhängigkeiten nicht und würden als Roh-Text auf der Seite landen
+  // (z. B. der jQuery-Dateibaum des Download-Managers).
+  out = out.replace(/<script\b[\s\S]*?<\/script>/gi, '');
+  out = out.replace(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi, '');
+  out = out.replace(/<noscript\b[\s\S]*?<\/noscript>/gi, '');
   // Die echte Seiten-h1 liefert der Header — h1 im WP-Body → h2 (keine doppelte h1)
   out = out.replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2');
   out = out.replace(/https?:\/\/(?:www\.)?vv-wildenstein\.com\/wp-content/g, `${wpHost}/wp-content`);
@@ -296,6 +302,24 @@ function rewriteContentUrls(html: string, postSlugs: Set<string>): string {
  * jeder Build zieht den aktuellen Stand (Auto-Deploy via Webhook/Zeitplan).
  * ---------------------------------------------------------------- */
 
+/** Kontaktdaten aus den Impreza-Custom-Feldern (mu-Plugin vv-rest-profilfelder). */
+export interface VvKontakt {
+  fuehrende_person?: string;
+  strasse_hausnummer?: string;
+  plz_ort?: string;
+  telefon?: string;
+  email?: string;
+  website?: string;
+  /** nur bei Vereinen: Mitgliederzahl */
+  mitglieder?: string;
+}
+
+export interface VvGalleryImage {
+  url: string;
+  full: string;
+  alt: string;
+}
+
 export interface WPPageItem {
   id: number;
   slug: string;
@@ -309,6 +333,15 @@ export interface WPPageItem {
   /** True, wenn die Seite ein Impreza-`us_grid`-Portalgitter enthielt
    *  (das wir entfernt haben) → Signal, ein natives Kachelgitter zu rendern. */
   hadHubGrid: boolean;
+  /** Kacheln, die im entfernten Grid standen (Titel + Ziel) — Fallback-Quelle */
+  gridTiles?: HubTile[];
+  /** Kontaktdaten (Ämter/Profile/Vereine/Tourismus) — bei diesen CPTs steht der
+   *  eigentliche Inhalt in Custom-Feldern, nicht im post_content. */
+  kontakt?: VvKontakt;
+  /** Zusatzbilder aus „Erweiterte Einstellungen" */
+  gallery?: VvGalleryImage[];
+  /** Beitragsbild */
+  image?: string;
 }
 
 /**
@@ -320,9 +353,58 @@ export interface WPPageItem {
  * (siehe VvHubGrid), die aus den echten Daten gespeist werden.
  * Entfernt den kompletten, balancierten <div class="…us_grid…">-Block.
  */
-function stripUsGrids(html: string): { html: string; had: boolean } {
+/**
+ * Kacheln aus einem gerenderten Impreza-Grid lesen (Titel, Ziel, Bild).
+ * Damit geht der Inhalt der Portalgitter NICHT verloren: Was das alte Grid
+ * anzeigte, rendern wir als natives Kachelgitter nach.
+ */
+function extractGridTiles(gridHtml: string): HubTile[] {
+  const tiles: HubTile[] = [];
+  const seen = new Set<string>();
+  for (const m of gridHtml.matchAll(/<article\b[^>]*class="[^"]*w-grid-item[^"]*"[\s\S]*?<\/article>/gi)) {
+    const item = m[0];
+    // Titel steht je nach Layout in <h2 …post_title> mit Link ODER in einem
+    // schlichten <div class="…post_title"> ganz ohne Link (dann über die ID).
+    const titleMatch =
+      item.match(/<(?:h\d|div)[^>]*class="[^"]*post_title[^"]*"[^>]*>([\s\S]*?)<\/(?:h\d|div)>/i);
+    if (!titleMatch) continue;
+    const title = decodeEntities(stripHtml(titleMatch[1]));
+    if (!title) continue;
+
+    // Ziel: eigener Titel-Link, sonst Bild-Link — Taxonomie-Links (…/gemeindeteil/…)
+    // taugen nicht als Ziel, dann bleibt die Auflösung über sourceId.
+    const hrefRaw =
+      titleMatch[1].match(/<a[^>]*href="([^"]+)"/i)?.[1] ??
+      item.match(/class="[^"]*post_image[^"]*"[\s\S]*?<a[^>]*href="([^"]+)"/i)?.[1] ??
+      '';
+    const href = hrefRaw.replace(/^https?:\/\/(?:www\.)?vv-wildenstein\.com/i, '').trim();
+    const brauchbar =
+      href !== '' &&
+      !/^\/?$/.test(href) &&
+      !/\/(download|gemeindeteil|category|tag|anliegen)\//i.test(href) &&
+      !/^(https?:)?\/\//i.test(href);
+
+    const sourceId = Number(item.match(/\bdata-id="(\d+)"/i)?.[1] ?? 0) || undefined;
+    if (!brauchbar && !sourceId) continue;
+
+    const key = title.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const img = item.match(/class="[^"]*post_image[^"]*"[\s\S]*?<img[^>]+src="([^"]+)"/i);
+    tiles.push({
+      title,
+      href: brauchbar ? href : '',
+      image: img ? img[1] : undefined,
+      sourceId,
+    });
+  }
+  return tiles;
+}
+
+function stripUsGrids(html: string): { html: string; had: boolean; tiles: HubTile[] } {
   let out = html;
   let had = false;
+  const tiles: HubTile[] = [];
   for (let guard = 0; guard < 50; guard++) {
     const start = /<div\b[^>]*\bus_grid\b[^>]*>/i.exec(out);
     if (!start) break;
@@ -341,9 +423,18 @@ function stripUsGrids(html: string): { html: string; had: boolean } {
       }
     }
     if (end === -1) break; // unbalanciert → abbrechen, Rest unangetastet lassen
+    tiles.push(...extractGridTiles(out.slice(start.index, end)));
     out = out.slice(0, start.index) + out.slice(end);
   }
-  return { html: out, had };
+  // Über mehrere Grids einer Seite hinweg deduplizieren
+  const seen = new Set<string>();
+  const uniq = tiles.filter((t) => {
+    const k = t.title.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  return { html: out, had, tiles: uniq };
 }
 
 interface WPPageRaw {
@@ -405,6 +496,7 @@ export async function fetchWordPressPages(): Promise<WPPageItem[]> {
         path,
         parentId: p.parent,
         hadHubGrid: stripped.had,
+        gridTiles: stripped.tiles,
         title: decodeEntities(stripHtml(p.title.rendered).trim()),
         contentHtml: rewriteContentUrls(stripped.html, postSlugs),
         breadcrumb: parents.slice(0, -1).map((x) => ({
@@ -440,7 +532,10 @@ export async function fetchWordPressCptPages(): Promise<WPPageItem[]> {
       const url = new URL(`${WP_BASE}/${src.restBase}`);
       url.searchParams.set('per_page', '100');
       url.searchParams.set('page', String(pageNo));
-      url.searchParams.set('_fields', 'id,slug,title,content');
+      // vv_kontakt/vv_gallery liefert das mu-Plugin vv-rest-profilfelder. Bei
+      // Profilen, Vereinen und Tourismus-Einträgen steht der eigentliche Inhalt
+      // (Ansprechpartner, Adresse, Telefon …) NUR dort — post_content ist leer.
+      url.searchParams.set('_embed', 'wp:featuredmedia');
       const res = await fetch(url.toString(), {
         headers: { Accept: 'application/json', ...buildAuthHeader() },
       });
@@ -448,18 +543,29 @@ export async function fetchWordPressCptPages(): Promise<WPPageItem[]> {
         if (pageNo > 1) break; // keine weitere Seite vorhanden
         throw new Error(`WP REST ${src.restBase} ${res.status} ${res.statusText}`);
       }
-      const raw = (await res.json()) as WPPageRaw[];
+      const raw = (await res.json()) as Array<
+        WPPageRaw & { vv_kontakt?: VvKontakt; vv_gallery?: VvGalleryImage[] } & WPCptEmbed
+      >;
       for (const p of raw) {
         const stripped = stripUsGrids(p.content?.rendered ?? '');
+        const kontakt = p.vv_kontakt
+          ? (Object.fromEntries(
+              Object.entries(p.vv_kontakt).filter(([, v]) => typeof v === 'string' && v.trim() !== ''),
+            ) as VvKontakt)
+          : undefined;
         out.push({
           id: p.id,
           slug: p.slug,
           path: `/${src.pathPrefix}/${p.slug}`,
           parentId: 0,
           hadHubGrid: stripped.had,
+          gridTiles: stripped.tiles,
           title: decodeEntities(stripHtml(p.title.rendered).trim()),
           contentHtml: rewriteContentUrls(stripped.html, postSlugs),
           breadcrumb: [src.crumb],
+          kontakt: kontakt && Object.keys(kontakt).length ? kontakt : undefined,
+          gallery: Array.isArray(p.vv_gallery) && p.vv_gallery.length ? p.vv_gallery : undefined,
+          image: cptImage(p),
         });
       }
       if (raw.length < 100) break;
@@ -479,6 +585,9 @@ export interface HubTile {
   image?: string;
   /** Tourismus-Kategorien (tourismus_kat-Slugs) — nur bei Tourismus-Einträgen */
   kats?: string[];
+  /** WP-Post-ID (aus `data-id` eines Grid-Items) — um das Ziel aufzulösen,
+   *  wenn die Kachel im Original keinen eigenen Link hatte. */
+  sourceId?: number;
 }
 
 interface WPCptEmbed {

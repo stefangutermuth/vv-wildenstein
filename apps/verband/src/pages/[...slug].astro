@@ -12,6 +12,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import VvPageHeader from '../components/global/VvPageHeader.astro';
 import VvLightbox from '../components/global/VvLightbox.astro';
 import VvHubGrid from '../components/global/VvHubGrid.astro';
+import VvKontaktkarte from '../components/global/VvKontaktkarte.astro';
 import {
   fetchWordPressPages,
   fetchWordPressCptPages,
@@ -38,6 +39,7 @@ export async function getStaticPaths() {
     pg: WPPageItem,
     childrenByParent: Map<number, WPPageItem[]>,
     hub: HubSources,
+    byId: Map<number, WPPageItem>,
   ): HubTile[] {
     const p = pg.path;
     // Tourismus-Übersicht = alle Einträge; Kategorie-Seiten = gefiltert
@@ -45,7 +47,9 @@ export async function getStaticPaths() {
     if (p.startsWith('/tourismus_uebersicht/')) {
       const cat = p.split('/').pop() ?? '';
       const kats = TOURISM_CAT_MAP[cat];
-      return kats ? hub.tourismus.filter((t) => t.kats?.some((k) => kats.includes(k))) : [];
+      // Ohne Kategorie-Zuordnung (z. B. „Sehenswürdigkeiten") unten weiter
+      // zum Grid-Fallback, statt die Seite leer zu lassen.
+      if (kats) return hub.tourismus.filter((t) => t.kats?.some((k) => kats.includes(k)));
     }
     // CPT-Index-Hubs
     if (p === '/verwaltung') return hub.amter;
@@ -53,7 +57,7 @@ export async function getStaticPaths() {
     // Sektions-Hubs → echte WP-Kind-Seiten als Kacheln (nach Titel dedupliziert)
     const kids = childrenByParent.get(pg.id) ?? [];
     const seen = new Set<string>();
-    return kids
+    const kidTiles = kids
       .filter((k) => {
         const key = k.title.toLowerCase();
         if (seen.has(key)) return false;
@@ -61,6 +65,18 @@ export async function getStaticPaths() {
         return true;
       })
       .map((k) => ({ title: k.title, href: k.path }));
+    if (kidTiles.length > 0) return kidTiles;
+    // Kein Mapping und keine Kind-Seiten → das nehmen, was im entfernten Grid
+    // stand (Vereine, Dienstleister, Kirchen … je nach Seite). Kacheln ohne
+    // eigenen Link (Impreza verlinkte dort nur die Taxonomie) über die
+    // WP-ID auf die generierte Detailseite auflösen.
+    return (pg.gridTiles ?? [])
+      .map((t) => {
+        if (t.href) return t;
+        const ziel = t.sourceId ? byId.get(t.sourceId) : undefined;
+        return ziel ? { ...t, href: ziel.path, image: t.image ?? ziel.image } : null;
+      })
+      .filter((t): t is HubTile => t !== null);
   }
 
   function pickHubIcon(path: string): string {
@@ -86,10 +102,14 @@ export async function getStaticPaths() {
     list.push(pg);
     childrenByParent.set(pg.parentId, list);
   }
+  // Landkarte WP-ID → generierte Seite (löst Grid-Kacheln ohne eigenen Link auf)
+  const byId = new Map<number, WPPageItem>();
+  for (const pg of [...pages, ...cpts]) byId.set(pg.id, pg);
   // Reservierte Pfade (eigene Routen) nicht überschreiben; Duplikate (Seite
   // vs. CPT mit gleichem Pfad) überspringen → sonst bricht der Build hart ab.
-  // 'amtsblatt' hat eine eigene Route (PDF-Ausgaben via vvw/v1/amtsblatt)
-  const RESERVED = new Set(['neuigkeiten', 'veranstaltungen', 'amtsblatt', '404']);
+  // Eigene Routen: Amtsblatt-Archiv und Downloads holen ihre Daten aus den
+  // vvw/v1-Endpoints (der Download-Manager ist über wp/v2 nicht erreichbar).
+  const RESERVED = new Set(['neuigkeiten', 'veranstaltungen', 'amtsblatt', 'downloads', '404']);
   const seen = new Set<string>();
   const routes = [];
   for (const page of [...pages, ...cpts]) {
@@ -97,7 +117,7 @@ export async function getStaticPaths() {
     if (!slug || RESERVED.has(slug.split('/')[0]) || seen.has(slug)) continue;
     seen.add(slug);
     // Native Kacheln nur, wo ein Impreza-Portalgitter entfernt wurde
-    const hubTiles = page.hadHubGrid ? resolveHubTiles(page, childrenByParent, hub) : [];
+    const hubTiles = page.hadHubGrid ? resolveHubTiles(page, childrenByParent, hub, byId) : [];
     routes.push({
       params: { slug },
       props: { page, hubTiles, hubIcon: pickHubIcon(page.path) },
@@ -112,7 +132,8 @@ const { page, hubTiles, hubIcon: tileIcon } = Astro.props;
 // nach dem Aufräumen bleibt kein Inhalt. Statt einer leeren Seite ein
 // freundlicher Hinweis mit Weg zurück in die Sektion.
 const contentText = page.contentHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-const isEmpty = hubTiles.length === 0 && contentText.length < 40;
+const isEmpty =
+  hubTiles.length === 0 && contentText.length < 40 && !page.kontakt && !page.gallery?.length;
 const parentPath = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].path : '/';
 const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].title : 'Startseite';
 ---
@@ -120,6 +141,10 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
   <VvPageHeader title={page.title} breadcrumb={page.breadcrumb} />
   <div class="vv-pagebody">
     <div class="vv-container">
+      {page.image && (
+        <img class="vv-pagebody__lead" src={page.image} alt="" loading="lazy" decoding="async" />
+      )}
+      {page.kontakt && <VvKontaktkarte kontakt={page.kontakt} />}
       {hubTiles.length > 0 && <VvHubGrid tiles={hubTiles} icon={tileIcon} />}
       {isEmpty ? (
         <div class="vv-emptyhub">
@@ -128,6 +153,15 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
         </div>
       ) : (
         <article class="vv-prose" set:html={page.contentHtml} />
+      )}
+      {page.gallery && page.gallery.length > 0 && (
+        <section class="vv-gallery" aria-label="Bildergalerie">
+          {page.gallery.map((img) => (
+            <figure class="vv-gal-item">
+              <img class="vv-gal-img" src={img.full} alt={img.alt} loading="lazy" decoding="async" />
+            </figure>
+          ))}
+        </section>
       )}
     </div>
   </div>
@@ -140,6 +174,34 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
     background: var(--vv-white);
   }
   .vv-pagebody .vv-container { max-width: 980px; }
+  .vv-pagebody__lead {
+    width: 100%;
+    max-height: 380px;
+    object-fit: cover;
+    border-radius: var(--vv-radius-lg);
+    margin: 0 0 var(--vv-space-5);
+  }
+  /* Zusatzbilder („Erweiterte Einstellungen" im Backend) als Raster */
+  .vv-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+    gap: var(--vv-space-3);
+    margin-top: var(--vv-space-6);
+  }
+  .vv-gallery :global(.vv-gal-item) {
+    margin: 0;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--vv-radius-md);
+    box-shadow: var(--vv-shadow-sm);
+  }
+  .vv-gallery :global(.vv-gal-img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    cursor: zoom-in;
+  }
   .vv-emptyhub {
     padding: var(--vv-space-6);
     background: var(--vv-bg-alt);

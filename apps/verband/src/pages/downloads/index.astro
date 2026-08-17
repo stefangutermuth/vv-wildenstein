@@ -1,0 +1,120 @@
+---
+/**
+ * Downloads — Anträge & Formulare, nach Fachbereich gruppiert.
+ *
+ * Quelle: mu-Plugin-Endpoint /wp-json/vvw/v1/downloads-alle (liest den
+ * Download-Manager aus; wp/v2 kennt den Inhaltstyp nicht). Die Original-Seite
+ * nutzte ein jQuery-Dateibaum-Widget, das ohne Plugin-Skripte nicht läuft.
+ * Amtsblatt-Jahrgänge bleiben hier außen vor — die haben eine eigene Seite.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import VvPageHeader from '../../components/global/VvPageHeader.astro';
+import VvIcon from '../../components/primitives/VvIcon.astro';
+
+const VVW_BASE =
+  ((import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
+    (typeof process !== 'undefined' ? process.env.PUBLIC_WP_API_BASE : undefined) ??
+    'https://vv-wildenstein.com/wp-json/wp/v2').replace(/\/wp\/v2\/?$/, '/vvw/v1');
+
+interface Datei { id: number; titel: string; url: string; seite: string; typ: string }
+interface Gruppe { titel: string; dateien: Datei[] }
+
+let gruppen: Gruppe[] = [];
+try {
+  const res = await fetch(`${VVW_BASE}/downloads-alle`, { headers: { Accept: 'application/json' } });
+  if (res.ok) gruppen = ((await res.json()) as { gruppen: Gruppe[] }).gruppen ?? [];
+} catch {
+  /* Endpoint nicht erreichbar → Seite bleibt baubar */
+}
+
+// Amtsblatt-Ausgaben (Jahrgangs-Gruppen + „Amtsblatt") gehören auf /amtsblatt
+const istAmtsblatt = (t: string) => /^\d{4}$/.test(t) || /^amtsblatt$/i.test(t);
+const fachbereiche = gruppen.filter((g) => !istAmtsblatt(g.titel));
+const anzahl = fachbereiche.reduce((n, g) => n + g.dateien.length, 0);
+---
+<BaseLayout
+  title="Downloads — Verwaltungsverband Wildenstein"
+  description="Anträge, Formulare und Satzungen des Verwaltungsverbands Wildenstein zum Herunterladen — nach Fachbereich sortiert."
+>
+  <VvPageHeader
+    title="Downloads"
+    intro={`${anzahl} Anträge, Formulare und Satzungen zum Herunterladen — sortiert nach Fachbereich.`}
+  />
+  <div class="vv-pagebody">
+    <div class="vv-container">
+      <p class="vv-dl__hint">
+        <VvIcon name="file-text" size={17} />
+        Alle Amtsblatt-Ausgaben finden Sie gesammelt im <a href="/amtsblatt">Amtsblatt-Archiv</a>.
+      </p>
+
+      {fachbereiche.map((g) => (
+        <section class="vv-dl__group">
+          <h2>{g.titel}</h2>
+          <ul role="list">
+            {g.dateien.map((d) => (
+              <li>
+                <a href={d.url} target="_blank" rel="noopener">
+                  <span class="vv-dl__typ" aria-hidden="true">{d.typ || 'DOC'}</span>
+                  <span class="vv-dl__titel">{d.titel}</span>
+                  <VvIcon name="arrow-up-right" size={14} class="vv-dl__arrow" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+      {fachbereiche.length === 0 && (
+        <p class="vv-dl__empty">Aktuell stehen keine Downloads bereit.</p>
+      )}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .vv-pagebody { padding-block: var(--vv-space-7) var(--vv-space-9); background: var(--vv-white); }
+  .vv-pagebody .vv-container { max-width: 900px; }
+
+  .vv-dl__hint {
+    display: flex; align-items: center; gap: var(--vv-space-2);
+    background: var(--vv-bg-alt);
+    border-radius: var(--vv-radius-md);
+    padding: var(--vv-space-3) var(--vv-space-4);
+    margin: 0 0 var(--vv-space-6);
+    color: var(--vv-text-muted);
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-dl__hint a { color: var(--vv-link); font-weight: 600; }
+
+  .vv-dl__group { margin-bottom: var(--vv-space-6); }
+  .vv-dl__group h2 {
+    font-size: var(--vv-fs-lg);
+    color: var(--vv-navy-800);
+    margin: 0 0 var(--vv-space-3);
+    padding-bottom: var(--vv-space-2);
+    border-bottom: 2px solid var(--vv-sky-200);
+  }
+  .vv-dl__group ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .vv-dl__group a {
+    display: flex; align-items: center; gap: var(--vv-space-3);
+    padding: var(--vv-space-3) var(--vv-space-4);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+    text-decoration: none;
+    transition: border-color var(--vv-dur-fast), box-shadow var(--vv-dur-fast);
+  }
+  .vv-dl__group a:hover,
+  .vv-dl__group a:focus-visible { border-color: var(--vv-sky-400); box-shadow: var(--vv-shadow-sm); }
+  .vv-dl__typ {
+    flex: none; min-width: 46px; text-align: center;
+    background: var(--vv-navy-800); color: var(--vv-white);
+    border-radius: 4px; padding: 3px 7px;
+    font-size: 11px; font-weight: 700; letter-spacing: .03em;
+  }
+  .vv-dl__titel { flex: 1; color: var(--vv-navy-800); font-weight: 500; overflow-wrap: anywhere; }
+  .vv-dl__group :global(.vv-dl__arrow) { flex: none; color: var(--vv-sky-500); }
+
+  .vv-dl__empty {
+    padding: var(--vv-space-6); background: var(--vv-bg-alt);
+    border-radius: var(--vv-radius-lg); text-align: center; color: var(--vv-text-muted);
+  }
+</style>

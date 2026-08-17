@@ -1,0 +1,106 @@
+---
+/**
+ * Kontaktkarte für CPT-Detailseiten (Profile, Vereine, Tourismus, Ämter).
+ *
+ * Bei diesen Inhaltstypen steht der eigentliche Inhalt NICHT im Fließtext,
+ * sondern in den Impreza-Custom-Feldern — im alten Theme wurden sie über
+ * [us_post_custom_field] ausgegeben. Das mu-Plugin vv-rest-profilfelder
+ * liefert sie als `vv_kontakt`; ohne diese Karte wären die Seiten leer.
+ */
+import type { VvKontakt } from '../../lib/cms-wordpress';
+import VvIcon from '../primitives/VvIcon.astro';
+
+interface Props {
+  kontakt: VvKontakt;
+  title?: string;
+}
+const { kontakt, title = 'Kontakt' } = Astro.props;
+
+const adresse = [kontakt.strasse_hausnummer, kontakt.plz_ort].filter(Boolean).join(', ');
+const telHref = kontakt.telefon ? `tel:${kontakt.telefon.replace(/[^\d+]/g, '')}` : '';
+const webHref = kontakt.website
+  ? /^https?:\/\//i.test(kontakt.website)
+    ? kontakt.website
+    : `https://${kontakt.website}`
+  : '';
+const webLabel = kontakt.website?.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+const hasAny = Boolean(
+  kontakt.fuehrende_person || adresse || kontakt.telefon || kontakt.email || kontakt.website || kontakt.mitglieder,
+);
+---
+{hasAny && (
+  <aside class="vv-kontakt" aria-label={title}>
+    <h2 class="vv-kontakt__title">{title}</h2>
+    <dl class="vv-kontakt__list">
+      {kontakt.fuehrende_person && (
+        <div class="vv-kontakt__row">
+          <dt><VvIcon name="users" size={17} /><span class="vv-sr">Ansprechpartner</span></dt>
+          <dd>{kontakt.fuehrende_person}</dd>
+        </div>
+      )}
+      {adresse && (
+        <div class="vv-kontakt__row">
+          <dt><VvIcon name="map-pin" size={17} /><span class="vv-sr">Anschrift</span></dt>
+          <dd>{adresse}</dd>
+        </div>
+      )}
+      {kontakt.telefon && (
+        <div class="vv-kontakt__row">
+          <dt><VvIcon name="phone" size={17} /><span class="vv-sr">Telefon</span></dt>
+          <dd><a href={telHref}>{kontakt.telefon}</a></dd>
+        </div>
+      )}
+      {kontakt.email && (
+        <div class="vv-kontakt__row">
+          <dt><VvIcon name="mail" size={17} /><span class="vv-sr">E-Mail</span></dt>
+          <dd><a href={`mailto:${kontakt.email}`}>{kontakt.email}</a></dd>
+        </div>
+      )}
+      {kontakt.website && (
+        <div class="vv-kontakt__row">
+          <dt><VvIcon name="arrow-up-right" size={17} /><span class="vv-sr">Website</span></dt>
+          <dd><a href={webHref} target="_blank" rel="noopener">{webLabel}</a></dd>
+        </div>
+      )}
+      {kontakt.mitglieder && (
+        <div class="vv-kontakt__row">
+          <dt><VvIcon name="building" size={17} /><span class="vv-sr">Mitglieder</span></dt>
+          <dd>{kontakt.mitglieder} Mitglieder</dd>
+        </div>
+      )}
+    </dl>
+  </aside>
+)}
+
+<style>
+  .vv-kontakt {
+    background: var(--vv-bg-alt);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-lg);
+    padding: var(--vv-space-5);
+    margin: 0 0 var(--vv-space-6);
+  }
+  .vv-kontakt__title {
+    margin: 0 0 var(--vv-space-4);
+    font-size: var(--vv-fs-lg);
+    color: var(--vv-navy-800);
+  }
+  .vv-kontakt__list { margin: 0; display: grid; gap: var(--vv-space-3); }
+  .vv-kontakt__row {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    align-items: start;
+    gap: var(--vv-space-3);
+  }
+  .vv-kontakt__row dt { color: var(--vv-sky-500); margin: 0; line-height: 1; padding-top: 2px; }
+  .vv-kontakt__row dd { margin: 0; color: var(--vv-text); overflow-wrap: anywhere; }
+  .vv-kontakt__row a { color: var(--vv-link); font-weight: 600; text-decoration: none; }
+  .vv-kontakt__row a:hover { text-decoration: underline; }
+  .vv-sr {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border: 0;
+  }
+</style>
