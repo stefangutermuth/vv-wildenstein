@@ -1,0 +1,64 @@
+name: mu-Plugins zum WordPress hochladen
+
+# Spielt die versionierten mu-Plugins aus wp-plugin/mu-plugins/ auf das zentrale
+# WordPress. Bisher lief das nur von Hand per rsync — dadurch konnten Repo und
+# Server auseinanderlaufen, und bei gesperrtem Zugang ging es gar nicht.
+#
+# Auslöser: Änderungen an den Dateien (Push) oder manuell über GitHub → Actions.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wp-plugin/mu-plugins/**'
+      - '.github/workflows/deploy-mu-plugins.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-mu-plugins
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: mu-Plugins → vv-wildenstein.com
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: PHP-Syntax aller mu-Plugins prüfen
+        run: |
+          for f in wp-plugin/mu-plugins/*.php; do
+            php -l "$f" || exit 1
+          done
+
+      - name: SSH-Schlüssel laden
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ALLINKL_SSH_KEY }}
+
+      - name: Known-Hosts hinterlegen
+        env:
+          KNOWN_HOSTS: ${{ secrets.ALLINKL_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Hochladen
+        run: |
+          # Bewusst OHNE --delete: auf dem Server liegen mu-Plugins, die (noch)
+          # nicht im Repo versioniert sind — die dürfen nicht verschwinden.
+          for i in 1 2 3; do
+            if rsync -avz --human-readable \
+              -e "ssh -o ConnectTimeout=30" \
+              wp-plugin/mu-plugins/ \
+              ${{ secrets.ALLINKL_SSH_USER }}@${{ secrets.ALLINKL_SSH_HOST }}:/www/htdocs/w01f6038/vv-wildenstein.com/wp-content/mu-plugins/; then
+              echo "Upload erfolgreich (Versuch $i)"; exit 0
+            fi
+            echo "Versuch $i fehlgeschlagen — neuer Versuch in 15s…"; sleep 15
+          done
+          echo "rsync nach 3 Versuchen fehlgeschlagen"; exit 1
+
+      - name: Erfolg
+        run: echo "mu-Plugins aktualisiert auf vv-wildenstein.com"
