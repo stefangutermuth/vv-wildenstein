@@ -49,11 +49,13 @@ const {
       )}
     </div>
 
-    {kontakt && (kontakt.fuehrende_person || kontakt.telefon || kontakt.email || kontakt.website || kontakt.strasse_hausnummer || kontakt.oeffnungszeiten) && (
+    {kontakt && (kontakt.fuehrende_person || kontakt.telefon || kontakt.mobil || kontakt.email || kontakt.website || kontakt.strasse_hausnummer || kontakt.anschrift || kontakt.oeffnungszeiten || kontakt.informationen) && (
       <aside class="grh-detail__kontakt">
         <h3>Kontakt</h3>
         {kontakt.fuehrende_person && <p class="grh-detail__person">{kontakt.fuehrende_person}</p>}
-        {(kontakt.strasse_hausnummer || kontakt.plz_ort) && (
+        {kontakt.anschrift ? (
+          <p class="grh-detail__addr grh-detail__addr--multi">{kontakt.anschrift}</p>
+        ) : (kontakt.strasse_hausnummer || kontakt.plz_ort) && (
           <p class="grh-detail__addr">
             {kontakt.strasse_hausnummer && <>{kontakt.strasse_hausnummer}<br /></>}
             {kontakt.plz_ort}
@@ -61,6 +63,8 @@ const {
         )}
         <ul>
           {kontakt.telefon && <li><a href={`tel:${kontakt.telefon.replace(/\s/g,'')}`}>{kontakt.telefon}</a></li>}
+          {kontakt.mobil && <li><a href={`tel:${kontakt.mobil.replace(/\s/g,'')}`}>{kontakt.mobil}</a> <span class="grh-detail__hint">mobil</span></li>}
+          {kontakt.fax && <li><span class="grh-detail__fax">{kontakt.fax}</span> <span class="grh-detail__hint">Fax</span></li>}
           {kontakt.email && <li><a href={`mailto:${kontakt.email}`}>{kontakt.email}</a></li>}
           {kontakt.website && <li><a href={kontakt.website} target="_blank" rel="noopener">{kontakt.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a></li>}
         </ul>
@@ -68,6 +72,12 @@ const {
           <div class="grh-detail__zeiten">
             <h4>Besuch &amp; Öffnungszeiten</h4>
             <p>{kontakt.oeffnungszeiten}</p>
+          </div>
+        )}
+        {kontakt.informationen && (
+          <div class="grh-detail__zeiten">
+            <h4>Weitere Informationen</h4>
+            <p>{kontakt.informationen}</p>
           </div>
         )}
       </aside>
@@ -202,6 +212,9 @@ const {
     padding-top: 1rem;
     border-top: 1px solid rgba(0, 0, 0, 0.1);
   }
+  .grh-detail__addr--multi { white-space: pre-line; }
+  .grh-detail__hint { color: rgba(0,0,0,.5); font-size: 0.82rem; }
+  .grh-detail__fax { font-variant-numeric: tabular-nums; }
   .grh-detail__zeiten h4 {
     margin: 0 0 0.4rem;
     font-size: 0.95rem;

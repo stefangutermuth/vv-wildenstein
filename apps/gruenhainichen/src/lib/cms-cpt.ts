@@ -81,6 +81,13 @@ export interface VVKontakt {
   /** Freitext der Redaktion: Öffnungszeiten, Anmeldung, Kontakt für Besuche.
    *  Bei vielen Tourismus-Einträgen stehen hier die einzigen Besuchsangaben. */
   oeffnungszeiten?: string;
+  mobil?: string;
+  fax?: string;
+  /** Freitext „Informationen" (Leistungen, Hinweise) — v. a. bei Firmenprofilen */
+  informationen?: string;
+  /** Ämter: Funktion des Ansprechpartners, mehrzeilige Anschrift */
+  funktion?: string;
+  anschrift?: string;
 }
 
 const FETCH_TIMEOUT_MS = 8000;
@@ -211,14 +218,23 @@ export async function getTourism(): Promise<TourismItem[]> {
     link: p.link,
   }));
   // Frontend-Dedup: In vv-wildenstein.com liegen einzelne Tourismus-Beiträge
-  // mehrfach unter verschiedenen Slugs. Wir behalten den ersten pro Titel.
-  const seen = new Set<string>();
-  return items.filter((it) => {
+  // mehrfach unter verschiedenen Slugs. Wir behalten den INHALTSREICHSTEN
+  // pro Titel — „der erste" hat beim Museum „Erzgebirgische Volkskunst" die
+  // Variante ohne Anschrift und Telefonnummer gewonnen.
+  const inhalt = (it: (typeof items)[number]): number => {
+    const felder = Object.values(it.kontakt ?? {}).filter(
+      (v) => typeof v === 'string' && v.trim() !== '',
+    ).length;
+    return felder * 1000 + (it.contentHtml?.replace(/<[^>]+>/g, '').trim().length ?? 0);
+  };
+  const beste = new Map<string, (typeof items)[number]>();
+  for (const it of items) {
     const key = it.title.trim().toLowerCase();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+    const bisher = beste.get(key);
+    if (!bisher || inhalt(it) > inhalt(bisher)) beste.set(key, it);
+  }
+  // Ursprüngliche Reihenfolge beibehalten
+  return items.filter((it) => beste.get(it.title.trim().toLowerCase()) === it);
 }
 
 /* ============================================================

@@ -312,6 +312,17 @@ export interface VvKontakt {
   website?: string;
   /** nur bei Vereinen: Mitgliederzahl */
   mitglieder?: string;
+  /** Ämter: Funktion des Ansprechpartners (z. B. „Sachbearbeiterin") */
+  funktion?: string;
+  /** Ämter: mehrzeilige Anschrift (statt Straße/PLZ getrennt) */
+  anschrift?: string;
+  /** Sprech-/Öffnungszeiten als Redaktions-Freitext */
+  oeffnungszeiten?: string;
+  fax?: string;
+  mobil?: string;
+  email2?: string;
+  informationen?: string;
+  sonstiges?: string;
 }
 
 export interface VvGalleryImage {

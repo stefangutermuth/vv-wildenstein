@@ -16,7 +16,9 @@ interface Props {
 }
 const { kontakt, title = 'Kontakt' } = Astro.props;
 
-const adresse = [kontakt.strasse_hausnummer, kontakt.plz_ort].filter(Boolean).join(', ');
+// Ämter pflegen eine mehrzeilige „Anschrift", Profile/Vereine Straße + PLZ getrennt.
+const adresse = kontakt.anschrift?.trim()
+  || [kontakt.strasse_hausnummer, kontakt.plz_ort].filter(Boolean).join(', ');
 const telHref = kontakt.telefon ? `tel:${kontakt.telefon.replace(/[^\d+]/g, '')}` : '';
 const webHref = kontakt.website
   ? /^https?:\/\//i.test(kontakt.website)
@@ -25,7 +27,9 @@ const webHref = kontakt.website
   : '';
 const webLabel = kontakt.website?.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 const hasAny = Boolean(
-  kontakt.fuehrende_person || adresse || kontakt.telefon || kontakt.email || kontakt.website || kontakt.mitglieder,
+  kontakt.fuehrende_person || adresse || kontakt.telefon || kontakt.email || kontakt.website ||
+  kontakt.mitglieder || kontakt.oeffnungszeiten || kontakt.fax || kontakt.mobil ||
+  kontakt.informationen || kontakt.email2,
 );
 ---
 {hasAny && (
@@ -35,7 +39,10 @@ const hasAny = Boolean(
       {kontakt.fuehrende_person && (
         <div class="vv-kontakt__row">
           <dt><VvIcon name="users" size={17} /><span class="vv-sr">Ansprechpartner</span></dt>
-          <dd>{kontakt.fuehrende_person}</dd>
+          <dd>
+            {kontakt.fuehrende_person}
+            {kontakt.funktion && <span class="vv-kontakt__funktion">{kontakt.funktion}</span>}
+          </dd>
         </div>
       )}
       {adresse && (
@@ -50,10 +57,28 @@ const hasAny = Boolean(
           <dd><a href={telHref}>{kontakt.telefon}</a></dd>
         </div>
       )}
+      {kontakt.mobil && (
+        <div class="vv-kontakt__row">
+          <dt><VvIcon name="phone" size={17} /><span class="vv-sr">Mobil</span></dt>
+          <dd><a href={`tel:${kontakt.mobil.replace(/[^\d+]/g, '')}`}>{kontakt.mobil}</a> <span class="vv-kontakt__hint">(mobil)</span></dd>
+        </div>
+      )}
+      {kontakt.fax && (
+        <div class="vv-kontakt__row">
+          <dt><VvIcon name="file-text" size={17} /><span class="vv-sr">Fax</span></dt>
+          <dd>{kontakt.fax} <span class="vv-kontakt__hint">(Fax)</span></dd>
+        </div>
+      )}
       {kontakt.email && (
         <div class="vv-kontakt__row">
           <dt><VvIcon name="mail" size={17} /><span class="vv-sr">E-Mail</span></dt>
           <dd><a href={`mailto:${kontakt.email}`}>{kontakt.email}</a></dd>
+        </div>
+      )}
+      {kontakt.email2 && (
+        <div class="vv-kontakt__row">
+          <dt><VvIcon name="mail" size={17} /><span class="vv-sr">Weitere E-Mail</span></dt>
+          <dd><a href={`mailto:${kontakt.email2}`}>{kontakt.email2}</a></dd>
         </div>
       )}
       {kontakt.website && (
@@ -69,6 +94,23 @@ const hasAny = Boolean(
         </div>
       )}
     </dl>
+    {kontakt.oeffnungszeiten && (
+      <div class="vv-kontakt__block">
+        <h3>Sprech- &amp; Öffnungszeiten</h3>
+        <p>{kontakt.oeffnungszeiten}</p>
+      </div>
+    )}
+    {kontakt.informationen && (
+      <div class="vv-kontakt__block">
+        <h3>Weitere Informationen</h3>
+        <p>{kontakt.informationen}</p>
+      </div>
+    )}
+    {kontakt.sonstiges && (
+      <div class="vv-kontakt__block">
+        <p>{kontakt.sonstiges}</p>
+      </div>
+    )}
   </aside>
 )}
 
@@ -96,6 +138,24 @@ const hasAny = Boolean(
   .vv-kontakt__row dd { margin: 0; color: var(--vv-text); overflow-wrap: anywhere; }
   .vv-kontakt__row a { color: var(--vv-link); font-weight: 600; text-decoration: none; }
   .vv-kontakt__row a:hover { text-decoration: underline; }
+  .vv-kontakt__funktion { display: block; color: var(--vv-text-muted); font-size: var(--vv-fs-sm); }
+  .vv-kontakt__hint { color: var(--vv-text-muted); font-size: var(--vv-fs-sm); }
+  .vv-kontakt__block {
+    margin-top: var(--vv-space-4);
+    padding-top: var(--vv-space-4);
+    border-top: 1px solid var(--vv-border-soft);
+  }
+  .vv-kontakt__block h3 {
+    margin: 0 0 var(--vv-space-2);
+    font-size: var(--vv-fs-base);
+    color: var(--vv-navy-800);
+  }
+  .vv-kontakt__block p {
+    margin: 0;
+    white-space: pre-line;   /* Zeilenumbrüche der Redaktion beibehalten */
+    color: var(--vv-text);
+  }
+  .vv-kontakt__row dd { white-space: pre-line; }
   .vv-sr {
     position: absolute;
     width: 1px; height: 1px;

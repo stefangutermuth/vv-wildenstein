@@ -2,14 +2,14 @@
 /**
  * Plugin Name: VV → REST: Profil-/Tourismus-Kontaktfelder
  * Description: Hängt die Impreza-Custom-Felder (Kontaktdaten) der Custom-Post-Types
- *              „profile", „tourismus" und „verein" als Objekt `vv_kontakt` an die REST-Antwort an
+ *              „profile", „tourismus", „verein" und „amter" als Objekt `vv_kontakt` an die REST-Antwort an
  *              und die „Zusatzbilder" (us_tile_additional_image, „Erweiterte
  *              Einstellungen") als Array `vv_gallery`. Damit können die statischen
  *              Gemeinde-Frontends (z. B. boernichen.de) Kontaktdaten und Foto-Galerie
  *              dynamisch auslesen. Robust über den `rest_prepare`-Filter — unabhängig
  *              vom REST-Controller des CPT und vom REST-Optimizer.
  * Author:      GUMU
- * Version:     2.3.0
+ * Version:     2.4.0
  *
  * Installation: nach  wp-content/mu-plugins/vv-rest-profilfelder.php  kopieren.
  */
@@ -72,6 +72,25 @@ add_action( 'rest_api_init', function () {
 		// Besuche … (Feldname im Backend ohne Umlaut). Steckt bei 72 Einträgen
 		// voller Angaben, die sonst nirgends auftauchen.
 		'offnungszeiten'       => 'oeffnungszeiten',
+		'mobil'                => 'mobil',
+		'Fax'                  => 'fax',   // Großschreibung wie im Backend
+		'fax'                  => 'fax',   // Kleinschreibung kommt auch vor
+		'informationen'        => 'informationen',
+	);
+
+	// Ämter haben eine eigene Feldgruppe: Anschrift statt Straße/PLZ getrennt,
+	// „vor_und_nachname" als Ansprechpartner, „geschlecht" enthält faktisch die
+	// Funktion (z. B. „Sachbearbeiterin"), dazu Fax und Sprechzeiten.
+	$keys_amt = array(
+		'vor_und_nachname'  => 'fuehrende_person',
+		'geschlecht'        => 'funktion',
+		'anschrift'         => 'anschrift',
+		'telefon'           => 'telefon',
+		'fax'               => 'fax',
+		'e-mail_adresse'    => 'email',
+		'e-mail_adresse_2'  => 'email2',
+		'offnungszeiten'    => 'oeffnungszeiten',
+		'sonstiges'         => 'sonstiges',
 	);
 	$keys_verein = array(
 		'ansprechpartner'         => 'fuehrende_person',
@@ -88,6 +107,7 @@ add_action( 'rest_api_init', function () {
 		'profile'   => $keys_profile,
 		'tourismus' => $keys_profile,
 		'verein'    => $keys_verein,
+		'amter'     => $keys_amt,
 	);
 
 	foreach ( $typen as $pt => $keys ) {
