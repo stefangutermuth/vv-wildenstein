@@ -9,7 +9,7 @@
  *              dynamisch auslesen. Robust über den `rest_prepare`-Filter — unabhängig
  *              vom REST-Controller des CPT und vom REST-Optimizer.
  * Author:      GUMU
- * Version:     2.2.0
+ * Version:     2.3.0
  *
  * Installation: nach  wp-content/mu-plugins/vv-rest-profilfelder.php  kopieren.
  */
@@ -68,6 +68,10 @@ add_action( 'rest_api_init', function () {
 		'telefon'              => 'telefon',
 		'e-mail_adresse'       => 'email',
 		'website'              => 'website',
+		// Freitextfeld der Redaktion: Öffnungszeiten, Anmeldung, Telefon für
+		// Besuche … (Feldname im Backend ohne Umlaut). Steckt bei 72 Einträgen
+		// voller Angaben, die sonst nirgends auftauchen.
+		'offnungszeiten'       => 'oeffnungszeiten',
 	);
 	$keys_verein = array(
 		'ansprechpartner'         => 'fuehrende_person',
@@ -77,6 +81,7 @@ add_action( 'rest_api_init', function () {
 		'e-mail_adresse'          => 'email',
 		'website'                 => 'website',
 		'mgl'                     => 'mitglieder',
+		'offnungszeiten'          => 'oeffnungszeiten',
 	);
 
 	$typen = array(

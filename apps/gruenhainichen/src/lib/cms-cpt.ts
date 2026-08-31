@@ -78,6 +78,9 @@ export interface VVKontakt {
   telefon?: string;
   email?: string;
   website?: string;
+  /** Freitext der Redaktion: Öffnungszeiten, Anmeldung, Kontakt für Besuche.
+   *  Bei vielen Tourismus-Einträgen stehen hier die einzigen Besuchsangaben. */
+  oeffnungszeiten?: string;
 }
 
 const FETCH_TIMEOUT_MS = 8000;

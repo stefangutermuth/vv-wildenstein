@@ -49,7 +49,7 @@ const {
       )}
     </div>
 
-    {kontakt && (kontakt.fuehrende_person || kontakt.telefon || kontakt.email || kontakt.website || kontakt.strasse_hausnummer) && (
+    {kontakt && (kontakt.fuehrende_person || kontakt.telefon || kontakt.email || kontakt.website || kontakt.strasse_hausnummer || kontakt.oeffnungszeiten) && (
       <aside class="grh-detail__kontakt">
         <h3>Kontakt</h3>
         {kontakt.fuehrende_person && <p class="grh-detail__person">{kontakt.fuehrende_person}</p>}
@@ -64,6 +64,12 @@ const {
           {kontakt.email && <li><a href={`mailto:${kontakt.email}`}>{kontakt.email}</a></li>}
           {kontakt.website && <li><a href={kontakt.website} target="_blank" rel="noopener">{kontakt.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a></li>}
         </ul>
+        {kontakt.oeffnungszeiten && (
+          <div class="grh-detail__zeiten">
+            <h4>Besuch &amp; Öffnungszeiten</h4>
+            <p>{kontakt.oeffnungszeiten}</p>
+          </div>
+        )}
       </aside>
     )}
   </div>
@@ -189,6 +195,24 @@ const {
     word-break: break-word;
   }
   .grh-detail__kontakt a:hover { border-color: var(--grh-candle-500); }
+
+  /* Öffnungszeiten: Redaktions-Freitext, Zeilenumbrüche beibehalten */
+  .grh-detail__zeiten {
+    margin-top: 1.1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  .grh-detail__zeiten h4 {
+    margin: 0 0 0.4rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+  .grh-detail__zeiten p {
+    margin: 0;
+    white-space: pre-line;
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
   .grh-detail__foot {
     padding: var(--grh-space-5) 0;
     border-top: 1px solid var(--grh-line);
