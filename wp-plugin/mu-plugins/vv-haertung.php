@@ -56,6 +56,21 @@ add_filter( 'login_errors', static function () {
 	return __( 'Anmeldung fehlgeschlagen. Bitte Zugangsdaten prüfen.', 'default' );
 } );
 
+/* --- 3b) Auch Plugin-Kennungen aus dem Kopfbereich entfernen ---------------
+ * Manche Plugins schreiben ihre Version direkt in den Seitenkopf (z. B.
+ * „WordPress Download Manager 3.3.67"). Damit lässt sich gezielt nach
+ * Schwachstellen genau dieser Version suchen. Der Filter unten räumt alle
+ * generator-Angaben aus der fertigen Seite — unabhängig davon, welches
+ * Plugin sie gesetzt hat.                                                    */
+add_action( 'template_redirect', static function () {
+	if ( is_admin() ) {
+		return;
+	}
+	ob_start( static function ( $html ) {
+		return preg_replace( '#<meta[^>]+name=["\']generator["\'][^>]*>\s*#i', '', $html ) ?? $html;
+	} );
+}, 1 );
+
 /* --- 4) Sicherheits-Kopfzeilen -------------------------------------------- */
 add_action( 'send_headers', static function () {
 	if ( is_admin() ) {
