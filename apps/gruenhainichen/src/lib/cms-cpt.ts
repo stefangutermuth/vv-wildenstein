@@ -791,3 +791,46 @@ export async function getDownloadListe(name: string): Promise<DownloadGruppe[]> 
     return [];
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Servicehinweise                                                    */
+/*                                                                     */
+/*  Kurzfristige Meldungen zu Öffnungszeiten und Erreichbarkeit. Sie    */
+/*  erscheinen dort, wo sonst die falsche Erwartung entsteht — im Fuß   */
+/*  neben den Sprechzeiten.                                            */
+/*                                                                     */
+/*  Quelle im Repo: docs/wordpress/vv-rest-hinweise.php                */
+/* ------------------------------------------------------------------ */
+
+export interface Servicehinweis {
+  id: number;
+  titel: string;
+  text: string;
+  slug: string;
+  /** ISO-Zeitpunkt, ab dem der Hinweis nicht mehr gilt. */
+  gueltigBis: string;
+}
+
+export async function getServicehinweise(): Promise<Servicehinweis[]> {
+  try {
+    // Ohne Platten-Zwischenspeicher: Ein Hinweis, der eine geänderte
+    // Öffnungszeit ankündigt, ist nur solange etwas wert, wie er stimmt.
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    let res: Response;
+    try {
+      res = await fetch(`${VVW_API_BASE}/hinweise`, {
+        headers: { Accept: 'application/json' },
+        signal: ctrl.signal,
+      });
+    } finally {
+      clearTimeout(t);
+    }
+    if (!res.ok) return [];
+    const data = (await res.json()) as { hinweise?: Servicehinweis[] };
+    return data.hinweise ?? [];
+  } catch (err) {
+    console.warn('[cms-cpt] vvw/v1/hinweise Fehler:', (err as Error).message);
+    return [];
+  }
+}

@@ -1,6 +1,13 @@
 ---
 import GrhIcon from '../primitives/GrhIcon.astro';
 import GrhWappen from './GrhWappen.astro';
+import { getServicehinweise } from '../../lib/cms-cpt';
+
+/* Kurzfristige Hinweise zu Öffnungszeiten. Sie stehen bewusst hier: Direkt
+   darunter nennt der Fuß die Sprechzeiten — und genau dort entsteht die
+   falsche Erwartung, wenn an einem Tag etwas anderes gilt. */
+const hinweise = await getServicehinweise();
+const hinweis = hinweise[0] ?? null;
 
 const sitemap = {
   Gemeinde: [
@@ -51,6 +58,22 @@ const year = new Date().getFullYear();
 
       <div class="grh-footer__col">
         <h3>Sprechzeiten</h3>
+
+        {hinweis && (
+          <a
+            class="grh-footer__hinweis"
+            href={`/neuigkeiten/${hinweis.slug}/`}
+            data-grh-hinweis
+            data-gueltig-bis={hinweis.gueltigBis}
+          >
+            <span class="grh-footer__hinweis-kopf">
+              <span class="grh-footer__hinweis-punkt" aria-hidden="true"></span>
+              Abweichende Zeiten
+            </span>
+            <span class="grh-footer__hinweis-text">{hinweis.titel}</span>
+          </a>
+        )}
+
         <p>
           Di 9–12 &amp; 13–18<br />
           Do 9–12 &amp; 13–16<br />
@@ -80,6 +103,19 @@ const year = new Date().getFullYear();
     </div>
   </div>
 </footer>
+
+<script is:inline>
+  /* Sicherheitsnetz gegen einen Hinweis, der seine Zeit überlebt.
+     Die Seiten liegen fertig auf dem Server; läuft der Hinweis um Mitternacht
+     ab, würde er bis zum nächsten Bau weiterstehen — und ein abgelaufener
+     Hinweis auf eine Öffnungszeit ist schlimmer als keiner. */
+  (function () {
+    var el = document.querySelector('[data-grh-hinweis]');
+    if (!el) return;
+    var bis = Date.parse(el.dataset.gueltigBis || '');
+    if (bis && Date.now() > bis) el.remove();
+  })();
+</script>
 
 <style>
   .grh-footer {
@@ -204,6 +240,45 @@ const year = new Date().getFullYear();
     transition: gap var(--grh-dur-base);
   }
   .grh-footer__col-cta:hover { gap: 12px; }
+
+  /* === Servicehinweis über den Sprechzeiten ================== */
+  .grh-footer__hinweis {
+    display: block;
+    margin-bottom: var(--grh-space-3);
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(232, 182, 88, 0.14);
+    border-left: 3px solid var(--grh-candle-500);
+    text-decoration: none;
+    opacity: 1 !important;
+    transition: background-color var(--grh-dur-fast, 160ms) ease;
+  }
+  .grh-footer__hinweis:hover { background: rgba(232, 182, 88, 0.22); padding-left: 12px !important; }
+  .grh-footer__hinweis:focus-visible { outline: 3px solid var(--grh-candle-500); outline-offset: 2px; }
+
+  .grh-footer__hinweis-kopf {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    color: var(--grh-candle-300);
+    margin-bottom: 4px;
+  }
+  .grh-footer__hinweis-punkt {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--grh-candle-500);
+    flex-shrink: 0;
+  }
+  .grh-footer__hinweis-text {
+    display: block;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--grh-cream-50);
+  }
 
   /* === Bottom-Bar =========================================== */
   .grh-footer__bottom {
