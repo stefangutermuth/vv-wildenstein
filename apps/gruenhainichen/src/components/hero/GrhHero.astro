@@ -2,6 +2,14 @@
 import type { Season } from '../../lib/seasons';
 import GrhFeaturedSlot from './GrhFeaturedSlot.astro';
 import GrhIcon from '../primitives/GrhIcon.astro';
+import { getServicehinweise } from '../../lib/cms-cpt';
+
+/* Kurzfristiger Hinweis ganz oben — etwa eine geänderte Öffnungszeit.
+   Er steht bewusst über allem anderen, weil er nur wenige Tage gilt und in
+   dieser Zeit wichtiger ist als jede Dauerinformation. Ohne aktiven Hinweis
+   entfällt das Band restlos; der Hero sieht dann aus wie zuvor. */
+const hinweisListe = await getServicehinweise();
+const topHinweis = hinweisListe[0] ?? null;
 
 interface CTA { label: string; href: string; variant?: 'primary' | 'secondary' | 'ghost' }
 interface Featured {
@@ -37,6 +45,23 @@ const {
 } = Astro.props;
 ---
 <section class="grh-hero" data-grh-hero>
+
+  {topHinweis && (
+    <a
+      class="grh-hero__hinweis"
+      href={`/neuigkeiten/${topHinweis.slug}/`}
+      data-grh-hinweis
+      data-gueltig-bis={topHinweis.gueltigBis}
+    >
+      <span class="grh-hero__hinweis-inner">
+        <span class="grh-hero__hinweis-punkt" aria-hidden="true"></span>
+        <span class="grh-hero__hinweis-label">Hinweis</span>
+        <span class="grh-hero__hinweis-text">{topHinweis.titel}</span>
+        <span class="grh-hero__hinweis-pfeil" aria-hidden="true">→</span>
+      </span>
+    </a>
+  )}
+
   <div class="grh-hero__grid">
     {/* Linke Spalte: Forest-Wall mit Editorial-Typo */}
     <div class="grh-hero__copy">
@@ -553,6 +578,68 @@ const {
   }
 
   /* --- FeaturedSlot — als Editorial-Randnotiz in der dunklen Spalte ----- */
+  /* === Kurzfristiger Hinweis ganz oben ======================== */
+  .grh-hero__hinweis {
+    display: block;
+    position: relative;
+    z-index: 5;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-950);
+    text-decoration: none;
+    transition: background-color var(--grh-dur-fast, 160ms) ease;
+  }
+  .grh-hero__hinweis:hover { background: var(--grh-candle-300); }
+  .grh-hero__hinweis:focus-visible {
+    outline: 3px solid var(--grh-cream-50);
+    outline-offset: -3px;
+  }
+  .grh-hero__hinweis-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: var(--grh-container-max);
+    margin-inline: auto;
+    padding: 10px var(--grh-gutter);
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  .grh-hero__hinweis-punkt {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--grh-forest-950);
+    flex-shrink: 0;
+    /* Sanftes Pulsieren — es soll auffallen, aber niemanden anschreien. */
+    animation: grh-hinweis-puls 2.4s ease-in-out infinite;
+  }
+  @keyframes grh-hinweis-puls {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-hero__hinweis-punkt { animation: none; }
+  }
+  .grh-hero__hinweis-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .grh-hero__hinweis-text {
+    font-weight: 500;
+    /* Auf schmalen Bildschirmen lieber eine Zeile kürzen als das Band
+       dreizeilig werden lassen. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .grh-hero__hinweis-pfeil { margin-left: auto; flex-shrink: 0; }
+
+  @media (max-width: 560px) {
+    .grh-hero__hinweis-label { display: none; }
+    .grh-hero__hinweis-inner { font-size: 0.82rem; gap: 8px; }
+  }
+
   .grh-hero__featured-wrap {
     position: relative;
     z-index: 4;

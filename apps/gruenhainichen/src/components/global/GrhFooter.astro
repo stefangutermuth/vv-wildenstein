@@ -110,10 +110,14 @@ const year = new Date().getFullYear();
      ab, würde er bis zum nächsten Bau weiterstehen — und ein abgelaufener
      Hinweis auf eine Öffnungszeit ist schlimmer als keiner. */
   (function () {
-    var el = document.querySelector('[data-grh-hinweis]');
-    if (!el) return;
-    var bis = Date.parse(el.dataset.gueltigBis || '');
-    if (bis && Date.now() > bis) el.remove();
+    // querySelectorAll, nicht querySelector: Derselbe Hinweis steht an zwei
+    // Stellen — als Band oben im Hero und hier über den Sprechzeiten. Mit
+    // querySelector bliebe einer von beiden stehen.
+    var jetzt = Date.now();
+    document.querySelectorAll('[data-grh-hinweis]').forEach(function (el) {
+      var bis = Date.parse(el.dataset.gueltigBis || '');
+      if (bis && jetzt > bis) el.remove();
+    });
   })();
 </script>
 
