@@ -13,6 +13,7 @@ final class VW_Events_Admin_UI {
         add_action( 'manage_vw_event_posts_custom_column', [ __CLASS__, 'render_column' ], 10, 2 );
         add_filter( 'manage_edit-vw_event_sortable_columns', [ __CLASS__, 'sortable_columns' ] );
         add_action( 'pre_get_posts', [ __CLASS__, 'sort_query' ] );
+        add_filter( 'posts_clauses', [ __CLASS__, 'default_order' ], 10, 2 );
 
         add_action( 'restrict_manage_posts', [ __CLASS__, 'list_filters' ] );
 
@@ -165,10 +166,49 @@ final class VW_Events_Admin_UI {
 
     public static function sort_query( WP_Query $q ): void {
         if ( ! is_admin() || ! $q->is_main_query() ) { return; }
+        if ( $q->get( 'post_type' ) !== 'vw_event' ) { return; }
+        // Ausdrücklicher Klick auf die Spalte „Start" → rein chronologisch,
+        // Richtung bestimmt WordPress über ?order=asc|desc.
         if ( $q->get( 'orderby' ) === 'vw_start' ) {
             $q->set( 'meta_key', '_vw_event_start' );
             $q->set( 'orderby', 'meta_value' );
         }
+    }
+
+    /**
+     * Standard-Sortierung der Veranstaltungsliste im Backend.
+     *
+     * WordPress sortiert sonst nach Anlagedatum — bei 680 Einträgen, von denen
+     * die allermeisten vergangen sind, stehen dann Veranstaltungen von vorgestern
+     * oben und die nächste steht auf Seite 30. Deshalb:
+     *   1. kommende Veranstaltungen zuerst, die als nächstes stattfindende oben
+     *   2. danach die vergangenen, die zuletzt gewesene zuerst
+     *   3. Einträge ohne Startdatum ganz zum Schluss
+     * Sobald jemand selbst eine Spalte anklickt (?orderby=…), gilt dessen Wahl.
+     */
+    public static function default_order( array $clauses, WP_Query $q ): array {
+        global $pagenow, $wpdb;
+        if ( ! is_admin() || ! $q->is_main_query() ) { return $clauses; }
+        if ( $pagenow !== 'edit.php' ) { return $clauses; }
+        if ( $q->get( 'post_type' ) !== 'vw_event' ) { return $clauses; }
+        if ( ! empty( $_GET['orderby'] ) ) { return $clauses; }
+
+        // LEFT JOIN, damit Einträge ohne Startdatum nicht aus der Liste fallen.
+        $clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS vw_start_sort"
+            . " ON ( vw_start_sort.post_id = {$wpdb->posts}.ID"
+            . " AND vw_start_sort.meta_key = '_vw_event_start' )";
+
+        // Startdatum liegt als 'YYYY-MM-DDTHH:MM' vor → als Text vergleichbar.
+        $jetzt = current_time( 'Y-m-d\\TH:i' );
+        $clauses['orderby'] = $wpdb->prepare(
+            'CASE WHEN vw_start_sort.meta_value >= %s THEN 0'
+            . ' WHEN vw_start_sort.meta_value IS NULL OR vw_start_sort.meta_value = %s THEN 2'
+            . ' ELSE 1 END ASC,'
+            . ' CASE WHEN vw_start_sort.meta_value >= %s THEN vw_start_sort.meta_value END ASC,'
+            . ' vw_start_sort.meta_value DESC',
+            $jetzt, '', $jetzt
+        );
+        return $clauses;
     }
 
     public static function list_filters(): void {
