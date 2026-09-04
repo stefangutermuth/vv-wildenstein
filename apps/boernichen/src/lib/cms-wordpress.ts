@@ -394,7 +394,10 @@ const AMTSBLATT_INFO_CAT = 189; // downloadkategorie „amtsblatt-informationen"
 
 interface WPAmtsblatt {
   id: number;
-  title: { rendered: string };
+  title: { rendered: string
+  /** Von vv-rest-amtsblatt.php nachgereicht: PDF, Datum, Ausgabennummer */
+  vv_amtsblatt?: { pdfUrl: string | null; veroeffentlicht: string | null; ausgabeMonat: number | null; ausgabeJahr: number | null };
+};
   date: string;
   link: string;
   downloadkategorie?: number[];
@@ -412,7 +415,7 @@ export async function fetchAmtsblaetter(): Promise<AmtsblattItem[]> {
     url.searchParams.set('page', String(page));
     url.searchParams.set('orderby', 'date');
     url.searchParams.set('order', 'desc');
-    url.searchParams.set('_fields', 'id,title,date,link,downloadkategorie');
+    url.searchParams.set('_fields', 'id,title,date,link,downloadkategorie,vv_amtsblatt');
     const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
     if (!res.ok) throw new Error(`amtsblatt ${res.status} ${res.statusText}`);
     totalPages = parseInt(res.headers.get('X-WP-TotalPages') ?? '1', 10) || 1;
@@ -420,9 +423,18 @@ export async function fetchAmtsblaetter(): Promise<AmtsblattItem[]> {
     page++;
   } while (page <= totalPages && page <= MAX_PAGES);
 
-  // 2. PDF je Eintrag holen (media?parent=ID) — parallel in Blöcken.
+  // 2. PDF je Eintrag. Erste Quelle ist das Zusatzfeld `datei_url`, das
+  //    vv-rest-amtsblatt.php als `vv_amtsblatt.pdfUrl` nachreicht. Die alte
+  //    Suche über media?parent=ID bleibt nur als Rückfall: Sie findet die
+  //    Datei nur, wenn sie mit dem Beitrag verknüpft hochgeladen wurde — bei
+  //    allen elf Ausgaben von 2021 war das nicht der Fall, und die Knöpfe
+  //    führten auf eine leere WordPress-Seite.
   const pdfByParent = new Map<number, string>();
-  const ids = posts.map((p) => p.id);
+  for (const p of posts) {
+    const url = p.vv_amtsblatt?.pdfUrl;
+    if (url) pdfByParent.set(p.id, url);
+  }
+  const ids = posts.filter((p) => !pdfByParent.has(p.id)).map((p) => p.id);
   const CHUNK = 8;
   for (let i = 0; i < ids.length; i += CHUNK) {
     const slice = ids.slice(i, i + CHUNK);
