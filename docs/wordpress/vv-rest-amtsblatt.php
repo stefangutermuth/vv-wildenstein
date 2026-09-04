@@ -54,6 +54,23 @@ function vv_amtsblatt_felder( $post ) {
 		}
 	}
 
+	// Dateigröße — damit die Website sagen kann, was man sich lädt. Ein
+	// Amtsblatt hat 5 bis 8 MB; auf dem Handy unterwegs ist das eine Information.
+	$groesse = 0;
+	$anhang  = (int) get_post_meta( $id, 'datei', true );
+	if ( $anhang ) {
+		$pfad = get_attached_file( $anhang );
+		if ( $pfad && is_readable( $pfad ) ) $groesse = (int) filesize( $pfad );
+	}
+	if ( ! $groesse && $pdf ) {
+		// Ohne Mediathek-Verknüpfung: Adresse in einen Pfad übersetzen.
+		$up = wp_upload_dir();
+		if ( str_starts_with( $pdf, $up['baseurl'] ) ) {
+			$pfad = $up['basedir'] . substr( $pdf, strlen( $up['baseurl'] ) );
+			if ( is_readable( $pfad ) ) $groesse = (int) filesize( $pfad );
+		}
+	}
+
 	// Redaktionelles Datum, gespeichert als JJJJMMTT.
 	$roh    = trim( (string) get_post_meta( $id, 'veroffentlichungsdatum', true ) );
 	$datum  = '';
@@ -71,6 +88,7 @@ function vv_amtsblatt_felder( $post ) {
 
 	return [
 		'pdfUrl'        => $pdf ?: null,
+		'groesse'       => $groesse,
 		'veroeffentlicht' => $datum ?: null,
 		'ausgabeMonat'  => $monat,
 		'ausgabeJahr'   => $jahr,

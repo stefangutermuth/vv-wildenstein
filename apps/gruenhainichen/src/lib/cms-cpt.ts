@@ -66,6 +66,7 @@ interface WPCPTBase {
   vv_kontakt?: VVKontakt;
   vv_amtsblatt?: {
     pdfUrl: string | null;
+    groesse?: number;
     veroeffentlicht: string | null;
     ausgabeMonat: number | null;
     ausgabeJahr: number | null;
@@ -414,6 +415,8 @@ export interface AmtsblattItem {
   /** Monat der Ausgabe, 1–12. Bestimmt die Monatsmarke links. */
   monat: number;
   pdfUrl?: string;
+  /** Dateigröße in Bytes, 0 wenn unbekannt. */
+  groesse: number;
   link: string;
 }
 
@@ -462,6 +465,7 @@ export async function getAmtsblaetter(): Promise<AmtsblattItem[]> {
         jahr: String(jahr),
         monat,
         pdfUrl: feld?.pdfUrl ?? pdfAusAnhang ?? pdfAusAuszug,
+        groesse: feld?.groesse ?? 0,
         link: p.link,
         /* Nur zum Aussortieren, siehe unten. */
         _istAusgabe: istAusgabe,

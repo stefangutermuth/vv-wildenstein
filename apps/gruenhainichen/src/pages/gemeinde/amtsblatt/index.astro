@@ -17,8 +17,10 @@ const years = Array.from(byYear.keys()).sort((a, b) => Number(b) - Number(a));
 /* Monatsmarke aus der AUSGABE, nicht aus dem Erscheinungsdatum.
    Das Amtsblatt 08/2026 kam am 31. Juli heraus — nach dem Erscheinen
    beschriftet trug es die Marke „jul" und stand scheinbar im falschen Monat. */
-const MONATE = ['jan','feb','mär','apr','mai','jun','jul','aug','sep','okt','nov','dez'];
-const monatsMarke = (m: number) => MONATE[Math.min(Math.max(m, 1), 12) - 1];
+const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const monatsName = (m: number) => MONATE[Math.min(Math.max(m, 1), 12) - 1];
+const nummer = (m: number) => String(m).padStart(2, '0');
+const mb = (b: number) => (b > 0 ? `${(b / 1048576).toFixed(1).replace('.', ',')} MB` : '');
 const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
 ---
 <BaseLayout title="Amtsblatt · Grünhainichen" header="compact">
@@ -39,10 +41,19 @@ const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long
             <ul>
               {byYear.get(year)!.map((a) => (
                 <li>
-                  <span class="grh-amtsblatt__month">{monatsMarke(a.monat)}</span>
+                  {/* Die Ausgabennummer ist der Anker der Zeile — groß in der
+                      Display-Schrift, der Monat ausgeschrieben darunter. Das ist
+                      dasselbe Muster wie bei den Veranstaltungen (Tageszahl +
+                      Monat), damit die Seite eine Sprache spricht. */}
+                  <span class="grh-amtsblatt__nr" aria-hidden="true">
+                    <strong>{nummer(a.monat)}</strong>
+                    <em>{monatsName(a.monat)}</em>
+                  </span>
                   <div class="grh-amtsblatt__meta">
                     <h3>{a.title}</h3>
-                    <time>{fmtFull.format(a.date)}</time>
+                    <time datetime={a.date.toISOString().slice(0, 10)}>
+                      Erschienen am {fmtFull.format(a.date)}
+                    </time>
                   </div>
                   {/* Ohne PDF gar keinen Knopf: Der bisherige Rückfall zeigte
                       auf die WordPress-Seite der Ausgabe, die nur den Titel und
@@ -55,9 +66,10 @@ const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long
                       href={a.pdfUrl}
                       target="_blank"
                       rel="noopener"
-                      aria-label={`${a.title} als PDF öffnen`}
+                      aria-label={`${a.title} als PDF öffnen${a.groesse ? `, ${mb(a.groesse)}` : ''}`}
                     >
-                      Öffnen
+                      <span class="grh-amtsblatt__dl-typ">PDF{a.groesse ? ` · ${mb(a.groesse)}` : ''}</span>
+                      <span class="grh-amtsblatt__dl-cta">Öffnen <span aria-hidden="true">→</span></span>
                     </a>
                   ) : (
                     <span class="grh-amtsblatt__dl grh-amtsblatt__dl--fehlt">
@@ -162,25 +174,50 @@ const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long
   }
   .grh-amtsblatt__year li {
     display: grid;
-    grid-template-columns: 52px 1fr auto;
+    grid-template-columns: 72px 1fr auto;
     align-items: center;
-    gap: var(--grh-space-3);
-    padding: 10px 0;
+    gap: var(--grh-space-4);
+    padding: 12px 8px;
+    margin: 0 -8px;
     border-bottom: 1px solid var(--grh-line);
-  }
-  .grh-amtsblatt__month {
-    font-family: var(--grh-font-display);
-    font-style: italic;
-    font-size: var(--grh-fs-sm);
-    /* Steht auf hellem Papier — dort ist candle-500 mit 1,60:1 unlesbar. */
-    color: var(--grh-candle-700);
-    text-transform: lowercase;
-    text-align: center;
-    letter-spacing: 0;
-    background: var(--grh-paper-100);
     border-radius: var(--grh-radius-sm);
-    padding: 4px 0;
+    transition: background var(--grh-dur-fast);
   }
+  .grh-amtsblatt__year li:hover { background: var(--grh-paper-100); }
+
+  /* Ausgabennummer als Kalenderblatt: Nummer groß, Monat klein darunter. */
+  .grh-amtsblatt__nr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    padding: 8px 4px 7px;
+    background: var(--grh-sage-100);
+    border-radius: var(--grh-radius-md);
+    line-height: 1;
+  }
+  .grh-amtsblatt__nr strong {
+    font-family: var(--grh-font-display);
+    font-weight: 500;
+    font-size: 1.55rem;
+    letter-spacing: -0.03em;
+    color: var(--grh-forest-900);
+  }
+  .grh-amtsblatt__nr em {
+    font-family: var(--grh-font-body);
+    font-style: normal;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--grh-forest-700);
+    margin-top: 5px;
+    max-width: 68px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .grh-amtsblatt__meta {
     min-width: 0;
   }
@@ -201,20 +238,32 @@ const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long
     letter-spacing: 0.16em;
   }
   .grh-amtsblatt__dl {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    text-decoration: none;
+    color: var(--grh-forest-800);
+    white-space: nowrap;
+  }
+  .grh-amtsblatt__dl-typ {
+    font-family: var(--grh-font-body);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--grh-stone-400);
+  }
+  .grh-amtsblatt__dl-cta {
     font-family: var(--grh-font-body);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.22em;
     font-weight: 700;
-    color: var(--grh-forest-800);
-    text-decoration: none;
     padding: 6px 12px;
     border: 1px solid var(--grh-forest-800);
     border-radius: var(--grh-radius-pill);
     transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
-    white-space: nowrap;
   }
-  .grh-amtsblatt__dl:hover {
+  .grh-amtsblatt__dl:hover .grh-amtsblatt__dl-cta {
     background: var(--grh-forest-900);
     color: var(--grh-cream-50);
   }
@@ -354,4 +403,9 @@ const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long
     word-break: break-word;
   }
   .grh-amtsblatt__contact a:hover { border-color: var(--grh-candle-500); }
+  @media (max-width: 560px) {
+    .grh-amtsblatt__year li { grid-template-columns: 60px 1fr; }
+    .grh-amtsblatt__nr { width: 60px; }
+    .grh-amtsblatt__dl { grid-column: 2; align-items: flex-start; margin-top: 4px; }
+  }
 </style>
