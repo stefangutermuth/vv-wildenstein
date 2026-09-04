@@ -211,8 +211,15 @@ export interface CptKontakt {
   strasse_hausnummer?: string;
   plz_ort?: string;
   telefon?: string;
+  /** Handynummer — bei Ferienwohnungen oft der einzige Weg, den Vermieter zu erreichen. */
+  mobil?: string;
+  fax?: string;
   email?: string;
   website?: string;
+  /** Freitext der Redaktion: Öffnungszeiten, Anmeldung, Besuchskontakt. */
+  oeffnungszeiten?: string;
+  /** Freitext „Informationen": Preise, Hinweise, Leistungen. */
+  informationen?: string;
 }
 export interface CptGalleryImage {
   /** Anzeigegröße (Grid-Kachel). */

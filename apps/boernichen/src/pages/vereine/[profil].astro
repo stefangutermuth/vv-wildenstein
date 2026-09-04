@@ -20,7 +20,7 @@ interface Props { profile: ProfileItem }
 const { profile } = Astro.props;
 const k = profile.kontakt ?? {};
 const telHref = (t: string) => 'tel:' + t.replace(/[^+\d]/g, '');
-const hasKontakt = !!(k.fuehrende_person || k.strasse_hausnummer || k.plz_ort || k.telefon || k.email || k.website);
+const hasKontakt = !!(k.fuehrende_person || k.strasse_hausnummer || k.plz_ort || k.telefon || k.mobil || k.email || k.website || k.oeffnungszeiten || k.informationen);
 // Kontaktkarte weglassen, wenn die Beschreibung die Kontaktdaten ohnehin schon enthält (sonst doppelt).
 const contentHasContact = !!(k.email && profile.contentHtml.includes(k.email));
 const showKontakt = hasKontakt && !contentHasContact;
@@ -54,11 +54,28 @@ const heroImg = OVERRIDE_IMG[profile.cptSlug] ?? profile.image;
           {k.plz_ort}
         </p>
       )}
-      {(k.telefon || k.email || k.website) && (
+      {(k.telefon || k.mobil || k.fax || k.email || k.website) && (
         <p>
           {k.telefon && <>Telefon: <a href={telHref(k.telefon)}>{k.telefon}</a><br /></>}
+          {/* Handynummer, Fax, Öffnungszeiten und Informationen wurden bis
+              September 2026 gepflegt, aber nie angezeigt — gleiche Erweiterung
+              wie auf der Tourismus-Detailseite. */}
+          {k.mobil && <>Mobil: <a href={telHref(k.mobil)}>{k.mobil}</a><br /></>}
+          {k.fax && <>Fax: {k.fax}<br /></>}
           {k.email && <>E-Mail: <a href={`mailto:${k.email}`}>{k.email}</a><br /></>}
           {k.website && <>Web: <a href={k.website} target="_blank" rel="noopener noreferrer">{k.website}</a></>}
+        </p>
+      )}
+      {k.oeffnungszeiten && (
+        <p class="grh-contactcard__block">
+          <strong>Öffnungszeiten</strong><br />
+          {k.oeffnungszeiten}
+        </p>
+      )}
+      {k.informationen && (
+        <p class="grh-contactcard__block">
+          <strong>Informationen</strong><br />
+          {k.informationen}
         </p>
       )}
     </div>
@@ -66,6 +83,8 @@ const heroImg = OVERRIDE_IMG[profile.cptSlug] ?? profile.image;
 </GrhPage>
 
 <style>
+  .grh-contactcard__block { white-space: pre-line; margin-top: 0.75rem; }
+
   .grh-detail__img {
     margin: var(--grh-space-6) 0;
     max-width: 520px;
