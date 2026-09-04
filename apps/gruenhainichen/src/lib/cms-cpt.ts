@@ -64,6 +64,12 @@ interface WPCPTBase {
   };
   // benutzerdefinierte Felder, die wir sehen
   vv_kontakt?: VVKontakt;
+  vv_amtsblatt?: {
+    pdfUrl: string | null;
+    veroeffentlicht: string | null;
+    ausgabeMonat: number | null;
+    ausgabeJahr: number | null;
+  };
   gemeindeteil?: number[];
   profilkategorie?: number[];
   tourismus_kat?: number[];
@@ -400,9 +406,13 @@ export async function getGemeinderatssitzungen(): Promise<SitzungItem[]> {
 export interface AmtsblattItem {
   slug: string;
   title: string;
+  /** Tag der Veröffentlichung — steht unter dem Titel. */
   date: Date;
   excerpt: string;
+  /** Jahr der AUSGABE, nicht des Erscheinens. Bestimmt die Gruppierung. */
   jahr: string;
+  /** Monat der Ausgabe, 1–12. Bestimmt die Monatsmarke links. */
+  monat: number;
   pdfUrl?: string;
   link: string;
 }
@@ -411,25 +421,51 @@ export async function getAmtsblaetter(): Promise<AmtsblattItem[]> {
   const data = await fetchJson<WPCPTBase>('amtsblatt_download');
   return data
     .map((p) => {
-      const date = new Date(p.date);
-      // Erstes PDF aus den Anhängen finden
-      const pdfFromAttach = p._embedded?.['wp:attachment']?.find(
+      const feld = p.vv_amtsblatt;
+
+      /* Die PDF steckt im Zusatzfeld `datei_url`, das die Standard-Schnittstelle
+         nicht herausgibt — vv-rest-amtsblatt.php reicht sie nach. Die beiden
+         alten Wege bleiben als Rückfall stehen, falls eine Ausgabe die Datei
+         nur als Anhang oder im Auszug hat. */
+      const pdfAusAnhang = p._embedded?.['wp:attachment']?.find(
         (a) => a.mime_type === 'application/pdf',
       )?.source_url;
-      // Fallback: PDF-Link aus dem Excerpt-HTML extrahieren
-      const excerptHtml = p.excerpt?.rendered ?? '';
-      const pdfFromExcerpt = excerptHtml.match(/href="([^"]+\.pdf)"/i)?.[1];
+      const auszug = p.excerpt?.rendered ?? '';
+      const pdfAusAuszug = auszug.match(/href="([^"]+\.pdf)"/i)?.[1];
+
+      /* Veröffentlichungsdatum: das redaktionell gesetzte, sonst das Anlagedatum. */
+      const date = feld?.veroeffentlicht
+        ? new Date(`${feld.veroeffentlicht}T00:00:00`)
+        : new Date(p.date);
+
+      /* Einordnung nach der AUSGABE, nicht nach dem Erscheinen.
+         Das Amtsblatt 08/2026 kam am 31. Juli heraus. Nach dem Erscheinen
+         beschriftet trug es die Marke „jul" und stand im falschen Monat —
+         genau der Fehler, den die Redaktion gemeldet hat. */
+      const monat = feld?.ausgabeMonat ?? date.getMonth() + 1;
+      const jahr = feld?.ausgabeJahr ?? date.getFullYear();
+
       return {
         slug: p.slug,
         title: decodeEntities(p.title.rendered),
         date,
-        excerpt: decodeEntities(stripHtml(excerptHtml)),
-        jahr: String(date.getFullYear()),
-        pdfUrl: pdfFromAttach ?? pdfFromExcerpt,
+        excerpt: decodeEntities(stripHtml(auszug)),
+        jahr: String(jahr),
+        monat,
+        pdfUrl: feld?.pdfUrl ?? pdfAusAnhang ?? pdfAusAuszug,
         link: p.link,
+        /* Nur zum Aussortieren, siehe unten. */
+        _istAusgabe: feld?.ausgabeMonat != null,
       };
     })
-    .sort((a, b) => b.date.valueOf() - a.date.valueOf());
+    /* „Anzeigenpreise" und „Terminplan" liegen im selben Inhaltstyp, sind aber
+       keine Ausgaben. Sie stehen auf der Seite ohnehin gesondert verlinkt und
+       hätten in der Jahresliste nichts zu suchen. */
+    .filter((a) => a._istAusgabe)
+    .map(({ _istAusgabe, ...a }) => a)
+    .sort((a, b) =>
+      b.jahr !== a.jahr ? Number(b.jahr) - Number(a.jahr) : b.monat - a.monat,
+    );
 }
 
 /* ============================================================

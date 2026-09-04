@@ -14,7 +14,11 @@ for (const a of all) {
 }
 const years = Array.from(byYear.keys()).sort((a, b) => Number(b) - Number(a));
 
-const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
+/* Monatsmarke aus der AUSGABE, nicht aus dem Erscheinungsdatum.
+   Das Amtsblatt 08/2026 kam am 31. Juli heraus — nach dem Erscheinen
+   beschriftet trug es die Marke „jul" und stand scheinbar im falschen Monat. */
+const MONATE = ['jan','feb','mär','apr','mai','jun','jul','aug','sep','okt','nov','dez'];
+const monatsMarke = (m: number) => MONATE[Math.min(Math.max(m, 1), 12) - 1];
 const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
 ---
 <BaseLayout title="Amtsblatt · Grünhainichen" header="compact">
@@ -35,20 +39,31 @@ const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long
             <ul>
               {byYear.get(year)!.map((a) => (
                 <li>
-                  <span class="grh-amtsblatt__month">{fmtMonth.format(a.date).replace('.', '')}</span>
+                  <span class="grh-amtsblatt__month">{monatsMarke(a.monat)}</span>
                   <div class="grh-amtsblatt__meta">
                     <h3>{a.title}</h3>
                     <time>{fmtFull.format(a.date)}</time>
                   </div>
-                  <a
-                    class={`grh-amtsblatt__dl ${a.pdfUrl ? '' : 'grh-amtsblatt__dl--alt'}`}
-                    href={a.pdfUrl ?? a.link}
-                    target="_blank"
-                    rel="noopener"
-                    aria-label={`Amtsblatt ${a.title} öffnen`}
-                  >
-                    Öffnen
-                  </a>
+                  {/* Ohne PDF gar keinen Knopf: Der bisherige Rückfall zeigte
+                      auf die WordPress-Seite der Ausgabe, die nur den Titel und
+                      ein Suchfeld enthält — ein Knopf, der nichts öffnet, ist
+                      schlechter als kein Knopf. Zur Zeit haben alle 71 Ausgaben
+                      eine PDF; der Fall bleibt für den Notfall stehen. */}
+                  {a.pdfUrl ? (
+                    <a
+                      class="grh-amtsblatt__dl"
+                      href={a.pdfUrl}
+                      target="_blank"
+                      rel="noopener"
+                      aria-label={`${a.title} als PDF öffnen`}
+                    >
+                      Öffnen
+                    </a>
+                  ) : (
+                    <span class="grh-amtsblatt__dl grh-amtsblatt__dl--fehlt">
+                      folgt
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -204,6 +219,14 @@ const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long
     color: var(--grh-cream-50);
   }
   .grh-amtsblatt__dl--alt { color: var(--grh-stone-700); border-color: var(--grh-line); }
+
+  /* Ausgabe ohne hinterlegte PDF — kein Knopf, nur ein Vermerk. */
+  .grh-amtsblatt__dl--fehlt {
+    border-style: dashed;
+    color: var(--grh-stone-400);
+    cursor: default;
+    pointer-events: none;
+  }
   .grh-amtsblatt__empty {
     text-align: center;
     color: var(--grh-stone-400);
