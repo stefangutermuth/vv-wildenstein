@@ -57,9 +57,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: apps/gruenhainichen/.wp-cache
-          key: wp-cache-grh-${{ github.run_id }}
+          # v2 seit 04.09.2026: Der Zwischenspeicher erneuert sich nur, wenn sich
+          # Inhalte ändern (modified_gmt). Kommt ein neues REST-Feld hinzu —
+          # wie vv_amtsblatt —, bleibt das Datum gleich und der Build läuft mit
+          # einer Antwort, die das Feld nicht kennt. Bei jeder Schema-Änderung
+          # an der Schnittstelle diese Versionsnummer hochzählen.
+          key: wp-cache-grh-v2-${{ github.run_id }}
           restore-keys: |
-            wp-cache-grh-
+            wp-cache-grh-v2-
 
       - name: Astro bauen (LIVE — Inhalte aus vv-wildenstein.com, indexierbar)
         run: npm run build:gruenhainichen

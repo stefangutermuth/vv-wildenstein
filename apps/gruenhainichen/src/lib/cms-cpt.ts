@@ -441,13 +441,22 @@ export async function getAmtsblaetter(): Promise<AmtsblattItem[]> {
       /* Einordnung nach der AUSGABE, nicht nach dem Erscheinen.
          Das Amtsblatt 08/2026 kam am 31. Juli heraus. Nach dem Erscheinen
          beschriftet trug es die Marke „jul" und stand im falschen Monat —
-         genau der Fehler, den die Redaktion gemeldet hat. */
-      const monat = feld?.ausgabeMonat ?? date.getMonth() + 1;
-      const jahr = feld?.ausgabeJahr ?? date.getFullYear();
+         genau der Fehler, den die Redaktion gemeldet hat.
+
+         Die Nummer wird HIER aus dem Titel gelesen, nicht nur aus dem
+         nachgereichten Feld. Der erste Live-Build nach der Umstellung lief
+         mit einem Zwischenspeicher, der das Feld noch nicht kannte — und weil
+         die Einordnung daran hing, war die Liste leer. Der Titel ist immer
+         da; das Feld dient nur noch als Bestätigung. */
+      const titel = decodeEntities(p.title.rendered);
+      const nr = titel.match(/(\d{1,2})\s*\/\s*(\d{4})/);
+      const monat = feld?.ausgabeMonat ?? (nr ? Number(nr[1]) : date.getMonth() + 1);
+      const jahr = feld?.ausgabeJahr ?? (nr ? Number(nr[2]) : date.getFullYear());
+      const istAusgabe = feld?.ausgabeMonat != null || nr != null;
 
       return {
         slug: p.slug,
-        title: decodeEntities(p.title.rendered),
+        title: titel,
         date,
         excerpt: decodeEntities(stripHtml(auszug)),
         jahr: String(jahr),
@@ -455,7 +464,7 @@ export async function getAmtsblaetter(): Promise<AmtsblattItem[]> {
         pdfUrl: feld?.pdfUrl ?? pdfAusAnhang ?? pdfAusAuszug,
         link: p.link,
         /* Nur zum Aussortieren, siehe unten. */
-        _istAusgabe: feld?.ausgabeMonat != null,
+        _istAusgabe: istAusgabe,
       };
     })
     /* „Anzeigenpreise" und „Terminplan" liegen im selben Inhaltstyp, sind aber
