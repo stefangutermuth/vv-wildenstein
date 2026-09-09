@@ -13,8 +13,14 @@ import VvIcon from '../primitives/VvIcon.astro';
 interface Props {
   kontakt: VvKontakt;
   title?: string;
+  /**
+   * Blendet Sprechzeiten/Weitere Informationen aus. In der Seitenleiste werden
+   * sie unter dem Themen-Menü ausgegeben (VvZeitenkarte) — sonst schöbe der
+   * bis zu zehnzeilige Zeitenblock das Menü aus dem sichtbaren Bereich.
+   */
+  ohneBloecke?: boolean;
 }
-const { kontakt, title = 'Kontakt' } = Astro.props;
+const { kontakt, title = 'Kontakt', ohneBloecke = false } = Astro.props;
 
 // Ämter pflegen eine mehrzeilige „Anschrift", Profile/Vereine Straße + PLZ getrennt.
 const adresse = kontakt.anschrift?.trim()
@@ -100,19 +106,19 @@ const hasAny = Boolean(
         </div>
       )}
     </dl>
-    {kontakt.oeffnungszeiten && (
+    {!ohneBloecke && kontakt.oeffnungszeiten && (
       <div class="vv-kontakt__block">
         <h3>Sprech- &amp; Öffnungszeiten</h3>
         <p>{kontakt.oeffnungszeiten}</p>
       </div>
     )}
-    {kontakt.informationen && (
+    {!ohneBloecke && kontakt.informationen && (
       <div class="vv-kontakt__block">
         <h3>Weitere Informationen</h3>
         <p>{kontakt.informationen}</p>
       </div>
     )}
-    {kontakt.sonstiges && (
+    {!ohneBloecke && kontakt.sonstiges && (
       <div class="vv-kontakt__block">
         <p>{kontakt.sonstiges}</p>
       </div>
@@ -173,6 +179,19 @@ const hasAny = Boolean(
     white-space: pre-line;   /* Zeilenumbrüche der Redaktion beibehalten */
     color: var(--vv-text);
   }
+  /* In der Seitenleiste zählt jeder Pixel: Die Sprechzeiten der Ämter sind
+     bis zu zehn Zeilen lang und würden das Themen-Menü aus dem Bild drängen. */
+  :global(.vv-seitenleiste) .vv-kontakt { padding: var(--vv-space-4); }
+  :global(.vv-seitenleiste) .vv-kontakt__list { gap: var(--vv-space-2); }
+  :global(.vv-seitenleiste) .vv-kontakt__block {
+    margin-top: var(--vv-space-3);
+    padding-top: var(--vv-space-3);
+  }
+  :global(.vv-seitenleiste) .vv-kontakt__block p {
+    font-size: var(--vv-fs-sm);
+    line-height: 1.45;
+  }
+  :global(.vv-seitenleiste) .vv-kontakt__title { margin-bottom: var(--vv-space-3); }
   .vv-kontakt__row dd { white-space: pre-line; }
   .vv-sr {
     position: absolute;

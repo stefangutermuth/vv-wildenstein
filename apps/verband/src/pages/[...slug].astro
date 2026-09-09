@@ -14,6 +14,7 @@ import VvLightbox from '../components/global/VvLightbox.astro';
 import VvHubGrid from '../components/global/VvHubGrid.astro';
 import VvKontaktkarte from '../components/global/VvKontaktkarte.astro';
 import VvSprungmenu from '../components/global/VvSprungmenu.astro';
+import VvZeitenkarte from '../components/global/VvZeitenkarte.astro';
 import {
   fetchWordPressPages,
   fetchWordPressCptPages,
@@ -152,19 +153,29 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
       {page.image && (
         <img class="vv-pagebody__lead" src={page.image} alt="" loading="lazy" decoding="async" />
       )}
-      <div class:list={['vv-einstieg', { 'is-zweispaltig': zeigeSprungmenu && !!page.kontakt }]}>
-        {page.kontakt && <VvKontaktkarte kontakt={page.kontakt} />}
-        {zeigeSprungmenu && <VvSprungmenu marken={marken} />}
-      </div>
-      {hubTiles.length > 0 && <VvHubGrid tiles={hubTiles} icon={tileIcon} />}
-      {isEmpty ? (
-        <div class="vv-emptyhub">
-          <p>Für diese Seite liegen derzeit keine eigenen Inhalte vor.</p>
-          <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>
+      <div class:list={['vv-layout', { 'has-seitenleiste': zeigeSprungmenu }]}>
+        {zeigeSprungmenu ? (
+          <aside class="vv-seitenleiste">
+            {page.kontakt && <VvKontaktkarte kontakt={page.kontakt} ohneBloecke />}
+            <VvSprungmenu marken={marken} />
+            {page.kontakt && <VvZeitenkarte kontakt={page.kontakt} />}
+          </aside>
+        ) : (
+          page.kontakt && <VvKontaktkarte kontakt={page.kontakt} />
+        )}
+
+        <div class="vv-layout__inhalt">
+          {hubTiles.length > 0 && <VvHubGrid tiles={hubTiles} icon={tileIcon} />}
+          {isEmpty ? (
+            <div class="vv-emptyhub">
+              <p>Für diese Seite liegen derzeit keine eigenen Inhalte vor.</p>
+              <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>
+            </div>
+          ) : (
+            <article class="vv-prose" set:html={zeigeSprungmenu ? inhaltMitMarken : page.contentHtml} />
+          )}
         </div>
-      ) : (
-        <article class="vv-prose" set:html={zeigeSprungmenu ? inhaltMitMarken : page.contentHtml} />
-      )}
+      </div>
       {page.gallery && page.gallery.length > 0 && (
         <section class="vv-gallery" aria-label="Bildergalerie">
           {page.gallery.map((img) => (
@@ -180,17 +191,40 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
 </BaseLayout>
 
 <style>
-  /* Einstieg: Kontakt und Themen-Menü stehen vor dem Text. Ist genug Breite
-     da, nebeneinander — sonst untereinander mit dem Kontakt zuerst. */
-  .vv-einstieg { display: grid; gap: 0; }
-  .vv-einstieg.is-zweispaltig { gap: var(--vv-space-5); }
-  @media (min-width: 900px) {
-    .vv-einstieg.is-zweispaltig {
-      grid-template-columns: minmax(280px, 2fr) 3fr;
+  /* Lange Seiten bekommen eine Seitenleiste: Kontakt und Themen-Menü stehen
+     links und laufen beim Scrollen mit, der Text nutzt die restliche Breite.
+     Vorher standen beide Kästen obenauf und der Text lief darunter über die
+     volle Spaltenbreite — unruhig zu lesen und das Menü war nach dem ersten
+     Scrollen weg. */
+  .vv-layout { display: grid; gap: var(--vv-space-6); }
+  .vv-layout__inhalt { min-width: 0; }   /* verhindert Überlaufen breiter Tabellen */
+
+  @media (min-width: 1000px) {
+    .vv-layout.has-seitenleiste {
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: var(--vv-space-7);
       align-items: start;
     }
-    .vv-einstieg.is-zweispaltig > :global(.vv-kontakt) { margin-bottom: 0; }
-    .vv-einstieg.is-zweispaltig > :global(.vv-sprung) { margin-bottom: 0; }
+    .vv-seitenleiste {
+      position: sticky;
+      top: 84px;
+      max-height: calc(100vh - 104px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      display: grid;
+      gap: var(--vv-space-4);
+      align-content: start;
+      /* dezenter Scrollbalken, nur wenn nötig */
+      scrollbar-width: thin;
+    }
+    .vv-seitenleiste > :global(.vv-kontakt),
+    .vv-seitenleiste > :global(.vv-sprung) { margin: 0; }
+  }
+  /* Schmale Schirme: alles untereinander, Kontakt zuerst */
+  @media (max-width: 999px) {
+    .vv-seitenleiste { display: grid; gap: var(--vv-space-4); }
+    .vv-seitenleiste > :global(.vv-kontakt),
+    .vv-seitenleiste > :global(.vv-sprung) { margin: 0; }
   }
   /* Angesprungene Überschrift nicht unter dem festen Kopf verstecken */
   .vv-prose :global(h2[id]) { scroll-margin-top: 90px; }
@@ -199,6 +233,8 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
     background: var(--vv-white);
   }
   .vv-pagebody .vv-container { max-width: 980px; }
+  /* Mit Seitenleiste braucht die Zeile mehr Platz, sonst wird der Text schmal */
+  .vv-pagebody .vv-container:has(.vv-layout.has-seitenleiste) { max-width: 1240px; }
   .vv-pagebody__lead {
     width: 100%;
     max-height: 380px;

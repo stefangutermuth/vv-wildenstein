@@ -1,0 +1,65 @@
+---
+/**
+ * Sprechzeiten und weitere Hinweise als eigener Kasten.
+ *
+ * Auf den Ämterseiten stehen hier bis zu zehn Zeilen. Säßen sie im
+ * Kontaktkasten, begänne das Themen-Menü erst unterhalb des Bildschirmrands.
+ * Deshalb: Kerndaten oben, Menü, dann dieser Kasten.
+ */
+import VvIcon from '../primitives/VvIcon.astro';
+import type { VvKontakt } from '../../lib/cms-wordpress';
+
+interface Props { kontakt: VvKontakt }
+const { kontakt } = Astro.props;
+const hatInhalt = Boolean(kontakt.oeffnungszeiten || kontakt.informationen || kontakt.sonstiges);
+---
+{hatInhalt && (
+  <div class="vv-zeiten">
+    {kontakt.oeffnungszeiten && (
+      <section>
+        <h3><VvIcon name="clock" size={16} />Sprech- &amp; Öffnungszeiten</h3>
+        <p>{kontakt.oeffnungszeiten}</p>
+      </section>
+    )}
+    {kontakt.informationen && (
+      <section>
+        <h3>Weitere Informationen</h3>
+        <p>{kontakt.informationen}</p>
+      </section>
+    )}
+    {kontakt.sonstiges && (
+      <section><p>{kontakt.sonstiges}</p></section>
+    )}
+  </div>
+)}
+
+<style>
+  .vv-zeiten {
+    background: var(--vv-bg-alt);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-lg);
+    padding: var(--vv-space-4);
+    display: grid;
+    gap: var(--vv-space-4);
+  }
+  .vv-zeiten h3 {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 var(--vv-space-2);
+    font-size: var(--vv-fs-sm);
+    color: var(--vv-navy-800);
+  }
+  .vv-zeiten h3 :global(svg) { color: var(--vv-sky-500); flex: none; }
+  .vv-zeiten p {
+    margin: 0;
+    white-space: pre-line;      /* Zeilenumbrüche der Redaktion beibehalten */
+    font-size: var(--vv-fs-sm);
+    line-height: 1.5;
+    color: var(--vv-text);
+  }
+  .vv-zeiten section + section {
+    padding-top: var(--vv-space-3);
+    border-top: 1px solid var(--vv-border-soft);
+  }
+</style>
