@@ -60,13 +60,19 @@ const hasAny = Boolean(
       {kontakt.mobil && (
         <div class="vv-kontakt__row">
           <dt><VvIcon name="phone" size={17} /><span class="vv-sr">Mobil</span></dt>
-          <dd><a href={`tel:${kontakt.mobil.replace(/[^\d+]/g, '')}`}>{kontakt.mobil}</a> <span class="vv-kontakt__hint">(mobil)</span></dd>
+          <dd>
+            <a href={`tel:${kontakt.mobil.replace(/[^\d+]/g, '')}`}>{kontakt.mobil}</a>
+            <span class="vv-kontakt__hint" aria-hidden="true">mobil</span>
+          </dd>
         </div>
       )}
       {kontakt.fax && (
         <div class="vv-kontakt__row">
           <dt><VvIcon name="file-text" size={17} /><span class="vv-sr">Fax</span></dt>
-          <dd>{kontakt.fax} <span class="vv-kontakt__hint">(Fax)</span></dd>
+          <dd>
+            <span class="vv-kontakt__wert">{kontakt.fax}</span>
+            <span class="vv-kontakt__hint" aria-hidden="true">Fax</span>
+          </dd>
         </div>
       )}
       {kontakt.email && (
@@ -139,7 +145,19 @@ const hasAny = Boolean(
   .vv-kontakt__row a { color: var(--vv-link); font-weight: 600; text-decoration: none; }
   .vv-kontakt__row a:hover { text-decoration: underline; }
   .vv-kontakt__funktion { display: block; color: var(--vv-text-muted); font-size: var(--vv-fs-sm); }
-  .vv-kontakt__hint { color: var(--vv-text-muted); font-size: var(--vv-fs-sm); }
+  .vv-kontakt__hint {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--vv-bg-alt);
+    border: 1px solid var(--vv-border-soft);
+    color: var(--vv-text-muted);
+    font-size: 0.76rem;
+    font-weight: 500;
+    vertical-align: 1px;
+  }
+  .vv-kontakt__wert { font-variant-numeric: tabular-nums; }
   .vv-kontakt__block {
     margin-top: var(--vv-space-4);
     padding-top: var(--vv-space-4);
