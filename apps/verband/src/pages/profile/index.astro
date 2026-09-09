@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import VvPageHeader from '../../components/global/VvPageHeader.astro';
+import VvCptUebersicht from '../../components/global/VvCptUebersicht.astro';
+import { fetchWordPressCptPages } from '../../lib/cms-wordpress';
+
+// Basispfad des Inhaltstyps: lieferte vorher einen Server-Fehler, weil es
+// nur Detailseiten gab. Jetzt eine vollständige Übersicht.
+const alle = await fetchWordPressCptPages();
+const eintraege = alle.filter((p) => p.path.startsWith('/profile/'));
+---
+<BaseLayout
+  title="Gewerbe & Einrichtungen — Verwaltungsverband Wildenstein"
+  description="Unternehmen, Handwerk, Dienstleister und Einrichtungen in der Region."
+>
+  <VvPageHeader title="Gewerbe & Einrichtungen" intro="Unternehmen, Handwerk, Dienstleister und Einrichtungen in der Region." />
+  <div class="vv-cptidx">
+    <div class="vv-container">
+      <p class="vv-cptidx__anzahl">{eintraege.length} Einträge</p>
+      <VvCptUebersicht eintraege={eintraege} alphabetisch={true} />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .vv-cptidx { padding-block: var(--vv-space-7) var(--vv-space-9); background: var(--vv-bg-alt); }
+  .vv-cptidx .vv-container { max-width: 900px; }
+  .vv-cptidx__anzahl {
+    margin: 0 0 var(--vv-space-5);
+    color: var(--vv-text-muted);
+    font-size: var(--vv-fs-sm);
+  }
+</style>

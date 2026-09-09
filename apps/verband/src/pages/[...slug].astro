@@ -13,9 +13,11 @@ import VvPageHeader from '../components/global/VvPageHeader.astro';
 import VvLightbox from '../components/global/VvLightbox.astro';
 import VvHubGrid from '../components/global/VvHubGrid.astro';
 import VvKontaktkarte from '../components/global/VvKontaktkarte.astro';
+import VvSprungmenu from '../components/global/VvSprungmenu.astro';
 import {
   fetchWordPressPages,
   fetchWordPressCptPages,
+  baueSprungmarken,
   fetchHubSources,
   type WPPageItem,
   type HubTile,
@@ -132,6 +134,12 @@ const { page, hubTiles, hubIcon: tileIcon } = Astro.props;
 // nach dem Aufräumen bleibt kein Inhalt. Statt einer leeren Seite ein
 // freundlicher Hinweis mit Weg zurück in die Sektion.
 const contentText = page.contentHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+// Themen-Menü für lange Seiten: Überschriften bekommen Sprungmarken, die
+// Liste steht über dem Text. Lohnt sich erst ab einer gewissen Länge —
+// bei drei Absätzen wäre es nur Beiwerk.
+const { html: inhaltMitMarken, marken } = baueSprungmarken(page.contentHtml);
+const zeigeSprungmenu = marken.length >= 4 && contentText.length > 2500;
 const isEmpty =
   hubTiles.length === 0 && contentText.length < 40 && !page.kontakt && !page.gallery?.length;
 const parentPath = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].path : '/';
@@ -144,7 +152,10 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
       {page.image && (
         <img class="vv-pagebody__lead" src={page.image} alt="" loading="lazy" decoding="async" />
       )}
-      {page.kontakt && <VvKontaktkarte kontakt={page.kontakt} />}
+      <div class:list={['vv-einstieg', { 'is-zweispaltig': zeigeSprungmenu && !!page.kontakt }]}>
+        {page.kontakt && <VvKontaktkarte kontakt={page.kontakt} />}
+        {zeigeSprungmenu && <VvSprungmenu marken={marken} />}
+      </div>
       {hubTiles.length > 0 && <VvHubGrid tiles={hubTiles} icon={tileIcon} />}
       {isEmpty ? (
         <div class="vv-emptyhub">
@@ -152,7 +163,7 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
           <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>
         </div>
       ) : (
-        <article class="vv-prose" set:html={page.contentHtml} />
+        <article class="vv-prose" set:html={zeigeSprungmenu ? inhaltMitMarken : page.contentHtml} />
       )}
       {page.gallery && page.gallery.length > 0 && (
         <section class="vv-gallery" aria-label="Bildergalerie">
@@ -169,6 +180,20 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
 </BaseLayout>
 
 <style>
+  /* Einstieg: Kontakt und Themen-Menü stehen vor dem Text. Ist genug Breite
+     da, nebeneinander — sonst untereinander mit dem Kontakt zuerst. */
+  .vv-einstieg { display: grid; gap: 0; }
+  .vv-einstieg.is-zweispaltig { gap: var(--vv-space-5); }
+  @media (min-width: 900px) {
+    .vv-einstieg.is-zweispaltig {
+      grid-template-columns: minmax(280px, 2fr) 3fr;
+      align-items: start;
+    }
+    .vv-einstieg.is-zweispaltig > :global(.vv-kontakt) { margin-bottom: 0; }
+    .vv-einstieg.is-zweispaltig > :global(.vv-sprung) { margin-bottom: 0; }
+  }
+  /* Angesprungene Überschrift nicht unter dem festen Kopf verstecken */
+  .vv-prose :global(h2[id]) { scroll-margin-top: 90px; }
   .vv-pagebody {
     padding-block: var(--vv-space-7) var(--vv-space-9);
     background: var(--vv-white);

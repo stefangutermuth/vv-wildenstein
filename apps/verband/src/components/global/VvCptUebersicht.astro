@@ -1,0 +1,134 @@
+---
+/**
+ * Übersicht aller Einträge eines Inhaltstyps (Ämter, Vereine, Tourismus,
+ * Profile). Die Detailseiten waren bisher nur über die Portalseiten erreichbar,
+ * die nackten Basispfade lieferten einen Server-Fehler. Diese Seite schließt
+ * die Lücke und zeigt zugleich die wichtigsten Angaben aus den Redaktionsfeldern
+ * (Ort, Telefon, Ansprechpartner), damit man nicht erst klicken muss.
+ */
+import VvIcon from '../primitives/VvIcon.astro';
+import type { WPPageItem } from '../../lib/cms-wordpress';
+
+interface Props {
+  eintraege: WPPageItem[];
+  /** Nach Anfangsbuchstaben gruppieren (sinnvoll ab ~20 Einträgen) */
+  alphabetisch?: boolean;
+}
+const { eintraege, alphabetisch = false } = Astro.props;
+
+const sortiert = [...eintraege].sort((a, b) =>
+  a.title.localeCompare(b.title, 'de', { sensitivity: 'base' }),
+);
+
+// Gruppierung nach Anfangsbuchstaben
+const gruppen = new Map<string, WPPageItem[]>();
+if (alphabetisch) {
+  for (const e of sortiert) {
+    const b = (e.title.trim()[0] ?? '#').toUpperCase();
+    const key = /[A-ZÄÖÜ]/.test(b) ? b.replace(/[ÄÖÜ]/, (m) => ({ Ä: 'A', Ö: 'O', Ü: 'U' })[m]!) : '#';
+    if (!gruppen.has(key)) gruppen.set(key, []);
+    gruppen.get(key)!.push(e);
+  }
+}
+const buchstaben = [...gruppen.keys()].sort((a, b) => a.localeCompare(b, 'de'));
+
+/** Kurze Zeile mit den wichtigsten Kontaktangaben */
+function zeile(e: WPPageItem): string {
+  const k = e.kontakt;
+  if (!k) return '';
+  return [k.fuehrende_person, k.plz_ort || k.anschrift?.split('\n').pop()?.trim()]
+    .filter(Boolean)
+    .join(' · ');
+}
+---
+{alphabetisch && buchstaben.length > 3 && (
+  <nav class="vv-cptidx__abc" aria-label="Nach Anfangsbuchstaben springen">
+    {buchstaben.map((b) => <a href={`#buchstabe-${b}`}>{b}</a>)}
+  </nav>
+)}
+
+{alphabetisch ? (
+  buchstaben.map((b) => (
+    <section class="vv-cptidx__gruppe">
+      <h2 class="vv-cptidx__buchstabe" id={`buchstabe-${b}`}>{b}</h2>
+      <ul class="vv-cptidx__list">
+        {gruppen.get(b)!.map((e) => (
+          <li>
+            <a href={e.path} class="vv-cptidx__item">
+              <span class="vv-cptidx__text">
+                <span class="vv-cptidx__title">{e.title}</span>
+                {zeile(e) && <span class="vv-cptidx__meta">{zeile(e)}</span>}
+              </span>
+              {e.kontakt?.telefon && <span class="vv-cptidx__tel">{e.kontakt.telefon}</span>}
+              <VvIcon name="arrow-right" size={16} class="vv-cptidx__arrow" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))
+) : (
+  <ul class="vv-cptidx__list">
+    {sortiert.map((e) => (
+      <li>
+        <a href={e.path} class="vv-cptidx__item">
+          <span class="vv-cptidx__text">
+            <span class="vv-cptidx__title">{e.title}</span>
+            {zeile(e) && <span class="vv-cptidx__meta">{zeile(e)}</span>}
+          </span>
+          {e.kontakt?.telefon && <span class="vv-cptidx__tel">{e.kontakt.telefon}</span>}
+          <VvIcon name="arrow-right" size={16} class="vv-cptidx__arrow" />
+        </a>
+      </li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .vv-cptidx__abc {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: var(--vv-space-6);
+    padding-bottom: var(--vv-space-4);
+    border-bottom: 1px solid var(--vv-border-soft);
+  }
+  .vv-cptidx__abc a {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 38px; min-height: 38px;
+    border-radius: var(--vv-radius-md);
+    border: 1px solid var(--vv-border-soft);
+    background: var(--vv-bg);
+    color: var(--vv-link); font-weight: 700; text-decoration: none;
+  }
+  .vv-cptidx__abc a:hover { background: var(--vv-navy-800); border-color: var(--vv-navy-800); color: #fff; }
+  .vv-cptidx__gruppe { margin-bottom: var(--vv-space-7); scroll-margin-top: 90px; }
+  .vv-cptidx__buchstabe {
+    margin: 0 0 var(--vv-space-3);
+    font-size: var(--vv-fs-lg);
+    color: var(--vv-sky-500);
+    scroll-margin-top: 90px;
+  }
+  .vv-cptidx__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .vv-cptidx__item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: var(--vv-space-3);
+    padding: var(--vv-space-3) var(--vv-space-4);
+    background: var(--vv-bg);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+    text-decoration: none;
+    color: var(--vv-text);
+    min-height: 56px;
+  }
+  .vv-cptidx__item:hover { border-color: var(--vv-sky-500); background: var(--vv-bg-alt); }
+  .vv-cptidx__text { display: grid; gap: 2px; min-width: 0; }
+  .vv-cptidx__title { font-weight: 600; color: var(--vv-navy-800); }
+  .vv-cptidx__meta { font-size: var(--vv-fs-sm); color: var(--vv-text-muted); }
+  .vv-cptidx__tel { font-size: var(--vv-fs-sm); color: var(--vv-text-muted); font-variant-numeric: tabular-nums; }
+  .vv-cptidx__arrow { color: var(--vv-sky-500); flex: none; }
+  @media (max-width: 560px) {
+    .vv-cptidx__item { grid-template-columns: 1fr auto; }
+    .vv-cptidx__tel { display: none; }
+  }
+</style>

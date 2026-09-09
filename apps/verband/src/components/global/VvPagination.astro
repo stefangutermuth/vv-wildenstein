@@ -1,0 +1,142 @@
+---
+/**
+ * Blätter-Navigation für lange Listen.
+ * Seite 1 liegt auf der Basis-Adresse (/neuigkeiten/), Seite 2..N unter
+ * /neuigkeiten/seite/{n}/ — dieselbe Aufteilung wie im Grünhainichen-Frontend.
+ */
+import VvIcon from '../primitives/VvIcon.astro';
+
+interface Props {
+  aktuell: number;
+  gesamt: number;
+  basis: string;        // z. B. "/neuigkeiten"
+  label?: string;
+}
+const { aktuell, gesamt, basis, label = 'Seitennummerierung' } = Astro.props;
+
+const href = (n: number) => (n <= 1 ? `${basis}/` : `${basis}/seite/${n}/`);
+
+// Fenster um die aktuelle Seite: 1 … 4 5 [6] 7 8 … 13
+function seitenfolge(a: number, g: number): Array<number | '…'> {
+  if (g <= 7) return Array.from({ length: g }, (_, i) => i + 1);
+  const raus = new Set<number>([1, g, a, a - 1, a + 1]);
+  if (a <= 3) [2, 3, 4].forEach((n) => raus.add(n));
+  if (a >= g - 2) [g - 3, g - 2, g - 1].forEach((n) => raus.add(n));
+  const nums = [...raus].filter((n) => n >= 1 && n <= g).sort((x, y) => x - y);
+  const out: Array<number | '…'> = [];
+  let vorher = 0;
+  for (const n of nums) {
+    if (vorher && n - vorher > 1) out.push('…');
+    out.push(n);
+    vorher = n;
+  }
+  return out;
+}
+const folge = seitenfolge(aktuell, gesamt);
+---
+{gesamt > 1 && (
+  <nav class="vv-pager" aria-label={label}>
+    <a
+      class="vv-pager__step"
+      href={href(aktuell - 1)}
+      rel="prev"
+      aria-disabled={aktuell <= 1 ? 'true' : undefined}
+      tabindex={aktuell <= 1 ? -1 : undefined}
+    >
+      <VvIcon name="arrow-right" size={16} class="vv-pager__icon vv-pager__icon--back" />
+      <span>Neuere</span>
+    </a>
+
+    <ol class="vv-pager__list">
+      {folge.map((n) =>
+        n === '…' ? (
+          <li class="vv-pager__gap" aria-hidden="true">…</li>
+        ) : (
+          <li>
+            <a
+              href={href(n)}
+              class:list={['vv-pager__num', { 'is-current': n === aktuell }]}
+              aria-current={n === aktuell ? 'page' : undefined}
+            >
+              <span class="vv-sr">Seite </span>{n}
+            </a>
+          </li>
+        ),
+      )}
+    </ol>
+
+    <a
+      class="vv-pager__step"
+      href={href(aktuell + 1)}
+      rel="next"
+      aria-disabled={aktuell >= gesamt ? 'true' : undefined}
+      tabindex={aktuell >= gesamt ? -1 : undefined}
+    >
+      <span>Ältere</span>
+      <VvIcon name="arrow-right" size={16} class="vv-pager__icon" />
+    </a>
+  </nav>
+)}
+
+<style>
+  .vv-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--vv-space-3);
+    flex-wrap: wrap;
+    margin-top: var(--vv-space-7);
+    padding-top: var(--vv-space-5);
+    border-top: 1px solid var(--vv-border-soft);
+  }
+  .vv-pager__list {
+    display: flex;
+    align-items: center;
+    gap: var(--vv-space-1);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .vv-pager__num,
+  .vv-pager__step {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 40px;
+    min-height: 40px;          /* Tippziel nach BITV */
+    padding: 0 var(--vv-space-3);
+    justify-content: center;
+    border-radius: var(--vv-radius-md);
+    border: 1px solid var(--vv-border-soft);
+    background: var(--vv-bg);
+    color: var(--vv-link);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-pager__num:hover,
+  .vv-pager__step:hover { background: var(--vv-bg-alt); border-color: var(--vv-sky-500); }
+  .vv-pager__num.is-current {
+    background: var(--vv-navy-800);
+    border-color: var(--vv-navy-800);
+    color: #fff;
+    cursor: default;
+  }
+  .vv-pager__step[aria-disabled='true'] {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .vv-pager__icon--back { transform: rotate(180deg); }
+  .vv-pager__gap { padding: 0 4px; color: var(--vv-text-muted); }
+  .vv-sr {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+  @media (max-width: 560px) {
+    .vv-pager { justify-content: center; }
+    .vv-pager__list { order: -1; width: 100%; }
+  }
+</style>

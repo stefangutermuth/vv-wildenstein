@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import VvPageHeader from '../../../components/global/VvPageHeader.astro';
+import VvNewsListe from '../../../components/global/VvNewsListe.astro';
+import VvPagination from '../../../components/global/VvPagination.astro';
+import { getNews } from '../../../lib/cms';
+
+export async function getStaticPaths() {
+  // Die Seitengröße muss hier stehen: getStaticPaths läuft in einem eigenen
+  // Gültigkeitsbereich und sieht keine Konstanten aus dem Frontmatter darunter.
+  const PRO_SEITE = 30;
+  const alle = await getNews();
+  const seiten = Math.max(1, Math.ceil(alle.length / PRO_SEITE));
+  const pfade = [];
+  // Seite 1 liegt auf /neuigkeiten/ — hier nur die Folgeseiten.
+  for (let p = 2; p <= seiten; p++) {
+    pfade.push({ params: { page: String(p) }, props: { nummer: p, seiten, alle } });
+  }
+  return pfade;
+}
+
+const PRO_SEITE = 30;
+const { nummer, seiten, alle } = Astro.props as {
+  nummer: number;
+  seiten: number;
+  alle: Awaited<ReturnType<typeof getNews>>;
+};
+const news = alle.slice((nummer - 1) * PRO_SEITE, nummer * PRO_SEITE);
+---
+<BaseLayout
+  title={`Neuigkeiten — Seite ${nummer} von ${seiten} — Verwaltungsverband Wildenstein`}
+  description="Ältere Neuigkeiten und Bekanntmachungen des Verwaltungsverbands Wildenstein."
+>
+  <VvPageHeader
+    title="Neuigkeiten & Bekanntmachungen"
+    intro={`Ältere Meldungen — Seite ${nummer} von ${seiten}.`}
+  />
+
+  <div class="vv-newsindex">
+    <div class="vv-container">
+      <VvNewsListe news={news} />
+      <VvPagination aktuell={nummer} gesamt={seiten} basis="/neuigkeiten" />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .vv-newsindex { padding-block: var(--vv-space-7) var(--vv-space-9); background: var(--vv-bg-alt); }
+  .vv-newsindex .vv-container { max-width: 980px; }
+</style>

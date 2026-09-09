@@ -1,0 +1,104 @@
+---
+/**
+ * Themen-Menü für lange Seiten (vor allem die Ämter).
+ *
+ * Das Einwohnermeldeamt führt 31 Leistungen von „Auskunftssperre" bis
+ * „Wohnungsgeberbestätigung" auf einer Seite — ohne Einstieg muss man durch
+ * 48.000 Zeichen scrollen. Das Menü listet die Themen und springt direkt hin.
+ * Bei vielen Einträgen wird es zweispaltig, damit es nicht die halbe Seite füllt.
+ */
+import VvIcon from '../primitives/VvIcon.astro';
+import type { Sprungmarke } from '../../lib/cms-wordpress';
+
+interface Props {
+  marken: Sprungmarke[];
+  titel?: string;
+}
+const { marken, titel = 'Themen auf dieser Seite' } = Astro.props;
+const zweispaltig = marken.length > 8;
+---
+{marken.length >= 3 && (
+  <nav class="vv-sprung" aria-labelledby="vv-sprung-titel">
+    <h2 class="vv-sprung__titel" id="vv-sprung-titel">
+      <VvIcon name="file-text" size={18} />
+      {titel}
+      <span class="vv-sprung__anzahl">{marken.length}</span>
+    </h2>
+    <ul class:list={['vv-sprung__list', { 'is-mehrspaltig': zweispaltig }]}>
+      {marken.map((m) => (
+        <li>
+          <a href={`#${m.id}`}>{m.titel}</a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<style>
+  .vv-sprung {
+    background: var(--vv-bg);
+    border: 1px solid var(--vv-border-soft);
+    border-left: 4px solid var(--vv-sky-500);
+    border-radius: var(--vv-radius-lg);
+    padding: var(--vv-space-5);
+    margin: 0 0 var(--vv-space-6);
+  }
+  .vv-sprung__titel {
+    display: flex;
+    align-items: center;
+    gap: var(--vv-space-2);
+    margin: 0 0 var(--vv-space-4);
+    font-size: var(--vv-fs-base);
+    color: var(--vv-navy-800);
+  }
+  .vv-sprung__titel :global(svg) { color: var(--vv-sky-500); flex: none; }
+  .vv-sprung__anzahl {
+    margin-left: auto;
+    font-size: var(--vv-fs-sm);
+    font-weight: 500;
+    color: var(--vv-text-muted);
+    background: var(--vv-bg-alt);
+    border-radius: 999px;
+    padding: 2px 10px;
+  }
+  .vv-sprung__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1px;
+  }
+  .vv-sprung__list.is-mehrspaltig {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    column-gap: var(--vv-space-4);
+  }
+  .vv-sprung__list a {
+    display: block;
+    padding: 7px 10px 7px 18px;
+    border-radius: var(--vv-radius-sm);
+    color: var(--vv-link);
+    text-decoration: none;
+    font-size: var(--vv-fs-sm);
+    line-height: 1.4;
+    position: relative;
+  }
+  .vv-sprung__list a::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    margin-top: -2px;
+    border-radius: 50%;
+    background: var(--vv-sky-500);
+    opacity: 0.55;
+  }
+  .vv-sprung__list a:hover {
+    background: var(--vv-bg-alt);
+    text-decoration: underline;
+  }
+  @media print {
+    .vv-sprung { display: none; }
+  }
+</style>

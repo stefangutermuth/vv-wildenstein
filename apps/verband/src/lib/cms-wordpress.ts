@@ -63,6 +63,81 @@ interface WPPost {
   };
 }
 
+/**
+ * Prozent-kodierte Slugs (z. B. „%c2%a7" = §) brechen Astros statisches
+ * [slug]-Routing. Früher wurden solche Beiträge übersprungen — dabei fielen
+ * amtliche Bekanntmachungen zum Flächennutzungsplan unter den Tisch.
+ * Jetzt wird der Slug entschärft: dekodieren, Sonderzeichen entfernen,
+ * Bindestriche normalisieren. Der Beitrag bleibt damit erhalten.
+ */
+export function entschaerfeSlug(slug: string): string {
+  if (!slug.includes('%')) return slug;
+  let klar = slug;
+  try {
+    klar = decodeURIComponent(slug);
+  } catch {
+    klar = slug.replace(/%[0-9a-f]{2}/gi, '');
+  }
+  const sauber = klar
+    .toLowerCase()
+    .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return sauber || slug.replace(/%/g, '');
+}
+
+export interface Sprungmarke {
+  id: string;
+  titel: string;
+  ebene: number;
+}
+
+/**
+ * Versieht die Zwischenüberschriften eines Inhalts mit Sprungmarken und gibt
+ * sie als Liste zurück. Grundlage für das Themen-Menü auf langen Amtsseiten
+ * (Einwohnermeldeamt: 48.000 Zeichen, 31 Überschriften) — ohne das muss man
+ * durch die ganze Seite scrollen, um „Personalausweis" zu finden.
+ *
+ * Nur h2 wird aufgenommen: h3/h4 sind dort Unterpunkte einzelner Leistungen
+ * und würden das Menü unbrauchbar lang machen.
+ */
+export function baueSprungmarken(html: string): { html: string; marken: Sprungmarke[] } {
+  if (!html) return { html, marken: [] };
+  const marken: Sprungmarke[] = [];
+  const vergeben = new Set<string>();
+
+  const out = html.replace(
+    /<h2([^>]*)>([\s\S]*?)<\/h2>/gi,
+    (treffer, attr: string, inhalt: string) => {
+      const titel = decodeEntities(inhalt.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')).trim();
+      if (!titel) return treffer;
+
+      // Vorhandene ID übernehmen, sonst aus dem Titel bilden
+      const vorhanden = /\bid=["']([^"']+)["']/i.exec(attr)?.[1];
+      let id =
+        vorhanden ||
+        titel
+          .toLowerCase()
+          .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/ß/g, 'ss')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 60);
+      if (!id) id = `abschnitt-${marken.length + 1}`;
+      // Doppelte Überschriften (z. B. zweimal „Gebühren") auseinanderhalten
+      let eindeutig = id;
+      let n = 2;
+      while (vergeben.has(eindeutig)) eindeutig = `${id}-${n++}`;
+      vergeben.add(eindeutig);
+
+      marken.push({ id: eindeutig, titel, ebene: 2 });
+      const attrOhneId = attr.replace(/\s*\bid=["'][^"']*["']/i, '');
+      return `<h2${attrOhneId} id="${eindeutig}" tabindex="-1">${inhalt}</h2>`;
+    },
+  );
+  return { html: out, marken };
+}
+
 const PLACEHOLDER_PATTERNS = [/platzhalter/i, /placeholder/i, /beitrag_platzhalter/i];
 function isPlaceholderUrl(url: string): boolean {
   return PLACEHOLDER_PATTERNS.some((p) => p.test(url));
@@ -99,9 +174,7 @@ export async function fetchWordPressNews(): Promise<NewsItem[]> {
     _embed: 'wp:featuredmedia,wp:term',
     orderby: 'date',
     order: 'desc',
-    // Slugs mit Prozent-Kodierung (z. B. „%c2%a7" = §) brechen Astros
-    // statisches [slug]-Routing — solche (seltenen) alten Posts überspringen.
-  })).filter((p) => !p.slug.includes('%'));
+  })).map((p) => (p.slug.includes('%') ? { ...p, slug: entschaerfeSlug(p.slug) } : p));
   const postSlugs = await ensurePostSlugs();
   return posts.map((p) => mapWPPostToNewsItem(p, postSlugs)).filter((n): n is NewsItem => n !== null);
 }
@@ -185,7 +258,7 @@ function ensurePostSlugs(): Promise<Set<string>> {
         // Denselben (vollständigen) Umfang wie fetchWordPressNews — nur so
         // zeigen umgeschriebene Links immer auf tatsächlich gebaute Seiten.
         const posts = await fetchAllPages<{ slug: string }>('posts', { _fields: 'slug' });
-        return new Set(posts.map((p) => p.slug).filter((s) => !s.includes('%')));
+        return new Set(posts.map((p) => entschaerfeSlug(p.slug)));
       } catch {
         return new Set<string>();
       }
@@ -534,7 +607,18 @@ const CPT_SOURCES: Array<{
   { restBase: 'profile',   pathPrefix: 'profile',   crumb: { title: 'Wirtschaft',       path: '/wirtschaft' } },
 ];
 
-export async function fetchWordPressCptPages(): Promise<WPPageItem[]> {
+/**
+ * Die CPT-Seiten werden inzwischen von mehreren Seiten gebraucht (Detailrouten
+ * und die vier Übersichten). Ergebnis einmal pro Build merken, statt die
+ * REST-API mehrfach abzufragen.
+ */
+let cptPagesPromise: Promise<WPPageItem[]> | null = null;
+export function fetchWordPressCptPages(): Promise<WPPageItem[]> {
+  if (!cptPagesPromise) cptPagesPromise = ladeCptPages();
+  return cptPagesPromise;
+}
+
+async function ladeCptPages(): Promise<WPPageItem[]> {
   const out: WPPageItem[] = [];
   const postSlugs = await ensurePostSlugs();
   for (const src of CPT_SOURCES) {
