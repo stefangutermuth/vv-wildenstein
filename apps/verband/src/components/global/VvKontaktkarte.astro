@@ -179,10 +179,12 @@ const hasAny = Boolean(
     white-space: pre-line;   /* Zeilenumbrüche der Redaktion beibehalten */
     color: var(--vv-text);
   }
-  /* In der Seitenleiste zählt jeder Pixel: Die Sprechzeiten der Ämter sind
-     bis zu zehn Zeilen lang und würden das Themen-Menü aus dem Bild drängen. */
+  /* In der Seitenleiste zählt jeder Pixel: Kontakt und Sprechzeiten stehen
+     über dem Themen-Menü, und das soll ohne Scrollen sichtbar bleiben. */
   :global(.vv-seitenleiste) .vv-kontakt { padding: var(--vv-space-4); }
-  :global(.vv-seitenleiste) .vv-kontakt__list { gap: var(--vv-space-2); }
+  :global(.vv-seitenleiste) .vv-kontakt__list { gap: 7px; }
+  :global(.vv-seitenleiste) .vv-kontakt__row { gap: var(--vv-space-2); }
+  :global(.vv-seitenleiste) .vv-kontakt__row dd { line-height: 1.4; }
   :global(.vv-seitenleiste) .vv-kontakt__block {
     margin-top: var(--vv-space-3);
     padding-top: var(--vv-space-3);

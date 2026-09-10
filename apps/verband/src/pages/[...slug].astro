@@ -157,9 +157,14 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
       <div class:list={['vv-layout', { 'has-seitenleiste': zeigeSprungmenu }]}>
         {zeigeSprungmenu ? (
           <aside class="vv-seitenleiste">
+            {/* Das Themen-Menü steht zuunterst, weil es beim Scrollen andockt:
+                Ein angedocktes Element bleibt an seiner Stelle im Fluss und
+                schiebt sich optisch über alles, was darunter folgt — die
+                Sprechzeiten wurden dadurch verdeckt. Als letztes Element kann
+                das nicht mehr passieren. */}
             {page.kontakt && <VvKontaktkarte kontakt={page.kontakt} ohneBloecke />}
-            <VvSprungmenu marken={marken} />
             {page.kontakt && <VvZeitenkarte kontakt={page.kontakt} />}
+            <VvSprungmenu marken={marken} />
           </aside>
         ) : (
           page.kontakt && <VvKontaktkarte kontakt={page.kontakt} />
