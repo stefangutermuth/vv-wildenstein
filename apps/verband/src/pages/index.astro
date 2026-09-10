@@ -362,9 +362,26 @@ const highlights = [
   .vv-news__contactbox a:hover { color: var(--vv-navy-900); }
 
   /* === Ämter ================================================= */
-  .vv-aemter { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: var(--vv-space-3); }
+  /* Drei feste Spalten statt automatischer Füllung: Bei 1240px Spurbreite
+     wurden daraus vier Spalten, und weil „Einwohnermeldeamt / Passwesen" und
+     „Ordnungsamt / Prävention" umbrachen, waren die Reihen verschieden hoch.
+     grid-auto-rows: 1fr macht alle Kästen gleich groß — auch die mit
+     zweizeiligem Namen. */
+  .vv-aemter {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    gap: var(--vv-space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .vv-aemter > li { display: grid; }
+  @media (max-width: 900px) { .vv-aemter { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .vv-aemter { grid-template-columns: 1fr; } }
   .vv-aemter__tile {
     display: flex; align-items: center; justify-content: space-between; gap: var(--vv-space-3);
+    height: 100%;
     padding: var(--vv-space-4) var(--vv-space-5);
     background: var(--vv-white); border: 1px solid var(--vv-border); border-left: 3px solid var(--vv-green-600);
     border-radius: var(--vv-radius-sm); color: var(--vv-navy-800); font-weight: 500;
