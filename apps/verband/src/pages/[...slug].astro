@@ -273,20 +273,58 @@ const zeigeRathaus = istVerwaltung && contentText.length > 40;
 const isEmpty =
   hubTiles.length === 0 && contentText.length < 40 && !page.kontakt && !page.gallery?.length;
 
-/* Bleibt nach dem Entfernen der Impreza-Portalgitter nur noch die Reihe der
-   Abschnitts-Überschriften übrig, hat der Textteil nichts mehr zu sagen — die
-   Überschriften stehen dann doppelt, einmal verwaist am Seitenende und einmal
-   über der Liste, die an die Stelle des Gitters getreten ist. Genau so sah es
-   auf /verband/verbandsversammlung aus: vier h6 ohne einen Satz dazwischen. */
+/* Nach dem Entfernen der Impreza-Portalgitter bleiben oft nur Überschriften
+   übrig — genau die, die auch über der Liste stehen, die an die Stelle des
+   Gitters getreten ist. Auf /verband/verbandsversammlung waren das vier h6
+   ohne einen Satz dazwischen: „Verbandsversammlung – Mitglieder",
+   „Bekanntmachungen", „Gemeinderäte Börnichen/Erzg.", „Gemeinderäte
+   Grünhainichen".
+
+   Entfernt wird nur, wenn der Textteil AUSSCHLIESSLICH aus Überschriften
+   besteht — und auch dann nur solche, die eine Kachel oder einen
+   Abschnittstitel wiederholen. Verglichen wird über den Anfang des ersten
+   bedeutungstragenden Wortes, denn die Redaktion schreibt „Gemeinderäte", wir
+   „Gemeinderat". Auf /kirchen bleibt „Kirchgemeinde Börnichen, Waldkirchen
+   und Grünhainichen" dadurch stehen — eine echte Angabe, keine Dublette. */
+function stamm(t: string): string {
+  const wort = t
+    .toLowerCase()
+    .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[^a-z ]+/g, ' ')
+    .split(/\s+/)
+    .find((w) => w.length >= 4);
+  return wort ? wort.slice(0, 6) : '';
+}
+
+const eigeneTitel = new Set(
+  [
+    ...hubTiles.map((t) => t.title),
+    ...gremien.map((g) => g.name),
+    ...(istVersammlung ? ['Bekanntmachungen'] : []),
+  ]
+    .map(stamm)
+    .filter(Boolean),
+);
+
 const textOhneUeberschriften = inhaltHtml
   .replace(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/gi, '')
   .replace(/<[^>]*>/g, ' ')
   .replace(/\s+/g, ' ')
   .trim();
+/* „Nur Überschriften" heisst: ausser ihnen steht nichts da. */
 const nurUeberschriften =
   (hubTiles.length > 0 || gremien.length > 0) &&
   contentText.length > 0 &&
   textOhneUeberschriften.length < 40;
+
+const inhaltOhneDoppel = nurUeberschriften
+  ? inhaltHtml.replace(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/gi, (treffer, innen: string) => {
+      const t = innen.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      return eigeneTitel.has(stamm(t)) ? '' : treffer;
+    })
+  : inhaltHtml;
+/* Bleibt danach gar nichts uebrig, entfaellt der Textteil ganz. */
+const textteilLeer = inhaltOhneDoppel.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().length < 25;
 /* Kurzbeschreibung fuer Suchmaschinen und Vorschauen. Bisher stand hier nur
    der Seitentitel — bei 170 Seiten waren das unter 20 Zeichen, also nichts
    Brauchbares. Jetzt der Anfang des Inhalts, sonst die Anschrift aus den
@@ -353,8 +391,8 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
               <p>Für diese Seite liegen derzeit keine eigenen Inhalte vor.</p>
               <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>
             </div>
-          ) : zeigeRathaus || nurUeberschriften ? null : (
-            <article class:list={['vv-prose', { 'is-bildseite': kopfBild }]} set:html={zeigeSprungmenu ? inhaltMitMarken : inhaltHtml} />
+          ) : zeigeRathaus || textteilLeer ? null : (
+            <article class:list={['vv-prose', { 'is-bildseite': kopfBild }]} set:html={zeigeSprungmenu ? inhaltMitMarken : inhaltOhneDoppel} />
           )}
         </div>
       </div>
