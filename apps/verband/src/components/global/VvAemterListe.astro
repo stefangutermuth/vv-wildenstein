@@ -1,13 +1,13 @@
 ---
 /**
- * Ämter-Übersicht als Liste.
+ * Ämter-Übersicht als Tabelle.
  *
- * Vorher standen hier Kacheln — bei 14 Ämtern aber fast alle ohne Bild, also
- * 14 leere blaue Flächen mit einem Symbol darin. Die Angaben, die man auf
- * einer Verwaltungsseite tatsächlich sucht (Wer? Wann? Welche Nummer?), lagen
- * eine Klickebene tiefer. Diese Liste zeigt sie direkt.
+ * Vorher standen hier Kacheln — bei 14 Ämtern fast alle ohne Bild, also leere
+ * blaue Flächen. Was man auf einer Verwaltungsseite sucht (Wer? Welche Nummer?
+ * Wann offen?), lag eine Klickebene tiefer.
  *
- * Bewusst ohne Bilder: Ein Amt hat kein Motiv, das etwas beiträgt.
+ * Aufbau je Zeile: Amtsname über die volle Breite, darunter drei Spalten —
+ * Ansprechpartner, Kontakt, Sprechzeiten.
  */
 import VvIcon from '../primitives/VvIcon.astro';
 import type { HubTile } from '../../lib/cms-wordpress';
@@ -17,145 +17,198 @@ interface Props {
 }
 const { tiles } = Astro.props;
 
-/** Sprechzeiten auf eine knappe Zeile bringen — die Redaktionsangabe ist
- *  bis zu zehn Zeilen lang und würde die Liste sprengen. */
-function zeitenKurz(text?: string): string | undefined {
-  if (!text) return undefined;
-  const tage = text
-    .split(/\r?\n/)
-    .map((z) => z.trim())
-    .filter((z) => /^(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)/i.test(z))
-    .filter((z) => !/geschlossen/i.test(z));
+const sortiert = [...tiles].sort((a, b) =>
+  a.title.localeCompare(b.title, 'de', { sensitivity: 'base' }),
+);
 
-  if (tage.length) {
-    // Nur die Wochentage nennen, an denen offen ist
-    const namen = tage.map((z) => z.split(':')[0].trim().slice(0, 2));
-    return `Sprechzeit ${[...new Set(namen)].join(' · ')}`;
+const TAGE: Record<string, string> = {
+  montag: 'Mo', dienstag: 'Di', mittwoch: 'Mi', donnerstag: 'Do',
+  freitag: 'Fr', samstag: 'Sa', sonntag: 'So',
+};
+
+interface Zeitzeile { tag: string; zeit: string }
+
+/**
+ * Zerlegt den Sprechzeiten-Freitext in Tag/Zeit-Paare.
+ * Die Redaktion schreibt „Dienstag: 9.00 - 12.00 Uhr und 13.00 - 18.00 Uhr" —
+ * das wird zu „Di · 9–12, 13–18 Uhr". Geschlossene Tage entfallen, Zusätze wie
+ * „(Anmeldeschluss 17.30 Uhr)" wandern in die Fußzeile.
+ */
+function zerlegeZeiten(text?: string): { zeilen: Zeitzeile[]; hinweis?: string } {
+  if (!text) return { zeilen: [] };
+  const roh = text.split(/\r?\n/).map((z) => z.trim()).filter(Boolean);
+  const zeilen: Zeitzeile[] = [];
+  const rest: string[] = [];
+
+  for (const z of roh) {
+    const m = /^([A-Za-zÄÖÜäöü]+)\s*:\s*(.+)$/.exec(z);
+    const tag = m ? TAGE[m[1].toLowerCase()] : undefined;
+    if (!tag) { rest.push(z); continue; }
+    if (/geschlossen/i.test(m![2])) continue;
+
+    const zeit = m![2]
+      .replace(/\s*Uhr/gi, '')
+      .replace(/\s*und\s*/gi, ', ')
+      .replace(/\s*[-–]\s*/g, '–')
+      .replace(/(\d)\.00\b/g, '$1')       // 9.00 → 9
+      .replace(/\s+/g, ' ')
+      .trim();
+    zeilen.push({ tag, zeit: `${zeit} Uhr` });
   }
 
-  // Kein Wochentag-Muster, aber ein kurzer Hinweis — beim Bauamt und im Archiv
-  // steht dort „nur nach vorheriger Vereinbarung". Das ist die eigentliche
-  // Auskunft und darf nicht verschwinden.
-  const eine = text.replace(/\s+/g, ' ').trim();
-  if (eine && eine.length <= 70) return eine.charAt(0).toUpperCase() + eine.slice(1);
-  return undefined;
+  // Alle Zusatzangaben behalten — „(Anmeldeschluss 17.30 Uhr)" ist für den
+  // Besuch entscheidend und darf nicht wegfallen. Klammern werden nur
+  // abgestreift, damit die Zeile ruhiger wirkt.
+  const hinweis = rest
+    .map((r) => r.replace(/^\((.*)\)$/, '$1').trim())
+    .filter(Boolean)
+    .join(' · ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return { zeilen, hinweis: hinweis || undefined };
 }
 ---
-<ul class="vv-aemter">
-  {tiles.map((t) => {
+<div class="vv-aemter">
+  {sortiert.map((t) => {
     const k = t.kontakt;
-    const zeiten = zeitenKurz(k?.oeffnungszeiten);
+    const { zeilen, hinweis } = zerlegeZeiten(k?.oeffnungszeiten);
     return (
-      <li class="vv-aemter__item">
-        <a class="vv-aemter__link" href={t.href}>
-          <span class="vv-aemter__kopf">
-            <span class="vv-aemter__titel">{t.title}</span>
-            <VvIcon name="arrow-right" size={17} class="vv-aemter__pfeil" />
-          </span>
-
-          {(k?.fuehrende_person || k?.funktion) && (
-            <span class="vv-aemter__person">
-              {k?.fuehrende_person}
-              {k?.funktion && <span class="vv-aemter__funktion">{k.funktion}</span>}
-            </span>
-          )}
+      <article class="vv-amt">
+        <a class="vv-amt__titel" href={t.href}>
+          <span>{t.title}</span>
+          <VvIcon name="arrow-right" size={18} />
         </a>
 
-        {(k?.telefon || k?.email || zeiten) && (
-          <div class="vv-aemter__daten">
+        <div class="vv-amt__spalten">
+          <div class="vv-amt__spalte">
+            {(k?.fuehrende_person || k?.funktion) ? (
+              <>
+                <span class="vv-amt__wert">{k?.fuehrende_person}</span>
+                {k?.funktion && <span class="vv-amt__zusatz">{k.funktion}</span>}
+              </>
+            ) : (
+              <span class="vv-amt__leer">—</span>
+            )}
+          </div>
+
+          <div class="vv-amt__spalte">
             {k?.telefon && (
-              <span class="vv-aemter__datum">
-                <VvIcon name="phone" size={15} />
-                <a href={`tel:${k.telefon.replace(/[^\d+]/g, '')}`}>{k.telefon}</a>
+              <a class="vv-amt__zeile" href={`tel:${k.telefon.replace(/[^\d+]/g, '')}`}>
+                <VvIcon name="phone" size={15} />{k.telefon}
+              </a>
+            )}
+            {k?.fax && (
+              <span class="vv-amt__zeile vv-amt__zeile--still">
+                <VvIcon name="file-text" size={15} />{k.fax}
               </span>
             )}
             {k?.email && (
-              <span class="vv-aemter__datum">
-                <VvIcon name="mail" size={15} />
-                <a href={`mailto:${k.email}`}>{k.email}</a>
-              </span>
+              <a class="vv-amt__zeile" href={`mailto:${k.email}`}>
+                <VvIcon name="mail" size={15} />{k.email}
+              </a>
             )}
-            {zeiten && (
-              <span class="vv-aemter__datum vv-aemter__datum--zeit">
-                <VvIcon name="clock" size={15} />
-                <span>{zeiten}</span>
-              </span>
+            {!k?.telefon && !k?.email && <span class="vv-amt__leer">—</span>}
+          </div>
+
+          <div class="vv-amt__spalte vv-amt__spalte--zeiten">
+            {zeilen.length > 0 ? (
+              <>
+                <dl class="vv-amt__zeiten">
+                  {zeilen.map((z) => (
+                    <div>
+                      <dt>{z.tag}</dt>
+                      <dd>{z.zeit}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {hinweis && <span class="vv-amt__zusatz">{hinweis}</span>}
+              </>
+            ) : hinweis ? (
+              <span class="vv-amt__wert vv-amt__wert--klein">{hinweis}</span>
+            ) : (
+              <span class="vv-amt__leer">—</span>
             )}
           </div>
-        )}
-      </li>
+        </div>
+      </article>
     );
   })}
-</ul>
+</div>
 
 <style>
-  .vv-aemter {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: var(--vv-space-2);
-  }
-  .vv-aemter__item {
+  .vv-aemter { display: grid; gap: var(--vv-space-3); }
+
+  .vv-amt {
     background: var(--vv-bg);
     border: 1px solid var(--vv-border-soft);
-    border-left: 3px solid var(--vv-sky-500);
     border-radius: var(--vv-radius-md);
     padding: var(--vv-space-4) var(--vv-space-5);
     transition: border-color .15s, background .15s;
   }
-  .vv-aemter__item:hover { border-color: var(--vv-sky-500); background: var(--vv-bg-alt); }
+  .vv-amt:hover { border-color: var(--vv-sky-500); background: var(--vv-bg-alt); }
 
-  .vv-aemter__link { display: block; text-decoration: none; color: inherit; }
-  .vv-aemter__kopf {
+  .vv-amt__titel {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: var(--vv-space-3);
-  }
-  .vv-aemter__titel {
     font-size: var(--vv-fs-lg);
     font-weight: 700;
     color: var(--vv-navy-800);
+    text-decoration: none;
     line-height: 1.25;
   }
-  .vv-aemter__link:hover .vv-aemter__titel { text-decoration: underline; }
-  .vv-aemter__pfeil { color: var(--vv-sky-500); flex: none; align-self: center; }
+  .vv-amt__titel:hover span:first-child { text-decoration: underline; }
+  .vv-amt__titel :global(svg) { color: var(--vv-sky-500); flex: none; }
 
-  .vv-aemter__person {
-    display: block;
-    margin-top: 3px;
-    color: var(--vv-text);
-  }
-  .vv-aemter__funktion {
-    color: var(--vv-text-muted);
-    font-size: var(--vv-fs-sm);
-  }
-  .vv-aemter__funktion::before { content: ' · '; }
-
-  .vv-aemter__daten {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--vv-space-2) var(--vv-space-5);
+  .vv-amt__spalten {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr 1fr;
+    gap: var(--vv-space-4);
     margin-top: var(--vv-space-3);
     padding-top: var(--vv-space-3);
     border-top: 1px solid var(--vv-border-soft);
-    font-size: var(--vv-fs-sm);
   }
-  .vv-aemter__datum {
+  .vv-amt__spalte { display: grid; gap: 3px; align-content: start; min-width: 0; }
+
+  .vv-amt__wert { color: var(--vv-text); font-weight: 600; }
+  .vv-amt__wert--klein { font-weight: 500; font-size: var(--vv-fs-sm); }
+  .vv-amt__zusatz { color: var(--vv-text-muted); font-size: var(--vv-fs-sm); line-height: 1.4; }
+  .vv-amt__leer { color: var(--vv-text-muted); opacity: .5; }
+
+  .vv-amt__zeile {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    color: var(--vv-text-muted);
+    color: var(--vv-link);
+    font-size: var(--vv-fs-sm);
+    font-weight: 600;
+    text-decoration: none;
     overflow-wrap: anywhere;
   }
-  .vv-aemter__datum :global(svg) { color: var(--vv-sky-500); flex: none; }
-  .vv-aemter__datum a { color: var(--vv-link); font-weight: 600; text-decoration: none; }
-  .vv-aemter__datum a:hover { text-decoration: underline; }
-  .vv-aemter__datum--zeit { font-variant-numeric: tabular-nums; }
+  .vv-amt__zeile:hover { text-decoration: underline; }
+  .vv-amt__zeile--still { color: var(--vv-text-muted); font-weight: 500; }
+  .vv-amt__zeile :global(svg) { color: var(--vv-sky-500); flex: none; }
 
-  @media (max-width: 560px) {
-    .vv-aemter__item { padding: var(--vv-space-4); }
-    .vv-aemter__daten { gap: var(--vv-space-2) var(--vv-space-4); }
+  /* Sprechzeiten: Tageskürzel und Zeit in einer schmalen Doppelspalte */
+  .vv-amt__zeiten { margin: 0; display: grid; gap: 1px; }
+  .vv-amt__zeiten > div {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 6px;
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-amt__zeiten dt { margin: 0; font-weight: 700; color: var(--vv-navy-800); }
+  .vv-amt__zeiten dd { margin: 0; color: var(--vv-text); font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 800px) {
+    .vv-amt__spalten { grid-template-columns: 1fr 1fr; }
+    .vv-amt__spalte--zeiten { grid-column: 1 / -1; padding-top: var(--vv-space-2); }
+  }
+  @media (max-width: 520px) {
+    .vv-amt { padding: var(--vv-space-4); }
+    .vv-amt__spalten { grid-template-columns: 1fr; gap: var(--vv-space-3); }
+    .vv-amt__spalte--zeiten { grid-column: auto; padding-top: 0; }
   }
 </style>
