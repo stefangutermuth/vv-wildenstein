@@ -38,7 +38,6 @@ const zweispaltig = marken.length > 8;
   .vv-sprung {
     background: var(--vv-bg);
     border: 1px solid var(--vv-border-soft);
-    border-left: 4px solid var(--vv-sky-500);
     border-radius: var(--vv-radius-lg);
     padding: var(--vv-space-5);
     margin: 0 0 var(--vv-space-6);
@@ -125,45 +124,63 @@ const zweispaltig = marken.length > 8;
 </style>
 
 <script>
-  // Markiert im Themen-Menü den Abschnitt, der gerade oben im Bild steht.
-  // Reines Fortschritts-Signal: Ohne JavaScript funktionieren die Sprunglinks
-  // unverändert, es fehlt lediglich die Hervorhebung.
+  // Markiert im Themen-Menü den Abschnitt, in dem man gerade liest.
+  //
+  // Vorher lief das über einen IntersectionObserver mit schmalem Band unter
+  // der Kopfzeile. Wer zügig scrollt, springt über dieses Band hinweg — dann
+  // blieb die Markierung stehen oder erschien gar nicht. Jetzt wird bei jedem
+  // Scrollen bestimmt, welche Überschrift zuletzt passiert wurde; das trifft
+  // immer zu, unabhängig von der Scroll-Geschwindigkeit.
+  //
+  // Ohne JavaScript funktionieren die Sprunglinks unverändert, es fehlt
+  // lediglich die Hervorhebung.
   (() => {
     const menu = document.querySelector('[data-sprungmenu]');
     if (!menu) return;
-    const links = new Map();
+
+    const eintraege = [];
     for (const a of menu.querySelectorAll('a[href^="#"]')) {
       const id = decodeURIComponent(a.getAttribute('href').slice(1));
       const ziel = document.getElementById(id);
-      if (ziel) links.set(ziel, a);
+      if (ziel) eintraege.push({ a, ziel });
     }
-    if (!links.size) return;
+    if (!eintraege.length) return;
 
+    const liste = menu.querySelector('ul');
     let aktiv = null;
-    const setze = (el) => {
-      if (el === aktiv) return;
-      if (aktiv) links.get(aktiv)?.removeAttribute('aria-current');
-      aktiv = el;
-      const a = links.get(el);
-      if (!a) return;
-      a.setAttribute('aria-current', 'true');
-      // Mitlaufende Liste: Eintrag in den sichtbaren Bereich holen
-      const box = menu.querySelector('ul');
-      if (box && box.scrollHeight > box.clientHeight + 4) {
-        a.scrollIntoView({ block: 'nearest' });
+
+    function markiere() {
+      // Bezugslinie knapp unter der Kopfzeile
+      const linie = 100;
+      let treffer = eintraege[0];
+      for (const e of eintraege) {
+        if (e.ziel.getBoundingClientRect().top <= linie) treffer = e;
+        else break;
       }
+      // Ganz oben auf der Seite noch nichts hervorheben
+      if (window.scrollY < 40 && eintraege[0].ziel.getBoundingClientRect().top > linie) {
+        treffer = null;
+      }
+      if (treffer === aktiv) return;
+      if (aktiv) aktiv.a.removeAttribute('aria-current');
+      aktiv = treffer;
+      if (!aktiv) return;
+      aktiv.a.setAttribute('aria-current', 'true');
+      // Bei langen Listen den markierten Eintrag in den sichtbaren Bereich holen
+      if (liste && menu.scrollHeight > menu.clientHeight + 4) {
+        aktiv.a.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    let geplant = false;
+    const anstossen = () => {
+      if (geplant) return;
+      geplant = true;
+      requestAnimationFrame(() => { geplant = false; markiere(); });
     };
 
-    const beobachter = new IntersectionObserver(
-      (eintraege) => {
-        const sichtbar = eintraege
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (sichtbar.length) setze(sichtbar[0].target);
-      },
-      // Schmales Band unter der Kopfzeile: Was dort steht, gilt als „gelesen".
-      { rootMargin: '-84px 0px -70% 0px', threshold: 0 },
-    );
-    for (const ziel of links.keys()) beobachter.observe(ziel);
+    window.addEventListener('scroll', anstossen, { passive: true });
+    window.addEventListener('resize', anstossen, { passive: true });
+    markiere();
   })();
 </script>
