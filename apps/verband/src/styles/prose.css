@@ -62,6 +62,14 @@
   height: auto;
   border-radius: var(--vv-radius-md);
 }
+/* Unterstrichener Text aus dem Redaktionssystem ist KEIN Verweis — im Web
+   liest sich eine Unterstreichung aber genau so, und Besucher klicken darauf
+   ins Leere. 54 solche Stellen auf 22 Seiten, meist als Hervorhebung oder
+   Pseudo-Ueberschrift gemeint ("Kapazitaet:", "Was macht uns besonders?").
+   Die Betonung bleibt, die Verwechslung mit einem Verweis faellt weg. */
+.vv-prose u { text-decoration: none; font-weight: 600; }
+.vv-prose a u { text-decoration: underline; font-weight: inherit; }
+
 .vv-prose figure { margin: 1.5em 0; }
 .vv-prose figcaption { font-size: var(--vv-fs-sm); color: var(--vv-text-muted); margin-top: 6px; }
 /* iframes (YouTube/Maps): responsiv statt fixer Höhe → keine Verzerrung mobil */
@@ -161,7 +169,13 @@
   box-shadow: var(--vv-shadow-sm);
 }
 .vv-prose .royalSlider .vv-gal-item:first-of-type { grid-column: span 2; grid-row: span 2; }
-.vv-prose .royalSlider .vv-gal-item:nth-of-type(6n) { grid-row: span 2; }
+/* Nach dem grossen ersten Bild fuellen sich die Reihen zu zweit: gerade
+   Nummern beginnen eine Reihe, ungerade schliessen sie. Ist das LETZTE Bild
+   eine gerade Nummer, stuende es allein — dann ueber beide Spalten. Auf
+   /heiraten liess die erste Galerie (4 Bilder) so ein Loch, die zweite
+   (7 Bilder) eines durch eine doppelt hohe Kachel; die Regel dafuer
+   (nth-of-type(6n)) ist entfallen. */
+.vv-prose .royalSlider .vv-gal-item:last-of-type:nth-of-type(even) { grid-column: span 2; }
 .vv-prose .vv-gal-item img {
   width: 100%;
   height: 100%;
