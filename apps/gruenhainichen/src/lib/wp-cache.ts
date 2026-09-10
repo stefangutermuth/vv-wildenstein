@@ -71,21 +71,59 @@ async function writeMeta(next: CacheMeta): Promise<void> {
  * "Alle relevanten CPTs" = die, die wir überhaupt anfassen. Wenn User in einem
  * dieser CPTs etwas ändert oder ein neues Attachment für eines lädt, greift's.
  */
+/**
+ * Abruf mit Zeitgrenze.
+ *
+ * Am 10.09.2026 hing der CI-Bau 1 Stunde 22 Minuten in dieser Datei fest: Die
+ * Aktualitätsprüfung fragt neun Inhaltstypen ab, und diese Aufrufe hatten kein
+ * Zeitlimit. Bremst der Server die Bau-Umgebung aus (All-Inkl drosselt fremde
+ * IP-Adressen bei vielen Anfragen), wartet der Bau endlos. Lokal fiel das nie
+ * auf, weil von hier aus nichts gedrosselt wird.
+ *
+ * Läuft ein Aufruf ab, gilt die Prüfung als „nicht feststellbar" — der Bau
+ * arbeitet dann mit dem vorhandenen Zwischenspeicher weiter, statt zu hängen.
+ */
+const PRUEF_TIMEOUT_MS = 8_000;
+const ABRUF_TIMEOUT_MS = 30_000;
+
+async function holeMitZeitgrenze(
+  url: string,
+  init: RequestInit = {},
+  timeoutMs = PRUEF_TIMEOUT_MS,
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function ensureFreshness(wpBase: string): Promise<boolean> {
   if (freshChecked) return true;
   freshChecked = true;
 
   const cts = ['posts', 'tourismus', 'verein', 'profile', 'personen', 'amter', 'gemeinderatssitzung', 'amtsblatt_download', 'vvw_room'];
   let latest = '';
+  let abbrueche = 0;
   for (const t of cts) {
+    // Nach zwei Zeitüberschreitungen aufhören: Dann ist der Server erkennbar
+    // nicht ansprechbar, und die restlichen sieben Aufrufe kosten nur Zeit.
+    if (abbrueche >= 2) {
+      console.warn('[wp-cache] Aktualitätsprüfung abgebrochen — Server antwortet nicht');
+      break;
+    }
     try {
       const u = `${wpBase}/${t}?orderby=modified&order=desc&per_page=1&_fields=modified_gmt`;
-      const r = await fetch(u, { headers: { Accept: 'application/json' } });
+      const r = await holeMitZeitgrenze(u, { headers: { Accept: 'application/json' } });
       if (!r.ok) continue;
       const arr = (await r.json()) as Array<{ modified_gmt?: string }>;
       const m = arr?.[0]?.modified_gmt;
       if (m && m > latest) latest = m;
-    } catch { /* ignore */ }
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError') abbrueche++;
+    }
   }
 
   // Veranstaltungen laufen über einen eigenen Endpunkt (der Typ ist in wp/v2
@@ -95,7 +133,7 @@ async function ensureFreshness(wpBase: string): Promise<boolean> {
   // die Redaktion am 09.09.2026 gestolpert ist.
   try {
     const evBase = wpBase.replace(/\/wp\/v2$/, '/vw-events/v1');
-    const r = await fetch(`${evBase}/events/last-modified`, {
+    const r = await holeMitZeitgrenze(`${evBase}/events/last-modified`, {
       headers: { Accept: 'application/json' },
     });
     if (r.ok) {
@@ -174,7 +212,7 @@ export async function cachedFetch(url: string, init: RequestInit = {}, wpBase = 
   } catch { /* miss */ }
 
   // 2) Live fetchen + speichern
-  const res = await fetch(url, init);
+  const res = await holeMitZeitgrenze(url, init, ABRUF_TIMEOUT_MS);
   if (!res.ok) return res;
   const body = await res.text();
   try {
