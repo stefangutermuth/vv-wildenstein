@@ -12,6 +12,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import VvPageHeader from '../components/global/VvPageHeader.astro';
 import VvLightbox from '../components/global/VvLightbox.astro';
 import VvHubGrid from '../components/global/VvHubGrid.astro';
+import VvGremienListe from '../components/global/VvGremienListe.astro';
 import VvAemterListe from '../components/global/VvAemterListe.astro';
 import VvRathauskarte from '../components/global/VvRathauskarte.astro';
 import VvKontaktkarte from '../components/global/VvKontaktkarte.astro';
@@ -24,6 +25,7 @@ import {
   fetchHubSources,
   type WPPageItem,
   type HubTile,
+  fetchGremien,
   type HubSources,
 } from '../lib/cms-wordpress';
 
@@ -147,10 +149,36 @@ const zeigeSprungmenu = marken.length >= 4 && contentText.length > 2500;
 // Auf der Verwaltungsseite steht neben der Ämterliste der Rathaus-Kasten:
 // Öffnungszeiten und Hinweise standen bisher als Fließtext UNTER allen
 // 14 Ämtern, wo sie niemand sucht.
+/* Die Verbandsversammlungs-Seite zeigte 38 Bild-Kacheln mit leerer Bildfläche,
+   deren Verweise ausnahmslos ins Leere liefen (/personen/… wird hier nicht
+   gebaut), und alle vier Abschnitte der Seite waren zu einem Haufen
+   verschmolzen. Die Namen kommen jetzt als Liste aus den echten Daten; was im
+   Gitter sonst noch stand — die Bekanntmachungen —, bleibt als Kacheln. */
+const istVersammlung = page.path === '/verband/verbandsversammlung';
+const gremien = istVersammlung ? await fetchGremien() : [];
+const restKacheln = istVersammlung
+  ? hubTiles.filter((t) => !t.href.startsWith('/personen/'))
+  : hubTiles;
+
 const istVerwaltung = page.path === '/verwaltung';
 const zeigeRathaus = istVerwaltung && contentText.length > 40;
 const isEmpty =
   hubTiles.length === 0 && contentText.length < 40 && !page.kontakt && !page.gallery?.length;
+
+/* Bleibt nach dem Entfernen der Impreza-Portalgitter nur noch die Reihe der
+   Abschnitts-Überschriften übrig, hat der Textteil nichts mehr zu sagen — die
+   Überschriften stehen dann doppelt, einmal verwaist am Seitenende und einmal
+   über der Liste, die an die Stelle des Gitters getreten ist. Genau so sah es
+   auf /verband/verbandsversammlung aus: vier h6 ohne einen Satz dazwischen. */
+const textOhneUeberschriften = page.contentHtml
+  .replace(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/gi, '')
+  .replace(/<[^>]*>/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+const nurUeberschriften =
+  (hubTiles.length > 0 || gremien.length > 0) &&
+  contentText.length > 0 &&
+  textOhneUeberschriften.length < 40;
 const parentPath = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].path : '/';
 const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].title : 'Startseite';
 ---
@@ -182,17 +210,18 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
         )}
 
         <div class="vv-layout__inhalt">
-          {hubTiles.length > 0 && (
-            page.path === '/verwaltung'
-              ? <VvAemterListe tiles={hubTiles} />
-              : <VvHubGrid tiles={hubTiles} icon={tileIcon} />
+          {istVersammlung && gremien.length > 0 && <VvGremienListe gremien={gremien} />}
+          {restKacheln.length > 0 && (
+            istVerwaltung
+              ? <VvAemterListe tiles={restKacheln} />
+              : <VvHubGrid tiles={restKacheln} icon={tileIcon} titel={istVersammlung ? 'Bekanntmachungen' : undefined} />
           )}
           {isEmpty ? (
             <div class="vv-emptyhub">
               <p>Für diese Seite liegen derzeit keine eigenen Inhalte vor.</p>
               <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>
             </div>
-          ) : zeigeRathaus ? null : (
+          ) : zeigeRathaus || nurUeberschriften ? null : (
             <article class="vv-prose" set:html={zeigeSprungmenu ? inhaltMitMarken : page.contentHtml} />
           )}
         </div>

@@ -1,0 +1,89 @@
+---
+/**
+ * Mitglieder der Gremien — schlichte Namensliste ohne Bilder.
+ *
+ * Zu den Personen liegen im Redaktionssystem nur Name und Gremium vor: kein
+ * Foto, keine Funktion, kein Kontakt. Die frühere Darstellung als
+ * Bild-Kachelgitter zeigte deshalb 38 leere Bildflächen — und jede Kachel
+ * verwies auf eine Personenseite, die es gar nicht gibt. Namen brauchen hier
+ * weder Bild noch Verweis.
+ */
+import type { Gremium } from '../../lib/cms-wordpress';
+
+interface Props {
+  gremien: Gremium[];
+}
+const { gremien } = Astro.props;
+
+const zahlwort = (n: number) => (n === 1 ? '1 Mitglied' : `${n} Mitglieder`);
+---
+{gremien.map((g) => (
+  <section class="vv-gremium">
+    <h2 class="vv-gremium__titel">
+      {g.name}
+      <span class="vv-gremium__zahl">{zahlwort(g.mitglieder.length)}</span>
+    </h2>
+    <ul class="vv-gremium__liste" role="list">
+      {g.mitglieder.map((m) => (
+        <li>
+          <span class="vv-gremium__name">{m.name}</span>
+          {m.rollen.map((r) => <span class="vv-gremium__rolle">{r}</span>)}
+        </li>
+      ))}
+    </ul>
+  </section>
+))}
+
+<style>
+  .vv-gremium { margin-bottom: var(--vv-space-7); }
+  .vv-gremium:last-child { margin-bottom: 0; }
+
+  .vv-gremium__titel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--vv-space-3);
+    margin: 0 0 var(--vv-space-4);
+    padding-bottom: var(--vv-space-2);
+    border-bottom: 2px solid var(--vv-sky-200);
+    font-size: var(--vv-fs-xl);
+    color: var(--vv-navy-800);
+  }
+  .vv-gremium__zahl {
+    font-size: var(--vv-fs-sm);
+    font-weight: 400;
+    color: var(--vv-text-muted);
+  }
+
+  /* Namen sind kurz — mehrspaltig, damit aus sechzehn Zeilen kein langer
+     Streifen wird. Gelesen wird zeilenweise von links nach rechts, die
+     alphabetische Reihenfolge laeuft also quer. */
+  .vv-gremium__liste {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+    gap: 0 var(--vv-space-5);
+  }
+  .vv-gremium__liste li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--vv-space-2);
+    padding: var(--vv-space-3) 0;
+    border-bottom: 1px solid var(--vv-border-soft);
+  }
+  .vv-gremium__name { color: var(--vv-text); }
+
+  /* „Bürgermeister" — die einzige Rolle, die im Redaktionssystem als eigenes
+     Gremium gepflegt wird. Steht als Zusatz am Namen, nicht als Abschnitt. */
+  .vv-gremium__rolle {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--vv-bg-alt);
+    color: var(--vv-navy-800);
+    font-size: var(--vv-fs-xs);
+    white-space: nowrap;
+  }
+</style>

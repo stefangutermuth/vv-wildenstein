@@ -550,6 +550,24 @@ function extractGridTiles(gridHtml: string): HubTile[] {
   return tiles;
 }
 
+/**
+ * Kachel-Verweise auf denselben Stand bringen wie die Verweise im Fliesstext.
+ *
+ * extractGridTiles liest die Original-Permalinks aus dem WP-Schnappschuss
+ * ("/bundesweiter-warntag-.../"). Beitraege liegen hier aber unter
+ * /neuigkeiten/<slug>. Im Fliesstext macht rewriteContentUrls das schon; die
+ * Kacheln liefen daran vorbei — auf /verband/neuigkeiten zeigten dadurch 29
+ * von 29 Kacheln ins Leere.
+ */
+function kachelZieleUmschreiben(tiles: HubTile[], postSlugs: Set<string>): HubTile[] {
+  return tiles.map((t) => {
+    if (!t.href) return t;
+    const erstes = t.href.replace(/^\//, '').split('/')[0];
+    if (erstes && postSlugs.has(erstes)) return { ...t, href: `/neuigkeiten/${erstes}` };
+    return t;
+  });
+}
+
 function stripUsGrids(html: string): { html: string; had: boolean; tiles: HubTile[] } {
   let out = html;
   let had = false;
@@ -645,7 +663,7 @@ export async function fetchWordPressPages(): Promise<WPPageItem[]> {
         path,
         parentId: p.parent,
         hadHubGrid: stripped.had,
-        gridTiles: stripped.tiles,
+        gridTiles: kachelZieleUmschreiben(stripped.tiles, postSlugs),
         title: decodeEntities(stripHtml(p.title.rendered).trim()),
         contentHtml: rewriteContentUrls(stripped.html, postSlugs),
         breadcrumb: parents.slice(0, -1).map((x) => ({
@@ -719,7 +737,7 @@ async function ladeCptPages(): Promise<WPPageItem[]> {
           path: `/${src.pathPrefix}/${p.slug}`,
           parentId: 0,
           hadHubGrid: stripped.had,
-          gridTiles: stripped.tiles,
+          gridTiles: kachelZieleUmschreiben(stripped.tiles, postSlugs),
           title: decodeEntities(stripHtml(p.title.rendered).trim()),
           contentHtml: rewriteContentUrls(stripped.html, postSlugs),
           breadcrumb: [src.crumb],
@@ -1081,4 +1099,99 @@ async function ladeAmtsblaetter(): Promise<AmtsblattAusgabe[]> {
     .filter((a) => a._istAusgabe && a.pdfUrl)
     .map(({ _istAusgabe, ...a }) => a)
     .sort((a, b) => (b.jahr !== a.jahr ? b.jahr - a.jahr : b.monat - a.monat));
+}
+
+/* ============================================================
+ * Gremien und ihre Mitglieder
+ * ============================================================ */
+
+export interface GremiumMitglied {
+  name: string;
+  /** Weitere Gremien derselben Person — z. B. „Bürgermeister". */
+  rollen: string[];
+}
+
+export interface Gremium {
+  id: number;
+  name: string;
+  slug: string;
+  mitglieder: GremiumMitglied[];
+}
+
+/**
+ * Personen und Gremien aus dem Inhaltstyp `personen`.
+ *
+ * Die Verbandsversammlungs-Seite zeigte diese Menschen bisher als
+ * Bild-Kacheln aus einem Impreza-Portalgitter: 38 Kacheln mit leerer
+ * Bildfläche, alle vier Abschnitte der Seite zu einem Haufen verschmolzen,
+ * und JEDER der 38 Verweise zeigte auf eine Seite, die es nicht gibt
+ * (/personen/… wird hier nicht gebaut). Zu den Personen sind ohnehin nur
+ * Name und Gremium hinterlegt — kein Foto, keine Funktion, kein Kontakt.
+ * Deshalb jetzt als schlichte Liste aus den echten Daten.
+ */
+let gremienPromise: Promise<Gremium[]> | null = null;
+export function fetchGremien(): Promise<Gremium[]> {
+  if (!gremienPromise) gremienPromise = ladeGremien();
+  return gremienPromise;
+}
+
+/** Rollen, die neben der Mitgliedschaft als Zusatz erscheinen, statt als eigener Abschnitt. */
+const ROLLEN_SLUGS = new Set(['buergermeister']);
+
+async function ladeGremien(): Promise<Gremium[]> {
+  const hole = async (pfad: string) => {
+    const abbruch = new AbortController();
+    const wecker = setTimeout(() => abbruch.abort(), 20_000);
+    try {
+      const res = await fetch(`${WP_BASE}/${pfad}`, {
+        headers: { Accept: 'application/json', ...buildAuthHeader() },
+        signal: abbruch.signal,
+      });
+      if (!res.ok) throw new Error(`WP REST ${pfad} ${res.status} ${res.statusText}`);
+      return await res.json();
+    } finally {
+      clearTimeout(wecker);
+    }
+  };
+
+  const [terme, personen] = await Promise.all([
+    hole('gremien?per_page=100&_fields=id,name,slug') as Promise<
+      Array<{ id: number; name: string; slug: string }>
+    >,
+    hole('personen?per_page=100&_fields=id,title,gremien') as Promise<
+      Array<{ id: number; title: { rendered: string }; gremien?: number[] }>
+    >,
+  ]);
+
+  const termById = new Map(terme.map((t) => [t.id, t]));
+
+  /** Nach Nachnamen sortieren — „Dr. Nico Richter" gehört unter R, nicht unter D. */
+  const nachname = (n: string) =>
+    n.replace(/^(Dr\.|Prof\.|Dipl\.-\w+\.?)\s+/i, '').split(/\s+/).pop() ?? n;
+
+  const out: Gremium[] = [];
+  for (const t of terme) {
+    if (ROLLEN_SLUGS.has(t.slug)) continue;
+
+    const mitglieder = personen
+      .filter((p) => (p.gremien ?? []).includes(t.id))
+      .map((p) => ({
+        name: decodeEntities(p.title.rendered),
+        rollen: (p.gremien ?? [])
+          .filter((g) => g !== t.id && ROLLEN_SLUGS.has(termById.get(g)?.slug ?? ''))
+          .map((g) => termById.get(g)!.name),
+      }))
+      .sort((a, b) => nachname(a.name).localeCompare(nachname(b.name), 'de'));
+
+    if (mitglieder.length > 0) out.push({ id: t.id, name: t.name, slug: t.slug, mitglieder });
+  }
+
+  /* Reihenfolge wie im Backend gepflegt: Verbandsversammlung zuerst, dann die
+     beiden Gemeinderäte. */
+  const rang = ['verbandsversammlung', 'gemeinderat-boernichen', 'gemeinderat-gruenhainichen'];
+  return out.sort((a, b) => {
+    const ra = rang.indexOf(a.slug);
+    const rb = rang.indexOf(b.slug);
+    return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb);
+  });
 }
