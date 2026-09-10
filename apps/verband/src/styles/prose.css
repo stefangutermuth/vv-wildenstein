@@ -113,7 +113,13 @@
    Verhältnisse und eine 3er-Spalte wird so breit wie eine 9er.
    ~= trifft die Klasse als ganzes Wort — *= würde bei 'vc_col-sm-1' auch
    sm-10, sm-11 und sm-12 erwischen. */
-.vv-prose [class*='vc_col-sm-'] { flex: 1 1 0; min-width: min(100%, 240px); }
+/* min-width ist die Umbruchschwelle. Vier Viertelspalten brauchen bei 32px
+   Abstand 4 x Schwelle + 96px und muessen in die 830px Lesebreite passen —
+   also hoechstens 183px. Bei 240px rutschte die vierte allein in die naechste
+   Zeile und wuchs auf volle Breite; die vier Feuerwehr-Logos standen als
+   3 + 1 statt nebeneinander. 175px laesst Luft und stapelt auf dem Telefon
+   (327px Lesebreite) weiterhin ab der zweiten Spalte. */
+.vv-prose [class*='vc_col-sm-'] { flex: 1 1 0; min-width: min(100%, 175px); }
 .vv-prose [class~='vc_col-sm-1']  { flex-grow: 1; }
 .vv-prose [class~='vc_col-sm-2']  { flex-grow: 2; }
 .vv-prose [class~='vc_col-sm-3']  { flex-grow: 3; }
@@ -268,12 +274,16 @@
 .vv-prose .w-separator { height: var(--vv-space-5); }
 .vv-prose .w-image { margin: 1em 0; }
 .vv-prose .w-image:first-child { margin-top: 0; }
+/* max-width, NICHT width: sonst wird jedes Bild auf Spaltenbreite gezogen.
+   Das Logo der Ortsfeuerwehr Waldkirchen ist 200 x 200 Pixel gross und stand
+   auf /verband/feuerwehren als 830 x 830 Pixel grosser Klotz auf der Seite.
+   Ohne Schlagschatten, weil viele dieser Bilder freigestellte Logos sind —
+   der Schatten zeichnete ein Rechteck um das transparente Umfeld. */
 .vv-prose .w-image-h img {
   display: block;
-  width: 100%;
+  max-width: 100%;
   height: auto;
   border-radius: var(--vv-radius-md);
-  box-shadow: var(--vv-shadow-sm);
 }
 /* Impreza legt Titel und Bildnachweis als w-image-meta unter das Bild. Ohne
    Gestaltung standen beide wie normaler Fließtext da. */
