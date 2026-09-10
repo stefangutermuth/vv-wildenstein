@@ -1,0 +1,161 @@
+---
+/**
+ * Ämter-Übersicht als Liste.
+ *
+ * Vorher standen hier Kacheln — bei 14 Ämtern aber fast alle ohne Bild, also
+ * 14 leere blaue Flächen mit einem Symbol darin. Die Angaben, die man auf
+ * einer Verwaltungsseite tatsächlich sucht (Wer? Wann? Welche Nummer?), lagen
+ * eine Klickebene tiefer. Diese Liste zeigt sie direkt.
+ *
+ * Bewusst ohne Bilder: Ein Amt hat kein Motiv, das etwas beiträgt.
+ */
+import VvIcon from '../primitives/VvIcon.astro';
+import type { HubTile } from '../../lib/cms-wordpress';
+
+interface Props {
+  tiles: HubTile[];
+}
+const { tiles } = Astro.props;
+
+/** Sprechzeiten auf eine knappe Zeile bringen — die Redaktionsangabe ist
+ *  bis zu zehn Zeilen lang und würde die Liste sprengen. */
+function zeitenKurz(text?: string): string | undefined {
+  if (!text) return undefined;
+  const tage = text
+    .split(/\r?\n/)
+    .map((z) => z.trim())
+    .filter((z) => /^(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)/i.test(z))
+    .filter((z) => !/geschlossen/i.test(z));
+
+  if (tage.length) {
+    // Nur die Wochentage nennen, an denen offen ist
+    const namen = tage.map((z) => z.split(':')[0].trim().slice(0, 2));
+    return `Sprechzeit ${[...new Set(namen)].join(' · ')}`;
+  }
+
+  // Kein Wochentag-Muster, aber ein kurzer Hinweis — beim Bauamt und im Archiv
+  // steht dort „nur nach vorheriger Vereinbarung". Das ist die eigentliche
+  // Auskunft und darf nicht verschwinden.
+  const eine = text.replace(/\s+/g, ' ').trim();
+  if (eine && eine.length <= 70) return eine.charAt(0).toUpperCase() + eine.slice(1);
+  return undefined;
+}
+---
+<ul class="vv-aemter">
+  {tiles.map((t) => {
+    const k = t.kontakt;
+    const zeiten = zeitenKurz(k?.oeffnungszeiten);
+    return (
+      <li class="vv-aemter__item">
+        <a class="vv-aemter__link" href={t.href}>
+          <span class="vv-aemter__kopf">
+            <span class="vv-aemter__titel">{t.title}</span>
+            <VvIcon name="arrow-right" size={17} class="vv-aemter__pfeil" />
+          </span>
+
+          {(k?.fuehrende_person || k?.funktion) && (
+            <span class="vv-aemter__person">
+              {k?.fuehrende_person}
+              {k?.funktion && <span class="vv-aemter__funktion">{k.funktion}</span>}
+            </span>
+          )}
+        </a>
+
+        {(k?.telefon || k?.email || zeiten) && (
+          <div class="vv-aemter__daten">
+            {k?.telefon && (
+              <span class="vv-aemter__datum">
+                <VvIcon name="phone" size={15} />
+                <a href={`tel:${k.telefon.replace(/[^\d+]/g, '')}`}>{k.telefon}</a>
+              </span>
+            )}
+            {k?.email && (
+              <span class="vv-aemter__datum">
+                <VvIcon name="mail" size={15} />
+                <a href={`mailto:${k.email}`}>{k.email}</a>
+              </span>
+            )}
+            {zeiten && (
+              <span class="vv-aemter__datum vv-aemter__datum--zeit">
+                <VvIcon name="clock" size={15} />
+                <span>{zeiten}</span>
+              </span>
+            )}
+          </div>
+        )}
+      </li>
+    );
+  })}
+</ul>
+
+<style>
+  .vv-aemter {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--vv-space-2);
+  }
+  .vv-aemter__item {
+    background: var(--vv-bg);
+    border: 1px solid var(--vv-border-soft);
+    border-left: 3px solid var(--vv-sky-500);
+    border-radius: var(--vv-radius-md);
+    padding: var(--vv-space-4) var(--vv-space-5);
+    transition: border-color .15s, background .15s;
+  }
+  .vv-aemter__item:hover { border-color: var(--vv-sky-500); background: var(--vv-bg-alt); }
+
+  .vv-aemter__link { display: block; text-decoration: none; color: inherit; }
+  .vv-aemter__kopf {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--vv-space-3);
+  }
+  .vv-aemter__titel {
+    font-size: var(--vv-fs-lg);
+    font-weight: 700;
+    color: var(--vv-navy-800);
+    line-height: 1.25;
+  }
+  .vv-aemter__link:hover .vv-aemter__titel { text-decoration: underline; }
+  .vv-aemter__pfeil { color: var(--vv-sky-500); flex: none; align-self: center; }
+
+  .vv-aemter__person {
+    display: block;
+    margin-top: 3px;
+    color: var(--vv-text);
+  }
+  .vv-aemter__funktion {
+    color: var(--vv-text-muted);
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-aemter__funktion::before { content: ' · '; }
+
+  .vv-aemter__daten {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vv-space-2) var(--vv-space-5);
+    margin-top: var(--vv-space-3);
+    padding-top: var(--vv-space-3);
+    border-top: 1px solid var(--vv-border-soft);
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-aemter__datum {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--vv-text-muted);
+    overflow-wrap: anywhere;
+  }
+  .vv-aemter__datum :global(svg) { color: var(--vv-sky-500); flex: none; }
+  .vv-aemter__datum a { color: var(--vv-link); font-weight: 600; text-decoration: none; }
+  .vv-aemter__datum a:hover { text-decoration: underline; }
+  .vv-aemter__datum--zeit { font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 560px) {
+    .vv-aemter__item { padding: var(--vv-space-4); }
+    .vv-aemter__daten { gap: var(--vv-space-2) var(--vv-space-4); }
+  }
+</style>

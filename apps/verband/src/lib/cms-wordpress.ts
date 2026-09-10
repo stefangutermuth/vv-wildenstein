@@ -683,6 +683,10 @@ export interface HubTile {
   /** WP-Post-ID (aus `data-id` eines Grid-Items) — um das Ziel aufzulösen,
    *  wenn die Kachel im Original keinen eigenen Link hatte. */
   sourceId?: number;
+  /** Redaktionsfelder für Listen-Darstellungen (Ämter, Gewerbe): Ohne sie
+   *  müsste man jede Kachel anklicken, um Ansprechpartner oder Telefonnummer
+   *  zu sehen. */
+  kontakt?: VvKontakt;
 }
 
 interface WPCptEmbed {
@@ -725,7 +729,7 @@ async function fetchCptTiles(
     headers: { Accept: 'application/json', ...buildAuthHeader() },
   });
   if (!res.ok) return [];
-  const raw = (await res.json()) as WPCptEmbed[];
+  const raw = (await res.json()) as Array<WPCptEmbed & { vv_kontakt?: VvKontakt }>;
   const tiles = raw.map((item) => {
     const kats = withTerms
       ? (item._embedded?.['wp:term'] ?? [])
@@ -733,11 +737,18 @@ async function fetchCptTiles(
           .filter((t) => t.taxonomy === 'tourismus_kat')
           .map((t) => t.slug)
       : undefined;
+    // Leere Felder aussortieren, damit die Liste nicht mit Nichts rechnet
+    const kontakt = item.vv_kontakt
+      ? (Object.fromEntries(
+          Object.entries(item.vv_kontakt).filter(([, v]) => typeof v === 'string' && v.trim() !== ''),
+        ) as VvKontakt)
+      : undefined;
     return {
       title: decodeEntities(stripHtml(item.title.rendered).trim()),
       href: `/${pathPrefix}/${item.slug}`,
       image: cptImage(item),
       kats,
+      kontakt: kontakt && Object.keys(kontakt).length ? kontakt : undefined,
     } as HubTile;
   });
   // Nach Titel deduplizieren (WP hat „…-2"-Dubletten) — Variante MIT Bild gewinnt.
