@@ -79,13 +79,11 @@ const zweispaltig = marken.length > 8;
     grid-template-columns: 1fr;
   }
   :global(.vv-seitenleiste) .vv-sprung { padding: var(--vv-space-4); }
-  :global(.vv-seitenleiste) .vv-sprung__list {
-    max-height: min(46vh, 420px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    padding-right: 4px;
-  }
+  /* Keine eigene Höhenbegrenzung mehr: Die Liste erzwang damit einen
+     Scrollbalken, obwohl das Menü ins Fenster gepasst hätte. Begrenzt wird
+     jetzt der ganze Kasten (in [...slug].astro), und zwar erst dann, wenn er
+     wirklich höher ist als das Fenster. */
+  :global(.vv-seitenleiste) .vv-sprung__list { padding-right: 2px; }
   .vv-sprung__list a {
     display: block;
     padding: 7px 10px 7px 18px;

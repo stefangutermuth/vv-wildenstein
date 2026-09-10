@@ -205,25 +205,35 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
   .vv-layout__inhalt { min-width: 0; }   /* verhindert Überlaufen breiter Tabellen */
 
   @media (min-width: 1000px) {
+    /* Text links, Seitenleiste rechts — der Blick beginnt beim Inhalt. */
     .vv-layout.has-seitenleiste {
-      grid-template-columns: 300px minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) 320px;
       gap: var(--vv-space-7);
       align-items: start;
     }
+    .vv-layout.has-seitenleiste .vv-layout__inhalt { order: 1; }
     .vv-seitenleiste {
-      position: sticky;
-      top: 84px;
-      max-height: calc(100vh - 104px);
-      overflow-y: auto;
-      overscroll-behavior: contain;
+      order: 2;
       display: grid;
       gap: var(--vv-space-4);
       align-content: start;
-      /* dezenter Scrollbalken, nur wenn nötig */
-      scrollbar-width: thin;
     }
     .vv-seitenleiste > :global(.vv-kontakt),
-    .vv-seitenleiste > :global(.vv-sprung) { margin: 0; }
+    .vv-seitenleiste > :global(.vv-zeiten) { margin: 0; }
+
+    /* Nur das Themen-Menü läuft mit. Kontakt und Sprechzeiten scrollen weg —
+       so muss man nicht INNERHALB der Leiste scrollen, was verwirrend war.
+       Die Höhenbegrenzung greift erst, wenn das Menü wirklich höher ist als
+       das Fenster (z. B. bei 39 Themen auf der Veranstaltungsseite). */
+    .vv-seitenleiste > :global(.vv-sprung) {
+      position: sticky;
+      top: 84px;
+      margin: 0;
+      max-height: calc(100vh - 108px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
   }
   /* Schmale Schirme: alles untereinander, Kontakt zuerst */
   @media (max-width: 999px) {
@@ -237,9 +247,18 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
     padding-block: var(--vv-space-7) var(--vv-space-9);
     background: var(--vv-white);
   }
-  .vv-pagebody .vv-container { max-width: 980px; }
-  /* Mit Seitenleiste braucht die Zeile mehr Platz, sonst wird der Text schmal */
-  .vv-pagebody .vv-container:has(.vv-layout.has-seitenleiste) { max-width: 1240px; }
+  /* Einheitliche Spurbreite auf allen Unterseiten — vorher waren Seiten mit
+     Seitenleiste 1240px breit und alle anderen 980px, was beim Blättern
+     zwischen den Seiten sichtbar sprang. */
+  .vv-pagebody .vv-container { max-width: 1240px; }
+  /* Der Fließtext bleibt trotzdem lesbar: lange Zeilen ermüden, deshalb wird
+     die Textspalte begrenzt — dieselbe Breite, die sie neben der Seitenleiste
+     hat. */
+  .vv-layout:not(.has-seitenleiste) .vv-prose,
+  .vv-layout:not(.has-seitenleiste) .vv-emptyhub { max-width: 830px; }
+  /* Auch der Kontaktkasten: ohne Seitenleiste zöge er sich sonst über die
+     vollen 1240px und wirkte wie ein Banner. */
+  .vv-layout:not(.has-seitenleiste) > :global(.vv-kontakt) { max-width: 830px; }
   .vv-pagebody__lead {
     width: 100%;
     max-height: 380px;
