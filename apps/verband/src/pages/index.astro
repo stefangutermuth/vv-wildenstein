@@ -226,7 +226,7 @@ const highlights = [
       </div>
       <ul class="vv-about__stats vv-reveal">
         <li><strong>2</strong><span>Mitgliedsgemeinden</span></li>
-        <li><strong>13</strong><span>Fachbereiche & Ämter</span></li>
+        <li><strong>14</strong><span>Fachbereiche & Ämter</span></li>
         <li><strong>1</strong><span>gemeinsame Verwaltung</span></li>
       </ul>
     </div>
@@ -507,8 +507,26 @@ const highlights = [
 
   .vv-about__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--vv-space-4); }
   @media (min-width: 900px) { .vv-about__stats { grid-template-columns: 1fr; } }
-  .vv-about__stats li { display: flex; flex-direction: column; gap: 4px; padding: var(--vv-space-4) 0; border-bottom: 1px solid rgba(255,255,255,0.14); }
-  .vv-about__stats strong { font-size: var(--vv-fs-3xl); font-weight: 700; color: var(--vv-sky-400); line-height: 1; }
+  /* Zahl und Beschriftung nebeneinander statt untereinander: Untereinander
+     brauchte der Block die dreifache Höhe für dieselbe Aussage. Die Zahlen
+     haben eine feste Mindestbreite, damit die Beschriftungen bündig stehen. */
+  .vv-about__stats li {
+    display: flex;
+    align-items: baseline;
+    gap: var(--vv-space-3);
+    padding: var(--vv-space-3) 0;
+    border-bottom: 1px solid rgba(255,255,255,0.14);
+  }
+  .vv-about__stats strong {
+    font-size: var(--vv-fs-2xl);
+    font-weight: 700;
+    color: var(--vv-sky-400);
+    line-height: 1;
+    min-width: 2.2ch;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
   .vv-about__stats span { font-size: var(--vv-fs-sm); color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.08em; }
 
   /* === Mitgliedsgemeinden ==================================== */
