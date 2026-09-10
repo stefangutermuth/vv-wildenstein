@@ -1,49 +1,47 @@
 ---
 /**
  * Amtsblatt — alle Ausgaben mit PDF, gruppiert nach Jahr.
- * Quelle: mu-Plugin-Endpoint /wp-json/vvw/v1/amtsblatt (liest die ACF-Metas
- * des CPT amtsblatt_download aus — wp/v2 liefert die PDF-URLs nicht).
+ *
+ * Quelle ist der Inhaltstyp amtsblatt_download; die PDF-Adresse reicht das
+ * mu-Plugin vv-rest-amtsblatt.php als Feld vv_amtsblatt nach (wp/v2 gibt sie
+ * nicht heraus). Grünhainichen und Börnichen holen sie über denselben Weg.
+ *
+ * Vorher fragte diese Seite /wp-json/vvw/v1/amtsblatt ab — eine Route, die es
+ * in dem Namensraum nicht gibt. Der Fehler wurde still zu einer leeren Liste,
+ * deshalb stand hier monatelang „Aktuell sind keine Ausgaben verfügbar", ohne
+ * dass ein Build je gemeckert hätte. Jetzt scheitert der Abruf laut.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import VvPageHeader from '../../components/global/VvPageHeader.astro';
 import VvIcon from '../../components/primitives/VvIcon.astro';
+import { fetchAmtsblaetter } from '../../lib/cms-wordpress';
 
-const VVW_BASE =
-  ((import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
-    (typeof process !== 'undefined' ? process.env.PUBLIC_WP_API_BASE : undefined) ??
-    'https://vv-wildenstein.com/wp-json/wp/v2').replace(/\/wp\/v2\/?$/, '/vvw/v1');
+const items = await fetchAmtsblaetter();
 
-interface AmtsblattItem {
-  id: number;
-  titel: string;
-  datum: string;
-  jahr: string;
-  pdfUrl: string;
-}
-
-let items: AmtsblattItem[] = [];
-try {
-  const res = await fetch(`${VVW_BASE}/amtsblatt`, { headers: { Accept: 'application/json' } });
-  if (res.ok) items = ((await res.json()) as { items: AmtsblattItem[] }).items ?? [];
-} catch {
-  /* Endpoint nicht erreichbar → leere Liste, Seite bleibt baubar */
-}
-
-const byYear = new Map<string, AmtsblattItem[]>();
+const byYear = new Map<number, typeof items>();
 for (const it of items) {
   const list = byYear.get(it.jahr) ?? [];
   list.push(it);
   byYear.set(it.jahr, list);
 }
-const years = [...byYear.keys()].sort((a, b) => Number(b) - Number(a));
+const years = [...byYear.keys()].sort((a, b) => b - a);
 
-const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short', timeZone: 'Europe/Berlin' });
+/* Die Monatsmarke zeigt den Monat der AUSGABE. Nach dem Erscheinungsdatum
+   beschriftet trüge das Amtsblatt 08/2026 die Marke „Jul" — es kam am
+   31. Juli heraus. Genau das hatte die Redaktion schon einmal gemeldet. */
+const MONATE = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
 const fmtFull = new Intl.DateTimeFormat('de-DE', {
   day: '2-digit',
   month: 'long',
   year: 'numeric',
   timeZone: 'Europe/Berlin',
 });
+
+function mb(bytes: number): string {
+  if (!bytes) return '';
+  return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
+}
 ---
 <BaseLayout
   title="Amtsblatt — Verwaltungsverband Wildenstein"
@@ -62,13 +60,16 @@ const fmtFull = new Intl.DateTimeFormat('de-DE', {
             {byYear.get(year)!.map((it) => (
               <li>
                 <a class="vv-ab__row" href={it.pdfUrl} target="_blank" rel="noopener">
-                  <span class="vv-ab__month" aria-hidden="true">{fmtMonth.format(new Date(it.datum)).replace('.', '')}</span>
+                  <span class="vv-ab__month" aria-hidden="true">{MONATE[it.monat - 1] ?? ''}</span>
                   <span class="vv-ab__meta">
                     <span class="vv-ab__title">{it.titel}</span>
-                    <time datetime={it.datum}>{fmtFull.format(new Date(it.datum))}</time>
+                    <span class="vv-ab__sub">
+                      {it.datum && <time datetime={it.datum}>{fmtFull.format(new Date(it.datum))}</time>}
+                      {it.groesse > 0 && <span>PDF · {mb(it.groesse)}</span>}
+                    </span>
                   </span>
                   <span class="vv-ab__open">
-                    <span>PDF öffnen</span>
+                    <span>Öffnen</span>
                     <VvIcon name="arrow-up-right" size={14} />
                   </span>
                 </a>
@@ -131,7 +132,15 @@ const fmtFull = new Intl.DateTimeFormat('de-DE', {
   }
   .vv-ab__meta { flex: 1; min-width: 0; display: grid; gap: 2px; }
   .vv-ab__title { font-weight: 600; color: var(--vv-navy-800); }
-  .vv-ab__meta time { color: var(--vv-text-muted); font-size: var(--vv-fs-sm); }
+  /* Getrennt wird über den Abstand, nicht über ein ::before-Zeichen: bricht
+     die Zeile auf schmalen Schirmen um, stünde sonst ein verwaister Trennpunkt
+     am Anfang der zweiten Zeile. */
+  .vv-ab__sub {
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    column-gap: var(--vv-space-4); row-gap: 2px;
+    color: var(--vv-text-muted); font-size: var(--vv-fs-sm);
+  }
+  .vv-ab__sub > * { white-space: nowrap; }
 
   .vv-ab__open {
     flex: none;

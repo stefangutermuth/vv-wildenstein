@@ -906,3 +906,115 @@ async function ladeRathausZeiten(): Promise<Zeitspanne[]> {
     return [];
   }
 }
+
+/* ============================================================
+ * Amtsblatt
+ * ============================================================ */
+
+export interface AmtsblattAusgabe {
+  id: number;
+  titel: string;
+  /** Erscheinungsdatum (ISO, ohne Zeit) — für die Zeile unter dem Titel. */
+  datum: string;
+  /** Jahr der AUSGABE, nicht des Erscheinens. */
+  jahr: number;
+  /** Monat der Ausgabe, 1–12. Bestimmt die Monatsmarke. */
+  monat: number;
+  pdfUrl: string;
+  /** Dateigröße in Bytes, 0 wenn unbekannt. */
+  groesse: number;
+}
+
+interface WPAmtsblattRaw {
+  id: number;
+  date: string;
+  title: { rendered: string };
+  excerpt?: { rendered: string };
+  vv_amtsblatt?: {
+    pdfUrl?: string | null;
+    groesse?: number;
+    veroeffentlicht?: string | null;
+    ausgabeMonat?: number | null;
+    ausgabeJahr?: number | null;
+  };
+}
+
+let amtsblattPromise: Promise<AmtsblattAusgabe[]> | null = null;
+export function fetchAmtsblaetter(): Promise<AmtsblattAusgabe[]> {
+  if (!amtsblattPromise) amtsblattPromise = ladeAmtsblaetter();
+  return amtsblattPromise;
+}
+
+async function ladeAmtsblaetter(): Promise<AmtsblattAusgabe[]> {
+  const roh: WPAmtsblattRaw[] = [];
+
+  // 71 Ausgaben heute; zwei Seiten à 100 reichen weit in die Zukunft.
+  for (let seite = 1; seite <= 2; seite++) {
+    const url = new URL(`${WP_BASE}/amtsblatt_download`);
+    url.searchParams.set('per_page', '100');
+    url.searchParams.set('page', String(seite));
+    url.searchParams.set('_fields', 'id,date,title,excerpt,vv_amtsblatt');
+
+    const abbruch = new AbortController();
+    const wecker = setTimeout(() => abbruch.abort(), 20_000);
+    let res: Response;
+    try {
+      res = await fetch(url.toString(), {
+        headers: { Accept: 'application/json', ...buildAuthHeader() },
+        signal: abbruch.signal,
+      });
+    } finally {
+      clearTimeout(wecker);
+    }
+    if (!res.ok) {
+      if (seite > 1) break; // keine weitere Seite vorhanden
+      // Bewusst hart scheitern: das Amtsblatt trägt amtliche Bekanntmachungen.
+      // Eine still leere Liste (so stand die Seite bisher da) ist schlimmer als
+      // ein Build-Abbruch — dann bleibt wenigstens der alte Stand online.
+      throw new Error(`WP REST amtsblatt_download ${res.status} ${res.statusText}`);
+    }
+    const teil = (await res.json()) as WPAmtsblattRaw[];
+    roh.push(...teil);
+    if (teil.length < 100) break;
+  }
+
+  return roh
+    .map((p) => {
+      const feld = p.vv_amtsblatt;
+      const titel = decodeEntities(p.title?.rendered ?? '');
+
+      /* Einordnung nach der AUSGABE, nicht nach dem Erscheinen: Das Amtsblatt
+         08/2026 kam am 31. Juli heraus und stünde sonst unter „Jul". Die
+         Nummer steht im Titel und wird auch von dort gelesen — das Feld kommt
+         aus einem mu-Plugin und fehlt, wenn ein Build auf einem älteren
+         Zwischenspeicher läuft. */
+      const nr = titel.match(/(\d{1,2})\s*\/\s*(\d{4})/);
+      const erschienen = feld?.veroeffentlicht || p.date || '';
+      const alsDatum = erschienen ? new Date(erschienen) : null;
+
+      const monat = feld?.ausgabeMonat ?? (nr ? Number(nr[1]) : alsDatum ? alsDatum.getMonth() + 1 : 0);
+      const jahr = feld?.ausgabeJahr ?? (nr ? Number(nr[2]) : alsDatum ? alsDatum.getFullYear() : 0);
+
+      /* Die PDF-Adresse reicht vv-rest-amtsblatt.php nach; wp/v2 gibt sie nicht
+         heraus. Der Auszug bleibt als Rückfall, falls eine Ausgabe sie nur
+         dort stehen hat. */
+      const ausAuszug = (p.excerpt?.rendered ?? '').match(/href="([^"]+\.pdf)"/i)?.[1];
+      const pdfUrl = feld?.pdfUrl || ausAuszug || '';
+
+      return {
+        id: p.id,
+        titel,
+        datum: erschienen.slice(0, 10),
+        jahr,
+        monat,
+        pdfUrl,
+        groesse: feld?.groesse ?? 0,
+        /* „Anzeigenpreise" und „Terminplan" liegen im selben Inhaltstyp, sind
+           aber keine Ausgaben und gehören nicht in die Jahresliste. */
+        _istAusgabe: feld?.ausgabeMonat != null || nr != null,
+      };
+    })
+    .filter((a) => a._istAusgabe && a.pdfUrl)
+    .map(({ _istAusgabe, ...a }) => a)
+    .sort((a, b) => (b.jahr !== a.jahr ? b.jahr - a.jahr : b.monat - a.monat));
+}
