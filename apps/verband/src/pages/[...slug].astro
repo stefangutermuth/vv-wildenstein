@@ -160,6 +160,32 @@ const restKacheln = istVersammlung
   ? hubTiles.filter((t) => !t.href.startsWith('/personen/'))
   : hubTiles;
 
+/* Seiten mit einer Bildergalerie bekommen ein Foto in den Seitenkopf statt
+   des blauen Bandes mit Höhenlinien. Auf /heiraten wirkte die Seite sonst so
+   behördlich wie eine Gebührensatzung — die Fotos sind dort der eigentliche
+   Inhalt. Genommen wird das erste QUERFORMAT der Galerie: ein Hochformat
+   waere in einem breiten Band fast nur Ausschnitt.
+   Das Bild kommt aus dem Inhalt, nicht aus dem Quelltext — tauscht die
+   Redaktion die Fotos, wandert der Seitenkopf mit. */
+const kopfBild = (() => {
+  const kandidaten = [...page.contentHtml.matchAll(/<img\b[^>]*class="[^"]*vv-gal-img[^"]*"[^>]*>/gi)]
+    .map((m) => {
+      const tag = m[0];
+      return {
+        src: tag.match(/\bsrc="([^"]+)"/i)?.[1] ?? '',
+        breite: Number(tag.match(/\bwidth="(\d+)"/i)?.[1] ?? 0),
+        hoehe: Number(tag.match(/\bheight="(\d+)"/i)?.[1] ?? 0),
+      };
+    })
+    .filter((k) => k.src && k.breite > k.hoehe);
+  if (kandidaten.length === 0) return undefined;
+  /* Das breiteste Motiv gewinnt: In einem flachen Band wird es am wenigsten
+     beschnitten. Auf /heiraten trifft das die Kutsche auf der Wiese (1,83:1)
+     statt des Trausaals (1,33:1) — der stand als erstes Galeriebild ohnehin
+     gleich darunter noch einmal. */
+  return kandidaten.sort((a, b) => b.breite / b.hoehe - a.breite / a.hoehe)[0].src;
+})();
+
 const istVerwaltung = page.path === '/verwaltung';
 const zeigeRathaus = istVerwaltung && contentText.length > 40;
 const isEmpty =
@@ -183,7 +209,7 @@ const parentPath = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.leng
 const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].title : 'Startseite';
 ---
 <BaseLayout title={`${page.title} — Verwaltungsverband Wildenstein`} description={page.title}>
-  <VvPageHeader title={page.title} breadcrumb={page.breadcrumb} />
+  <VvPageHeader title={page.title} breadcrumb={page.breadcrumb} bild={kopfBild} />
   <div class="vv-pagebody">
     <div class="vv-container">
       {page.image && (
@@ -222,7 +248,7 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
               <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>
             </div>
           ) : zeigeRathaus || nurUeberschriften ? null : (
-            <article class="vv-prose" set:html={zeigeSprungmenu ? inhaltMitMarken : page.contentHtml} />
+            <article class:list={['vv-prose', { 'is-bildseite': kopfBild }]} set:html={zeigeSprungmenu ? inhaltMitMarken : page.contentHtml} />
           )}
         </div>
       </div>

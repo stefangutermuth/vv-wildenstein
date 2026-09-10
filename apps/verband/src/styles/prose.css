@@ -146,6 +146,28 @@
 .vv-prose .l-section { padding: 0; margin: 0 0 var(--vv-space-5); }
 .vv-prose .l-section-h { padding: 0; }
 
+/* --- Bildseiten (Seitenkopf mit Foto) ----------------------- */
+/* Auf /heiraten stehen zwei Trauorte zur Wahl — im Fliesstext ging das
+   unter. Reihen MIT Bildern werden zu eigenen Bloecken, der abschliessende
+   Brief (Reihe ohne Bild) bleibt schlichter Text. */
+.vv-prose.is-bildseite .g-cols:has(img) {
+  background: var(--vv-bg-alt);
+  border: 1px solid var(--vv-border-soft);
+  border-radius: var(--vv-radius-lg);
+  padding: var(--vv-space-6);
+  margin-bottom: var(--vv-space-6);
+  /* Der Text ist kuerzer als die Bildreihe daneben. Oben ausgerichtet hinge
+     er im Block und liesse darunter ein Loch — mittig gesetzt wirkt es wie
+     eine Bildunterschrift zur Reihe. */
+  align-items: center;
+}
+.vv-prose.is-bildseite .g-cols:has(img) .vc_column-inner > .wpb_wrapper > :first-child { margin-top: 0; }
+/* Auf dem Telefon frisst ein Polster von 32px links und rechts 64 der 375
+   verfuegbaren Pixel — dort schmaler. */
+@media (max-width: 600px) {
+  .vv-prose.is-bildseite .g-cols:has(img) { padding: var(--vv-space-4); }
+}
+
 /* --- RoyalSlider (Impreza-Bildslider, ohne JS) --------------- */
 /* Ohne Slider-JS stapeln sich die Slides unbrauchbar — stattdessen
    als Magazin-Bildraster: erstes Bild groß (2×2), Rest kachelt sich
