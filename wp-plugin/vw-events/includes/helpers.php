@@ -204,6 +204,14 @@ function vw_events_render_filter_bar( WP_Query $q ): string {
                 <button type="button" data-quick="week"><?php esc_html_e( 'Diese Woche', 'vw-events' ); ?></button>
                 <button type="button" data-quick="month"><?php esc_html_e( 'Diesen Monat', 'vw-events' ); ?></button>
             </div>
+            <div class="vw-events-viewswitch" role="group" aria-label="<?php esc_attr_e( 'Darstellung', 'vw-events' ); ?>">
+                <button type="button" data-vw-view="cards" class="is-active" aria-pressed="true">
+                    <span aria-hidden="true">▦</span> <?php esc_html_e( 'Kacheln', 'vw-events' ); ?>
+                </button>
+                <button type="button" data-vw-view="rows" aria-pressed="false">
+                    <span aria-hidden="true">☰</span> <?php esc_html_e( 'Liste', 'vw-events' ); ?>
+                </button>
+            </div>
             <label class="vw-events-month">
                 <span class="vw-events-month-label"><?php esc_html_e( 'Monat', 'vw-events' ); ?></span>
                 <select data-filter="month">
@@ -282,7 +290,12 @@ function vw_events_format_date_range( string $start, string $end = '', bool $all
     $start_date = date_i18n( $date_fmt, $ts_start );
     $start_time = date_i18n( $time_fmt, $ts_start );
 
-    if ( $all_day ) {
+    // Eine Startzeit von 00:00 bedeutet in der Praxis „Uhrzeit nicht angegeben"
+    // — die Redaktion trägt sie so ein, wenn die Zeit noch nicht feststeht.
+    // „13. September 2026 · 00:00" wäre eine falsche Angabe, deshalb wird der
+    // Termin wie ein ganztägiger behandelt. Dieselbe Regel gilt in den
+    // Astro-Frontends, damit alle Seiten dasselbe zeigen.
+    if ( $all_day || date( 'H:i', $ts_start ) === '00:00' ) {
         if ( $ts_end && date( 'Y-m-d', $ts_end ) !== date( 'Y-m-d', $ts_start ) ) {
             return $start_date . ' – ' . date_i18n( $date_fmt, $ts_end );
         }

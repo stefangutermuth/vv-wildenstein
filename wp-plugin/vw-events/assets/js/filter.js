@@ -25,6 +25,32 @@
             card.dataset.searchText = parts.join(' ').toLowerCase();
         });
 
+        // Darstellung umschalten: Kacheln (Plakate) oder Liste (untereinander).
+        // Die Kacheln zeigen die Plakate groß, für einen Überblick über viele
+        // Termine ist eine Zeilenliste aber übersichtlicher — die Redaktion hat
+        // sie von der Gemeindeseite gekannt und hier vermisst.
+        const SPEICHER = 'vwEventsView';
+        const viewBtns = bar.querySelectorAll('.vw-events-viewswitch button[data-vw-view]');
+        function setzeAnsicht(view, merken) {
+            list.classList.toggle('is-rows', view === 'rows');
+            viewBtns.forEach((b) => {
+                const aktiv = b.dataset.vwView === view;
+                b.classList.toggle('is-active', aktiv);
+                b.setAttribute('aria-pressed', aktiv ? 'true' : 'false');
+            });
+            if (merken) {
+                try { localStorage.setItem(SPEICHER, view); } catch (e) { /* privater Modus */ }
+            }
+        }
+        viewBtns.forEach((b) => {
+            b.addEventListener('click', () => setzeAnsicht(b.dataset.vwView, true));
+        });
+        // Zuletzt gewählte Darstellung wiederherstellen
+        try {
+            const gemerkt = localStorage.getItem(SPEICHER);
+            if (gemerkt === 'rows' || gemerkt === 'cards') setzeAnsicht(gemerkt, false);
+        } catch (e) { /* privater Modus */ }
+
         // Quick-Tabs
         bar.querySelectorAll('.vw-events-quicktabs button').forEach((btn) => {
             btn.addEventListener('click', () => {

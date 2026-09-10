@@ -3,7 +3,7 @@
  * Plugin Name: Events im VV Wildenstein
  * Plugin URI:  https://vv-wildenstein.com
  * Description: Headless-CMS-Backend für Veranstaltungen — CPT, REST-API, Frontend-Submission, iCal, Cloudflare-Build-Hooks.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Requires at least: 6.4
  * Requires PHP: 8.1
  * Author:      gumu Agentur
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'VW_EVENTS_VERSION', '1.0.0' );
+define( 'VW_EVENTS_VERSION', '1.1.0' );
 define( 'VW_EVENTS_FILE', __FILE__ );
 define( 'VW_EVENTS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'VW_EVENTS_URL', plugin_dir_url( __FILE__ ) );

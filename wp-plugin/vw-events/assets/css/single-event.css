@@ -294,3 +294,113 @@
         letter-spacing: .05em;
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* Listen-Darstellung (Umschalter „Liste")                            */
+/*                                                                    */
+/* Die Kacheln zeigen die Plakate groß — schön, aber bei vielen        */
+/* Terminen unübersichtlich. In der Zeilenansicht steht ein Termin je  */
+/* Zeile: Kalenderblatt links, darauf Titel, Zeit und Ort. Das Plakat  */
+/* schrumpft zur Vorschau und verschwindet auf schmalen Schirmen.      */
+/* ------------------------------------------------------------------ */
+.vw-events-list.is-rows {
+    grid-template-columns: 1fr;
+    gap: .5rem;
+}
+.vw-events-list.is-rows .vw-event-card {
+    display: block;
+}
+.vw-events-list.is-rows .vw-event-card-link {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    align-items: center;
+    gap: 1rem;
+    padding: .6rem .9rem;
+}
+.vw-events-list.is-rows .vw-event-card-image,
+.vw-events-list.is-rows .vw-event-card-image-placeholder {
+    aspect-ratio: 4 / 3;
+    height: auto;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.vw-events-list.is-rows .vw-event-card-body {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.vw-events-list.is-rows .vw-event-card-title {
+    font-size: 1.02rem;
+    line-height: 1.3;
+    margin: 0;
+}
+.vw-events-list.is-rows .vw-event-card-when,
+.vw-events-list.is-rows .vw-event-card-where {
+    font-size: .88rem;
+}
+/* In der Zeile zählt der Überblick: Textauszug und Schlagworte weglassen,
+   Zeitpunkt und Ort in eine Zeile. Sonst wird jede Zeile 186 px hoch und die
+   Liste ist genauso unübersichtlich wie das Kachelraster. */
+.vw-events-list.is-rows .vw-event-card-excerpt,
+.vw-events-list.is-rows .vw-event-card-tags {
+    display: none;
+}
+.vw-events-list.is-rows .vw-event-card-when,
+.vw-events-list.is-rows .vw-event-card-where {
+    display: inline;
+    margin: 0;
+}
+.vw-events-list.is-rows .vw-event-card-where::before {
+    content: " · ";
+    opacity: .6;
+}
+.vw-events-list.is-rows .vw-event-card-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Das Kalenderblatt ist in der Zeile zu wuchtig — kleiner und ohne Drehung */
+.vw-events-list.is-rows .vw-event-leaf {
+    transform: none;
+    scale: .74;
+    transform-origin: top left;
+}
+@media (max-width: 560px) {
+    .vw-events-list.is-rows .vw-event-card-link {
+        grid-template-columns: 1fr;
+    }
+    .vw-events-list.is-rows .vw-event-card-image,
+    .vw-events-list.is-rows .vw-event-card-image-placeholder {
+        display: none;
+    }
+}
+
+/* Umschalter selbst */
+.vw-events-viewswitch {
+    display: inline-flex;
+    gap: 2px;
+    background: rgba(0, 0, 0, .05);
+    border-radius: 999px;
+    padding: 3px;
+}
+.vw-events-viewswitch button {
+    border: 0;
+    background: transparent;
+    border-radius: 999px;
+    padding: 6px 13px;
+    font: inherit;
+    font-size: .88rem;
+    color: inherit;
+    cursor: pointer;
+    min-height: 36px;
+}
+.vw-events-viewswitch button:hover { background: rgba(0, 0, 0, .06); }
+.vw-events-viewswitch button.is-active {
+    background: #fff;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+}
