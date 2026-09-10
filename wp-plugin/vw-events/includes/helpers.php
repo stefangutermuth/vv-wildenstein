@@ -242,6 +242,77 @@ function vw_events_render_filter_bar( WP_Query $q ): string {
 }
 
 /**
+ * Liest ein Datum aus dem Veranstaltungstitel.
+ *
+ * Rettungsanker für den häufigsten Bedienfehler: Wird das Startdatum ohne
+ * Uhrzeit eingegeben, verwirft der Browser die Eingabe (siehe save_meta) und
+ * die Veranstaltung erscheint nirgends. Fast alle Titel tragen das Datum aber
+ * mit sich — „Spieldosenanschieben in Grünhainichen am 28.11.2026". Daraus
+ * lässt sich der Termin als GANZTÄGIG retten, bis jemand die Uhrzeit nachträgt.
+ *
+ * Bewusst streng: Bei Unsicherheit wird nichts geraten (Rückgabe null). Ein
+ * falsches Datum auf einer amtlichen Seite wäre schlimmer als gar keines.
+ *
+ * @return array{start:string,end:?string}|null  Datumsteile als Y-m-d
+ */
+function vw_events_datum_aus_titel( string $titel ): ?array {
+	$t     = str_replace( array( '–', '—' ), '-', $titel );
+	$jahr4 = static function ( string $j ): int {
+		$n = (int) $j;
+		return $n < 100 ? 2000 + $n : $n;
+	};
+	$gueltig = static function ( int $d, int $m, int $y ): bool {
+		return checkdate( $m, $d, $y ) && $y >= 2000 && $y <= 2100;
+	};
+
+	// 1) Zwei Tage, gemeinsamer Monat: „28.+29.11.2026"
+	if ( preg_match( '/(\d{1,2})\.\s*[+&]\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})/u', $t, $m ) ) {
+		$y = $jahr4( $m[4] );
+		if ( $gueltig( (int) $m[1], (int) $m[3], $y ) && $gueltig( (int) $m[2], (int) $m[3], $y ) ) {
+			return array(
+				'start' => sprintf( '%04d-%02d-%02d', $y, $m[3], $m[1] ),
+				'end'   => sprintf( '%04d-%02d-%02d', $y, $m[3], $m[2] ),
+			);
+		}
+	}
+
+	// 2) Zeitraum: „23.01.-31.01.2027"
+	if ( preg_match( '/(\d{1,2})\.(\d{1,2})\.(?:(\d{2,4}))?\s*-\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})/u', $t, $m ) ) {
+		$y2 = $jahr4( $m[6] );
+		$y1 = ( isset( $m[3] ) && $m[3] !== '' ) ? $jahr4( $m[3] ) : $y2;
+		if ( $gueltig( (int) $m[1], (int) $m[2], $y1 ) && $gueltig( (int) $m[4], (int) $m[5], $y2 ) ) {
+			return array(
+				'start' => sprintf( '%04d-%02d-%02d', $y1, $m[2], $m[1] ),
+				'end'   => sprintf( '%04d-%02d-%02d', $y2, $m[5], $m[4] ),
+			);
+		}
+	}
+
+	// 3) Einzeldatum: „28.11.2026" oder „28.11.26"
+	if ( preg_match( '/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/u', $t, $m ) ) {
+		$y = $jahr4( $m[3] );
+		if ( $gueltig( (int) $m[1], (int) $m[2], $y ) ) {
+			return array( 'start' => sprintf( '%04d-%02d-%02d', $y, $m[2], $m[1] ), 'end' => null );
+		}
+	}
+
+	// 4) Ausgeschriebener Monat: „10. September 2026"
+	$monate = array(
+		'januar' => 1, 'februar' => 2, 'maerz' => 3, 'märz' => 3, 'april' => 4, 'mai' => 5,
+		'juni' => 6, 'juli' => 7, 'august' => 8, 'september' => 9, 'oktober' => 10,
+		'november' => 11, 'dezember' => 12,
+	);
+	if ( preg_match( '/(\d{1,2})\.\s*([A-Za-zÄÖÜäöü]+)\s+(\d{4})/u', $t, $m ) ) {
+		$key = mb_strtolower( $m[2] );
+		if ( isset( $monate[ $key ] ) && $gueltig( (int) $m[1], $monate[ $key ], (int) $m[3] ) ) {
+			return array( 'start' => sprintf( '%04d-%02d-%02d', (int) $m[3], $monate[ $key ], (int) $m[1] ), 'end' => null );
+		}
+	}
+
+	return null;
+}
+
+/**
  * Build data-attributes string for an event card (used by the filter JS).
  */
 function vw_events_card_data_attrs( int $post_id ): string {

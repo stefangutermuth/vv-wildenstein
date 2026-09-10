@@ -112,9 +112,11 @@ final class VW_Events_Admin_UI {
         // Am 08./09.09.2026 sind so elf Termine unsichtbar geblieben.
         if ( isset( $_POST['_vw_event_start'] ) && trim( (string) wp_unslash( $_POST['_vw_event_start'] ) ) === '' ) {
             unset( $_POST['_vw_event_start'] );
-            if ( ! get_post_meta( $post_id, '_vw_event_start', true ) ) {
-                set_transient( 'vw_event_hinweis_' . $post_id, 'kein_start', 60 );
-            }
+        }
+
+        // Die Redaktion hat eine echte Zeitangabe gemacht → Notlösung aufheben.
+        if ( isset( $_POST['_vw_event_start'] ) && trim( (string) wp_unslash( $_POST['_vw_event_start'] ) ) !== '' ) {
+            delete_post_meta( $post_id, '_vw_event_aus_titel' );
         }
 
         $text_keys = [
@@ -147,6 +149,40 @@ final class VW_Events_Admin_UI {
         if ( ! get_post_meta( $post_id, '_vw_event_source', true ) ) {
             update_post_meta( $post_id, '_vw_event_source', 'admin' );
         }
+
+        self::start_aus_titel_retten( $post_id, $post );
+    }
+
+    /**
+     * Notlösung gegen unsichtbare Veranstaltungen.
+     *
+     * Fehlt das Startdatum, wird es aus dem Titel gelesen („… am 28.11.2026")
+     * und als GANZTÄGIGER Termin eingesetzt. Damit steht die Veranstaltung
+     * wenigstens am richtigen Tag im Kalender, statt gar nicht zu erscheinen —
+     * und niemand trägt sie ein zweites Mal ein, weil er sie nicht findet.
+     *
+     * Bewusst keine Uhrzeit: Die ist nicht bekannt und wird nicht erfunden.
+     * Das Feld `_vw_event_aus_titel` merkt sich die Notlösung, damit das
+     * Backend darauf hinweist und die Redaktion sie ersetzen kann.
+     */
+    private static function start_aus_titel_retten( int $post_id, WP_Post $post ): void {
+        if ( get_post_meta( $post_id, '_vw_event_start', true ) ) {
+            return; // es gibt ein Datum — nichts zu retten
+        }
+        if ( ! function_exists( 'vw_events_datum_aus_titel' ) ) {
+            return;
+        }
+        $treffer = vw_events_datum_aus_titel( (string) $post->post_title );
+        if ( ! $treffer ) {
+            return; // im Titel steht kein verwertbares Datum
+        }
+
+        update_post_meta( $post_id, '_vw_event_start', $treffer['start'] . 'T00:00' );
+        if ( ! empty( $treffer['end'] ) ) {
+            update_post_meta( $post_id, '_vw_event_end', $treffer['end'] . 'T00:00' );
+        }
+        update_post_meta( $post_id, '_vw_event_all_day', true );
+        update_post_meta( $post_id, '_vw_event_aus_titel', $treffer['start'] );
     }
 
     /* ---------- Liste ---------- */
@@ -188,6 +224,21 @@ final class VW_Events_Admin_UI {
     public static function kein_start_banner( $post ): void {
         if ( ! $post || $post->post_type !== 'vw_event' ) { return; }
         if ( $post->post_status === 'auto-draft' ) { return; }
+
+        // Datum wurde als Notlösung aus dem Titel übernommen → darauf hinweisen
+        $aus_titel = get_post_meta( $post->ID, '_vw_event_aus_titel', true );
+        if ( $aus_titel ) {
+            echo '<div class="notice notice-warning"><p><strong>'
+                . esc_html__( 'Das Datum wurde automatisch aus dem Titel übernommen.', 'vw-events' )
+                . '</strong><br>'
+                . sprintf(
+                    esc_html__( 'Die Veranstaltung steht als ganztägiger Termin am %s im Kalender, weil beim Speichern kein Startdatum ankam. Bitte Datum prüfen und die Uhrzeit ergänzen — danach verschwindet dieser Hinweis.', 'vw-events' ),
+                    esc_html( mysql2date( 'j. F Y', $aus_titel ) )
+                )
+                . '</p></div>';
+            return;
+        }
+
         if ( get_post_meta( $post->ID, '_vw_event_start', true ) ) { return; }
         echo '<div class="notice notice-error"><p><strong>'
             . esc_html__( 'Diese Veranstaltung hat kein Startdatum und erscheint deshalb NICHT im Kalender.', 'vw-events' )

@@ -133,7 +133,23 @@ final class VW_Events_REST_Submissions {
         }
 
         // Meta
-        update_post_meta( $post_id, '_vw_event_start', sanitize_text_field( $start ) );
+        // Kommt trotz Pflichtfeld kein Startdatum an (unvollständige Eingabe im
+        // datetime-local-Feld überträgt einen leeren Wert), wird es aus dem
+        // Titel gelesen und der Termin als ganztägig eingesetzt — sonst läge
+        // eine Einreichung unsichtbar im System.
+        $start = sanitize_text_field( $start );
+        if ( trim( $start ) === '' && function_exists( 'vw_events_datum_aus_titel' ) ) {
+            $treffer = vw_events_datum_aus_titel( (string) $title );
+            if ( $treffer ) {
+                $start    = $treffer['start'] . 'T00:00';
+                $all_day  = true;
+                if ( $end === '' && ! empty( $treffer['end'] ) ) {
+                    $end = $treffer['end'] . 'T00:00';
+                }
+                update_post_meta( $post_id, '_vw_event_aus_titel', $treffer['start'] );
+            }
+        }
+        update_post_meta( $post_id, '_vw_event_start', $start );
         if ( $end !== '' )            update_post_meta( $post_id, '_vw_event_end', sanitize_text_field( $end ) );
         update_post_meta( $post_id, '_vw_event_all_day', $all_day );
         update_post_meta( $post_id, '_vw_event_repeat', 'none' );
