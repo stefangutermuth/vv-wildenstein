@@ -419,13 +419,23 @@ function rewriteContentUrls(html: string, postSlugs: Set<string>): string {
       const path = rawPath ?? '/';
       // wp-content/wp-json/wp-login/wp-admin niemals relativieren
       if (/^\/wp-/.test(path)) return match;
-      // Prozent-kodierte Pfade (z. B. §-Slugs) bauen wir nicht → absolut lassen
-      if (path.includes('%')) return match;
       // erster Pfad-Teil ohne Slashes/Anker/Query
       const first = path.replace(/^\//, '').split(/[/?#]/)[0];
       if (first && LINK_REMAP[first] !== undefined) return `href="${LINK_REMAP[first]}"`;
-      // Beitrags-Permalinks (/{slug}/) → interne News-Detailseite
-      if (first && postSlugs.has(first)) return `href="/neuigkeiten/${first}"`;
+
+      /* Beitrags-Permalinks (/{slug}/) → interne News-Detailseite.
+         Sonderzeichen machen dabei Ärger: Im Verweis steht „…-nach-§-3-abs-2-…"
+         ausgeschrieben, WordPress liefert den Slug prozentkodiert, und gebaut
+         wird er entschärft als „…-nach-3-abs-2-…". Deshalb beide Formen prüfen
+         — der Umweg über encodeURIComponent bringt das ausgeschriebene § in
+         die Form, die entschaerfeSlug erwartet. Auf /verband/bauleitplanung
+         liefen zwei von sechs Bekanntmachungen deshalb ins Leere. */
+      const alsSlug = postSlugs.has(first) ? first : entschaerfeSlug(encodeURIComponent(first));
+      if (alsSlug && postSlugs.has(alsSlug)) return `href="/neuigkeiten/${alsSlug}"`;
+
+      // Prozent-kodierte Pfade, die zu keiner gebauten Seite führen: absolut
+      // lassen, statt auf einen Pfad zu zeigen, den es hier nicht gibt.
+      if (path.includes('%')) return match;
       return `href="${path}"`;
     },
   );
