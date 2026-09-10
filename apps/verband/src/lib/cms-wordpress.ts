@@ -477,6 +477,12 @@ function rewriteContentUrls(
   // (z. B. der jQuery-Dateibaum des Download-Managers).
   out = out.replace(/<script\b[\s\S]*?<\/script>/gi, '');
   out = out.replace(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi, '');
+  /* Auch <style>-Bloecke: Impreza legt zu jedem Portalgitter eigene Regeln in
+     den Inhalt, teils mit !important (".usg_post_title_1{font-size:1rem
+     !important}"). Die Gitter ersetzen wir durch eigene Darstellungen — die
+     Regeln kaempfen dann gegen unser Stylesheet. Betraf /sperrungen,
+     /verband/bauleitplanung und /leben-freizeit/gesundheit. */
+  out = out.replace(/<style\b[\s\S]*?<\/style>/gi, '');
   out = out.replace(/<noscript\b[\s\S]*?<\/noscript>/gi, '');
   // Die echte Seiten-h1 liefert der Header — h1 im WP-Body → h2 (keine doppelte h1)
   out = out.replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2');

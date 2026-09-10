@@ -521,7 +521,11 @@ const highlights = [
   .vv-about__cta :global(.vv-btn--ghost) { --_fg: var(--vv-white); --_border: rgba(255,255,255,0.4); }
   .vv-about__cta :global(.vv-btn--ghost:hover) { --_bg: rgba(255,255,255,0.1); --_border: var(--vv-sky-400); --_fg: var(--vv-white); }
 
-  .vv-about__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--vv-space-4); }
+  /* Auf dem Telefon untereinander: Drei Spalten ergaben je 98 Pixel, darin
+     passt „gemeinsame Verwaltung" nicht — das Wort ragte 38 Pixel aus der
+     Seite und erzeugte einen waagerechten Bildlauf. */
+  .vv-about__stats { display: grid; grid-template-columns: 1fr; gap: var(--vv-space-4); }
+  @media (min-width: 640px) { .vv-about__stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (min-width: 900px) { .vv-about__stats { grid-template-columns: 1fr; } }
   /* Zahl und Beschriftung nebeneinander statt untereinander: Untereinander
      brauchte der Block die dreifache Höhe für dieselbe Aussage. Die Zahlen

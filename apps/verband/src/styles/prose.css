@@ -56,6 +56,20 @@
   margin: var(--vv-space-6) 0;
 }
 
+/* Vorformatierter Text aus dem Redaktionssystem.
+   Die Redaktion nutzt <pre> gelegentlich fuer Aufzaehlungen. Ohne Umbruch
+   schob eine solche Zeile die Seite auf: /tourismus/…-waldlabyrinth-… ragte
+   auf dem Telefon 1.180 Pixel nach rechts. Umbrechen statt abschneiden —
+   es ist Fliesstext, kein Quellcode. */
+.vv-prose pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 1em 0;
+  font: inherit;
+}
+
 /* --- Medien ------------------------------------------------ */
 .vv-prose img {
   max-width: 100%;
