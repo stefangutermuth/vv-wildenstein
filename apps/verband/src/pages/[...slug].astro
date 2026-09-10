@@ -214,7 +214,11 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
     .vv-layout.has-seitenleiste {
       grid-template-columns: minmax(0, 1fr) 320px;
       gap: var(--vv-space-7);
-      align-items: start;
+      /* KEIN align-items: start — das schrumpfte die Seitenleiste auf ihre
+         Inhaltshöhe. Ein angedocktes Element klebt aber nur innerhalb seines
+         Elternelements: Bei 1.200px Leiste und 27.000px Text hörte das Menü
+         nach einem Zwanzigstel der Seite auf mitzulaufen. Die Leiste muss so
+         hoch sein wie die Textspalte, damit das Menü durchgehend klebt. */
     }
     .vv-layout.has-seitenleiste .vv-layout__inhalt { order: 1; }
     .vv-seitenleiste {
