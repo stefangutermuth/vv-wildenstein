@@ -88,6 +88,22 @@ async function ensureFreshness(wpBase: string): Promise<boolean> {
     } catch { /* ignore */ }
   }
 
+  // Veranstaltungen laufen über einen eigenen Endpunkt (der Typ ist in wp/v2
+  // nicht freigegeben). Die schlanke Route /events/last-modified liefert den
+  // jüngsten Änderungszeitpunkt in einem Zug — ohne sie bliebe eine
+  // Termin-Änderung bis zur Alters-Grenze unsichtbar, genau der Fall, über den
+  // die Redaktion am 09.09.2026 gestolpert ist.
+  try {
+    const evBase = wpBase.replace(/\/wp\/v2$/, '/vw-events/v1');
+    const r = await fetch(`${evBase}/events/last-modified`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (r.ok) {
+      const { modified_gmt } = (await r.json()) as { modified_gmt?: string };
+      if (modified_gmt && modified_gmt > latest) latest = modified_gmt;
+    }
+  } catch { /* Endpunkt nicht erreichbar → Alters-Grenze greift weiterhin */ }
+
   const m = await readMeta();
 
   /*

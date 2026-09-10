@@ -85,6 +85,8 @@ export interface EventItem {
   featured: boolean;
   image?: string;
   href: string;
+  /** Ganztägig — dann darf keine Uhrzeit angezeigt werden (sonst „00:00 Uhr"). */
+  allDay?: boolean;
 }
 
 export async function getEvents(opts: { includePast?: boolean } = {}): Promise<EventItem[]> {

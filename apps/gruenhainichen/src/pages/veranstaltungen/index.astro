@@ -49,7 +49,8 @@ const enriched: Enriched[] = events.map((e) => {
     monthLabel: fmtMonthYear.format(new Date(y, e.startDate.getMonth(), 1)),
     isoDate: `${y}-${m}-${d}`,
     weekday: fmtWeek.format(e.startDate),
-    time: fmtTime.format(e.startDate),
+    // Ganztaegige Termine: keine Uhrzeit — sonst stuende dort 00:00 Uhr.
+    time: e.allDay ? '' : fmtTime.format(e.startDate),
   };
 });
 
@@ -161,7 +162,7 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
             <div class="grh-ev-card__body">
               <span class="grh-ev-card__eyebrow">{e.location || (e.ortsteil ? ortsteilLabel(e.ortsteil) : 'Termin')}</span>
               <h3 class="grh-ev-card__title">{e.title}</h3>
-              <p class="grh-ev-card__meta">{fmtDate.format(e.startDate)} · {e.time} Uhr</p>
+              <p class="grh-ev-card__meta">{fmtDate.format(e.startDate)}{e.time && <> · {e.time} Uhr</>}</p>
               {e.teaser && <p class="grh-ev-card__teaser">{e.teaser}</p>}
             </div>
           </a>
@@ -194,7 +195,7 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
               </h3>
               <p class="grh-ev-row__meta">
                 <span>{e.weekday}, {fmtDate.format(e.startDate)}</span>
-                <span> · {e.time} Uhr</span>
+                {e.time && <span> · {e.time} Uhr</span>}
                 {e.location && <span> · {e.location}</span>}
               </p>
             </div>
@@ -247,7 +248,7 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
                         {e.isPast && <span class="grh-ev-row__past-flag">Vergangen</span>}
                       </h3>
                       <p class="grh-ev-row__meta">
-                        <span>{e.time} Uhr</span>
+                        {e.time && <span>{e.time} Uhr</span>}
                         {e.location && <span> · {e.location}</span>}
                       </p>
                     </div>

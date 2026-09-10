@@ -362,6 +362,9 @@ function mapVWEvent(ev: VWEvent): EventItem | null {
     featured: false,
     image: ev.image?.url,
     href: ev.permalink,
+    // Ganztägig oder Startzeit 00:00 (Redaktion hat nur ein Datum erfasst):
+    // In beiden Fällen wäre „00:00 Uhr" eine falsche Angabe.
+    allDay: ev.all_day || /T00:00/.test(String(ev.start)),
   };
 }
 

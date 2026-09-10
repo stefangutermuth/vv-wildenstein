@@ -81,6 +81,10 @@ final class VW_Events_Helpers {
         return [
             'id'              => $post->ID,
             'slug'            => $post->post_name,
+            // Änderungsdatum: Die Frontends prüfen damit, ob ihr Zwischenspeicher
+            // noch aktuell ist. Ohne dieses Feld blieb eine Termin-Änderung bis zu
+            // sechs Stunden unsichtbar (dann greift erst die Alters-Grenze).
+            'modified_gmt'    => get_post_modified_time( 'c', true, $post ),
             'title'           => get_the_title( $post ),
             'description_html'=> wp_kses_post( apply_filters( 'the_content', $post->post_content ) ),
             'start'           => self::to_iso8601( $start, $all_day ),

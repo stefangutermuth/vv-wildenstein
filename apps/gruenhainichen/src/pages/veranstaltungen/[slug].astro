@@ -16,7 +16,9 @@ const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', ye
 const fmtTime = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
 const meta = event.endDate
   ? `${fmt.format(event.startDate)} – ${fmt.format(event.endDate)}`
-  : `${fmt.format(event.startDate)} · ${fmtTime.format(event.startDate)} Uhr`;
+  : event.allDay
+    ? fmt.format(event.startDate)
+    : `${fmt.format(event.startDate)} · ${fmtTime.format(event.startDate)} Uhr`;
 ---
 <BaseLayout title={`${event.title} · Veranstaltungen · Grünhainichen`} header="compact">
   <GrhCPTDetail

@@ -13,13 +13,18 @@ interface Props {
   featured?: boolean;
   ctaUrl?: string;
   ctaLabel?: string;
+  /** Ganztägig — dann keine Uhrzeit ausgeben (sonst „ab 00:00 Uhr"). */
+  allDay?: boolean;
 }
-const { title, startDate, endDate, location, ortsteil, teaser, featured = false, ctaUrl, ctaLabel = 'Weitere Informationen' } = Astro.props;
+const { title, startDate, endDate, location, ortsteil, teaser, featured = false, ctaUrl, ctaLabel = 'Weitere Informationen', allDay = false } = Astro.props;
 
 const day   = new Intl.DateTimeFormat('de-DE', { day: '2-digit' }).format(startDate);
 const month = new Intl.DateTimeFormat('de-DE', { month: 'short' }).format(startDate).replace('.', '');
 const time  = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' }).format(startDate);
 const ortsteilLabel = ortsteil ? { borstendorf: 'Borstendorf', gruenhainichen: 'Grünhainichen', waldkirchen: 'Waldkirchen' }[ortsteil] : null;
+
+// Ganztägige Termine: Wochentag statt Uhrzeit — informativer als „ab 00:00 Uhr".
+const ganztagLabel = new Intl.DateTimeFormat('de-DE', { weekday: 'long' }).format(startDate);
 
 const dateRange = endDate
   ? `${new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit' }).format(startDate)} – ${new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(endDate)}`
@@ -36,7 +41,7 @@ const dateRange = endDate
     <div class="grh-event-card__meta">
       {ortsteilLabel && <GrhBadge tone="moss" size="sm">{ortsteilLabel}</GrhBadge>}
       {featured && <GrhBadge tone="candle" size="sm">Empfehlung</GrhBadge>}
-      <span class="grh-event-card__time"><GrhIcon name="clock" size={14} /> {dateRange ?? `ab ${time} Uhr`}</span>
+      <span class="grh-event-card__time"><GrhIcon name="clock" size={14} /> {dateRange ?? (allDay ? ganztagLabel : `ab ${time} Uhr`)}</span>
     </div>
     <h3 class="grh-event-card__title">{title}</h3>
     <p class="grh-event-card__location">

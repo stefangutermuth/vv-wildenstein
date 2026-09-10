@@ -24,6 +24,15 @@ final class VW_Events_REST_Events {
             ],
         ] );
 
+        // Leichte Route nur für die Cache-Prüfung der Frontends: liefert den
+        // jüngsten Änderungszeitpunkt aller Veranstaltungen. Ohne sie müssten
+        // die Frontends alle Termine durchblättern, um zu erkennen, ob sich
+        // etwas geändert hat.
+        register_rest_route( self::NS, '/events/last-modified', [
+            'methods'             => 'GET',
+            'permission_callback' => '__return_true',
+            'callback'            => [ __CLASS__, 'last_modified' ],
+        ] );
         register_rest_route( self::NS, '/events/(?P<id>\d+)', [
             'methods'             => 'GET',
             'permission_callback' => '__return_true',
@@ -107,5 +116,28 @@ final class VW_Events_REST_Events {
             }
             return new WP_REST_Response( VW_Events_Helpers::format_event( $post ), 200 );
         } );
+    }
+
+    /**
+     * Jüngster Änderungszeitpunkt aller veröffentlichten Veranstaltungen.
+     * Eine einzige Datenbank-Abfrage — gedacht für die Cache-Prüfung der
+     * statischen Frontends beim Bauen.
+     */
+    public static function last_modified( $request ) {
+        global $wpdb;
+        $wert = $wpdb->get_var(
+            "SELECT MAX(post_modified_gmt) FROM {$wpdb->posts}
+             WHERE post_type = 'vw_event' AND post_status = 'publish'"
+        );
+        // post_modified_gmt steht in UTC. mysql2date( 'c', … ) haengt den
+        // lokalen Offset an und wuerde den Zeitpunkt damit um zwei Stunden
+        // verschieben — deshalb gmdate mit ausdruecklichem UTC-Bezug.
+        return rest_ensure_response( [
+            'modified_gmt' => $wert ? gmdate( 'Y-m-d\TH:i:s', strtotime( $wert . ' UTC' ) ) : null,
+            'count'        => (int) $wpdb->get_var(
+                "SELECT COUNT(*) FROM {$wpdb->posts}
+                 WHERE post_type = 'vw_event' AND post_status = 'publish'"
+            ),
+        ] );
     }
 }

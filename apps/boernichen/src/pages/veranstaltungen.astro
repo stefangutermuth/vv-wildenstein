@@ -38,7 +38,7 @@ const isExternal = (h: string) => /^https?:/i.test(h);
             </span>
             <span class="grh-evp__body">
               <time class="grh-evp__when" datetime={e.startDate.toISOString()}>
-                {fmtWeekday.format(e.startDate)}, {fmtDate.format(e.startDate)} · {fmtTime.format(e.startDate)} Uhr
+                {fmtWeekday.format(e.startDate)}, {fmtDate.format(e.startDate)}{!e.allDay && <> · {fmtTime.format(e.startDate)} Uhr</>}
               </time>
               <strong class="grh-evp__title">{e.title}</strong>
               {e.location && (
