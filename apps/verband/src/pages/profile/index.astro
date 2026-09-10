@@ -7,7 +7,17 @@ import { fetchWordPressCptPages } from '../../lib/cms-wordpress';
 // Basispfad des Inhaltstyps: lieferte vorher einen Server-Fehler, weil es
 // nur Detailseiten gab. Jetzt eine vollständige Übersicht.
 const alle = await fetchWordPressCptPages();
-const eintraege = alle.filter((p) => p.path.startsWith('/profile/'));
+/* Eintraege ohne jede Angabe ueberspringen: Sie fuehren auf eine Seite, die
+   nur „Für diese Seite liegen derzeit keine eigenen Inhalte vor" zeigt. */
+const eintraege = alle
+  .filter((p) => p.path.startsWith('/profile/'))
+  .filter(
+    (p) =>
+      p.kontakt ||
+      p.gallery?.length ||
+      p.image ||
+      p.contentHtml.replace(/<[^>]*>/g, ' ').trim().length >= 40,
+  );
 ---
 <BaseLayout
   title="Gewerbe & Einrichtungen — Verwaltungsverband Wildenstein"

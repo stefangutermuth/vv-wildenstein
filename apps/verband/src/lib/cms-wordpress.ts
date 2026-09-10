@@ -404,6 +404,20 @@ function rewriteContentUrls(html: string, postSlugs: Set<string>): string {
   //  - verwaiste [vc_*]/[/vc_*]-Tags
   out = out.replace(/\[vc_raw_(?:html|js)\][\s\S]*?\[\/vc_raw_(?:html|js)\]/gi, '');
   out = out.replace(/\[\/?vc_[a-z_]*[^\]]*\]/gi, '');
+
+  /* Kurzcodes abgeschalteter Erweiterungen standen als Roh-Text auf der Seite
+     — für Besucher lesbar. Achtung: Die Redaktion hat typografische
+     Anführungszeichen („ “ ″), deshalb [^\]] statt [^"\]]. */
+  // Facebook-Einbettungen laufen im statischen Build nicht — ersatzlos raus.
+  out = out.replace(/\[custom-facebook-feed[^\]]*\]/gi, '');
+  // Contact Form 7: ohne WordPress kein Formular. Statt des Kurzcodes ein Weg,
+  // der funktioniert — dieselbe Adresse, die auch auf /wirtschaft steht.
+  out = out.replace(
+    /\[contact-form-7[^\]]*\]/gi,
+    '<p class="vv-hinweis">Das Online-Formular steht hier nicht zur Verfügung. ' +
+      'Schreiben Sie uns bitte an <a href="mailto:info@vv-wildenstein.com">info@vv-wildenstein.com</a> ' +
+      '— wir nehmen Ihre Angaben auf.</p>',
+  );
   // Skripte/Stylesheets aus dem WP-Inhalt: laufen im statischen Build ohne die
   // Plugin-Abhängigkeiten nicht und würden als Roh-Text auf der Seite landen
   // (z. B. der jQuery-Dateibaum des Download-Managers).
@@ -1207,4 +1221,143 @@ async function ladeGremien(): Promise<Gremium[]> {
     const rb = rang.indexOf(b.slug);
     return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb);
   });
+}
+
+/* ============================================================
+ * Beitragslisten-Kurzcode [dt_blog_posts_small]
+ * ============================================================ */
+
+/**
+ * Löst `[dt_blog_posts_small category="…" number="…"]` in eine echte Liste auf.
+ *
+ * Der Kurzcode stammt aus einer abgeschalteten Erweiterung und stand als
+ * Roh-Text auf drei Seiten — zwei davon (/stellenausschreibungen,
+ * /vergabeausschreibungen) hängen im Hauptmenü. Besucher lasen dort
+ * `[dt_blog_posts_small category=„stellenausschreibungen"]`.
+ *
+ * Typografische Anführungszeichen sind Absicht: die Redaktion schreibt
+ * category=„…" mit „ und ″, nicht mit geraden Anführungszeichen.
+ */
+/**
+ * Beitragsliste für eine Seite, die im Redaktionssystem leer ist, deren
+ * Kürzel aber einer Beitragskategorie entspricht.
+ *
+ * /stellenanzeigen ist im WordPress leer — auch auf der alten Seite stand dort
+ * nur die Überschrift. Die Kategorie „Stellenanzeigen" hat aber Beiträge.
+ * Liefert '' wenn es weder Kategorie noch Beiträge gibt; dann bleibt der
+ * bisherige Leer-Hinweis stehen.
+ */
+export async function beitragslisteFuerKuerzel(kuerzel: string): Promise<string> {
+  if (!/^[a-z0-9-]{3,}$/.test(kuerzel)) return '';
+  const beitraege = await ladeKategorieBeitraege(kuerzel, 20);
+  return beitraege.length ? baueBeitragsliste(beitraege) : '';
+}
+
+export async function loeseBeitragslisten(html: string): Promise<string> {
+  if (!/\[dt_blog_posts_small/i.test(html)) return html;
+
+  const treffer = [...html.matchAll(/\[dt_blog_posts_small([^\]]*)\]/gi)];
+  let out = html;
+
+  for (const m of treffer) {
+    /* Die Anführungszeichen stehen im Inhalt als HTML-Entity (&#8220;), nicht
+       als Zeichen — erst entschärfen, dann lesen. Ohne das blieb die Kategorie
+       leer und der Kurzcode wurde ersatzlos entfernt: /stellenausschreibungen
+       stand danach als leere Seite da. */
+    const attr = m[1].replace(/&#\d+;|&#x[0-9a-f]+;|&quot;/gi, '"');
+    const kat = attr.match(/category\s*=\s*["'„“”]?\s*([a-z0-9_-]+)/i)?.[1];
+    const anzahl = Number(attr.match(/number\s*=\s*["'„“”]?\s*(\d+)/i)?.[1] ?? 10);
+    if (!kat) {
+      out = out.replace(m[0], '');
+      continue;
+    }
+    const beitraege = await ladeKategorieBeitraege(kat, Math.min(anzahl, 20));
+    out = out.replace(m[0], baueBeitragsliste(beitraege));
+  }
+  return out;
+}
+
+interface KatBeitrag {
+  titel: string;
+  pfad: string;
+  datum: string;
+  auszug: string;
+}
+
+const katCache = new Map<string, Promise<KatBeitrag[]>>();
+
+function ladeKategorieBeitraege(slug: string, anzahl: number): Promise<KatBeitrag[]> {
+  const schluessel = `${slug}:${anzahl}`;
+  let p = katCache.get(schluessel);
+  if (!p) {
+    p = holeKategorieBeitraege(slug, anzahl);
+    katCache.set(schluessel, p);
+  }
+  return p;
+}
+
+async function holeKategorieBeitraege(slug: string, anzahl: number): Promise<KatBeitrag[]> {
+  const abbruch = new AbortController();
+  const wecker = setTimeout(() => abbruch.abort(), 20_000);
+  try {
+    const katUrl = new URL(`${WP_BASE}/categories`);
+    katUrl.searchParams.set('slug', slug);
+    katUrl.searchParams.set('_fields', 'id');
+    const katRes = await fetch(katUrl.toString(), {
+      headers: { Accept: 'application/json', ...buildAuthHeader() },
+      signal: abbruch.signal,
+    });
+    if (!katRes.ok) return [];
+    const kats = (await katRes.json()) as Array<{ id: number }>;
+    if (!kats.length) return [];
+
+    const url = new URL(`${WP_BASE}/posts`);
+    url.searchParams.set('categories', String(kats[0].id));
+    url.searchParams.set('per_page', String(anzahl));
+    url.searchParams.set('_fields', 'slug,title,date,excerpt');
+    const res = await fetch(url.toString(), {
+      headers: { Accept: 'application/json', ...buildAuthHeader() },
+      signal: abbruch.signal,
+    });
+    if (!res.ok) return [];
+    const roh = (await res.json()) as Array<{
+      slug: string;
+      title: { rendered: string };
+      date: string;
+      excerpt?: { rendered: string };
+    }>;
+    return roh.map((b) => ({
+      titel: decodeEntities(stripHtml(b.title.rendered).trim()),
+      pfad: `/neuigkeiten/${entschaerfeSlug(b.slug)}`,
+      datum: b.date?.slice(0, 10) ?? '',
+      auszug: decodeEntities(stripHtml(b.excerpt?.rendered ?? '').trim()).slice(0, 180),
+    }));
+  } catch (err) {
+    console.warn(`[verband] Beitragsliste "${slug}" nicht abrufbar:`, err);
+    return [];
+  } finally {
+    clearTimeout(wecker);
+  }
+}
+
+function baueBeitragsliste(beitraege: KatBeitrag[]): string {
+  if (beitraege.length === 0) {
+    return '<p class="vv-hinweis">Derzeit liegen hierzu keine Einträge vor.</p>';
+  }
+  const fmt = new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin',
+  });
+  const zeilen = beitraege
+    .map((b) => {
+      const datum = b.datum ? fmt.format(new Date(b.datum)) : '';
+      return (
+        `<li><a href="${b.pfad}">` +
+        (datum ? `<time datetime="${b.datum}">${datum}</time>` : '') +
+        `<strong>${b.titel}</strong>` +
+        (b.auszug ? `<span>${b.auszug}…</span>` : '') +
+        `</a></li>`
+      );
+    })
+    .join('');
+  return `<ul class="vv-beitragsliste">${zeilen}</ul>`;
 }

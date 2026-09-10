@@ -27,6 +27,8 @@ import {
   type WPPageItem,
   type HubTile,
   fetchGremien,
+  loeseBeitragslisten,
+  beitragslisteFuerKuerzel,
   type HubSources,
 } from '../lib/cms-wordpress';
 
@@ -78,13 +80,23 @@ export async function getStaticPaths() {
     // stand (Vereine, Dienstleister, Kirchen … je nach Seite). Kacheln ohne
     // eigenen Link (Impreza verlinkte dort nur die Taxonomie) über die
     // WP-ID auf die generierte Detailseite auflösen.
-    return (pg.gridTiles ?? [])
+    const ausGrid = (pg.gridTiles ?? [])
       .map((t) => {
         if (t.href) return t;
         const ziel = t.sourceId ? byId.get(t.sourceId) : undefined;
         return ziel ? { ...t, href: ziel.path, image: t.image ?? ziel.image } : null;
       })
       .filter((t): t is HubTile => t !== null);
+    if (ausGrid.length > 0) return ausGrid;
+
+    /* Letzter Rückgriff: Seiten, die im Redaktionssystem leer sind, deren
+       Kürzel aber einer Gewerbekategorie entspricht. Genau so arbeitete die
+       alte Seite — ihr Menü zeigte für „Einkaufen" nicht auf die (leere)
+       Seite, sondern auf das Kategorie-Archiv /profilkategorie/einkaufen/.
+       Betrifft /leben-freizeit/einkaufen (20 Betriebe) und
+       /leben-freizeit/kindergarten (5 Einrichtungen). */
+    const kuerzel = pg.path.split('/').pop() ?? '';
+    return hub.profile.filter((t) => t.kats?.includes(kuerzel));
   }
 
   function pickHubIcon(path: string): string {
@@ -118,18 +130,54 @@ export async function getStaticPaths() {
   // Eigene Routen: Amtsblatt-Archiv und Downloads holen ihre Daten aus den
   // vvw/v1-Endpoints (der Download-Manager ist über wp/v2 nicht erreichbar).
   const RESERVED = new Set(['neuigkeiten', 'veranstaltungen', 'amtsblatt', 'downloads', '404']);
+
+  /* Nur Text zaehlt hier noch nicht — ob eine Seite leer ist, entscheidet sich
+     erst, wenn feststeht, ob sie Kacheln bekommt. Deshalb unten in zwei
+     Durchgaengen. */
+  function textLeer(pg: WPPageItem): boolean {
+    const text = pg.contentHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    return text.length < 40 && !pg.kontakt && !pg.gallery?.length;
+  }
+
   const seen = new Set<string>();
   const routes = [];
   for (const page of [...pages, ...cpts]) {
     const slug = page.path.replace(/^\//, '').replace(/\/$/, '');
     if (!slug || RESERVED.has(slug.split('/')[0]) || seen.has(slug)) continue;
     seen.add(slug);
-    // Native Kacheln nur, wo ein Impreza-Portalgitter entfernt wurde
-    const hubTiles = page.hadHubGrid ? resolveHubTiles(page, childrenByParent, hub, byId) : [];
+    /* Native Kacheln, wo ein Impreza-Portalgitter entfernt wurde — oder wo das
+       Seitenkürzel einer Gewerbekategorie entspricht. Letzteres rettet Seiten,
+       die im Redaktionssystem leer sind: /leben-freizeit/einkaufen und
+       /leben-freizeit/kindergarten hatten nie ein Gitter, die alte Seite
+       verwies für sie auf das Kategorie-Archiv. */
+    const kuerzel = page.path.split('/').pop() ?? '';
+    const passtZurKategorie = hub.profile.some((t) => t.kats?.includes(kuerzel));
+    /* Leere Elternseiten zeigen ihre Unterseiten — /informationen stand sonst
+       als Sackgasse da, obwohl drei Unterseiten daran haengen. */
+    const leerMitKindern = textLeer(page) && (childrenByParent.get(page.id)?.length ?? 0) > 0;
+    const hubTiles =
+      page.hadHubGrid || passtZurKategorie || leerMitKindern
+        ? resolveHubTiles(page, childrenByParent, hub, byId)
+        : [];
     routes.push({
       params: { slug },
       props: { page, hubTiles, hubIcon: pickHubIcon(page.path) },
     });
+  }
+
+  /* Zweiter Durchgang: Jetzt steht fest, welche Seiten wirklich nichts zeigen.
+     Kacheln, die dorthin verweisen, sind Sackgassen und fliegen raus — auf
+     /leben-freizeit fuehrte „Wohnen" ins Nichts, auf /profile eine
+     Kirchgemeinde ohne jede Angabe. */
+  const leerePfade = new Set(
+    routes
+      .filter((r) => r.props.hubTiles.length === 0 && textLeer(r.props.page))
+      .map((r) => r.props.page.path),
+  );
+  for (const r of routes) {
+    r.props.hubTiles = r.props.hubTiles.filter(
+      (t: HubTile) => !leerePfade.has(t.href.replace(/\/$/, '')),
+    );
   }
   return routes;
 }
@@ -139,12 +187,30 @@ const { page, hubTiles, hubIcon: tileIcon } = Astro.props;
 // Manche alten Seiten waren reine Impreza-Portalgitter oder Redirect-Stubs —
 // nach dem Aufräumen bleibt kein Inhalt. Statt einer leeren Seite ein
 // freundlicher Hinweis mit Weg zurück in die Sektion.
-const contentText = page.contentHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+/* Beitragslisten-Kurzcodes aufloesen, bevor der Inhalt irgendwo verwendet
+   wird — sonst stuende [dt_blog_posts_small category=„…"] als Text auf der
+   Seite. Betrifft /stellenausschreibungen, /vergabeausschreibungen und
+   /ortsteil-gruenhainichen. */
+let inhaltHtml = await loeseBeitragslisten(page.contentHtml);
+
+/* Ist danach immer noch nichts da, das Kürzel aber der Name einer
+   Beitragskategorie: deren Beiträge zeigen. Rettet /stellenanzeigen, das im
+   Redaktionssystem leer ist — auch auf der alten Seite stand dort nur die
+   Überschrift, obwohl die Kategorie Beiträge hat. */
+if (
+  hubTiles.length === 0 &&
+  inhaltHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().length < 40
+) {
+  const ausKategorie = await beitragslisteFuerKuerzel(page.path.split('/').pop() ?? '');
+  if (ausKategorie) inhaltHtml = ausKategorie;
+}
+
+const contentText = inhaltHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
 // Themen-Menü für lange Seiten: Überschriften bekommen Sprungmarken, die
 // Liste steht über dem Text. Lohnt sich erst ab einer gewissen Länge —
 // bei drei Absätzen wäre es nur Beiwerk.
-const { html: inhaltMitMarken, marken } = baueSprungmarken(page.contentHtml);
+const { html: inhaltMitMarken, marken } = baueSprungmarken(inhaltHtml);
 const zeigeSprungmenu = marken.length >= 4 && contentText.length > 2500;
 
 // Auf der Verwaltungsseite steht neben der Ämterliste der Rathaus-Kasten:
@@ -169,7 +235,7 @@ const restKacheln = istVersammlung
    Das Bild kommt aus dem Inhalt, nicht aus dem Quelltext — tauscht die
    Redaktion die Fotos, wandert der Seitenkopf mit. */
 const kopfBild = (() => {
-  const kandidaten = [...page.contentHtml.matchAll(/<img\b[^>]*class="[^"]*vv-gal-img[^"]*"[^>]*>/gi)]
+  const kandidaten = [...inhaltHtml.matchAll(/<img\b[^>]*class="[^"]*vv-gal-img[^"]*"[^>]*>/gi)]
     .map((m) => {
       const tag = m[0];
       return {
@@ -198,7 +264,7 @@ const isEmpty =
    Überschriften stehen dann doppelt, einmal verwaist am Seitenende und einmal
    über der Liste, die an die Stelle des Gitters getreten ist. Genau so sah es
    auf /verband/verbandsversammlung aus: vier h6 ohne einen Satz dazwischen. */
-const textOhneUeberschriften = page.contentHtml
+const textOhneUeberschriften = inhaltHtml
   .replace(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>/gi, '')
   .replace(/<[^>]*>/g, ' ')
   .replace(/\s+/g, ' ')
@@ -220,7 +286,7 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
       <div class:list={['vv-layout', { 'has-seitenleiste': zeigeSprungmenu || zeigeRathaus }]}>
         {zeigeRathaus ? (
           <aside class="vv-seitenleiste">
-            <VvRathauskarte html={page.contentHtml} />
+            <VvRathauskarte html={inhaltHtml} />
           </aside>
         ) : zeigeSprungmenu ? (
           <aside class="vv-seitenleiste">
@@ -252,7 +318,7 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
               <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>
             </div>
           ) : zeigeRathaus || nurUeberschriften ? null : (
-            <article class:list={['vv-prose', { 'is-bildseite': kopfBild }]} set:html={zeigeSprungmenu ? inhaltMitMarken : page.contentHtml} />
+            <article class:list={['vv-prose', { 'is-bildseite': kopfBild }]} set:html={zeigeSprungmenu ? inhaltMitMarken : inhaltHtml} />
           )}
         </div>
       </div>

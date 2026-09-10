@@ -146,6 +146,34 @@
 .vv-prose .l-section { padding: 0; margin: 0 0 var(--vv-space-5); }
 .vv-prose .l-section-h { padding: 0; }
 
+/* --- Aufgeloeste Beitragslisten und Hinweise ---------------- */
+/* Ersetzen die Kurzcodes abgeschalteter Erweiterungen, die vorher als
+   Roh-Text auf der Seite standen. */
+.vv-prose .vv-beitragsliste { list-style: none; margin: 1em 0; padding: 0; display: grid; gap: var(--vv-space-2); }
+.vv-prose .vv-beitragsliste a {
+  display: grid;
+  gap: 2px;
+  padding: var(--vv-space-3) var(--vv-space-4);
+  background: var(--vv-white);
+  border: 1px solid var(--vv-border-soft);
+  border-radius: var(--vv-radius-md);
+  text-decoration: none;
+  font-weight: 400;
+  transition: border-color var(--vv-dur-fast), box-shadow var(--vv-dur-fast);
+}
+.vv-prose .vv-beitragsliste a:hover { border-color: var(--vv-sky-400); box-shadow: var(--vv-shadow-sm); }
+.vv-prose .vv-beitragsliste time { font-size: var(--vv-fs-sm); color: var(--vv-text-muted); }
+.vv-prose .vv-beitragsliste strong { color: var(--vv-navy-800); font-size: var(--vv-fs-md); line-height: 1.35; }
+.vv-prose .vv-beitragsliste span { font-size: var(--vv-fs-sm); color: var(--vv-text-muted); line-height: 1.5; }
+
+.vv-prose .vv-hinweis {
+  padding: var(--vv-space-4) var(--vv-space-5);
+  background: var(--vv-bg-alt);
+  border: 1px solid var(--vv-border-soft);
+  border-radius: var(--vv-radius-md);
+  color: var(--vv-text);
+}
+
 /* --- Bildseiten (Seitenkopf mit Foto) ----------------------- */
 /* Auf /heiraten stehen zwei Trauorte zur Wahl — im Fliesstext ging das
    unter. Reihen MIT Bildern werden zu eigenen Bloecken, der abschliessende

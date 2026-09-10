@@ -78,7 +78,6 @@ export const navigation: NavItem[] = [
     href: '/leben-freizeit',
     children: [
       { label: 'Übersicht',            href: '/leben-freizeit' },
-      { label: 'Familien',             href: '/leben-freizeit/familien' },
       { label: 'Kindergarten',         href: '/leben-freizeit/kindergarten' },
       { label: 'Schule',               href: '/leben-freizeit/schule' },
       { label: 'Jugend',               href: '/leben-freizeit/jugend' },
