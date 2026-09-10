@@ -13,6 +13,7 @@
  */
 
 import type { NewsItem, NewsCategory, EventItem } from './cms';
+import { zerlegeOeffnungszeiten, type Zeitspanne } from './oeffnungszeiten';
 
 const WP_BASE =
   (import.meta.env.PUBLIC_WP_API_BASE as string | undefined) ??
@@ -859,4 +860,49 @@ function decodeEntities(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&hellip;/g, '…')
     .replace(/&nbsp;/g, ' ');
+}
+
+/**
+ * Sprechzeiten des Rathauses für den Seitenfuß.
+ *
+ * Steht auf der Verwaltungsseite (WP-Seite "verwaltung") und wird von dort
+ * geholt, statt im Fuß ein zweites Mal getippt zu werden — die getippte
+ * Fassung war zuletzt an drei Stellen veraltet. Ergebnis einmal pro Build
+ * merken: der Fuß steckt im BaseLayout und liefe sonst pro Seite neu.
+ *
+ * Schlägt der Abruf fehl, kommt eine leere Liste zurück und der Fuß verweist
+ * auf /verwaltung. Lieber keine Zeit als eine falsche.
+ */
+let rathausZeitenPromise: Promise<Zeitspanne[]> | null = null;
+export function fetchRathausZeiten(): Promise<Zeitspanne[]> {
+  if (!rathausZeitenPromise) rathausZeitenPromise = ladeRathausZeiten();
+  return rathausZeitenPromise;
+}
+
+async function ladeRathausZeiten(): Promise<Zeitspanne[]> {
+  try {
+    const url = new URL(`${WP_BASE}/pages`);
+    url.searchParams.set('slug', 'verwaltung');
+    url.searchParams.set('_fields', 'content');
+    // Mit Zeitlimit: der Fuß steckt in jeder Seite. Ohne Abbruch hing ein
+    // Build schon einmal über eine Stunde an einer nicht antwortenden REST-API.
+    const abbruch = new AbortController();
+    const wecker = setTimeout(() => abbruch.abort(), 15_000);
+    let res: Response;
+    try {
+      res = await fetch(url.toString(), {
+        headers: { Accept: 'application/json', ...buildAuthHeader() },
+        signal: abbruch.signal,
+      });
+    } finally {
+      clearTimeout(wecker);
+    }
+    if (!res.ok) throw new Error(`WP REST pages?slug=verwaltung ${res.status}`);
+    const raw = (await res.json()) as Array<{ content?: { rendered?: string } }>;
+    const html = raw[0]?.content?.rendered ?? '';
+    return zerlegeOeffnungszeiten(html).zeiten;
+  } catch (err) {
+    console.warn('[verband] Sprechzeiten für den Fuß nicht abrufbar:', err);
+    return [];
+  }
 }

@@ -5,64 +5,17 @@
  * Die Öffnungszeiten des Rathauses standen bisher als Fließtext UNTER allen
  * 14 Ämtern — dort sucht sie niemand. Jetzt stehen sie als Spalte daneben.
  *
- * Die Redaktion richtet die Spalten im Backend mit Leerzeichen aus
- * ("Freitag                09:00 Uhr bis 12:00 Uhr"). Im Browser fallen
- * mehrfache Leerzeichen zusammen, die Ausrichtung ging also verloren. Hier
- * werden die Zeilen an dieser Lücke getrennt und als saubere Doppelspalte
- * gesetzt. Was sich nicht zerlegen lässt, bleibt als Absatz erhalten —
- * lieber unformatiert als verschwunden.
+ * Das Zerlegen der im Backend mit Leerzeichen ausgerichteten Zeilen macht
+ * lib/oeffnungszeiten.ts — dieselbe Stelle versorgt auch den Seitenfuß.
  */
+import { zerlegeOeffnungszeiten } from '../../lib/oeffnungszeiten';
+
 interface Props {
   html: string;
 }
 const { html } = Astro.props;
 
-const roh = html
-  .replace(/<br\s*\/?>/gi, '\n')
-  .replace(/<\/p>/gi, '\n\n')
-  .replace(/<[^>]+>/g, '')
-  .replace(/&nbsp;/g, ' ')
-  .replace(/&amp;/g, '&')
-  .replace(/&#8211;/g, '–')
-  .replace(/&#8222;|&#8220;/g, '"');
-
-const zeilen = roh.split('\n').map((z) => z.trimEnd());
-
-interface Zeit { tage: string; zeit: string }
-const zeiten: Zeit[] = [];
-const absaetze: string[] = [];
-let ueberschrift = '';
-let offen = ''; // Tage, deren Zeit erst in der Folgezeile steht
-
-for (const z of zeilen) {
-  const t = z.trim();
-  if (!t) continue;
-
-  if (!ueberschrift && /Öffnungszeiten|Rathaus/i.test(t) && t.length < 60 && !/\d{2}:\d{2}/.test(t)) {
-    ueberschrift = t;
-    continue;
-  }
-
-  // Zeile mit Ausrichtungslücke: "Freitag        09:00 Uhr bis 12:00 Uhr"
-  const paar = /^(.+?)\s{2,}(.+)$/.exec(z);
-  if (paar) {
-    const tage = (offen ? offen + ' ' : '') + paar[1].trim();
-    offen = '';
-    zeiten.push({
-      tage: tage.replace(/,\s*$/, ''),
-      zeit: paar[2].trim().replace(/\s*Uhr\s*bis\s*/i, ' – ').replace(/\s+/g, ' '),
-    });
-    continue;
-  }
-
-  // Zeile nur mit Tagen ("Dienstag, Donnerstag,") → gehört zur nächsten
-  if (/^[A-Za-zÄÖÜäöü,\s]+,$/.test(t) && t.length < 40) {
-    offen = t;
-    continue;
-  }
-
-  absaetze.push(t);
-}
+const { ueberschrift, zeiten, absaetze, roh } = zerlegeOeffnungszeiten(html);
 const hatZeiten = zeiten.length > 0;
 ---
 <aside class="vv-rathaus" aria-label={ueberschrift || 'Rathaus'}>
@@ -78,7 +31,7 @@ const hatZeiten = zeiten.length > 0;
       ))}
     </dl>
   ) : (
-    <p class="vv-rathaus__text">{roh.trim()}</p>
+    <p class="vv-rathaus__text">{roh}</p>
   )}
 
   {hatZeiten && absaetze.map((a) => <p class="vv-rathaus__hinweis">{a}</p>)}

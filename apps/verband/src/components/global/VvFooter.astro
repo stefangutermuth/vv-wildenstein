@@ -1,6 +1,19 @@
 ---
 import VvWappen from './VvWappen.astro';
 import VvIcon from '../primitives/VvIcon.astro';
+import { fetchRathausZeiten } from '../../lib/cms-wordpress';
+import { kuerzeTage } from '../../lib/oeffnungszeiten';
+
+/**
+ * Die Sprechzeiten kommen aus dem Redaktionssystem (Seite "Verwaltung"),
+ * nicht aus dem Quelltext — hier getippt waren sie zuletzt an drei Stellen
+ * veraltet. Ist die Liste leer (Abruf fehlgeschlagen), verweist der Fuß auf
+ * /verwaltung statt eine falsche Zeit zu zeigen.
+ */
+const sprechzeiten = (await fetchRathausZeiten()).map((z) => ({
+  tage: kuerzeTage(z.tage),
+  zeit: z.zeit,
+}));
 
 const columns = [
   {
@@ -43,15 +56,36 @@ const columns = [
         </div>
       </div>
       <address class="vv-footer__contact">
-        <p><VvIcon name="map-pin" size={16} /> Chemnitzer Straße 41, 09579 Grünhainichen</p>
-        <p><a href="tel:+4937294170-0"><VvIcon name="phone" size={16} /> 037294 / 170-0</a></p>
-        <p><a href="mailto:info@wildenstein.ws"><VvIcon name="mail" size={16} /> info@wildenstein.ws</a></p>
+        <p>
+          <VvIcon name="map-pin" size={16} />
+          <span>Chemnitzer Straße 41<br />09579 Grünhainichen</span>
+        </p>
+        <p>
+          <VvIcon name="phone" size={16} />
+          <a href="tel:+4937294170-0">037294 / 170-0</a>
+        </p>
+        <p>
+          <VvIcon name="mail" size={16} />
+          <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a>
+        </p>
       </address>
+
       <div class="vv-footer__hours">
         <VvIcon name="clock" size={16} />
-        <div>
+        <div class="vv-footer__hours-body">
           <strong>Sprechzeiten</strong>
-          <span>Di 9–12 &amp; 14–18 Uhr · Do 9–12 &amp; 14–16 Uhr</span>
+          {sprechzeiten.length > 0 ? (
+            <dl class="vv-footer__times">
+              {sprechzeiten.map((z) => (
+                <div>
+                  <dt>{z.tage}</dt>
+                  <dd>{z.zeit}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <a href="/verwaltung">Sprechzeiten und Ämter ansehen</a>
+          )}
         </div>
       </div>
     </div>
@@ -98,16 +132,31 @@ const columns = [
   .vv-footer__brand-head strong { display: block; color: var(--vv-white); font-size: var(--vv-fs-md); }
   .vv-footer__brand-head span { color: var(--vv-sky-400); font-size: var(--vv-fs-sm); }
 
-  .vv-footer__contact { font-style: normal; margin-top: var(--vv-space-5); display: flex; flex-direction: column; gap: 8px; }
-  .vv-footer__contact p { display: flex; align-items: center; gap: 8px; font-size: var(--vv-fs-sm); }
+  /* Symbol und Text sind Geschwister im selben Flex-Kasten. Vorher steckte
+     das Symbol IM Link — dort greift die Ausrichtung des Absatzes nicht, und
+     Telefon und E-Mail brachen unter ihr Symbol um. */
+  .vv-footer__contact { font-style: normal; margin-top: var(--vv-space-5); display: flex; flex-direction: column; gap: var(--vv-space-3); }
+  .vv-footer__contact p { display: flex; align-items: flex-start; gap: 10px; font-size: var(--vv-fs-sm); line-height: 1.5; }
   .vv-footer__contact a { color: var(--vv-sky-200); transition: color var(--vv-dur-fast); }
   .vv-footer__contact a:hover { color: var(--vv-white); }
-  .vv-footer__contact :global(svg) { color: var(--vv-green-400); flex-shrink: 0; }
+  .vv-footer__contact :global(svg) { color: var(--vv-green-400); flex-shrink: 0; margin-top: 3px; }
 
-  .vv-footer__hours { display: flex; align-items: flex-start; gap: 8px; margin-top: var(--vv-space-4); }
-  .vv-footer__hours :global(svg) { color: var(--vv-green-400); margin-top: 2px; flex-shrink: 0; }
-  .vv-footer__hours strong { display: block; color: var(--vv-white); font-size: var(--vv-fs-sm); }
-  .vv-footer__hours span { font-size: var(--vv-fs-sm); }
+  .vv-footer__hours { display: flex; align-items: flex-start; gap: 10px; margin-top: var(--vv-space-5); }
+  .vv-footer__hours :global(svg) { color: var(--vv-green-400); margin-top: 3px; flex-shrink: 0; }
+  .vv-footer__hours-body { min-width: 0; }
+  .vv-footer__hours strong { display: block; color: var(--vv-white); font-size: var(--vv-fs-sm); margin-bottom: 6px; }
+  .vv-footer__hours a { color: var(--vv-sky-200); font-size: var(--vv-fs-sm); text-decoration: underline; text-underline-offset: 3px; }
+  .vv-footer__hours a:hover { color: var(--vv-white); }
+
+  /* Tage links, Zeiten rechtsbündig darunter — auch bei zwei Spannen am Tag
+     bleiben die Uhrzeiten so untereinander lesbar. */
+  /* Ein Raster für die ganze Liste, nicht eins pro Zeile — sonst beginnt jede
+     Uhrzeit an einer anderen Stelle, je nachdem wie breit die Tage davor sind.
+     display:contents hebt die Zeilen-Container ins gemeinsame Raster. */
+  .vv-footer__times { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px var(--vv-space-3); align-items: baseline; }
+  .vv-footer__times > div { display: contents; }
+  .vv-footer__times dt { margin: 0; font-size: var(--vv-fs-sm); color: var(--vv-sky-400); white-space: nowrap; }
+  .vv-footer__times dd { margin: 0; font-size: var(--vv-fs-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   .vv-footer__cols {
     display: grid;
