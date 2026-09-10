@@ -511,6 +511,31 @@ function rewriteContentUrls(
      Anführungszeichen („ “ ″), deshalb [^\]] statt [^"\]]. */
   // Facebook-Einbettungen laufen im statischen Build nicht — ersatzlos raus.
   out = out.replace(/\[custom-facebook-feed[^\]]*\]/gi, '');
+
+  /* Akkordeon-Kurzcode: Der Titel ist Inhalt, kein Beiwerk. Auf
+     /lebendigen-adventskalender stecken darin die 24 Gastgeber
+     ("Kindergarten Borstel Borstendorf", "CDU Ortsverband") — 27.000 Zeichen
+     Text ohne eine einzige Ueberschrift. Als h3 gibt es der Seite Gliederung
+     und ein Themenmenue. Ein h3 mitten im Absatz schliesst dieser im Browser
+     sauber ab. */
+  out = out.replace(/\[ultimate_exp_section\b([^\]]*)\]/gi, (_treffer, attr: string) => {
+    const roh = attr.match(/\btitle\s*=\s*(?:&#\d+;|["'„“”])([\s\S]*?)(?:&#\d+;|["'„“”])/i)?.[1] ?? '';
+    const titel = decodeEntities(roh.replace(/<[^>]*>/g, '')).trim();
+    // h2, damit das Themenmenue sie aufgreift — es wertet nur h2 aus.
+    return titel ? `<h2>${titel}</h2>` : '';
+  });
+  out = out.replace(/\[\/ultimate_exp_section\]/gi, '');
+  /* Sicherheitsnetz fuer Kurzcodes abgeschalteter Erweiterungen, die als Text
+     auf der Seite landen. Bedingung: ein Unterstrich im Namen — den haben alle
+     Plugin-Kurzcodes ([dt_portfolio_slider], [vc_empty_space]), gewoehnlicher
+     Text in eckigen Klammern ("[siehe unten]") dagegen nicht.
+     Ausgenommen [dt_blog_posts_small]: Daraus wird spaeter eine echte
+     Beitragsliste. Ohne die Ausnahme fiel /vergabeausschreibungen wieder auf
+     die Leermeldung zurueck. */
+  out = out.replace(/\[\/?([a-z][a-z0-9]*_[a-z0-9_]*)(?:\s[^\]]*)?\]/gi, (treffer, name: string) =>
+    /^dt_blog_posts_small$/i.test(name) ? treffer : '',
+  );
+
   // Contact Form 7: ohne WordPress kein Formular. Statt des Kurzcodes ein Weg,
   // der funktioniert — dieselbe Adresse, die auch auf /wirtschaft steht.
   out = out.replace(

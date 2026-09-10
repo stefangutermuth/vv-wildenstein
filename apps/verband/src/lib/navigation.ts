@@ -57,7 +57,6 @@ export const navigation: NavItem[] = [
       { label: 'Gastronomie',         href: '/tourismus_uebersicht/gastronomie' },
       { label: 'Unterkünfte',         href: '/tourismus_uebersicht/unterkuenfte' },
       { label: 'Aktivitäten',         href: '/tourismus_uebersicht/aktivitaeten' },
-      { label: 'Holzkunst',           href: '/holzkunst' },
       { label: 'Freibad',             href: '/leben-freizeit/freibad' },
     ],
   },
