@@ -20,6 +20,8 @@ interface Props {
   description?: string;
   ogImage?: string;
   header?: 'full' | 'compact';
+  /** Seite aus der Suche halten (z. B. Vorschauen, die noch nicht öffentlich sind) */
+  noindex?: boolean;
 }
 
 const {
@@ -27,6 +29,7 @@ const {
   description = 'Offizielle Website der Gemeinde Grünhainichen im sächsischen Erzgebirge. Drei Ortsteile, eine Heimat zwischen Zschopau und Flöha.',
   ogImage = '/og-default.jpg',
   header = 'full',
+  noindex = false,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
@@ -56,7 +59,7 @@ const orgJsonLd = {
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     {/* Staging-Schutz: kein Index für Vorschau-Subdomain (grh.vv-wildenstein.com) */}
-    {import.meta.env.PUBLIC_STAGING === 'true' && <meta name="robots" content="noindex,nofollow" />}
+    {(noindex || import.meta.env.PUBLIC_STAGING === 'true') && <meta name="robots" content="noindex,nofollow" />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/png" href="/images/logos/wappen-grh.png" />
     <link rel="apple-touch-icon" href="/images/logos/wappen-grh.png" />

@@ -24,7 +24,9 @@ const ROOM_COLORS = [
 ];
 const roomsWithColor = rooms.map((r, i) => ({ ...r, color: ROOM_COLORS[i % ROOM_COLORS.length] }));
 ---
-<BaseLayout title="Belegungsplan · Räume · Grünhainichen" header="compact">
+<BaseLayout title="Belegungsplan · Räume · Grünhainichen" header="compact"
+  noindex
+>
   <GrhPageHeader
     title="Belegungsplan"
     breadcrumb="Startseite · Gemeinde · Räume · Belegungsplan"

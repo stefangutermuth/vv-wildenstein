@@ -46,7 +46,9 @@ const timeWindow = room.openFrom && room.openTo
   ? `${room.openFrom}–${room.openTo} Uhr`
   : null;
 ---
-<BaseLayout title={`${room.title} · Räume · Grünhainichen`} header="compact">
+<BaseLayout title={`${room.title} · Räume · Grünhainichen`} header="compact"
+  noindex
+>
   {room.image && (
     <div class="grh-room-hero">
       <img src={room.image} alt={room.title} loading="eager" />

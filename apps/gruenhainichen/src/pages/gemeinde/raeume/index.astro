@@ -28,7 +28,9 @@ const allAmenities = Array.from(new Set(rooms.flatMap((r) => r.amenities))).sort
 const allOrtsteile = Array.from(new Set(rooms.map((r) => r.ortsteil).filter(Boolean))) as string[];
 allOrtsteile.sort();
 ---
-<BaseLayout title="Räume mieten · Grünhainichen" header="compact">
+<BaseLayout title="Räume mieten · Grünhainichen" header="compact"
+  noindex
+>
   <GrhPageHeader
     title="Räume mieten"
     breadcrumb="Startseite · Gemeinde · Räume"
