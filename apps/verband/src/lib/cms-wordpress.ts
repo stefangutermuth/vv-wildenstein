@@ -773,6 +773,8 @@ export interface HubTile {
   image?: string;
   /** Tourismus-Kategorien (tourismus_kat-Slugs) — nur bei Tourismus-Einträgen */
   kats?: string[];
+  /** Anzeigenamen der Kategorien (z. B. „Handwerk") — für gruppierte Listen */
+  katNamen?: string[];
   /** WP-Post-ID (aus `data-id` eines Grid-Items) — um das Ziel aufzulösen,
    *  wenn die Kachel im Original keinen eigenen Link hatte. */
   sourceId?: number;
@@ -791,7 +793,7 @@ interface WPCptEmbed {
       mime_type?: string;
       media_details?: { sizes?: Record<string, { source_url: string }> };
     }>;
-    'wp:term'?: Array<Array<{ slug: string; taxonomy: string }>>;
+    'wp:term'?: Array<Array<{ slug: string; name?: string; taxonomy: string }>>;
   };
 }
 
@@ -813,23 +815,23 @@ function cptImage(item: WPCptEmbed): string | undefined {
 async function fetchCptTiles(
   restBase: string,
   pathPrefix: string,
-  withTerms = false,
+  /** Taxonomie, deren Begriffe mitgelesen werden (Tourismus-Filter, Branchenliste) */
+  taxonomie?: string,
 ): Promise<HubTile[]> {
   const url = new URL(`${WP_BASE}/${restBase}`);
   url.searchParams.set('per_page', '100');
-  url.searchParams.set('_embed', withTerms ? 'wp:featuredmedia,wp:term' : 'wp:featuredmedia');
+  url.searchParams.set('_embed', taxonomie ? 'wp:featuredmedia,wp:term' : 'wp:featuredmedia');
   const res = await fetch(url.toString(), {
     headers: { Accept: 'application/json', ...buildAuthHeader() },
   });
   if (!res.ok) return [];
   const raw = (await res.json()) as Array<WPCptEmbed & { vv_kontakt?: VvKontakt }>;
   const tiles = raw.map((item) => {
-    const kats = withTerms
-      ? (item._embedded?.['wp:term'] ?? [])
-          .flat()
-          .filter((t) => t.taxonomy === 'tourismus_kat')
-          .map((t) => t.slug)
-      : undefined;
+    const begriffe = taxonomie
+      ? (item._embedded?.['wp:term'] ?? []).flat().filter((t) => t.taxonomy === taxonomie)
+      : [];
+    const kats = taxonomie ? begriffe.map((t) => t.slug) : undefined;
+    const katNamen = taxonomie ? begriffe.map((t) => decodeEntities(t.name ?? t.slug)) : undefined;
     // Leere Felder aussortieren, damit die Liste nicht mit Nichts rechnet
     const kontakt = item.vv_kontakt
       ? (Object.fromEntries(
@@ -841,6 +843,7 @@ async function fetchCptTiles(
       href: `/${pathPrefix}/${item.slug}`,
       image: cptImage(item),
       kats,
+      katNamen: katNamen && katNamen.length ? katNamen : undefined,
       kontakt: kontakt && Object.keys(kontakt).length ? kontakt : undefined,
     } as HubTile;
   });
@@ -864,8 +867,8 @@ export interface HubSources {
 export async function fetchHubSources(): Promise<HubSources> {
   const [amter, profile, tourismus] = await Promise.all([
     fetchCptTiles('amter', 'amter'),
-    fetchCptTiles('profile', 'profile'),
-    fetchCptTiles('tourismus', 'tourismus', true),
+    fetchCptTiles('profile', 'profile', 'profilkategorie'),
+    fetchCptTiles('tourismus', 'tourismus', 'tourismus_kat'),
   ]);
   return { amter, profile, tourismus };
 }

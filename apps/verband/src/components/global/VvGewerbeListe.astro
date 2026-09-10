@@ -1,0 +1,202 @@
+---
+/**
+ * Gewerbe-Übersicht als Verzeichnis, nach Branchen gruppiert.
+ *
+ * Vorher standen hier 60 Kacheln, davon 41 mit leerer Bildfläche — die Seite
+ * war 9.459 Pixel hoch, und wer eine Telefonnummer suchte, musste jede Kachel
+ * einzeln anklicken. Anschrift und Kontakt stehen jetzt gleich in der Zeile.
+ *
+ * Einträge, die im Redaktionssystem zwei Branchen tragen, erscheinen in
+ * beiden — so ist ein Verzeichnis gedacht.
+ */
+import VvIcon from '../primitives/VvIcon.astro';
+import type { HubTile } from '../../lib/cms-wordpress';
+
+interface Props {
+  tiles: HubTile[];
+}
+const { tiles } = Astro.props;
+
+const OHNE = 'Weitere Einträge';
+
+/** Sprungmarke aus dem Branchennamen — „Allgemeine Medizin" → „allgemeine-medizin". */
+function marke(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+const nachName = (a: HubTile, b: HubTile) =>
+  a.title.localeCompare(b.title, 'de', { sensitivity: 'base' });
+
+const gruppen = new Map<string, HubTile[]>();
+for (const t of tiles) {
+  const namen = t.katNamen?.length ? t.katNamen : [OHNE];
+  for (const n of namen) {
+    const liste = gruppen.get(n) ?? [];
+    liste.push(t);
+    gruppen.set(n, liste);
+  }
+}
+
+/* Alphabetisch, „Weitere Einträge" ans Ende. */
+const branchen = [...gruppen.entries()]
+  .map(([name, eintraege]) => ({ name, marke: marke(name), eintraege: eintraege.sort(nachName) }))
+  .sort((a, b) =>
+    a.name === OHNE ? 1 : b.name === OHNE ? -1 : a.name.localeCompare(b.name, 'de'),
+  );
+
+const telLink = (t: string) => `tel:${t.replace(/[^\d+]/g, '')}`;
+const webLink = (w: string) => (/^https?:\/\//i.test(w) ? w : `https://${w}`);
+const webText = (w: string) => w.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+---
+<nav class="vv-gewerbe__sprung" aria-label="Branchen">
+  {branchen.map((b) => (
+    <a href={`#${b.marke}`}>{b.name} <span>{b.eintraege.length}</span></a>
+  ))}
+</nav>
+
+{branchen.map((b) => (
+  <section class="vv-gewerbe__branche" id={b.marke}>
+    <h2 class="vv-gewerbe__titel">
+      {b.name}
+      <span class="vv-gewerbe__zahl">{b.eintraege.length}</span>
+    </h2>
+    <ul class="vv-gewerbe__liste" role="list">
+      {b.eintraege.map((t) => {
+        const k = t.kontakt;
+        return (
+          <li class="vv-gewerbe__zeile">
+            <div class="vv-gewerbe__name-spalte">
+              <a class="vv-gewerbe__name" href={t.href}>
+                <span>{t.title}</span>
+                <VvIcon name="arrow-right" size={15} />
+              </a>
+              {k?.fuehrende_person && <span class="vv-gewerbe__person">{k.fuehrende_person}</span>}
+            </div>
+
+            <div class="vv-gewerbe__anschrift">
+              {k?.strasse_hausnummer || k?.plz_ort
+                ? <span>{[k?.strasse_hausnummer, k?.plz_ort].filter(Boolean).join(', ')}</span>
+                : <span class="vv-gewerbe__leer">—</span>}
+            </div>
+
+            <div class="vv-gewerbe__kontakt">
+              {k?.telefon && (
+                <a href={telLink(k.telefon)}>
+                  <VvIcon name="phone" size={13} />{k.telefon}
+                </a>
+              )}
+              {k?.email && (
+                <a href={`mailto:${k.email}`}>
+                  <VvIcon name="mail" size={13} />{k.email}
+                </a>
+              )}
+              {k?.website && (
+                <a href={webLink(k.website)} target="_blank" rel="noopener noreferrer">
+                  <VvIcon name="arrow-up-right" size={13} />{webText(k.website)}
+                </a>
+              )}
+              {!k?.telefon && !k?.email && !k?.website && <span class="vv-gewerbe__leer">—</span>}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+))}
+
+<style>
+  /* Sprungmenü: bei zwölf Branchen findet man so schneller als durch Scrollen. */
+  .vv-gewerbe__sprung {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vv-space-2);
+    margin-bottom: var(--vv-space-7);
+  }
+  .vv-gewerbe__sprung a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--vv-border-soft);
+    border-radius: 999px;
+    background: var(--vv-white);
+    color: var(--vv-navy-800);
+    font-size: var(--vv-fs-sm);
+    text-decoration: none;
+    transition: border-color var(--vv-dur-fast), color var(--vv-dur-fast);
+  }
+  .vv-gewerbe__sprung a:hover { border-color: var(--vv-sky-400); color: var(--vv-link); }
+  .vv-gewerbe__sprung a span { color: var(--vv-text-muted); font-size: var(--vv-fs-xs); }
+
+  .vv-gewerbe__branche { margin-bottom: var(--vv-space-7); scroll-margin-top: 84px; }
+  .vv-gewerbe__branche:last-child { margin-bottom: 0; }
+  .vv-gewerbe__titel {
+    display: flex;
+    align-items: baseline;
+    gap: var(--vv-space-3);
+    margin: 0 0 var(--vv-space-3);
+    padding-bottom: var(--vv-space-2);
+    border-bottom: 2px solid var(--vv-sky-200);
+    font-size: var(--vv-fs-xl);
+    color: var(--vv-navy-800);
+  }
+  .vv-gewerbe__zahl { font-size: var(--vv-fs-sm); font-weight: 400; color: var(--vv-text-muted); }
+
+  .vv-gewerbe__liste { list-style: none; margin: 0; padding: 0; }
+
+  /* Eine Zeile je Eintrag, drei Spalten: Name, Anschrift, Kontakt. Als
+     gestapelte Bloecke war die Liste mit 10.565 Pixeln laenger als das
+     Kachelfeld davor — als Zeilen passt ein Eintrag in zwei Textzeilen. */
+  .vv-gewerbe__zeile {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: var(--vv-space-2) var(--vv-space-4);
+    align-items: baseline;
+    padding: var(--vv-space-3) 0;
+    border-bottom: 1px solid var(--vv-border-soft);
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-gewerbe__zeile:last-child { border-bottom: 0; }
+  @media (max-width: 700px) {
+    .vv-gewerbe__zeile { grid-template-columns: 1fr; gap: 2px; padding: var(--vv-space-4) 0; }
+  }
+
+  .vv-gewerbe__name-spalte { display: grid; gap: 1px; min-width: 0; }
+  .vv-gewerbe__name {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--vv-navy-800);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .vv-gewerbe__name:hover span { text-decoration: underline; }
+  .vv-gewerbe__name :global(svg) { color: var(--vv-sky-500); flex: none; }
+  .vv-gewerbe__person { font-size: var(--vv-fs-xs); color: var(--vv-text-muted); }
+
+  .vv-gewerbe__anschrift { color: var(--vv-text-muted); min-width: 0; }
+
+  /* Telefon, E-Mail und Netzadresse nebeneinander statt untereinander —
+     gestapelt machte allein die Kontaktspalte drei Zeilen. */
+  .vv-gewerbe__kontakt {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px var(--vv-space-3);
+    min-width: 0;
+  }
+  .vv-gewerbe__kontakt a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--vv-link);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .vv-gewerbe__kontakt a:hover { text-decoration: underline; }
+  .vv-gewerbe__kontakt :global(svg) { color: var(--vv-sky-500); flex: none; }
+  .vv-gewerbe__leer { color: var(--vv-text-muted); }
+</style>

@@ -13,6 +13,7 @@ import VvPageHeader from '../components/global/VvPageHeader.astro';
 import VvLightbox from '../components/global/VvLightbox.astro';
 import VvHubGrid from '../components/global/VvHubGrid.astro';
 import VvGremienListe from '../components/global/VvGremienListe.astro';
+import VvGewerbeListe from '../components/global/VvGewerbeListe.astro';
 import VvAemterListe from '../components/global/VvAemterListe.astro';
 import VvRathauskarte from '../components/global/VvRathauskarte.astro';
 import VvKontaktkarte from '../components/global/VvKontaktkarte.astro';
@@ -186,6 +187,7 @@ const kopfBild = (() => {
   return kandidaten.sort((a, b) => b.breite / b.hoehe - a.breite / a.hoehe)[0].src;
 })();
 
+const istWirtschaft = page.path === '/wirtschaft';
 const istVerwaltung = page.path === '/verwaltung';
 const zeigeRathaus = istVerwaltung && contentText.length > 40;
 const isEmpty =
@@ -240,7 +242,9 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
           {restKacheln.length > 0 && (
             istVerwaltung
               ? <VvAemterListe tiles={restKacheln} />
-              : <VvHubGrid tiles={restKacheln} icon={tileIcon} titel={istVersammlung ? 'Bekanntmachungen' : undefined} />
+              : istWirtschaft
+                ? <VvGewerbeListe tiles={restKacheln} />
+                : <VvHubGrid tiles={restKacheln} icon={tileIcon} titel={istVersammlung ? 'Bekanntmachungen' : undefined} />
           )}
           {isEmpty ? (
             <div class="vv-emptyhub">
