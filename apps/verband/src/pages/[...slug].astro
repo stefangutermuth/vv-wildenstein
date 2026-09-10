@@ -13,6 +13,7 @@ import VvPageHeader from '../components/global/VvPageHeader.astro';
 import VvLightbox from '../components/global/VvLightbox.astro';
 import VvHubGrid from '../components/global/VvHubGrid.astro';
 import VvAemterListe from '../components/global/VvAemterListe.astro';
+import VvRathauskarte from '../components/global/VvRathauskarte.astro';
 import VvKontaktkarte from '../components/global/VvKontaktkarte.astro';
 import VvSprungmenu from '../components/global/VvSprungmenu.astro';
 import VvZeitenkarte from '../components/global/VvZeitenkarte.astro';
@@ -142,6 +143,12 @@ const contentText = page.contentHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' 
 // bei drei Absätzen wäre es nur Beiwerk.
 const { html: inhaltMitMarken, marken } = baueSprungmarken(page.contentHtml);
 const zeigeSprungmenu = marken.length >= 4 && contentText.length > 2500;
+
+// Auf der Verwaltungsseite steht neben der Ämterliste der Rathaus-Kasten:
+// Öffnungszeiten und Hinweise standen bisher als Fließtext UNTER allen
+// 14 Ämtern, wo sie niemand sucht.
+const istVerwaltung = page.path === '/verwaltung';
+const zeigeRathaus = istVerwaltung && contentText.length > 40;
 const isEmpty =
   hubTiles.length === 0 && contentText.length < 40 && !page.kontakt && !page.gallery?.length;
 const parentPath = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].path : '/';
@@ -154,8 +161,12 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
       {page.image && (
         <img class="vv-pagebody__lead" src={page.image} alt="" loading="lazy" decoding="async" />
       )}
-      <div class:list={['vv-layout', { 'has-seitenleiste': zeigeSprungmenu }]}>
-        {zeigeSprungmenu ? (
+      <div class:list={['vv-layout', { 'has-seitenleiste': zeigeSprungmenu || zeigeRathaus }]}>
+        {zeigeRathaus ? (
+          <aside class="vv-seitenleiste">
+            <VvRathauskarte html={page.contentHtml} />
+          </aside>
+        ) : zeigeSprungmenu ? (
           <aside class="vv-seitenleiste">
             {/* Das Themen-Menü steht zuunterst, weil es beim Scrollen andockt:
                 Ein angedocktes Element bleibt an seiner Stelle im Fluss und
@@ -181,7 +192,7 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
               <p>Für diese Seite liegen derzeit keine eigenen Inhalte vor.</p>
               <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>
             </div>
-          ) : (
+          ) : zeigeRathaus ? null : (
             <article class="vv-prose" set:html={zeigeSprungmenu ? inhaltMitMarken : page.contentHtml} />
           )}
         </div>
@@ -229,6 +240,17 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
     }
     .vv-seitenleiste > :global(.vv-kontakt),
     .vv-seitenleiste > :global(.vv-zeiten) { margin: 0; }
+
+    /* Der Rathaus-Kasten läuft mit: Die Ämterliste ist knapp 2.800px lang,
+       ohne Andocken wären die Öffnungszeiten nach dem dritten Amt weg. */
+    .vv-seitenleiste > :global(.vv-rathaus) {
+      position: sticky;
+      top: 84px;
+      max-height: calc(100vh - 108px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
 
     /* Nur das Themen-Menü läuft mit. Kontakt und Sprechzeiten scrollen weg —
        so muss man nicht INNERHALB der Leiste scrollen, was verwirrend war.

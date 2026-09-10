@@ -1,0 +1,131 @@
+---
+/**
+ * Rathaus-Kasten für die Verwaltungsseite.
+ *
+ * Die Öffnungszeiten des Rathauses standen bisher als Fließtext UNTER allen
+ * 14 Ämtern — dort sucht sie niemand. Jetzt stehen sie als Spalte daneben.
+ *
+ * Die Redaktion richtet die Spalten im Backend mit Leerzeichen aus
+ * ("Freitag                09:00 Uhr bis 12:00 Uhr"). Im Browser fallen
+ * mehrfache Leerzeichen zusammen, die Ausrichtung ging also verloren. Hier
+ * werden die Zeilen an dieser Lücke getrennt und als saubere Doppelspalte
+ * gesetzt. Was sich nicht zerlegen lässt, bleibt als Absatz erhalten —
+ * lieber unformatiert als verschwunden.
+ */
+interface Props {
+  html: string;
+}
+const { html } = Astro.props;
+
+const roh = html
+  .replace(/<br\s*\/?>/gi, '\n')
+  .replace(/<\/p>/gi, '\n\n')
+  .replace(/<[^>]+>/g, '')
+  .replace(/&nbsp;/g, ' ')
+  .replace(/&amp;/g, '&')
+  .replace(/&#8211;/g, '–')
+  .replace(/&#8222;|&#8220;/g, '"');
+
+const zeilen = roh.split('\n').map((z) => z.trimEnd());
+
+interface Zeit { tage: string; zeit: string }
+const zeiten: Zeit[] = [];
+const absaetze: string[] = [];
+let ueberschrift = '';
+let offen = ''; // Tage, deren Zeit erst in der Folgezeile steht
+
+for (const z of zeilen) {
+  const t = z.trim();
+  if (!t) continue;
+
+  if (!ueberschrift && /Öffnungszeiten|Rathaus/i.test(t) && t.length < 60 && !/\d{2}:\d{2}/.test(t)) {
+    ueberschrift = t;
+    continue;
+  }
+
+  // Zeile mit Ausrichtungslücke: "Freitag        09:00 Uhr bis 12:00 Uhr"
+  const paar = /^(.+?)\s{2,}(.+)$/.exec(z);
+  if (paar) {
+    const tage = (offen ? offen + ' ' : '') + paar[1].trim();
+    offen = '';
+    zeiten.push({
+      tage: tage.replace(/,\s*$/, ''),
+      zeit: paar[2].trim().replace(/\s*Uhr\s*bis\s*/i, ' – ').replace(/\s+/g, ' '),
+    });
+    continue;
+  }
+
+  // Zeile nur mit Tagen ("Dienstag, Donnerstag,") → gehört zur nächsten
+  if (/^[A-Za-zÄÖÜäöü,\s]+,$/.test(t) && t.length < 40) {
+    offen = t;
+    continue;
+  }
+
+  absaetze.push(t);
+}
+const hatZeiten = zeiten.length > 0;
+---
+<aside class="vv-rathaus" aria-label={ueberschrift || 'Rathaus'}>
+  <h2 class="vv-rathaus__titel">{ueberschrift || 'Öffnungszeiten Rathaus'}</h2>
+
+  {hatZeiten ? (
+    <dl class="vv-rathaus__zeiten">
+      {zeiten.map((z) => (
+        <div>
+          <dt>{z.tage}</dt>
+          <dd>{z.zeit}</dd>
+        </div>
+      ))}
+    </dl>
+  ) : (
+    <p class="vv-rathaus__text">{roh.trim()}</p>
+  )}
+
+  {hatZeiten && absaetze.map((a) => <p class="vv-rathaus__hinweis">{a}</p>)}
+</aside>
+
+<style>
+  .vv-rathaus {
+    background: var(--vv-bg);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-lg);
+    padding: var(--vv-space-5);
+  }
+  .vv-rathaus__titel {
+    margin: 0 0 var(--vv-space-4);
+    font-size: var(--vv-fs-base);
+    color: var(--vv-navy-800);
+    line-height: 1.3;
+  }
+  .vv-rathaus__zeiten { margin: 0; display: grid; gap: var(--vv-space-2); }
+  .vv-rathaus__zeiten > div {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--vv-space-3);
+    align-items: baseline;
+    padding-bottom: var(--vv-space-2);
+    border-bottom: 1px solid var(--vv-border-soft);
+  }
+  .vv-rathaus__zeiten > div:last-child { border-bottom: 0; padding-bottom: 0; }
+  .vv-rathaus__zeiten dt {
+    margin: 0;
+    font-weight: 600;
+    color: var(--vv-text);
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-rathaus__zeiten dd {
+    margin: 0;
+    color: var(--vv-navy-800);
+    font-size: var(--vv-fs-sm);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .vv-rathaus__hinweis,
+  .vv-rathaus__text {
+    margin: var(--vv-space-3) 0 0;
+    font-size: var(--vv-fs-sm);
+    line-height: 1.5;
+    color: var(--vv-text-muted);
+  }
+  .vv-rathaus__text { white-space: pre-line; }
+</style>
