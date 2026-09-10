@@ -281,7 +281,13 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
   <div class="vv-pagebody">
     <div class="vv-container">
       {page.image && (
-        <img class="vv-pagebody__lead" src={page.image} alt="" loading="lazy" decoding="async" />
+        <img
+            class:list={['vv-pagebody__lead', { 'is-breit': page.imageBreit }]}
+            src={page.image}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
       )}
       <div class:list={['vv-layout', { 'has-seitenleiste': zeigeSprungmenu || zeigeRathaus }]}>
         {zeigeRathaus ? (
@@ -421,6 +427,17 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
     object-fit: cover;
     border-radius: var(--vv-radius-lg);
     margin: 0 0 var(--vv-space-5);
+  }
+  /* Breite Banner (Firmenlogos) nicht ueber die volle Breite ziehen und
+     beschneiden — klein und mittig, wie ein Briefkopf. */
+  .vv-pagebody__lead.is-breit {
+    display: block;
+    width: auto;
+    max-width: min(100%, 460px);
+    max-height: 140px;
+    object-fit: contain;
+    margin: 0 auto var(--vv-space-6);
+    border-radius: 0;
   }
   /* Zusatzbilder („Erweiterte Einstellungen" im Backend) als Raster */
   .vv-gallery {

@@ -57,7 +57,11 @@ interface WPPost {
     'wp:featuredmedia'?: Array<{
       source_url?: string;
       mime_type?: string;
-      media_details?: { sizes?: Record<string, { source_url: string; width: number }> };
+      media_details?: {
+        width?: number;
+        height?: number;
+        sizes?: Record<string, { source_url: string; width: number }>;
+      };
       alt_text?: string;
     }>;
     'wp:term'?: Array<Array<{ id: number; slug: string; name: string; taxonomy: string }>>;
@@ -592,6 +596,8 @@ export interface WPPageItem {
   gallery?: VvGalleryImage[];
   /** Beitragsbild */
   image?: string;
+  /** Beitragsbild ist ein breites Banner (Logo) — nicht beschneiden */
+  imageBreit?: boolean;
 }
 
 /**
@@ -847,6 +853,7 @@ async function ladeCptPages(): Promise<WPPageItem[]> {
           kontakt: kontakt && Object.keys(kontakt).length ? kontakt : undefined,
           gallery: Array.isArray(p.vv_gallery) && p.vv_gallery.length ? p.vv_gallery : undefined,
           image: cptImage(p),
+          imageBreit: cptImageIstBreit(p),
         });
       }
       if (raw.length < 100) break;
@@ -884,10 +891,29 @@ interface WPCptEmbed {
     'wp:featuredmedia'?: Array<{
       source_url?: string;
       mime_type?: string;
-      media_details?: { sizes?: Record<string, { source_url: string }> };
+      media_details?: {
+        width?: number;
+        height?: number;
+        sizes?: Record<string, { source_url: string }>;
+      };
     }>;
     'wp:term'?: Array<Array<{ slug: string; name?: string; taxonomy: string }>>;
   };
+}
+
+/**
+ * Ist das Beitragsbild ein breites Banner (Firmenlogo) statt eines Fotos?
+ *
+ * Das Logo der GRUENPERGA Papier GmbH ist 900 x 194 Pixel. Als Kopfbild ueber
+ * die volle Inhaltsbreite gezogen und auf 380 Pixel Hoehe beschnitten sah es
+ * aus wie ein Fehler. Ab etwa 2,2:1 wird ein Bild deshalb nicht beschnitten,
+ * sondern klein und mittig gesetzt.
+ */
+function cptImageIstBreit(item: WPCptEmbed): boolean {
+  const md = item._embedded?.['wp:featuredmedia']?.[0]?.media_details;
+  const b = md?.width ?? 0;
+  const h = md?.height ?? 0;
+  return b > 0 && h > 0 && b / h > 2.2;
 }
 
 function cptImage(item: WPCptEmbed): string | undefined {
