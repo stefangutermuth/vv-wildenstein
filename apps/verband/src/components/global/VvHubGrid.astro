@@ -24,6 +24,15 @@ const { tiles, icon = 'arrow-up-right', titel } = Astro.props;
    Bilderrahmen, unter anderem alle Bekanntmachungen der
    Verbandsversammlungs-Seite. */
 const hatBilder = tiles.some((t) => t.image);
+
+/* Anschrift unter den Titel: Die alte Seite zeigte sie in jeder Kachel mit
+   an — /leben-freizeit/freibad bestand danach aus dem Wort „Freibad" und
+   sonst nichts. Die Daten stecken ohnehin in der Kachel. */
+function ort(t: HubTile): string {
+  const k = t.kontakt;
+  if (!k) return '';
+  return [k.strasse_hausnummer, k.plz_ort].filter(Boolean).join(', ');
+}
 ---
 {tiles.length > 0 && titel && <h2 class="vv-hubgrid__titel">{titel}</h2>}
 {tiles.length > 0 && (
@@ -41,7 +50,10 @@ const hatBilder = tiles.some((t) => t.image);
           )}
           <div class="vv-hubtile__body">
             {!hatBilder && <VvIcon name={icon} size={18} class="vv-hubtile__leitzeichen" />}
-            <span class="vv-hubtile__title">{t.title}</span>
+            <span class="vv-hubtile__meta">
+              <span class="vv-hubtile__title">{t.title}</span>
+              {ort(t) && <span class="vv-hubtile__ort">{ort(t)}</span>}
+            </span>
             <VvIcon name="arrow-right" size={16} class="vv-hubtile__arrow" />
           </div>
         </a>
@@ -94,7 +106,7 @@ const hatBilder = tiles.some((t) => t.image);
   .vv-hubtile__leitzeichen { color: var(--vv-primary); flex: none; }
   /* Drei Kinder statt zwei: der Titel nimmt den freien Platz, sonst schöbe
      space-between das Leitzeichen vom Text weg. */
-  .vv-hubgrid.is-schlicht .vv-hubtile__title { flex: 1; min-width: 0; }
+  .vv-hubgrid.is-schlicht .vv-hubtile__meta { flex: 1; min-width: 0; }
 
   .vv-hubtile__media {
     position: relative;
@@ -129,10 +141,17 @@ const hatBilder = tiles.some((t) => t.image);
   .vv-hubtile:hover .vv-hubtile__media img { transform: scale(1.05); }
   .vv-hubtile__body {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
     gap: var(--vv-space-3);
     padding: var(--vv-space-3) var(--vv-space-4);
+  }
+  .vv-hubtile__meta { display: grid; gap: 1px; min-width: 0; }
+  .vv-hubtile__ort {
+    font-size: var(--vv-fs-xs);
+    color: var(--vv-text-muted);
+    font-weight: 400;
+    line-height: 1.35;
   }
   .vv-hubtile__title {
     font-weight: 600;

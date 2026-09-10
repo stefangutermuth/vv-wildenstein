@@ -74,7 +74,7 @@ export async function getStaticPaths() {
         seen.add(key);
         return true;
       })
-      .map((k) => ({ title: k.title, href: k.path }));
+      .map((k) => ({ title: k.title, href: k.path, kontakt: k.kontakt, image: k.image }));
     if (kidTiles.length > 0) return kidTiles;
     // Kein Mapping und keine Kind-Seiten → das nehmen, was im entfernten Grid
     // stand (Vereine, Dienstleister, Kirchen … je nach Seite). Kacheln ohne
@@ -87,7 +87,7 @@ export async function getStaticPaths() {
         return ziel ? { ...t, href: ziel.path, image: t.image ?? ziel.image } : null;
       })
       .filter((t): t is HubTile => t !== null);
-    if (ausGrid.length > 0) return ausGrid;
+    if (ausGrid.length > 0) return ausGrid.map(reichereAn);
 
     /* Letzter Rückgriff: Seiten, die im Redaktionssystem leer sind, deren
        Kürzel aber einer Gewerbekategorie entspricht. Genau so arbeitete die
@@ -95,8 +95,8 @@ export async function getStaticPaths() {
        Seite, sondern auf das Kategorie-Archiv /profilkategorie/einkaufen/.
        Betrifft /leben-freizeit/einkaufen (20 Betriebe) und
        /leben-freizeit/kindergarten (5 Einrichtungen). */
-    const kuerzel = pg.path.split('/').pop() ?? '';
-    return hub.profile.filter((t) => t.kats?.includes(kuerzel));
+    const kuerzelKat = pg.path.split('/').pop() ?? '';
+    return hub.profile.filter((t) => t.kats?.includes(kuerzelKat));
   }
 
   function pickHubIcon(path: string): string {
@@ -125,6 +125,20 @@ export async function getStaticPaths() {
   // Landkarte WP-ID → generierte Seite (löst Grid-Kacheln ohne eigenen Link auf)
   const byId = new Map<number, WPPageItem>();
   for (const pg of [...pages, ...cpts]) byId.set(pg.id, pg);
+
+  /* Kacheln aus einem entfernten Portalgitter tragen nur Titel und Ziel. Die
+     Anschrift steht aber in der Zielseite — die alte Seite zeigte sie in
+     jeder Kachel mit. Ohne das bestand /leben-freizeit/freibad aus dem Wort
+     „Freibad" und sonst nichts. */
+  const nachPfad = new Map<string, WPPageItem>();
+  for (const pg of [...pages, ...cpts]) nachPfad.set(pg.path, pg);
+
+  function reichereAn(t: HubTile): HubTile {
+    if (t.kontakt && t.image) return t;
+    const ziel = nachPfad.get(t.href.replace(/\/$/, ''));
+    if (!ziel) return t;
+    return { ...t, kontakt: t.kontakt ?? ziel.kontakt, image: t.image ?? ziel.image };
+  }
   // Reservierte Pfade (eigene Routen) nicht überschreiben; Duplikate (Seite
   // vs. CPT mit gleichem Pfad) überspringen → sonst bricht der Build hart ab.
   // Eigene Routen: Amtsblatt-Archiv und Downloads holen ihre Daten aus den
