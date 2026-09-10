@@ -236,14 +236,30 @@ const highlights = [
   <VvSection eyebrow="Mitgliedsgemeinden" title="Die Gemeinden im Verband" align="center">
     <div class="vv-communes">
       <a href="https://www.gruenhainichen.com" target="_blank" rel="noopener noreferrer" class="vv-commune vv-reveal">
-        <span class="vv-commune__name">Gemeinde Grünhainichen</span>
-        <span class="vv-commune__sub">mit Borstendorf &amp; Waldkirchen/Erzgeb.</span>
-        <span class="vv-commune__link">Zur Gemeinde-Website <VvIcon name="arrow-up-right" size={15} /></span>
+        <img
+          class="vv-commune__wappen"
+          src="/images/wappen/gruenhainichen.png"
+          alt="Wappen der Gemeinde Grünhainichen"
+          width="228" height="261" loading="lazy" decoding="async"
+        />
+        <span class="vv-commune__text">
+          <span class="vv-commune__name">Gemeinde Grünhainichen</span>
+          <span class="vv-commune__sub">mit Borstendorf &amp; Waldkirchen/Erzgeb.</span>
+          <span class="vv-commune__link">Zur Gemeinde-Website <VvIcon name="arrow-up-right" size={15} /></span>
+        </span>
       </a>
       <a href="https://www.boernichen.de" target="_blank" rel="noopener noreferrer" class="vv-commune vv-reveal">
-        <span class="vv-commune__name">Gemeinde Börnichen/Erzgeb.</span>
-        <span class="vv-commune__sub">Staatlich anerkannter Erholungsort</span>
-        <span class="vv-commune__link">Zur Gemeinde-Website <VvIcon name="arrow-up-right" size={15} /></span>
+        <img
+          class="vv-commune__wappen"
+          src="/images/wappen/boernichen.png"
+          alt="Wappen der Gemeinde Börnichen/Erzgeb."
+          width="512" height="512" loading="lazy" decoding="async"
+        />
+        <span class="vv-commune__text">
+          <span class="vv-commune__name">Gemeinde Börnichen/Erzgeb.</span>
+          <span class="vv-commune__sub">Staatlich anerkannter Erholungsort</span>
+          <span class="vv-commune__link">Zur Gemeinde-Website <VvIcon name="arrow-up-right" size={15} /></span>
+        </span>
       </a>
     </div>
   </VvSection>
@@ -530,16 +546,27 @@ const highlights = [
   .vv-about__stats span { font-size: var(--vv-fs-sm); color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.08em; }
 
   /* === Mitgliedsgemeinden ==================================== */
-  .vv-communes { display: grid; grid-template-columns: 1fr; gap: var(--vv-space-5); max-width: 900px; margin-inline: auto; }
+  /* Etwas breiter als zuvor (900px): Mit dem Wappen daneben blieben für den
+     Text nur 276px, wodurch „Gemeinde Börnichen/Erzgeb." umbrach. */
+  .vv-communes { display: grid; grid-template-columns: 1fr; gap: var(--vv-space-5); max-width: 1040px; margin-inline: auto; }
   @media (min-width: 720px) { .vv-communes { grid-template-columns: 1fr 1fr; } }
   .vv-commune {
-    display: flex; flex-direction: column; gap: 6px;
+    display: flex; align-items: center; gap: var(--vv-space-5);
     padding: var(--vv-space-6);
     background: var(--vv-white); border: 1px solid var(--vv-border-soft);
     border-radius: var(--vv-radius-lg); box-shadow: var(--vv-shadow-sm);
     transition: transform var(--vv-dur-fast), box-shadow var(--vv-dur-fast), border-color var(--vv-dur-fast);
   }
   .vv-commune:hover { transform: translateY(-4px); border-color: var(--vv-sky-400); box-shadow: var(--vv-shadow-md); }
+  /* Die beiden Wappen sind unterschiedlich proportioniert (Grünhainichen
+     hochkant, Börnichen quadratisch). Eine feste Box mit object-fit: contain
+     stellt beide gleich groß dar, ohne sie zu verzerren. */
+  .vv-commune__wappen {
+    width: 72px; height: 84px;
+    object-fit: contain;
+    flex: none;
+  }
+  .vv-commune__text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .vv-commune__name { font-size: var(--vv-fs-lg); font-weight: 700; color: var(--vv-navy-800); }
   .vv-commune__sub { font-size: var(--vv-fs-sm); color: var(--vv-text-muted); }
   .vv-commune__link { display: inline-flex; align-items: center; gap: 6px; margin-top: var(--vv-space-3); font-weight: 600; font-size: var(--vv-fs-sm); color: var(--vv-green-800); }
