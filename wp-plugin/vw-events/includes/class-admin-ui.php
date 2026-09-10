@@ -23,6 +23,8 @@ final class VW_Events_Admin_UI {
         add_action( 'wp_dashboard_setup', [ __CLASS__, 'dashboard_widget' ] );
 
         add_action( 'edit_form_top', [ __CLASS__, 'pending_banner' ] );
+        add_action( 'edit_form_top', [ __CLASS__, 'kein_start_banner' ] );
+        add_action( 'admin_notices', [ __CLASS__, 'liste_ohne_start_hinweis' ] );
     }
 
     public static function get_settings(): array {
@@ -61,7 +63,13 @@ final class VW_Events_Admin_UI {
         ?>
         <table class="form-table">
             <tr><th><label for="_vw_event_start"><?php esc_html_e( 'Start (lokale Zeit)', 'vw-events' ); ?> *</label></th>
-                <td><input type="datetime-local" name="_vw_event_start" id="_vw_event_start" value="<?php echo $get( '_vw_event_start' ); ?>" class="regular-text"></td></tr>
+                <td>
+                    <input type="datetime-local" name="_vw_event_start" id="_vw_event_start"
+                           value="<?php echo $get( '_vw_event_start' ); ?>" class="regular-text" required>
+                    <p class="description">
+                        <?php esc_html_e( 'Datum UND Uhrzeit angeben. Ohne Uhrzeit verwirft der Browser die Eingabe und die Veranstaltung erscheint nicht im Kalender. Steht die Uhrzeit noch nicht fest: 00:00 eintragen und unten „Ganztägig" ankreuzen.', 'vw-events' ); ?>
+                    </p>
+                </td></tr>
             <tr><th><label for="_vw_event_end"><?php esc_html_e( 'Ende (lokale Zeit)', 'vw-events' ); ?></label></th>
                 <td><input type="datetime-local" name="_vw_event_end" id="_vw_event_end" value="<?php echo $get( '_vw_event_end' ); ?>" class="regular-text"></td></tr>
             <tr><th><?php esc_html_e( 'Ganztägig', 'vw-events' ); ?></th>
@@ -95,6 +103,19 @@ final class VW_Events_Admin_UI {
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
         if ( ! isset( $_POST['vw_event_nonce'] ) || ! wp_verify_nonce( $_POST['vw_event_nonce'], 'vw_event_save_meta' ) ) { return; }
         if ( ! current_user_can( 'edit_post', $post_id ) ) { return; }
+
+        // Ein leeres Startdatum darf ein vorhandenes NICHT überschreiben.
+        // Hintergrund: <input type="datetime-local"> überträgt bei
+        // unvollständiger Eingabe (Datum ohne Uhrzeit) einen leeren String.
+        // Vorher wurde der gespeichert — die Veranstaltung verschwand lautlos
+        // aus dem Kalender, obwohl das Backend „aktualisiert" meldete.
+        // Am 08./09.09.2026 sind so elf Termine unsichtbar geblieben.
+        if ( isset( $_POST['_vw_event_start'] ) && trim( (string) wp_unslash( $_POST['_vw_event_start'] ) ) === '' ) {
+            unset( $_POST['_vw_event_start'] );
+            if ( ! get_post_meta( $post_id, '_vw_event_start', true ) ) {
+                set_transient( 'vw_event_hinweis_' . $post_id, 'kein_start', 60 );
+            }
+        }
 
         $text_keys = [
             '_vw_event_start',
@@ -157,6 +178,62 @@ final class VW_Events_Admin_UI {
         } elseif ( $col === 'vw_source' ) {
             echo esc_html( (string) ( get_post_meta( $post_id, '_vw_event_source', true ) ?: 'admin' ) );
         }
+    }
+
+    /**
+     * Warnung auf der Bearbeitungsseite, wenn kein Startdatum gespeichert ist.
+     * Ohne diesen Hinweis wirkt das Speichern erfolgreich, die Veranstaltung
+     * erscheint aber nirgends — die Redaktion trägt sie dann ein zweites Mal ein.
+     */
+    public static function kein_start_banner( $post ): void {
+        if ( ! $post || $post->post_type !== 'vw_event' ) { return; }
+        if ( $post->post_status === 'auto-draft' ) { return; }
+        if ( get_post_meta( $post->ID, '_vw_event_start', true ) ) { return; }
+        echo '<div class="notice notice-error"><p><strong>'
+            . esc_html__( 'Diese Veranstaltung hat kein Startdatum und erscheint deshalb NICHT im Kalender.', 'vw-events' )
+            . '</strong><br>'
+            . esc_html__( 'Bitte oben Datum und Uhrzeit eintragen. Beides ist nötig — bei einer Eingabe ohne Uhrzeit verwirft der Browser den Wert.', 'vw-events' )
+            . '</p></div>';
+    }
+
+    /**
+     * Sammelhinweis über der Veranstaltungsliste: zählt Termine ohne Datum.
+     */
+    public static function liste_ohne_start_hinweis(): void {
+        global $pagenow, $typenow, $wpdb;
+        if ( $pagenow !== 'edit.php' || $typenow !== 'vw_event' ) { return; }
+        if ( ! current_user_can( 'edit_posts' ) ) { return; }
+
+        $ids = $wpdb->get_col(
+            "SELECT p.ID FROM {$wpdb->posts} p
+             LEFT JOIN {$wpdb->postmeta} m
+               ON m.post_id = p.ID AND m.meta_key = '_vw_event_start'
+             WHERE p.post_type = 'vw_event'
+               AND p.post_status = 'publish'
+               AND ( m.meta_value IS NULL OR m.meta_value = '' )
+             LIMIT 50"
+        );
+        if ( ! $ids ) { return; }
+
+        echo '<div class="notice notice-warning"><p><strong>'
+            . sprintf(
+                esc_html( _n(
+                    '%d veröffentlichte Veranstaltung hat kein Startdatum und erscheint nicht im Kalender.',
+                    '%d veröffentlichte Veranstaltungen haben kein Startdatum und erscheinen nicht im Kalender.',
+                    count( $ids ),
+                    'vw-events'
+                ) ),
+                count( $ids )
+            )
+            . '</strong></p><ul style="margin:0 0 4px 18px;list-style:disc">';
+        foreach ( array_slice( $ids, 0, 10 ) as $id ) {
+            printf(
+                '<li><a href="%s">%s</a></li>',
+                esc_url( get_edit_post_link( $id ) ),
+                esc_html( get_the_title( $id ) ?: '(ohne Titel)' )
+            );
+        }
+        echo '</ul></div>';
     }
 
     public static function sortable_columns( array $cols ): array {
