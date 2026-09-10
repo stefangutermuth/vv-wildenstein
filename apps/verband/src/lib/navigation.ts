@@ -40,6 +40,7 @@ export const navigation: NavItem[] = [
     href: '/verwaltung',
     children: [
       { label: 'Öffnungszeiten & Ämter',      href: '/verwaltung' },
+      { label: 'Stellenanzeigen',            href: '/stellenanzeigen' },
       { label: 'Heiraten',                    href: '/heiraten' },
       { label: 'Kindertagesstätten / Hort',   href: '/kindertagesstaetten' },
       { label: 'Kita-Formulare',              href: '/formulare-der-kindertageseinrichtungen-gruenhainichen' },
@@ -66,7 +67,6 @@ export const navigation: NavItem[] = [
     children: [
       { label: 'Überblick & Unternehmen', href: '/wirtschaft' },
       { label: 'Dienstleistungen',           href: '/wirtschaft#dienstleistungen' },
-      { label: 'Stellenanzeigen',         href: '/stellenanzeigen' },
       { label: 'Stellenausschreibungen',  href: '/stellenausschreibungen' },
       { label: 'Vergabe / Ausschreibungen', href: '/vergabeausschreibungen' },
       { label: 'Gewerbeeintrag melden',   href: '/informationen/gewerbeeintrag' },
