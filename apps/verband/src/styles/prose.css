@@ -108,12 +108,24 @@
 }
 .vv-prose .vc_row:last-child,
 .vv-prose .g-cols:last-child { margin-bottom: 0; }
-.vv-prose [class*='vc_col-sm-'] { flex: 1 1 300px; min-width: 0; }
-/* Grobe Breitenverhältnisse der Original-Spalten erhalten */
-.vv-prose [class*='vc_col-sm-3'] { flex-grow: 1; }
-.vv-prose [class*='vc_col-sm-4'] { flex-grow: 2; }
-.vv-prose [class*='vc_col-sm-6'] { flex-grow: 3; }
-.vv-prose [class*='vc_col-sm-8'] { flex-grow: 4; }
+/* Breitenverhältnisse der Original-Spalten erhalten: das Zwölftel-Raster des
+   Baukastens eins zu eins als flex-grow. Basis 0, sonst schlägt die Basis die
+   Verhältnisse und eine 3er-Spalte wird so breit wie eine 9er.
+   ~= trifft die Klasse als ganzes Wort — *= würde bei 'vc_col-sm-1' auch
+   sm-10, sm-11 und sm-12 erwischen. */
+.vv-prose [class*='vc_col-sm-'] { flex: 1 1 0; min-width: min(100%, 240px); }
+.vv-prose [class~='vc_col-sm-1']  { flex-grow: 1; }
+.vv-prose [class~='vc_col-sm-2']  { flex-grow: 2; }
+.vv-prose [class~='vc_col-sm-3']  { flex-grow: 3; }
+.vv-prose [class~='vc_col-sm-4']  { flex-grow: 4; }
+.vv-prose [class~='vc_col-sm-5']  { flex-grow: 5; }
+.vv-prose [class~='vc_col-sm-6']  { flex-grow: 6; }
+.vv-prose [class~='vc_col-sm-7']  { flex-grow: 7; }
+.vv-prose [class~='vc_col-sm-8']  { flex-grow: 8; }
+.vv-prose [class~='vc_col-sm-9']  { flex-grow: 9; }
+.vv-prose [class~='vc_col-sm-10'] { flex-grow: 10; }
+.vv-prose [class~='vc_col-sm-11'] { flex-grow: 11; }
+.vv-prose [class~='vc_col-sm-12'] { flex-grow: 12; min-width: 100%; }
 .vv-prose .vc_column-inner { padding: 0; }
 .vv-prose .wpb_wrapper > :last-child { margin-bottom: 0; }
 /* Impreza-Sections: Innenabstände neutralisieren */
@@ -236,4 +248,75 @@
 /* --- Kleinkram --------------------------------------------- */
 .vv-prose .w-separator { height: var(--vv-space-5); }
 .vv-prose .w-image { margin: 1em 0; }
+.vv-prose .w-image:first-child { margin-top: 0; }
+.vv-prose .w-image-h img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--vv-radius-md);
+  box-shadow: var(--vv-shadow-sm);
+}
+/* Impreza legt Titel und Bildnachweis als w-image-meta unter das Bild. Ohne
+   Gestaltung standen beide wie normaler Fließtext da. */
+.vv-prose .w-image-meta { margin-top: var(--vv-space-2); line-height: 1.4; }
+.vv-prose .w-image-title { font-size: var(--vv-fs-sm); font-weight: 600; color: var(--vv-heading); }
+.vv-prose .w-image-description { font-size: var(--vv-fs-xs, 0.8125rem); color: var(--vv-text-muted); }
+/* Gestapelt auf dem Telefon wuerde ein Hochformat aus einer schmalen Spalte
+   (Portraits, Wappen) den halben Schirm fuellen. Auf Spaltenbreite deckeln. */
+@media (max-width: 600px) {
+  .vv-prose [class~='vc_col-sm-2'] .w-image,
+  .vv-prose [class~='vc_col-sm-3'] .w-image,
+  .vv-prose [class~='vc_col-sm-4'] .w-image { max-width: 240px; }
+}
 .vv-prose .wpb_text_column { margin-bottom: 1em; }
+
+
+/* --- Impreza-Bildbanner (w-ibanner) ------------------------- */
+/* Zwei davon stehen auf /verband für die Mitgliedsgemeinden. Ohne die
+   Gestaltung des Baukastens blieb von ihnen nur eine Überschrift übrig — das
+   Bild steckt als background-image in einem leeren div, der Verweis ist ein
+   leeres <a>, das die ganze Fläche abdecken soll. */
+.vv-prose .w-hwrapper { display: flex; flex-wrap: wrap; gap: var(--vv-space-4); }
+.vv-prose .w-hwrapper > * { flex: 1 1 240px; min-width: 0; }
+
+.vv-prose .w-ibanner {
+  position: relative;
+  border-radius: var(--vv-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--vv-shadow-sm);
+  isolation: isolate;
+}
+/* Das leere <a> deckt die Kachel ab — die Beschriftung trägt es im aria-label. */
+.vv-prose .w-ibanner > a { position: absolute; inset: 0; z-index: 3; }
+.vv-prose .w-ibanner > a:focus-visible { outline: 3px solid var(--vv-focus); outline-offset: -3px; }
+
+.vv-prose .w-ibanner-image {
+  aspect-ratio: 3 / 2;
+  background-size: cover;
+  background-position: center;
+  transition: transform var(--vv-dur-slow, 400ms) ease;
+}
+.vv-prose .w-ibanner.ratio_1x1 .w-ibanner-image { aspect-ratio: 1 / 1; }
+.vv-prose .w-ibanner.ratio_4x3 .w-ibanner-image { aspect-ratio: 4 / 3; }
+.vv-prose .w-ibanner.ratio_16x9 .w-ibanner-image { aspect-ratio: 16 / 9; }
+.vv-prose .w-ibanner:hover .w-ibanner-image { transform: scale(1.05); }
+
+.vv-prose .w-ibanner-content {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 2;
+  padding: var(--vv-space-5) var(--vv-space-4) var(--vv-space-3);
+  background: linear-gradient(to top, rgb(11 24 61 / 0.88), rgb(11 24 61 / 0));
+}
+.vv-prose .w-ibanner-title {
+  margin: 0;
+  color: var(--vv-white);
+  font-size: var(--vv-fs-md);
+  line-height: 1.25;
+}
+.vv-prose .w-ibanner-desc:empty { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vv-prose .w-ibanner-image { transition: none; }
+  .vv-prose .w-ibanner:hover .w-ibanner-image { transform: none; }
+}

@@ -334,6 +334,68 @@ function normalizeGalleries(html: string): string {
   return out;
 }
 
+/**
+ * Leere Baukasten-Spalten entfernen.
+ *
+ * Im Backend dienen schmale Spalten (meist vc_col-sm-3) haeufig nur als
+ * Einrueckung und enthalten nichts. Ohne die Gestaltung des Baukastens
+ * beanspruchen sie hier aber genauso viel Platz wie die Textspalte daneben —
+ * auf /verband wurde der Text dadurch in eine schmale Saeule am rechten Rand
+ * gequetscht. 34 Seiten waren betroffen.
+ *
+ * Als "leer" gilt eine Spalte nur ohne Text UND ohne alles, was etwas zeigen
+ * koennte: Bild, Verweis, Tabelle, Einbettung, Hintergrundbild. Im Zweifel
+ * bleibt sie stehen — eine zu viel ist harmloser als ein geloeschter Inhalt.
+ */
+function entferneLeereSpalten(html: string): string {
+  let out = html;
+
+  // Mehrere Durchlaeufe: wird eine innere Spalte entfernt, kann die aeussere
+  // dadurch selbst leer werden.
+  for (let runde = 0; runde < 3; runde++) {
+    const vorher = out;
+    let von = 0;
+
+    for (let schutz = 0; schutz < 500; schutz++) {
+      const treffer = /<div\b[^>]*\bvc_col-sm-\d+\b[^>]*>/i.exec(out.slice(von));
+      if (!treffer) break;
+      const start = von + treffer.index;
+      const inhaltAb = start + treffer[0].length;
+
+      // <div>-Tiefe zaehlen, bis der Block balanciert ist.
+      const tag = /<\/?div\b[^>]*>/gi;
+      tag.lastIndex = start;
+      let tiefe = 0;
+      let ende = -1;
+      let t: RegExpExecArray | null;
+      while ((t = tag.exec(out)) !== null) {
+        tiefe += t[0].startsWith('</') ? -1 : 1;
+        if (tiefe === 0) {
+          ende = t.index + t[0].length;
+          break;
+        }
+      }
+      if (ende < 0) break; // unbalanciert — Finger weg
+
+      const innen = out.slice(inhaltAb, ende);
+      const ohneText = innen.replace(/<[^>]+>/g, '').replace(/&nbsp;|\s/g, '') === '';
+      const ohneInhalt = !/<(img|iframe|video|audio|svg|input|table|hr|a)\b/i.test(innen);
+      const ohneBild = !/background-image\s*:/i.test(innen);
+
+      if (ohneText && ohneInhalt && ohneBild) {
+        out = out.slice(0, start) + out.slice(ende);
+        // von bleibt stehen: an derselben Stelle weitersuchen
+      } else {
+        von = inhaltAb; // in die Spalte hinein — verschachtelte Spalten pruefen
+      }
+    }
+
+    if (out === vorher) break;
+  }
+
+  return out;
+}
+
 function rewriteContentUrls(html: string, postSlugs: Set<string>): string {
   const wpHost = WP_BASE.replace(/\/wp-json.*$/, '');
   let out = normalizeGalleries(html);
@@ -367,7 +429,9 @@ function rewriteContentUrls(html: string, postSlugs: Set<string>): string {
       return `href="${path}"`;
     },
   );
-  return out;
+  // Zum Schluss: Erst jetzt — nach dem Entfernen von Skripten, Stylesheets
+  // und Kurzcode-Resten — steht fest, welche Spalte wirklich leer ist.
+  return entferneLeereSpalten(out);
 }
 
 /* ----------------------------------------------------------------
