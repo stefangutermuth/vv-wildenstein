@@ -194,7 +194,13 @@ function mapWPPostToNewsItem(
 ): NewsItem | null {
   const termSlugs = collectTermSlugs(p);
   const category = pickCategory(termSlugs);
-  const image = pickFeaturedImage(p) ?? pickInlineImage(p.content?.rendered ?? '');
+  /* Erst umschreiben, dann das Vorschaubild herausziehen: Sonst stammt es aus
+     dem Rohinhalt und behaelt Adressen der aufgeloesten Multisite — drei
+     Vorschaubilder in der Neuigkeitenliste zeigten auf
+     http://gruenhainichen.com/…, das dort 404 liefert und auf einer
+     https-Seite ohnehin blockiert wuerde. */
+  const inhalt = rewriteContentUrls(p.content?.rendered ?? '', postSlugs, downloadKarte);
+  const image = pickFeaturedImage(p) ?? pickInlineImage(inhalt);
 
   return {
     slug: p.slug,
@@ -206,7 +212,7 @@ function mapWPPostToNewsItem(
     featured: p.sticky ?? false,
     // Interne Detailseite statt Link auf die alte WP-Ansicht
     href: `/neuigkeiten/${p.slug}`,
-    contentHtml: rewriteContentUrls(p.content?.rendered ?? '', postSlugs, downloadKarte),
+    contentHtml: inhalt,
   };
 }
 
@@ -450,13 +456,50 @@ async function ladeDownloadKarte(): Promise<Map<string, string>> {
   return karte;
 }
 
+/**
+ * Bedienelemente entfernen, die im statischen Bau nichts tun.
+ *
+ * Impreza legt Filterformulare (w-filter) und das vw-events-Plugin eine
+ * Filterleiste in den Seiteninhalt. Beides braucht JavaScript und Endpunkte,
+ * die es hier nicht gibt: Auf /leben-freizeit/gesundheit stand eine Liste
+ * aller Gewerbekategorien zum Anklicken, ohne dass ein Klick etwas bewirkte,
+ * auf /leben-freizeit/veranstaltungen eine Leiste mit "Alle | Heute | Diese
+ * Woche" samt Monatsauswahl. Bedienelemente ohne Wirkung sind schlimmer als
+ * keine.
+ */
+function entferneToteBedienelemente(html: string): string {
+  let out = html;
+  // <form class="w-filter …"> … </form>
+  out = out.replace(/<form\b[^>]*\bw-filter\b[\s\S]*?<\/form>/gi, '');
+  // Filterleiste des Veranstaltungs-Plugins
+  for (let schutz = 0; schutz < 20; schutz++) {
+    const start = /<div\b[^>]*\bvw-events-filterbar\b[^>]*>/i.exec(out);
+    if (!start) break;
+    const tag = /<\/?div\b[^>]*>/gi;
+    tag.lastIndex = start.index;
+    let tiefe = 0;
+    let ende = -1;
+    let t: RegExpExecArray | null;
+    while ((t = tag.exec(out)) !== null) {
+      tiefe += t[0].startsWith('</') ? -1 : 1;
+      if (tiefe === 0) {
+        ende = t.index + t[0].length;
+        break;
+      }
+    }
+    if (ende < 0) break;
+    out = out.slice(0, start.index) + out.slice(ende);
+  }
+  return out;
+}
+
 function rewriteContentUrls(
   html: string,
   postSlugs: Set<string>,
   downloadKarte: Map<string, string> = new Map(),
 ): string {
   const wpHost = WP_BASE.replace(/\/wp-json.*$/, '');
-  let out = normalizeGalleries(html);
+  let out = entferneToteBedienelemente(normalizeGalleries(html));
   // Nicht aufgelöste WPBakery-Shortcodes, die als Roh-Text durchrutschen:
   //  - [vc_raw_html]…base64…[/vc_raw_html] / [vc_raw_js] (meist Redirect-/Script-Stubs)
   //  - verwaiste [vc_*]/[/vc_*]-Tags
@@ -491,6 +534,16 @@ function rewriteContentUrls(
   // Die echte Seiten-h1 liefert der Header — h1 im WP-Body → h2 (keine doppelte h1)
   out = out.replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2');
   out = out.replace(/https?:\/\/(?:www\.)?vv-wildenstein\.com\/wp-content/g, `${wpHost}/wp-content`);
+  /* Bilder und Dateien aus der aufgeloesten Multisite: Sie lagen unter
+     gruenhainichen.com/wp-content/uploads/sites/2/…, liegen aber auf dem
+     zentralen Server. Unter der alten Adresse antwortet heute die neue
+     statische Seite mit 404 — und weil die Verweise auf http lauten, haette
+     ein Browser sie auf einer https-Seite ohnehin blockiert. Betraf neun
+     eingebettete Bilder und eine PDF-Datei. */
+  out = out.replace(
+    /https?:\/\/(?:www\.)?(?:gruenhainichen\.com|boernichen\.de)\/wp-content/g,
+    `${wpHost}/wp-content`,
+  );
   out = out.replace(
     /href="https?:\/\/(?:www\.)?vv-wildenstein\.com(\/[^"]*)?"/g,
     (match, rawPath?: string) => {

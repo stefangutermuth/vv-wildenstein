@@ -28,7 +28,7 @@ const categoryLabel: Record<string, string> = {
 };
 const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
 ---
-<BaseLayout title={`${item.title} — Verwaltungsverband Wildenstein`} description={item.excerpt.slice(0, 160)}>
+<BaseLayout title={`${item.title} — Verwaltungsverband Wildenstein`} description={(item.excerpt || "").trim().length >= 40 ? item.excerpt.slice(0, 160) : `${item.title} — Verwaltungsverband Wildenstein, Grünhainichen und Börnichen/Erzgeb.`}>
   <VvPageHeader
     title={item.title}
     breadcrumb={[{ title: 'Neuigkeiten', path: '/neuigkeiten' }]}

@@ -27,7 +27,7 @@ const fmtTime = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-d
 const dayKey = (d: Date) => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: TZ }).format(d);
 const sameDay = item.endDate ? dayKey(item.endDate) === dayKey(item.startDate) : false;
 ---
-<BaseLayout title={`${item.title} — Verwaltungsverband Wildenstein`} description={item.teaser}>
+<BaseLayout title={`${item.title} — Verwaltungsverband Wildenstein`} description={(item.teaser || "").trim().length >= 40 ? item.teaser : `${item.title} — Verwaltungsverband Wildenstein, Grünhainichen und Börnichen/Erzgeb.`}>
   <VvPageHeader
     title={item.title}
     breadcrumb={[{ title: 'Veranstaltungen', path: '/veranstaltungen' }]}

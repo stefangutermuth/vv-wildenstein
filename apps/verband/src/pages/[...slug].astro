@@ -287,10 +287,26 @@ const nurUeberschriften =
   (hubTiles.length > 0 || gremien.length > 0) &&
   contentText.length > 0 &&
   textOhneUeberschriften.length < 40;
+/* Kurzbeschreibung fuer Suchmaschinen und Vorschauen. Bisher stand hier nur
+   der Seitentitel — bei 170 Seiten waren das unter 20 Zeichen, also nichts
+   Brauchbares. Jetzt der Anfang des Inhalts, sonst die Anschrift aus den
+   Kontaktdaten, sonst ein Satz aus dem Titel. */
+const beschreibung = (() => {
+  const ausText = contentText.replace(/\s+/g, ' ').trim();
+  if (ausText.length >= 60) {
+    const kurz = ausText.slice(0, 155);
+    return (kurz.length < ausText.length ? kurz.replace(/\s+\S*$/, '') + ' …' : kurz);
+  }
+  const k = page.kontakt;
+  const ort = [k?.strasse_hausnummer, k?.plz_ort].filter(Boolean).join(', ');
+  if (ort) return `${page.title} — ${ort}. Verwaltungsverband Wildenstein.`;
+  return `${page.title} beim Verwaltungsverband Wildenstein — Grünhainichen und Börnichen/Erzgeb.`;
+})();
+
 const parentPath = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].path : '/';
 const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.length - 1].title : 'Startseite';
 ---
-<BaseLayout title={`${page.title} — Verwaltungsverband Wildenstein`} description={page.title}>
+<BaseLayout title={`${page.title} — Verwaltungsverband Wildenstein`} description={beschreibung}>
   <VvPageHeader title={page.title} breadcrumb={page.breadcrumb} bild={kopfBild} />
   <div class="vv-pagebody">
     <div class="vv-container">
