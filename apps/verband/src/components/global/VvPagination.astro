@@ -33,19 +33,26 @@ function seitenfolge(a: number, g: number): Array<number | '…'> {
   return out;
 }
 const folge = seitenfolge(aktuell, gesamt);
+
+/* Am Anfang bzw. Ende gibt es keine Nachbarseite. aria-disabled allein
+   genuegt nicht: Der Verweis blieb klickbar und zeigte auf /seite/14/, die es
+   nicht gibt. Ohne Ziel wird aus dem Verweis ein <span>. */
+const hatZurueck = aktuell > 1;
+const hatVor = aktuell < gesamt;
 ---
 {gesamt > 1 && (
   <nav class="vv-pager" aria-label={label}>
-    <a
-      class="vv-pager__step"
-      href={href(aktuell - 1)}
-      rel="prev"
-      aria-disabled={aktuell <= 1 ? 'true' : undefined}
-      tabindex={aktuell <= 1 ? -1 : undefined}
-    >
-      <VvIcon name="arrow-right" size={16} class="vv-pager__icon vv-pager__icon--back" />
-      <span>Neuere</span>
-    </a>
+    {hatZurueck ? (
+      <a class="vv-pager__step" href={href(aktuell - 1)} rel="prev">
+        <VvIcon name="arrow-right" size={16} class="vv-pager__icon vv-pager__icon--back" />
+        <span>Neuere</span>
+      </a>
+    ) : (
+      <span class="vv-pager__step is-aus" aria-hidden="true">
+        <VvIcon name="arrow-right" size={16} class="vv-pager__icon vv-pager__icon--back" />
+        <span>Neuere</span>
+      </span>
+    )}
 
     <ol class="vv-pager__list">
       {folge.map((n) =>
@@ -65,20 +72,22 @@ const folge = seitenfolge(aktuell, gesamt);
       )}
     </ol>
 
-    <a
-      class="vv-pager__step"
-      href={href(aktuell + 1)}
-      rel="next"
-      aria-disabled={aktuell >= gesamt ? 'true' : undefined}
-      tabindex={aktuell >= gesamt ? -1 : undefined}
-    >
-      <span>Ältere</span>
-      <VvIcon name="arrow-right" size={16} class="vv-pager__icon" />
-    </a>
+    {hatVor ? (
+      <a class="vv-pager__step" href={href(aktuell + 1)} rel="next">
+        <span>Ältere</span>
+        <VvIcon name="arrow-right" size={16} class="vv-pager__icon" />
+      </a>
+    ) : (
+      <span class="vv-pager__step is-aus" aria-hidden="true">
+        <span>Ältere</span>
+        <VvIcon name="arrow-right" size={16} class="vv-pager__icon" />
+      </span>
+    )}
   </nav>
 )}
 
 <style>
+  .vv-pager__step.is-aus { opacity: 0.35; pointer-events: none; }
   .vv-pager {
     display: flex;
     align-items: center;

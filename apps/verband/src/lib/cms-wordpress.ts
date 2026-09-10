@@ -177,10 +177,17 @@ export async function fetchWordPressNews(): Promise<NewsItem[]> {
     order: 'desc',
   })).map((p) => (p.slug.includes('%') ? { ...p, slug: entschaerfeSlug(p.slug) } : p));
   const postSlugs = await ensurePostSlugs();
-  return posts.map((p) => mapWPPostToNewsItem(p, postSlugs)).filter((n): n is NewsItem => n !== null);
+  const downloadKarte = await ensureDownloadKarte();
+  return posts
+    .map((p) => mapWPPostToNewsItem(p, postSlugs, downloadKarte))
+    .filter((n): n is NewsItem => n !== null);
 }
 
-function mapWPPostToNewsItem(p: WPPost, postSlugs: Set<string>): NewsItem | null {
+function mapWPPostToNewsItem(
+  p: WPPost,
+  postSlugs: Set<string>,
+  downloadKarte: Map<string, string>,
+): NewsItem | null {
   const termSlugs = collectTermSlugs(p);
   const category = pickCategory(termSlugs);
   const image = pickFeaturedImage(p) ?? pickInlineImage(p.content?.rendered ?? '');
@@ -195,7 +202,7 @@ function mapWPPostToNewsItem(p: WPPost, postSlugs: Set<string>): NewsItem | null
     featured: p.sticky ?? false,
     // Interne Detailseite statt Link auf die alte WP-Ansicht
     href: `/neuigkeiten/${p.slug}`,
-    contentHtml: rewriteContentUrls(p.content?.rendered ?? '', postSlugs),
+    contentHtml: rewriteContentUrls(p.content?.rendered ?? '', postSlugs, downloadKarte),
   };
 }
 
@@ -396,7 +403,54 @@ function entferneLeereSpalten(html: string): string {
   return out;
 }
 
-function rewriteContentUrls(html: string, postSlugs: Set<string>): string {
+/**
+ * Zuordnung /download/<kuerzel>/ → echte Datei-Adresse.
+ *
+ * Der Download-Manager legt fuer jede Datei eine eigene WordPress-Seite an.
+ * Die bauen wir nicht — 65 Verweise auf Formulare und Satzungen liefen
+ * dadurch ins Leere, allein 14 auf der Seite mit den Kita-Formularen. Der
+ * mu-Plugin-Endpunkt vvw/v1/downloads-alle kennt zu jeder dieser Seiten die
+ * Datei selbst; darauf zeigen die Verweise jetzt direkt.
+ */
+let downloadKartePromise: Promise<Map<string, string>> | null = null;
+function ensureDownloadKarte(): Promise<Map<string, string>> {
+  if (!downloadKartePromise) downloadKartePromise = ladeDownloadKarte();
+  return downloadKartePromise;
+}
+
+async function ladeDownloadKarte(): Promise<Map<string, string>> {
+  const karte = new Map<string, string>();
+  const basis = WP_BASE.replace(/\/wp\/v2\/?$/, '/vvw/v1');
+  const abbruch = new AbortController();
+  const wecker = setTimeout(() => abbruch.abort(), 20_000);
+  try {
+    const res = await fetch(`${basis}/downloads-alle`, {
+      headers: { Accept: 'application/json', ...buildAuthHeader() },
+      signal: abbruch.signal,
+    });
+    if (!res.ok) throw new Error(`vvw/v1/downloads-alle ${res.status}`);
+    const daten = (await res.json()) as {
+      gruppen?: Array<{ dateien?: Array<{ url?: string; seite?: string }> }>;
+    };
+    for (const g of daten.gruppen ?? []) {
+      for (const f of g.dateien ?? []) {
+        const kuerzel = (f.seite ?? '').match(/\/download\/([^/]+)\/?$/)?.[1];
+        if (kuerzel && f.url) karte.set(decodeURIComponent(kuerzel), f.url);
+      }
+    }
+  } catch (err) {
+    console.warn('[verband] Download-Zuordnung nicht abrufbar:', err);
+  } finally {
+    clearTimeout(wecker);
+  }
+  return karte;
+}
+
+function rewriteContentUrls(
+  html: string,
+  postSlugs: Set<string>,
+  downloadKarte: Map<string, string> = new Map(),
+): string {
   const wpHost = WP_BASE.replace(/\/wp-json.*$/, '');
   let out = normalizeGalleries(html);
   // Nicht aufgelöste WPBakery-Shortcodes, die als Roh-Text durchrutschen:
@@ -433,8 +487,18 @@ function rewriteContentUrls(html: string, postSlugs: Set<string>): string {
       const path = rawPath ?? '/';
       // wp-content/wp-json/wp-login/wp-admin niemals relativieren
       if (/^\/wp-/.test(path)) return match;
+      /* Alter Permalink-Präfix /blog/… aus einer früheren WordPress-Struktur.
+         /blog/amter/bauamt-liegenschaften ist heute /amter/bauamt-liegenschaften. */
+      const ohneBlog = path.replace(/^\/blog(?=\/)/, '');
+
+      // Download-Manager-Seiten gibt es hier nicht → direkt auf die Datei
+      const dl = path.match(/^\/download\/([^/?#]+)\/?$/i)?.[1];
+      if (dl) {
+        const datei = downloadKarte.get(decodeURIComponent(dl)) ?? downloadKarte.get(dl);
+        if (datei) return `href="${datei}"`;
+      }
       // erster Pfad-Teil ohne Slashes/Anker/Query
-      const first = path.replace(/^\//, '').split(/[/?#]/)[0];
+      const first = ohneBlog.replace(/^\//, '').split(/[/?#]/)[0];
       if (first && LINK_REMAP[first] !== undefined) return `href="${LINK_REMAP[first]}"`;
 
       /* Beitrags-Permalinks (/{slug}/) → interne News-Detailseite.
@@ -450,9 +514,16 @@ function rewriteContentUrls(html: string, postSlugs: Set<string>): string {
       // Prozent-kodierte Pfade, die zu keiner gebauten Seite führen: absolut
       // lassen, statt auf einen Pfad zu zeigen, den es hier nicht gibt.
       if (path.includes('%')) return match;
-      return `href="${path}"`;
+      return `href="${ohneBlog}"`;
     },
   );
+  /* Verweise auf Download-Seiten, die schon relativ im Inhalt stehen (ohne
+     Domain) — die Regel oben greift nur bei absoluten Adressen. */
+  out = out.replace(/href="\/download\/([^"/?#]+)\/?"/gi, (match, kuerzel: string) => {
+    const datei = downloadKarte.get(decodeURIComponent(kuerzel)) ?? downloadKarte.get(kuerzel);
+    return datei ? `href="${datei}"` : match;
+  });
+
   // Zum Schluss: Erst jetzt — nach dem Entfernen von Skripten, Stylesheets
   // und Kurzcode-Resten — steht fest, welche Spalte wirklich leer ist.
   return entferneLeereSpalten(out);
@@ -661,6 +732,7 @@ export async function fetchWordPressPages(): Promise<WPPageItem[]> {
   }
   const raw = (await res.json()) as WPPageRaw[];
   const postSlugs = await ensurePostSlugs();
+  const downloadKarte = await ensureDownloadKarte();
   const byId = new Map(raw.map((p) => [p.id, p]));
 
   function chain(p: WPPageRaw): WPPageRaw[] {
@@ -689,7 +761,7 @@ export async function fetchWordPressPages(): Promise<WPPageItem[]> {
         hadHubGrid: stripped.had,
         gridTiles: kachelZieleUmschreiben(stripped.tiles, postSlugs),
         title: decodeEntities(stripHtml(p.title.rendered).trim()),
-        contentHtml: rewriteContentUrls(stripped.html, postSlugs),
+        contentHtml: rewriteContentUrls(stripped.html, postSlugs, downloadKarte),
         breadcrumb: parents.slice(0, -1).map((x) => ({
           title: decodeEntities(stripHtml(x.title.rendered).trim()),
           path: '/' + chain(x).map((y) => y.slug).join('/'),
@@ -728,6 +800,7 @@ export function fetchWordPressCptPages(): Promise<WPPageItem[]> {
 async function ladeCptPages(): Promise<WPPageItem[]> {
   const out: WPPageItem[] = [];
   const postSlugs = await ensurePostSlugs();
+  const downloadKarte = await ensureDownloadKarte();
   for (const src of CPT_SOURCES) {
     // Bis zu 2 Seiten à 100 — deckt alle aktuellen Bestände (max 60)
     for (let pageNo = 1; pageNo <= 2; pageNo++) {
@@ -763,7 +836,7 @@ async function ladeCptPages(): Promise<WPPageItem[]> {
           hadHubGrid: stripped.had,
           gridTiles: kachelZieleUmschreiben(stripped.tiles, postSlugs),
           title: decodeEntities(stripHtml(p.title.rendered).trim()),
-          contentHtml: rewriteContentUrls(stripped.html, postSlugs),
+          contentHtml: rewriteContentUrls(stripped.html, postSlugs, downloadKarte),
           breadcrumb: [src.crumb],
           kontakt: kontakt && Object.keys(kontakt).length ? kontakt : undefined,
           gallery: Array.isArray(p.vv_gallery) && p.vv_gallery.length ? p.vv_gallery : undefined,
@@ -926,16 +999,21 @@ export async function fetchWordPressEvents(): Promise<EventItem[]> {
   }
   const events = (await res.json()) as VWEvent[];
   const postSlugs = await ensurePostSlugs();
+  const downloadKarte = await ensureDownloadKarte();
 
   const now = new Date();
   return events
-    .map((ev) => mapVWEvent(ev, postSlugs))
+    .map((ev) => mapVWEvent(ev, postSlugs, downloadKarte))
     .filter((e): e is EventItem => e !== null)
     .filter((e) => (e.endDate ?? e.startDate).valueOf() >= now.valueOf())
     .sort((a, b) => a.startDate.valueOf() - b.startDate.valueOf());
 }
 
-function mapVWEvent(ev: VWEvent, postSlugs: Set<string>): EventItem | null {
+function mapVWEvent(
+  ev: VWEvent,
+  postSlugs: Set<string>,
+  downloadKarte: Map<string, string>,
+): EventItem | null {
   if (!ev.start) return null;
   const startDate = new Date(ev.start);
   if (Number.isNaN(startDate.valueOf())) return null;
@@ -952,7 +1030,7 @@ function mapVWEvent(ev: VWEvent, postSlugs: Set<string>): EventItem | null {
     image: ev.image?.url,
     // Interne Detailseite (gleicher Pfad wie das Original-Permalink)
     href: `/veranstaltungen/${ev.slug}`,
-    contentHtml: rewriteContentUrls(ev.description_html ?? '', postSlugs),
+    contentHtml: rewriteContentUrls(ev.description_html ?? '', postSlugs, downloadKarte),
     organizer: ev.organizer?.name || undefined,
     allDay: ev.all_day || undefined,
   };
