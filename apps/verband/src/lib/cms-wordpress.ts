@@ -1645,3 +1645,267 @@ function baueBeitragsliste(beitraege: KatBeitrag[]): string {
     .join('');
   return `<ul class="vv-beitragsliste">${zeilen}</ul>`;
 }
+
+/* ================================================================
+   Foerderbescheide (Seite /verband/ausschreibungen)
+   ================================================================ */
+
+export interface Foerdermassnahme {
+  titel: string;
+  gesamt?: string;   // Gesamtausgaben, z. B. „32.644,52 Euro"
+  satz?: string;     // Foerdersatz, z. B. „60"
+  betrag?: string;   // Foerderbetrag, z. B. „19.586,71 Euro"
+  textHtml: string;  // Beschreibung ohne die beiden Geldsaetze
+}
+
+export interface Foerderblock {
+  logos: { src: string; alt: string }[];
+  /* Abschnitte desselben Foerderprogramms teilen ein Logoband. Die Gruppe
+     sagt der Anzeige, wo das Band wiederholt wuerde — dort bleibt es weg. */
+  logoGruppe: number;
+  grundlage?: string;              // „Folgende … wurde bewilligt:"
+  massnahmen: Foerdermassnahme[];
+  anmerkungHtml?: string;
+}
+
+export interface Foerderuebersicht {
+  bloecke: Foerderblock[];
+  hinweise: string[];
+}
+
+/**
+ * Alternativtexte fuer die Foerderlogos.
+ *
+ * Im WordPress stehen alle fuenf ohne alt-Attribut — fuer einen Screenreader
+ * war der halbe Seitenkopf dadurch stumm. Zuordnung ueber den Dateinamen,
+ * die Texte stammen von den Logos selbst.
+ */
+const FOERDER_LOGOS: { muster: RegExp; alt: string }[] = [
+  { muster: /Logo-EU_NEU/i,   alt: 'Kofinanziert von der Europäischen Union' },
+  { muster: /SMUL_LO_EPLR/i,  alt: 'EPLR – Entwicklungsprogramm für den ländlichen Raum im Freistaat Sachsen 2014–2020, Europäischer Landwirtschaftsfonds für die Entwicklung des ländlichen Raums' },
+  { muster: /LEADER-\d+x\d+/, alt: 'Verein zur Entwicklung der Erzgebirgsregion Flöha- und Zschopautal e. V.' },
+  { muster: /Leader/i,        alt: 'LEADER' },
+];
+
+function logoAlt(src: string): string {
+  const name = src.split('/').pop() ?? '';
+  return FOERDER_LOGOS.find((l) => l.muster.test(name))?.alt ?? '';
+}
+
+/** Äußere Auszeichnungs-Hüllen abschälen, die WPBakery um ganze Absätze legt. */
+function schaeleHuellen(html: string): string {
+  let s = html.trim();
+  for (let i = 0; i < 6; i++) {
+    const m = /^<(span|b|strong|i|em|u)\b[^>]*>([\s\S]*)<\/\1>$/i.exec(s);
+    if (!m) break;
+    // Nur abschälen, wenn die Hülle wirklich den ganzen Absatz umfasst.
+    if (/<\/(span|b|strong|i|em|u)>/i.test(m[2]) && m[2].split(`</${m[1]}>`).length > 1) {
+      // Mehrere gleichnamige Enden: Hülle ist nicht eindeutig — Finger weg.
+      const tag = new RegExp(`</?${m[1]}\\b[^>]*>`, 'gi');
+      let tiefe = 0;
+      let heil = true;
+      let t: RegExpExecArray | null;
+      const ganz = s;
+      while ((t = tag.exec(ganz)) !== null) {
+        tiefe += t[0].startsWith('</') ? -1 : 1;
+        if (tiefe === 0 && t.index + t[0].length < ganz.length) { heil = false; break; }
+      }
+      if (!heil) break;
+    }
+    s = m[2].trim();
+  }
+  return s;
+}
+
+const nurText = (html: string) =>
+  decodeEntities(html.replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+
+/**
+ * Liest die Foerderbescheide aus dem WordPress-Absatzsalat in eine Struktur.
+ *
+ * Die Seite kam als einziger Textblock: fuenf Logos ohne Alternativtext, die
+ * Rechtsgrundlagen als fettes Kursiv mitten im Fliesstext, jede Massnahme ein
+ * Absatz, der mit fettem Titel beginnt und die beiden Geldbetraege im Satz
+ * versteckt. Zwoelf Bewilligungen sahen dadurch aus wie eine Textwueste.
+ *
+ * Erkannt wird ueber die Form der Absaetze, nicht ueber ihren Wortlaut:
+ *   - Absatz nur mit Bildern        → Logoband, beginnt einen neuen Block
+ *   - fett ueber den ganzen Absatz  → Rechtsgrundlage des Blocks
+ *   - fetter Anfang + Resttext      → einzelne Massnahme
+ *   - „Anmerkung:"                  → Fussnote des Blocks
+ *   - schlichter Satz               → Hinweis am Seitenende
+ *
+ * Gibt null zurueck, sobald die Seite nicht diesem Muster entspricht. Dann
+ * bleibt der gewohnte Fliesstext stehen — eine Umstellung im Backend kann die
+ * Seite so nicht leer werden lassen.
+ */
+export function leseFoerderbloecke(html: string): Foerderuebersicht | null {
+  const absaetze = [...html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)].map((m) => m[1]);
+  if (absaetze.length < 4) return null;
+
+  const bloecke: Foerderblock[] = [];
+  const hinweise: string[] = [];
+  let aktuell: Foerderblock | null = null;
+  let gruppe = 0;
+  const neuerBlock = (eigeneGruppe = true) => {
+    if (eigeneGruppe) gruppe++;
+    aktuell = { logos: [], logoGruppe: gruppe, massnahmen: [] };
+    bloecke.push(aktuell);
+    return aktuell;
+  };
+
+  for (const roh of absaetze) {
+    const bilder = [...roh.matchAll(/<img\b[^>]*\bsrc="([^"]+)"[^>]*>/gi)].map((m) => m[1]);
+    const text = nurText(roh);
+
+    // Leerabsatz (&nbsp;-Platzhalter aus dem Baukasten)
+    if (!text && bilder.length === 0) continue;
+
+    // Logoband: beginnt einen neuen Foerderabschnitt
+    if (!text && bilder.length > 0) {
+      const b = neuerBlock();
+      b.logos = bilder.map((src) => ({ src, alt: logoAlt(src) }));
+      continue;
+    }
+
+    const kern = schaeleHuellen(roh);
+    const fett = /^<(b|strong)\b[^>]*>([\s\S]*?)<\/\1>/i.exec(kern);
+    const rest = fett ? kern.slice(fett[0].length) : '';
+    const restText = nurText(rest);
+
+    /* Rechtsgrundlage. Erkannt am Doppelpunkt am Ende, nicht an der
+       Fett-Auszeichnung: diese Absaetze sind im Baukasten komplett in
+       <b><strong><i><em> gehuellt, und genau die Huelle schaelt
+       schaeleHuellen() ab. Eine Massnahme endet nie auf einem Doppelpunkt. */
+    if (/:\s*$/.test(text) && text.length > 60) {
+      const b = aktuell ?? neuerBlock();
+      if (b.grundlage && b.massnahmen.length > 0) {
+        // Zweite Rechtsgrundlage ohne eigenes Logoband → eigener Abschnitt
+        // im selben Foerderprogramm.
+        const n = neuerBlock(false);
+        n.logos = [...b.logos];
+        n.grundlage = text;
+      } else {
+        b.grundlage = text;
+      }
+      continue;
+    }
+
+    // Fussnote des Abschnitts
+    if (/^Anmerkung\b/i.test(text)) {
+      const b = aktuell ?? neuerBlock();
+      b.anmerkungHtml = kern.replace(/^<em><u>\s*Anmerkung:\s*<\/u><\/em>\s*/i, '').trim();
+      continue;
+    }
+
+    // Fetter Titel + Beschreibung → Massnahme
+    if (fett && restText.length >= 20) {
+      const titel = nurText(fett[2]).replace(/[,\s]+$/, '');
+      const gesamt = /Gesamtausgaben\s+in\s+Höhe\s+von\s+([\d.,]+)\s*Euro/i.exec(restText)?.[1];
+      const foerder = /Fördersatz\s+von\s+(\d+)\s*%\s*beträgt\s+([\d.,]+)\s*Euro/i.exec(restText);
+      // Die beiden Geldsaetze stehen oben als Kennzahlen — im Text sind sie
+      // dann doppelt und verdecken, worum es bei der Massnahme eigentlich geht.
+      const textHtml = rest
+        .replace(
+          /^\s*(?:<[^>]+>\s*)*mit\s+Gesamtausgaben\s+in\s+Höhe\s+von\s+[\d.,]+\s*Euro\.\s*Der\s+Fördersatz\s+von\s+\d+\s*%\s*beträgt\s+[\d.,]+\s*Euro\.\s*/i,
+          '',
+        )
+        .trim();
+      (aktuell ?? neuerBlock()).massnahmen.push({
+        titel,
+        gesamt: gesamt ? `${gesamt} Euro` : undefined,
+        satz: foerder?.[1],
+        betrag: foerder ? `${foerder[2]} Euro` : undefined,
+        textHtml: textHtml || rest.trim(),
+      });
+      continue;
+    }
+
+    // Schlichter Satz ohne Auszeichnung → Hinweis unter die Seite
+    if (text.length > 0 && text.length < 200) {
+      hinweise.push(text);
+      continue;
+    }
+
+    // Etwas Unerwartetes — Struktur nicht verlaesslich, Fliesstext behalten.
+    return null;
+  }
+
+  const massnahmen = bloecke.reduce((n, b) => n + b.massnahmen.length, 0);
+  if (massnahmen < 2) return null;
+
+  /* Freistehende Logos ohne eigenen Inhalt: am Seitenende hing das
+     LEADER-Zeichen allein unter dem letzten Satz. Es gehoert zum Programm des
+     letzten Abschnitts — also an dessen ganze Logo-Gruppe, nicht nur an den
+     letzten Absatz. */
+  for (let i = bloecke.length - 1; i > 0; i--) {
+    const b = bloecke[i];
+    if (b.massnahmen.length > 0 || b.grundlage || b.logos.length === 0) continue;
+    const ziel = bloecke.slice(0, i).reverse().find((v) => v.massnahmen.length > 0);
+    if (ziel) {
+      for (const v of bloecke.filter((x) => x.logoGruppe === ziel.logoGruppe)) {
+        for (const l of b.logos) {
+          if (!v.logos.some((x) => x.alt === l.alt)) v.logos.push(l);
+        }
+      }
+    }
+    bloecke.splice(i, 1);
+  }
+
+  return { bloecke: bloecke.filter((b) => b.massnahmen.length > 0), hinweise };
+}
+
+export interface Vergabeverfahren {
+  titel: string;
+  datum?: string;
+  textHtml: string;
+}
+
+let vergabenPromise: Promise<Vergabeverfahren[]> | null = null;
+
+/**
+ * Laufende Vergabeverfahren aus dem CPT „ausschreibungen".
+ *
+ * Auf der alten Seite stand ueber den Foerderbescheiden ein Impreza-Gitter
+ * genau dieses Inhaltstyps (mit no_items_action="hide_grid", deshalb war dort
+ * nichts zu sehen: veroeffentlicht ist derzeit kein einziger Eintrag). Ohne
+ * diesen Abruf wuerde eine kuenftige Vergabe auf der neuen Seite still
+ * fehlen — sie erscheint jetzt oben, sobald die Verwaltung eine einstellt.
+ */
+export function fetchAusschreibungen(): Promise<Vergabeverfahren[]> {
+  if (!vergabenPromise) vergabenPromise = holeAusschreibungen();
+  return vergabenPromise;
+}
+
+async function holeAusschreibungen(): Promise<Vergabeverfahren[]> {
+  const abbruch = new AbortController();
+  const wecker = setTimeout(() => abbruch.abort(), 20_000);
+  try {
+    const url = new URL(`${WP_BASE}/ausschreibungen`);
+    url.searchParams.set('per_page', '20');
+    url.searchParams.set('orderby', 'date');
+    url.searchParams.set('order', 'desc');
+    url.searchParams.set('_fields', 'title,date,content,excerpt');
+    const res = await fetch(url.toString(), {
+      headers: { Accept: 'application/json', ...buildAuthHeader() },
+      signal: abbruch.signal,
+    });
+    if (!res.ok) return [];
+    const rohe = (await res.json()) as Array<{
+      title?: { rendered?: string };
+      date?: string;
+      content?: { rendered?: string };
+      excerpt?: { rendered?: string };
+    }>;
+    return rohe.map((r) => ({
+      titel: decodeEntities(r.title?.rendered ?? '').trim(),
+      datum: r.date,
+      textHtml: (r.content?.rendered ?? r.excerpt?.rendered ?? '').trim(),
+    })).filter((v) => v.titel);
+  } catch (err) {
+    console.warn('[verband] Vergabeverfahren nicht abrufbar:', err);
+    return [];
+  } finally {
+    clearTimeout(wecker);
+  }
+}

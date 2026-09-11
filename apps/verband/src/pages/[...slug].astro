@@ -19,6 +19,7 @@ import VvRathauskarte from '../components/global/VvRathauskarte.astro';
 import VvKontaktkarte from '../components/global/VvKontaktkarte.astro';
 import VvSprungmenu from '../components/global/VvSprungmenu.astro';
 import VvZeitenkarte from '../components/global/VvZeitenkarte.astro';
+import VvFoerderListe from '../components/global/VvFoerderListe.astro';
 import {
   fetchWordPressPages,
   fetchWordPressCptPages,
@@ -29,6 +30,8 @@ import {
   fetchGremien,
   loeseBeitragslisten,
   beitragslisteFuerKuerzel,
+  leseFoerderbloecke,
+  fetchAusschreibungen,
   type HubSources,
 } from '../lib/cms-wordpress';
 
@@ -225,7 +228,8 @@ const contentText = inhaltHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').tri
 // Liste steht über dem Text. Lohnt sich erst ab einer gewissen Länge —
 // bei drei Absätzen wäre es nur Beiwerk.
 const { html: inhaltMitMarken, marken } = baueSprungmarken(inhaltHtml);
-const zeigeSprungmenu = marken.length >= 4 && contentText.length > 2500;
+const zeigeSprungmenu =
+  marken.length >= 4 && contentText.length > 2500 && page.path !== '/verband/ausschreibungen';
 
 // Auf der Verwaltungsseite steht neben der Ämterliste der Rathaus-Kasten:
 // Öffnungszeiten und Hinweise standen bisher als Fließtext UNTER allen
@@ -269,6 +273,16 @@ const kopfBild = (() => {
 
 const istWirtschaft = page.path === '/wirtschaft';
 const istVerwaltung = page.path === '/verwaltung';
+
+/* Die Ausschreibungsseite ist eine Liste von Foerderbescheiden, kam aus dem
+   Baukasten aber als ein einziger Textblock: neun Bewilligungen ohne
+   Gliederung, die Betraege im Satz versteckt, fuenf Logos ohne
+   Alternativtext. Erkennt der Leser die Struktur nicht wieder — etwa weil die
+   Redaktion die Seite umbaut —, gibt er null zurueck und der gewohnte
+   Fliesstext bleibt stehen. */
+const foerderUebersicht =
+  page.path === '/verband/ausschreibungen' ? leseFoerderbloecke(inhaltHtml) : null;
+const vergaben = foerderUebersicht ? await fetchAusschreibungen() : [];
 const zeigeRathaus = istVerwaltung && contentText.length > 40;
 const isEmpty =
   hubTiles.length === 0 && contentText.length < 40 && !page.kontakt && !page.gallery?.length;
@@ -386,7 +400,9 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
                 ? <VvGewerbeListe tiles={restKacheln} />
                 : <VvHubGrid tiles={restKacheln} icon={tileIcon} titel={istVersammlung ? 'Bekanntmachungen' : undefined} />
           )}
-          {isEmpty ? (
+          {foerderUebersicht ? (
+            <VvFoerderListe uebersicht={foerderUebersicht} vergaben={vergaben} />
+          ) : isEmpty ? (
             <div class="vv-emptyhub">
               <p>Für diese Seite liegen derzeit keine eigenen Inhalte vor.</p>
               <a class="vv-emptyhub__link" href={parentPath}>← Zurück zu {parentTitle}</a>

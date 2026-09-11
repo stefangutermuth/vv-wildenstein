@@ -1,0 +1,320 @@
+---
+/**
+ * Ausschreibungen und Förderbescheide.
+ *
+ * Der Inhalt kommt unverändert aus der WordPress-Seite — er stand dort aber
+ * als ein einziger Textblock: fünf Logos ohne Alternativtext, die
+ * Rechtsgrundlagen als fettes Kursiv im Fließtext, jede Bewilligung ein
+ * Absatz, der mit fettem Titel beginnt und die beiden Geldbeträge im Satz
+ * versteckt. Neun Bewilligungen sahen dadurch gleich aus.
+ *
+ * Hier wird daraus je Förderprogramm ein Abschnitt mit Logoband und
+ * Rechtsgrundlage, darin jede Maßnahme als eigene Karte mit Titel,
+ * Gesamtausgaben und Förderbetrag auf einen Blick. Kein Satz fällt weg.
+ */
+import VvIcon from '../primitives/VvIcon.astro';
+import type { Foerderuebersicht, Vergabeverfahren } from '../../lib/cms-wordpress';
+
+interface Props {
+  uebersicht: Foerderuebersicht;
+  vergaben?: Vergabeverfahren[];
+}
+const { uebersicht, vergaben = [] } = Astro.props;
+const { bloecke, hinweise } = uebersicht;
+
+const fmt = new Intl.DateTimeFormat('de-DE', {
+  day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin',
+});
+const datum = (iso?: string) => {
+  if (!iso) return undefined;
+  const d = new Date(iso);
+  return Number.isNaN(d.valueOf()) ? undefined : fmt.format(d);
+};
+
+/**
+ * Kurzer Titel für den Abschnitt.
+ *
+ * Die Rechtsgrundlage ist ein Satz von rund 270 Zeichen — als Überschrift
+ * unbrauchbar, als Angabe aber unverzichtbar. Sie bleibt darunter vollständig
+ * stehen; über ihr steht das, was die Abschnitte unterscheidet: die
+ * Richtlinie und, wo angegeben, das Veröffentlichungsdatum.
+ */
+function kurztitel(grundlage: string | undefined, nr: number): string {
+  if (!grundlage) return `Bewilligungen ${nr}`;
+  const rl = /RL\s+LEADER\s*\/\s*(\d{4})/i.exec(grundlage)?.[1];
+  const veroeffentlicht = /veröffentlicht\s+am\s+([\d.]+)/i.exec(grundlage)?.[1];
+  const basis = rl ? `Bewilligungen nach RL LEADER/${rl}` : 'Bewilligungen';
+  return veroeffentlicht ? `${basis} — veröffentlicht am ${veroeffentlicht}` : basis;
+}
+
+const anker = (t: string) =>
+  t.toLowerCase()
+    .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+---
+<div class="vv-foerder">
+
+  {/* Laufende Vergabeverfahren. Auf der alten Seite stand hier ein Gitter des
+      Inhaltstyps „ausschreibungen"; veröffentlicht ist derzeit keines. Der
+      Hinweis sagt das offen, statt die Stelle einfach leer zu lassen. */}
+  <section class="vv-foerder__vergaben" aria-labelledby="vergabeverfahren">
+    <h2 class="vv-foerder__h2" id="vergabeverfahren">Laufende Vergabeverfahren</h2>
+    {vergaben.length === 0 ? (
+      <p class="vv-foerder__leer">
+        <VvIcon name="megaphone" size={17} />
+        <span>
+          Derzeit ist kein Vergabeverfahren ausgeschrieben. Neue Verfahren
+          werden hier und im Amtsblatt bekannt gemacht.
+        </span>
+      </p>
+    ) : (
+      <ul class="vv-foerder__liste">
+        {vergaben.map((v) => (
+          <li class="vv-karte vv-karte--vergabe">
+            <h3 class="vv-karte__titel">{v.titel}</h3>
+            {datum(v.datum) && (
+              <p class="vv-karte__datum">
+                <VvIcon name="calendar" size={15} />
+                {datum(v.datum)}
+              </p>
+            )}
+            {v.textHtml && <div class="vv-karte__text" set:html={v.textHtml} />}
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+
+  {/* Förderbescheide, je Förderprogramm ein Abschnitt. */}
+  {bloecke.map((b, i) => {
+    const titel = kurztitel(b.grundlage, i + 1);
+    const id = anker(titel);
+    const bandZeigen = b.logos.length > 0 && (i === 0 || bloecke[i - 1].logoGruppe !== b.logoGruppe);
+    return (
+      <section class="vv-foerder__block" aria-labelledby={id}>
+        {bandZeigen && (
+          <div class="vv-foerder__logos">
+            {b.logos.map((l) => (
+              <img src={l.src} alt={l.alt} loading="lazy" decoding="async" />
+            ))}
+          </div>
+        )}
+
+        <h2 class="vv-foerder__h2" id={id}>{titel}</h2>
+        {b.grundlage && <p class="vv-foerder__grundlage">{b.grundlage}</p>}
+
+        <ul class="vv-foerder__liste">
+          {b.massnahmen.map((m) => (
+            <li class="vv-karte">
+              <h3 class="vv-karte__titel">{m.titel}</h3>
+              {(m.gesamt || m.betrag) && (
+                <dl class="vv-karte__zahlen">
+                  {m.gesamt && (
+                    <div class="vv-karte__zahl">
+                      <dt>Gesamtausgaben</dt>
+                      <dd>{m.gesamt}</dd>
+                    </div>
+                  )}
+                  {m.betrag && (
+                    <div class="vv-karte__zahl vv-karte__zahl--foerder">
+                      <dt>{m.satz ? `Fördersatz ${m.satz} %` : 'Förderung'}</dt>
+                      <dd>{m.betrag}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+              {m.textHtml && <div class="vv-karte__text" set:html={m.textHtml} />}
+            </li>
+          ))}
+        </ul>
+
+        {b.anmerkungHtml && (
+          <p class="vv-foerder__anmerkung">
+            <strong>Anmerkung:</strong> <span set:html={b.anmerkungHtml} />
+          </p>
+        )}
+      </section>
+    );
+  })}
+
+  {hinweise.length > 0 && (
+    <p class="vv-foerder__hinweis">
+      {hinweise.map((h, i) => <>{i > 0 && ' '}{h}</>)}
+    </p>
+  )}
+</div>
+
+<style>
+  .vv-foerder { display: grid; gap: var(--vv-space-8); }
+
+  /* --- Abschnitte ---------------------------------------------------- */
+  .vv-foerder__block,
+  .vv-foerder__vergaben { display: grid; gap: var(--vv-space-3); }
+
+  .vv-foerder__h2 {
+    margin: 0;
+    font-size: var(--vv-fs-lg);
+    line-height: 1.3;
+    color: var(--vv-navy-800);
+    /* Scharfe Kante links: bindet Überschrift, Rechtsgrundlage und Karten
+       sichtbar zu einem Abschnitt zusammen. */
+    border-left: 3px solid var(--vv-sky-500);
+    padding-left: var(--vv-space-3);
+  }
+
+  /* Die Rechtsgrundlage ist ein langer Rechtssatz — vollständig, aber
+     erkennbar nachgeordnet: kleiner, ruhiger, mit begrenzter Zeilenlänge. */
+  .vv-foerder__grundlage {
+    margin: 0;
+    padding-left: calc(var(--vv-space-3) + 3px);
+    max-width: 62ch;
+    font-size: var(--vv-fs-sm);
+    line-height: 1.6;
+    color: var(--vv-text-muted);
+  }
+
+  /* --- Logoband ------------------------------------------------------ */
+  .vv-foerder__logos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--vv-space-4) var(--vv-space-6);
+    padding: var(--vv-space-4) var(--vv-space-5);
+    background: var(--vv-bg-alt);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+  }
+  /* Auf gleiche Höhe gebracht statt auf gleiche Breite: die Logos sind
+     296×300 bis 300×68 groß und standen ungeordnet nebeneinander.
+     72 px, weil die Fördervermerke im Logo mitgedruckt sind („Kofinanziert
+     von der Europäischen Union") — darunter sind sie nicht mehr lesbar, und
+     genau die Lesbarkeit ist der Zweck der Förderpublizität. Über max-height
+     statt height, damit die querformatigen Logos auf dem Telefon über die
+     Breite schrumpfen dürfen, ohne verzerrt zu werden. */
+  .vv-foerder__logos img {
+    max-height: 72px;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+  }
+
+  /* --- Maßnahmen als Karten ------------------------------------------ */
+  .vv-foerder__liste {
+    list-style: none;
+    margin: var(--vv-space-2) 0 0;
+    padding: 0;
+    display: grid;
+    gap: var(--vv-space-4);
+  }
+  .vv-karte {
+    background: var(--vv-bg);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+    padding: var(--vv-space-5);
+    box-shadow: var(--vv-shadow-sm);
+  }
+  .vv-karte--vergabe { border-left: 3px solid var(--vv-green-600); }
+
+  .vv-karte__titel {
+    margin: 0;
+    font-size: var(--vv-fs-md);
+    line-height: 1.3;
+    color: var(--vv-navy-800);
+  }
+  .vv-karte__datum {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: var(--vv-space-2) 0 0;
+    font-size: var(--vv-fs-sm);
+    color: var(--vv-text-muted);
+  }
+  .vv-karte__datum :global(svg) { color: var(--vv-sky-500); flex: none; }
+
+  /* Die beiden Beträge steckten mitten im Satz („mit Gesamtausgaben in Höhe
+     von 32.644,52 Euro. Der Fördersatz von 60% beträgt …"). Als Kennzahlen
+     sind sie vergleichbar; im Text stehen sie deshalb nicht mehr doppelt. */
+  .vv-karte__zahlen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vv-space-3) var(--vv-space-6);
+    margin: var(--vv-space-3) 0 0;
+    padding: var(--vv-space-3) 0 0;
+    border-top: 1px solid var(--vv-border-soft);
+  }
+  .vv-karte__zahl dt {
+    margin: 0;
+    font-size: var(--vv-fs-xs);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--vv-text-muted);
+  }
+  .vv-karte__zahl dd {
+    margin: 2px 0 0;
+    font-size: var(--vv-fs-md);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--vv-text);
+  }
+  .vv-karte__zahl--foerder dd { color: var(--vv-green-800); }
+
+  .vv-karte__text {
+    margin-top: var(--vv-space-3);
+    font-size: var(--vv-fs-sm);
+    line-height: 1.65;
+  }
+  .vv-karte__text :global(p) { margin: 0 0 var(--vv-space-2); }
+  .vv-karte__text :global(p:last-child) { margin-bottom: 0; }
+
+  /* --- Fußnoten und Hinweise ----------------------------------------- */
+  .vv-foerder__anmerkung,
+  .vv-foerder__hinweis {
+    margin: 0;
+    font-size: var(--vv-fs-sm);
+    color: var(--vv-text-muted);
+  }
+  .vv-foerder__anmerkung strong { color: var(--vv-text); }
+  .vv-foerder__hinweis {
+    padding: var(--vv-space-4) var(--vv-space-5);
+    background: var(--vv-bg-alt);
+    border-radius: var(--vv-radius-md);
+  }
+
+  .vv-foerder__leer {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--vv-space-3);
+    margin: 0;
+    padding: var(--vv-space-5);
+    background: var(--vv-bg);
+    border: 1px dashed var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+    color: var(--vv-text-muted);
+    font-size: var(--vv-fs-sm);
+    line-height: 1.6;
+  }
+  .vv-foerder__leer :global(svg) { color: var(--vv-sky-500); flex: none; margin-top: 2px; }
+
+  @media (min-width: 900px) {
+    /* Ab dieser Breite stehen die Kennzahlen neben dem Titel statt darunter —
+       die Karte bleibt dadurch flach und die Beträge bilden eine Spalte, in
+       der man sie über alle Maßnahmen hinweg vergleichen kann. */
+    .vv-karte { display: grid; grid-template-columns: 1fr 15.5rem; gap: 0 var(--vv-space-6); }
+    .vv-karte__titel,
+    .vv-karte__text { grid-column: 1; }
+    .vv-karte__zahlen {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      display: grid;
+      align-content: start;
+      gap: var(--vv-space-3);
+      margin: 0;
+      padding: 0 0 0 var(--vv-space-6);
+      border-top: 0;
+      border-left: 1px solid var(--vv-border-soft);
+    }
+    .vv-karte--vergabe { grid-template-columns: 1fr; }
+    .vv-karte--vergabe .vv-karte__titel,
+    .vv-karte--vergabe .vv-karte__text { grid-column: 1; }
+  }
+</style>
