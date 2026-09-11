@@ -68,8 +68,6 @@ export const navigation: NavItem[] = [
       { label: 'Überblick & Unternehmen', href: '/wirtschaft' },
       { label: 'Dienstleistungen',           href: '/wirtschaft#dienstleistungen' },
       { label: 'Stellenanzeigen',            href: '/wirtschaft/stellenanzeigen' },
-      { label: 'Vergabe / Ausschreibungen', href: '/vergabeausschreibungen' },
-      { label: 'Gewerbeeintrag melden',   href: '/informationen/gewerbeeintrag' },
     ],
   },
   {
