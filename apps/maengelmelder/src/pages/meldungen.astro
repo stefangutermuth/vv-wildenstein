@@ -114,7 +114,9 @@ const anliegenCounts = Object.fromEntries(
 
     .filterbar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
     .filterbar--anliegen { margin-bottom: 1.5rem; }
+    /* min-height: die Knöpfe kamen auf 37 px. */
     .filterbar__btn {
+      min-height: 40px;
       font: inherit; font-size: 0.85rem; font-weight: 500;
       border: 1px solid var(--border); background: var(--bg); color: var(--text);
       padding: 0.4rem 0.85rem; border-radius: 999px; cursor: pointer;

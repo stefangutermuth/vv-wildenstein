@@ -120,6 +120,16 @@ const {
     color: var(--grh-cream-50);
     isolation: isolate;
     background: var(--grh-forest-950);
+    /* Das um 1,1 vergrößerte Hintergrundbild blähte die Scrollbreite des
+       Dokuments auf: bei 768 px Fensterbreite ließ sich die ganze Seite um
+       61 px waagerecht schieben, bei 834 px um 28 px. Sichtbar beschnitten
+       war es schon durch .grh-hero__bg — der Scrollbereich blieb aber.
+
+       clip statt hidden, weil der Scroll-Knopf absichtlich 30 px unter den
+       Helden hängt: hidden würde ihn halbieren, clip in der Waagerechten
+       lässt die Senkrechte frei. */
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   /* --- Vollbild-Hintergrund ---------------------------------- */

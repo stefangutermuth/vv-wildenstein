@@ -271,7 +271,11 @@ const isHome = Astro.url.pathname === '/';
     font-weight: 600;
     margin-top: 4px;
   }
-  @media (max-width: 720px) {
+  /* 899 statt 720 px: Schriftzug und Werkzeuge passen zusammen erst ab
+     etwa 860 px ins Fenster. Zwischen 721 und 851 px liess sich die Seite
+     um bis zu 61 px waagerecht schieben und der Menueknopf ragte hinaus —
+     auf jedem Tablet im Hochformat. */
+  @media (max-width: 899px) {
     .grh-headerc__brandtext { display: none; }
     .grh-headerc__inner { min-height: 84px; }
     .grh-header--compact.is-scrolled .grh-headerc__inner { min-height: 72px; }
@@ -339,7 +343,8 @@ const isHome = Astro.url.pathname === '/';
     letter-spacing: -0.01em;
   }
   .grh-headerc__weather-loc {
-    font-size: 9px;
+    /* 9 px war auf einem Telefon nicht mehr zu entziffern. */
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.22em;
     color: var(--grh-stone-400);
@@ -467,6 +472,8 @@ const isHome = Astro.url.pathname === '/';
     align-items: center;
     gap: var(--grh-space-3);
     padding: 10px 16px 10px 14px;
+    /* 35 px waren zu wenig fuer DIE Bedienung des Menues auf dem Telefon. */
+    min-height: 44px;
     border-radius: var(--grh-radius-pill);
     background: var(--grh-forest-900);
     color: var(--grh-cream-50);

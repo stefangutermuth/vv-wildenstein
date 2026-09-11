@@ -315,7 +315,7 @@ const fmtMon = (d: Date) => new Intl.DateTimeFormat('de-DE', { month: 'short' })
   .grh-ne__search-input:focus { outline: none; }
   .grh-ne__search-btn {
     flex-shrink: 0;
-    width: 36px; height: 36px;
+    width: 40px; height: 40px;
     display: grid; place-items: center;
     border-radius: 50%;
     background: var(--grh-candle-500);
@@ -364,7 +364,7 @@ const fmtMon = (d: Date) => new Intl.DateTimeFormat('de-DE', { month: 'short' })
     box-shadow: var(--grh-shadow-md);
   }
   .grh-ne__event-badge-day { font-family: var(--grh-font-display); font-size: 1.4rem; font-weight: 600; }
-  .grh-ne__event-badge-mon { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--grh-moss-600); }
+  .grh-ne__event-badge-mon { font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--grh-moss-600); }
   .grh-ne__event-feature-body { display: flex; flex-direction: column; gap: 6px; padding: var(--grh-space-4); }
   .grh-ne__event-when {
     font-size: 11px;
@@ -465,7 +465,8 @@ const fmtMon = (d: Date) => new Intl.DateTimeFormat('de-DE', { month: 'short' })
     color: var(--grh-forest-900);
   }
   .grh-ne__event-li-day { font-family: var(--grh-font-display); font-size: 1.05rem; font-weight: 600; }
-  .grh-ne__event-li-mon { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grh-moss-600); }
+  /* 9 px: das Monatskuerzel im Datum war nicht mehr lesbar. */
+  .grh-ne__event-li-mon { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grh-moss-600); }
   .grh-ne__event-li-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .grh-ne__event-li-title {
     font-size: var(--grh-fs-sm);
@@ -481,9 +482,11 @@ const fmtMon = (d: Date) => new Intl.DateTimeFormat('de-DE', { month: 'short' })
   .grh-ne__event-li:hover .grh-ne__event-li-title { color: var(--grh-moss-600); }
 
   /* === Gemeinsame „Mehr"-Links =========================== */
+  /* War 19 px hoch — als Ziel fuer einen Finger unbrauchbar. */
   .grh-ne__more {
     display: inline-flex;
     align-items: center;
+    min-height: 40px;
     gap: 8px;
     margin-top: var(--grh-space-5);
     font-size: 12px;

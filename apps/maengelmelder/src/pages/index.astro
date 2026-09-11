@@ -312,8 +312,19 @@ const STATUS_TEXT: Record<string, string> = {
       gap: 0.6rem;
       padding-block: 1.25rem;
     }
+    /* Leaflet liefert seine Zoomknöpfe mit 30×30 px aus. Auf einer Karte
+       sind sie neben der Wischgeste die Hauptbedienung und damit zu klein
+       für einen Finger. :global, weil Leaflet sie selbst erzeugt. */
+    .mapwrap :global(.leaflet-control-zoom a) {
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      font-size: 22px;
+    }
+
     /* Legende-Button + Panel in der Karte */
     .map-legend-btn {
+      min-height: 40px;
       position: absolute;
       top: 12px;
       right: 12px;
@@ -391,7 +402,9 @@ const STATUS_TEXT: Record<string, string> = {
     .map-locate-btn.is-loading { opacity: 0.5; }
 
     .filterbar { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    /* min-height: die Knöpfe kamen auf 37 px. */
     .filterbar__btn {
+      min-height: 40px;
       font: inherit;
       font-size: 0.85rem;
       font-weight: 500;
