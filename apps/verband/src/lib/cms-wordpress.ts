@@ -1096,6 +1096,102 @@ interface VWEvent {
   permalink: string;
 }
 
+export interface VvStelle {
+  id: number;
+  slug: string;
+  titel: string;
+  beschreibungHtml: string;
+  arbeitgeber?: string;
+  ort?: string;
+  umfang?: string;
+  ab?: string;
+  frist?: string;
+  /** Läuft ab am (JJJJ-MM-TT) — danach wird die Anzeige nicht mehr gezeigt */
+  bis?: string;
+  email?: string;
+  telefon?: string;
+  website?: string;
+  /** Fertiger Aushang als PDF oder Bild, wie die Betriebe ihn schicken */
+  datei?: { url: string; typ: string; name: string };
+  /** Vorschaubild (Beitragsbild) */
+  bild?: string;
+  /** Auf welchen Websites die Anzeige erscheinen soll */
+  orte: string[];
+  art: string[];
+}
+
+/**
+ * Stellenanzeigen aus dem Redaktionssystem.
+ *
+ * Abgelaufene Anzeigen werden hier herausgefiltert — das ist der Kern der
+ * Umstellung: Vorher lagen die Aushänge als Bild-Kurzcodes in einer Seite,
+ * und eine abgelaufene Anzeige fiel erst auf, wenn sich jemand beschwerte.
+ *
+ * @param website  'verband' | 'gruenhainichen' | 'boernichen' — es werden nur
+ *                 Anzeigen zurückgegeben, die für diese Website gedacht sind
+ *                 ('verband-weit' erscheint überall).
+ */
+export async function fetchWordPressStellen(
+  website: 'verband' | 'gruenhainichen' | 'boernichen' = 'verband',
+): Promise<VvStelle[]> {
+  const url = new URL(`${WP_BASE}/stellenanzeigen`);
+  url.searchParams.set('per_page', '100');
+  url.searchParams.set('_embed', 'wp:featuredmedia');
+  let res: Response;
+  try {
+    res = await fetch(url.toString(), {
+      headers: { Accept: 'application/json', ...buildAuthHeader() },
+    });
+  } catch {
+    return [];
+  }
+  if (!res.ok) return [];
+
+  const heute = new Date().toISOString().slice(0, 10);
+  const raw = (await res.json()) as Array<
+    WPPageRaw & WPCptEmbed & { vvw_stelle?: Record<string, unknown> }
+  >;
+
+  return raw
+    .map((p) => {
+      const s = (p.vvw_stelle ?? {}) as Record<string, any>;
+      const txt = (v: unknown) => {
+        const t = typeof v === 'string' ? v.trim() : '';
+        return t === '' ? undefined : t;
+      };
+      return {
+        id: p.id,
+        slug: p.slug,
+        titel: decodeEntities(stripHtml(p.title.rendered).trim()),
+        beschreibungHtml: p.content?.rendered ?? '',
+        arbeitgeber: txt(s.arbeitgeber),
+        ort: txt(s.ort),
+        umfang: txt(s.umfang),
+        ab: txt(s.ab),
+        frist: txt(s.frist),
+        bis: txt(s.bis),
+        email: txt(s.email),
+        telefon: txt(s.telefon),
+        website: txt(s.website),
+        datei: s.datei?.url ? s.datei : undefined,
+        bild: cptImage(p as WPCptEmbed),
+        orte: Array.isArray(s.orte) ? s.orte : [],
+        art: Array.isArray(s.art) ? s.art : [],
+      } as VvStelle;
+    })
+    // Abgelaufene fliegen raus — der eigentliche Zweck der Umstellung
+    .filter((st) => !st.bis || st.bis >= heute)
+    // Nur Anzeigen für diese Website
+    .filter((st) => st.orte.length === 0 || st.orte.includes('verband-weit') || st.orte.includes(website))
+    // Nächste Bewerbungsfrist zuerst, Anzeigen ohne Frist danach
+    .sort((a, b) => {
+      if (a.frist && b.frist) return a.frist.localeCompare(b.frist);
+      if (a.frist) return -1;
+      if (b.frist) return 1;
+      return a.titel.localeCompare(b.titel, 'de');
+    });
+}
+
 export async function fetchWordPressEvents(): Promise<EventItem[]> {
   const url = new URL(`${VW_EVENTS_BASE}/events`);
   url.searchParams.set('per_page', '100');

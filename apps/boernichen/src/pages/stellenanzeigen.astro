@@ -1,0 +1,43 @@
+---
+import GrhPage from '../layouts/GrhPage.astro';
+import GrhStellenListe from '../components/global/GrhStellenListe.astro';
+import { getStellen } from '../lib/cms-wordpress';
+
+// Anzeigen für Börnichen und solche für alle Websites; abgelaufene filtert
+// getStellen bereits heraus.
+const stellen = await getStellen('boernichen');
+---
+<GrhPage
+  title="Stellenanzeigen"
+  eyebrow="Leben in Börnichen"
+  description="Offene Stellen bei Betrieben, Einrichtungen und in der Verwaltung."
+  breadcrumb={[{ label: 'Leben in Börnichen', href: '/leben-in-boernichen' }]}
+>
+  <p class="grh-stellen-anzahl">
+    {stellen.length === 1 ? '1 Anzeige' : `${stellen.length} Anzeigen`}
+  </p>
+
+  <GrhStellenListe stellen={stellen} />
+
+  <aside class="grh-stellen-hinweis">
+    <h2>Sie möchten eine Stelle ausschreiben?</h2>
+    <p>
+      Betriebe aus der Gemeinde können ihre Stellenanzeige kostenfrei
+      veröffentlichen lassen. Schicken Sie den Aushang als PDF oder Bild an
+      <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a> — mit
+      Angabe, bis wann die Anzeige laufen soll.
+    </p>
+  </aside>
+</GrhPage>
+
+<style>
+  .grh-stellen-anzahl { margin: 0 0 1.25rem; color: rgba(0, 0, 0, .55); font-size: .9rem; }
+  .grh-stellen-hinweis {
+    margin-top: 2.5rem;
+    padding: 1.25rem 1.4rem;
+    background: rgba(0, 0, 0, .035);
+    border-radius: 10px;
+  }
+  .grh-stellen-hinweis h2 { margin: 0 0 .4rem; font-size: 1rem; }
+  .grh-stellen-hinweis p { margin: 0; font-size: .92rem; }
+</style>

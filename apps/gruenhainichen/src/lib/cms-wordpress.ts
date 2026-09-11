@@ -416,3 +416,83 @@ function decodeEntities(html: string): string {
     return NAMED_ENTITIES[ref] ?? m;
   });
 }
+
+export interface GrhStelle {
+  id: number;
+  slug: string;
+  titel: string;
+  beschreibungHtml: string;
+  arbeitgeber?: string;
+  ort?: string;
+  umfang?: string;
+  ab?: string;
+  frist?: string;
+  bis?: string;
+  email?: string;
+  telefon?: string;
+  website?: string;
+  datei?: { url: string; typ: string; name: string };
+  orte: string[];
+  art: string[];
+}
+
+/**
+ * Stellenanzeigen aus dem Redaktionssystem (Inhaltstyp vvw_stelle).
+ *
+ * Abgelaufene Anzeigen werden herausgefiltert — genau dafür wurde der
+ * Inhaltstyp angelegt: Vorher lagen die Aushänge als Bild-Kurzcodes in einer
+ * Seite, und eine abgelaufene Anzeige fiel erst auf, wenn sich jemand meldete.
+ *
+ * Es werden nur Anzeigen zurückgegeben, die für DIESE Website gedacht sind;
+ * „verband-weit" erscheint überall.
+ */
+export async function getStellen(website: string = 'gruenhainichen'): Promise<GrhStelle[]> {
+  const url = new URL(`${WP_BASE}/stellenanzeigen`);
+  url.searchParams.set('per_page', '100');
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(url.toString(), { headers: { Accept: 'application/json' } });
+  } catch (err) {
+    console.warn('[cms] Stellenanzeigen nicht erreichbar:', (err as Error).message);
+    return [];
+  }
+  if (!res.ok) return [];
+
+  const heute = new Date().toISOString().slice(0, 10);
+  const raw = (await res.json()) as Array<any>;
+
+  return raw
+    .map((p) => {
+      const s = (p.vvw_stelle ?? {}) as Record<string, any>;
+      const txt = (v: unknown) => {
+        const t = typeof v === 'string' ? v.trim() : '';
+        return t === '' ? undefined : t;
+      };
+      return {
+        id: p.id,
+        slug: p.slug,
+        titel: decodeEntities(stripHtml(p.title?.rendered ?? '')).trim(),
+        beschreibungHtml: p.content?.rendered ?? '',
+        arbeitgeber: txt(s.arbeitgeber),
+        ort: txt(s.ort),
+        umfang: txt(s.umfang),
+        ab: txt(s.ab),
+        frist: txt(s.frist),
+        bis: txt(s.bis),
+        email: txt(s.email),
+        telefon: txt(s.telefon),
+        website: txt(s.website),
+        datei: s.datei?.url ? s.datei : undefined,
+        orte: Array.isArray(s.orte) ? s.orte : [],
+        art: Array.isArray(s.art) ? s.art : [],
+      } as GrhStelle;
+    })
+    .filter((st) => !st.bis || st.bis >= heute)
+    .filter((st) => st.orte.length === 0 || st.orte.includes('verband-weit') || st.orte.includes(website))
+    .sort((a, b) => {
+      if (a.frist && b.frist) return a.frist.localeCompare(b.frist);
+      if (a.frist) return -1;
+      if (b.frist) return 1;
+      return a.titel.localeCompare(b.titel, 'de');
+    });
+}

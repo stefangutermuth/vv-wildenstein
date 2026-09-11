@@ -1,12 +1,54 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import GrhPagePlaceholder from '../../components/global/GrhPagePlaceholder.astro';
+import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
+import GrhStellenListe from '../../components/global/GrhStellenListe.astro';
+import { getStellen } from '../../lib/cms-wordpress';
+
+// Anzeigen für Grünhainichen und solche für alle Websites; abgelaufene
+// filtert getStellen bereits heraus.
+const stellen = await getStellen('gruenhainichen');
 ---
-<BaseLayout title="Stellenausschreibungen · Grünhainichen" header="compact">
-  <GrhPagePlaceholder
-    title="Stellenausschreibungen"
-    breadcrumb="Gewerbe · Stellenausschreibungen"
-    description="Aktuelle offene Stellen in Verwaltung und Gemeinde."
-    hints={["Liste offener Stellen","Bewerbungsfristen","Ansprechpartner Personal","PDF-Ausschreibungen"]}
+<BaseLayout
+  title="Stellenanzeigen · Grünhainichen"
+  description="Offene Stellen bei Betrieben, Einrichtungen und in der Verwaltung in Grünhainichen, Borstendorf und Waldkirchen."
+  header="compact"
+>
+  <GrhPageHeader
+    title="Stellenanzeigen"
+    breadcrumb="Startseite · Gewerbe · Stellenanzeigen"
+    intro="Offene Stellen bei Betrieben, Einrichtungen und in der Verwaltung."
   />
+
+  <div class="grh-stellenseite">
+    <div class="grh-container">
+      <p class="grh-stellenseite__anzahl">
+        {stellen.length === 1 ? '1 Anzeige' : `${stellen.length} Anzeigen`}
+      </p>
+      <GrhStellenListe stellen={stellen} />
+
+      <aside class="grh-stellenseite__hinweis">
+        <h2>Sie möchten eine Stelle ausschreiben?</h2>
+        <p>
+          Betriebe aus der Gemeinde können ihre Stellenanzeige kostenfrei
+          veröffentlichen lassen. Schicken Sie den Aushang als PDF oder Bild an
+          <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a> — mit
+          Angabe, bis wann die Anzeige laufen soll.
+        </p>
+      </aside>
+    </div>
+  </div>
 </BaseLayout>
+
+<style>
+  .grh-stellenseite { padding-block: 2.5rem 4rem; }
+  .grh-stellenseite .grh-container { max-width: 860px; margin: 0 auto; padding-inline: 1.25rem; }
+  .grh-stellenseite__anzahl { margin: 0 0 1.25rem; color: rgba(0, 0, 0, .55); font-size: .9rem; }
+  .grh-stellenseite__hinweis {
+    margin-top: 2.5rem;
+    padding: 1.25rem 1.4rem;
+    background: rgba(0, 0, 0, .035);
+    border-radius: 10px;
+  }
+  .grh-stellenseite__hinweis h2 { margin: 0 0 .4rem; font-size: 1rem; }
+  .grh-stellenseite__hinweis p { margin: 0; font-size: .92rem; }
+</style>

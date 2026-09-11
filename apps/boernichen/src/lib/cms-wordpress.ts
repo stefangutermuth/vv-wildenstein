@@ -528,3 +528,91 @@ export async function fetchTourismus(): Promise<CptEntry[]> {
   }
   return list.map(mapCpt);
 }
+
+export interface GrhStelle {
+  id: number;
+  slug: string;
+  titel: string;
+  beschreibungHtml: string;
+  arbeitgeber?: string;
+  ort?: string;
+  umfang?: string;
+  ab?: string;
+  frist?: string;
+  bis?: string;
+  email?: string;
+  telefon?: string;
+  website?: string;
+  datei?: { url: string; typ: string; name: string };
+  orte: string[];
+  art: string[];
+}
+
+/**
+ * Stellenanzeigen aus dem Redaktionssystem (Inhaltstyp vvw_stelle).
+ *
+ * Abgelaufene Anzeigen werden herausgefiltert — genau dafür wurde der
+ * Inhaltstyp angelegt. Es erscheinen nur Anzeigen, die für Börnichen oder
+ * für alle Websites („verband-weit") bestimmt sind.
+ *
+ * Mit eigener Zeitgrenze: Am 10.09.2026 hing ein Bau anderthalb Stunden an
+ * einem Abruf ohne Zeitlimit, weil der Server die Bau-Umgebung drosselte.
+ */
+export async function getStellen(website = 'boernichen'): Promise<GrhStelle[]> {
+  const url = new URL(`${WP_BASE}/stellenanzeigen`);
+  url.searchParams.set('per_page', '100');
+
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 20_000);
+  let res: Response;
+  try {
+    res = await fetch(url.toString(), {
+      headers: { Accept: 'application/json' },
+      signal: ctrl.signal,
+    });
+  } catch (err) {
+    console.warn('[cms] Stellenanzeigen nicht erreichbar:', (err as Error).message);
+    return [];
+  } finally {
+    clearTimeout(t);
+  }
+  if (!res.ok) return [];
+
+  const heute = new Date().toISOString().slice(0, 10);
+  const raw = (await res.json()) as Array<any>;
+
+  return raw
+    .map((p) => {
+      const s = (p.vvw_stelle ?? {}) as Record<string, any>;
+      const txt = (v: unknown) => {
+        const t2 = typeof v === 'string' ? v.trim() : '';
+        return t2 === '' ? undefined : t2;
+      };
+      return {
+        id: p.id,
+        slug: p.slug,
+        titel: decodeEntities(stripHtml(p.title?.rendered ?? '')).trim(),
+        beschreibungHtml: p.content?.rendered ?? '',
+        arbeitgeber: txt(s.arbeitgeber),
+        ort: txt(s.ort),
+        umfang: txt(s.umfang),
+        ab: txt(s.ab),
+        frist: txt(s.frist),
+        bis: txt(s.bis),
+        email: txt(s.email),
+        telefon: txt(s.telefon),
+        website: txt(s.website),
+        datei: s.datei?.url ? s.datei : undefined,
+        orte: Array.isArray(s.orte) ? s.orte : [],
+        art: Array.isArray(s.art) ? s.art : [],
+      } as GrhStelle;
+    })
+    .filter((st) => !st.bis || st.bis >= heute)
+    .filter((st) => st.orte.length === 0 || st.orte.includes('verband-weit') || st.orte.includes(website))
+    .sort((a, b) => {
+      if (a.frist && b.frist) return a.frist.localeCompare(b.frist);
+      if (a.frist) return -1;
+      if (b.frist) return 1;
+      return a.titel.localeCompare(b.titel, 'de');
+    });
+}

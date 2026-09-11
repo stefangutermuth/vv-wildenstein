@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import VvPageHeader from '../../components/global/VvPageHeader.astro';
+import VvStellenListe from '../../components/global/VvStellenListe.astro';
+import { fetchWordPressStellen } from '../../lib/cms-wordpress';
+
+// Nur Anzeigen, die für den Verband bestimmt sind — abgelaufene filtert
+// fetchWordPressStellen bereits heraus.
+const stellen = await fetchWordPressStellen('verband');
+---
+<BaseLayout
+  title="Stellenanzeigen — Verwaltungsverband Wildenstein"
+  description="Offene Stellen bei Betrieben und Einrichtungen im Verwaltungsverband Wildenstein mit den Gemeinden Grünhainichen und Börnichen/Erzgeb."
+>
+  <VvPageHeader
+    title="Stellenanzeigen"
+    breadcrumb={[{ title: 'Wirtschaft', path: '/wirtschaft' }]}
+    intro="Offene Stellen bei Betrieben und Einrichtungen in der Region."
+  />
+
+  <div class="vv-stellenseite">
+    <div class="vv-container">
+      <p class="vv-stellenseite__anzahl">
+        {stellen.length === 1 ? '1 Anzeige' : `${stellen.length} Anzeigen`}
+      </p>
+      <VvStellenListe stellen={stellen} />
+
+      <aside class="vv-stellenseite__hinweis">
+        <h2>Sie möchten eine Stelle ausschreiben?</h2>
+        <p>
+          Betriebe aus Grünhainichen und Börnichen/Erzgeb. können ihre
+          Stellenanzeige kostenfrei veröffentlichen lassen. Schicken Sie den
+          Aushang als PDF oder Bild an
+          <a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a> —
+          mit Angabe, bis wann die Anzeige laufen soll.
+        </p>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .vv-stellenseite { padding-block: var(--vv-space-7) var(--vv-space-9); background: var(--vv-bg-alt); }
+  .vv-stellenseite .vv-container { max-width: 900px; }
+  .vv-stellenseite__anzahl {
+    margin: 0 0 var(--vv-space-5);
+    color: var(--vv-text-muted);
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-stellenseite__hinweis {
+    margin-top: var(--vv-space-8);
+    padding: var(--vv-space-5);
+    background: var(--vv-bg);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-lg);
+  }
+  .vv-stellenseite__hinweis h2 {
+    margin: 0 0 var(--vv-space-2);
+    font-size: var(--vv-fs-base);
+    color: var(--vv-navy-800);
+  }
+  .vv-stellenseite__hinweis p { margin: 0; font-size: var(--vv-fs-sm); color: var(--vv-text); }
+  .vv-stellenseite__hinweis a { color: var(--vv-link); font-weight: 600; }
+</style>

@@ -1,0 +1,123 @@
+---
+/**
+ * Stellenanzeigen als Liste.
+ *
+ * Die Betriebe schicken meist einen fertigen Aushang (PDF oder Bild) — der
+ * wird verlinkt. Die Felder darüber (Arbeitgeber, Ort, Umfang, Frist) machen
+ * die Anzeige lesbar, ohne sie zu öffnen, und sind durchsuchbar.
+ */
+import type { GrhStelle } from '../../lib/cms-wordpress';
+
+interface Props { stellen: GrhStelle[] }
+const { stellen } = Astro.props;
+
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+const datum = (iso?: string) => {
+  if (!iso) return undefined;
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.valueOf()) ? undefined : fmt.format(d);
+};
+---
+{stellen.length === 0 ? (
+  <p class="grh-stellen__leer">
+    Derzeit liegen keine Stellenanzeigen vor. Betriebe aus der Gemeinde können
+    ihre Anzeige über die Verwaltung einstellen lassen.
+  </p>
+) : (
+  <ul class="grh-stellen">
+    {stellen.map((s) => (
+      <li class="grh-stellen__item">
+        <h2 class="grh-stellen__titel">{s.titel}</h2>
+        {s.arbeitgeber && <p class="grh-stellen__firma">{s.arbeitgeber}</p>}
+
+        {(s.ort || s.umfang || datum(s.ab)) && (
+          <ul class="grh-stellen__fakten">
+            {s.ort && <li>{s.ort}</li>}
+            {s.umfang && <li>{s.umfang}</li>}
+            {datum(s.ab) && <li>ab {datum(s.ab)}</li>}
+          </ul>
+        )}
+
+        {s.beschreibungHtml && <div class="grh-stellen__text" set:html={s.beschreibungHtml} />}
+
+        {datum(s.frist) && (
+          <p class="grh-stellen__frist"><strong>Bewerbungsfrist:</strong> {datum(s.frist)}</p>
+        )}
+
+        <div class="grh-stellen__aktionen">
+          {s.datei && (
+            <a class="grh-stellen__knopf" href={s.datei.url} target="_blank" rel="noopener">
+              {s.datei.typ === 'application/pdf' ? 'Anzeige als PDF' : 'Anzeige ansehen'}
+            </a>
+          )}
+          {s.email && <a class="grh-stellen__link" href={`mailto:${s.email}`}>{s.email}</a>}
+          {s.telefon && (
+            <a class="grh-stellen__link" href={`tel:${s.telefon.replace(/[^\d+]/g, '')}`}>{s.telefon}</a>
+          )}
+          {s.website && (
+            <a class="grh-stellen__link" href={s.website} target="_blank" rel="noopener">
+              {s.website.replace(/^https?:\/\//i, '').replace(/\/$/, '')}
+            </a>
+          )}
+        </div>
+      </li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .grh-stellen__leer {
+    color: rgba(0, 0, 0, .6);
+    border: 1px dashed rgba(0, 0, 0, .18);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 0;
+  }
+  .grh-stellen { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+  .grh-stellen__item {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, .1);
+    border-left: 3px solid var(--grh-green-700, #1c4b2a);
+    border-radius: 10px;
+    padding: 1.25rem 1.4rem;
+  }
+  .grh-stellen__titel { margin: 0; font-size: 1.16rem; line-height: 1.25; }
+  .grh-stellen__firma { margin: 2px 0 0; font-weight: 600; }
+  .grh-stellen__fakten {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem 1.2rem;
+    margin: .7rem 0 0;
+    padding: 0;
+    font-size: .9rem;
+    color: rgba(0, 0, 0, .6);
+  }
+  .grh-stellen__fakten li + li::before { content: '· '; }
+  .grh-stellen__text { margin-top: .7rem; font-size: .92rem; }
+  .grh-stellen__text :global(p) { margin: 0 0 .5rem; }
+  .grh-stellen__frist { margin: .7rem 0 0; font-size: .92rem; }
+  .grh-stellen__aktionen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem 1.1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, .1);
+    font-size: .92rem;
+  }
+  .grh-stellen__knopf {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: .55rem 1rem;
+    background: var(--grh-green-700, #1c4b2a);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .grh-stellen__knopf:hover { filter: brightness(1.15); }
+  .grh-stellen__link { color: var(--grh-green-700, #1c4b2a); overflow-wrap: anywhere; }
+</style>

@@ -1,0 +1,176 @@
+---
+/**
+ * Stellenanzeigen als Liste.
+ *
+ * Die Betriebe schicken meist einen fertigen Aushang (PDF oder Bild). Der ist
+ * der eigentliche Inhalt und wird verlinkt bzw. als Vorschau gezeigt — die
+ * Felder darüber (Arbeitgeber, Ort, Umfang, Frist) machen die Anzeige
+ * überhaupt lesbar, ohne sie zu öffnen.
+ */
+import VvIcon from '../primitives/VvIcon.astro';
+import type { VvStelle } from '../../lib/cms-wordpress';
+
+interface Props {
+  stellen: VvStelle[];
+}
+const { stellen } = Astro.props;
+
+const fmt = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+const datum = (iso?: string) => {
+  if (!iso) return undefined;
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.valueOf()) ? undefined : fmt.format(d);
+};
+---
+{stellen.length === 0 ? (
+  <p class="vv-stellen__leer">
+    Derzeit liegen keine Stellenanzeigen vor. Betriebe aus dem Verbandsgebiet
+    können ihre Anzeige über die Verwaltung einstellen lassen.
+  </p>
+) : (
+  <ul class="vv-stellen">
+    {stellen.map((s) => (
+      <li class="vv-stellen__item">
+        <div class="vv-stellen__kopf">
+          <h2 class="vv-stellen__titel">{s.titel}</h2>
+          {s.arbeitgeber && <p class="vv-stellen__firma">{s.arbeitgeber}</p>}
+        </div>
+
+        {(s.ort || s.umfang || s.ab) && (
+          <ul class="vv-stellen__fakten">
+            {s.ort && (
+              <li><VvIcon name="map-pin" size={15} />{s.ort}</li>
+            )}
+            {s.umfang && (
+              <li><VvIcon name="users" size={15} />{s.umfang}</li>
+            )}
+            {datum(s.ab) && (
+              <li><VvIcon name="clock" size={15} />ab {datum(s.ab)}</li>
+            )}
+          </ul>
+        )}
+
+        {s.beschreibungHtml && (
+          <div class="vv-stellen__text" set:html={s.beschreibungHtml} />
+        )}
+
+        {datum(s.frist) && (
+          <p class="vv-stellen__frist">
+            <strong>Bewerbungsfrist:</strong> {datum(s.frist)}
+          </p>
+        )}
+
+        <div class="vv-stellen__aktionen">
+          {s.datei && (
+            <a class="vv-stellen__knopf" href={s.datei.url} target="_blank" rel="noopener">
+              <VvIcon name="file-text" size={16} />
+              {s.datei.typ === 'application/pdf' ? 'Anzeige als PDF' : 'Anzeige ansehen'}
+            </a>
+          )}
+          {s.email && (
+            <a class="vv-stellen__link" href={`mailto:${s.email}`}>
+              <VvIcon name="mail" size={15} />{s.email}
+            </a>
+          )}
+          {s.telefon && (
+            <a class="vv-stellen__link" href={`tel:${s.telefon.replace(/[^\d+]/g, '')}`}>
+              <VvIcon name="phone" size={15} />{s.telefon}
+            </a>
+          )}
+          {s.website && (
+            <a class="vv-stellen__link" href={s.website} target="_blank" rel="noopener">
+              <VvIcon name="arrow-up-right" size={15} />
+              {s.website.replace(/^https?:\/\//i, '').replace(/\/$/, '')}
+            </a>
+          )}
+        </div>
+      </li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .vv-stellen__leer {
+    color: var(--vv-text-muted);
+    background: var(--vv-bg);
+    border: 1px dashed var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+    padding: var(--vv-space-6);
+    margin: 0;
+  }
+  .vv-stellen { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--vv-space-4); }
+  .vv-stellen__item {
+    background: var(--vv-bg);
+    border: 1px solid var(--vv-border-soft);
+    border-left: 3px solid var(--vv-sky-500);
+    border-radius: var(--vv-radius-md);
+    padding: var(--vv-space-5);
+  }
+  .vv-stellen__titel {
+    margin: 0;
+    font-size: var(--vv-fs-lg);
+    color: var(--vv-navy-800);
+    line-height: 1.25;
+  }
+  .vv-stellen__firma {
+    margin: 2px 0 0;
+    font-weight: 600;
+    color: var(--vv-text);
+  }
+
+  .vv-stellen__fakten {
+    list-style: none;
+    margin: var(--vv-space-3) 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vv-space-2) var(--vv-space-5);
+    font-size: var(--vv-fs-sm);
+    color: var(--vv-text-muted);
+  }
+  .vv-stellen__fakten li { display: inline-flex; align-items: center; gap: 7px; }
+  .vv-stellen__fakten :global(svg) { color: var(--vv-sky-500); flex: none; }
+
+  .vv-stellen__text { margin-top: var(--vv-space-3); font-size: var(--vv-fs-sm); }
+  .vv-stellen__text :global(p) { margin: 0 0 var(--vv-space-2); }
+
+  .vv-stellen__frist {
+    margin: var(--vv-space-3) 0 0;
+    font-size: var(--vv-fs-sm);
+    color: var(--vv-text);
+  }
+
+  .vv-stellen__aktionen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--vv-space-2) var(--vv-space-4);
+    margin-top: var(--vv-space-4);
+    padding-top: var(--vv-space-4);
+    border-top: 1px solid var(--vv-border-soft);
+    font-size: var(--vv-fs-sm);
+  }
+  .vv-stellen__knopf {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--vv-navy-800);
+    color: #fff;
+    padding: 9px 15px;
+    border-radius: var(--vv-radius-md);
+    font-weight: 600;
+    text-decoration: none;
+    min-height: 40px;
+  }
+  .vv-stellen__knopf:hover { background: var(--vv-sky-500); }
+  .vv-stellen__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--vv-link);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .vv-stellen__link:hover { text-decoration: underline; }
+  .vv-stellen__link :global(svg) { color: var(--vv-sky-500); flex: none; }
+</style>
