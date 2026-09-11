@@ -106,6 +106,47 @@ const columns = [
           </ul>
         </nav>
       ))}
+
+      {/* Unter den Linkspalten war viel leere Fläche. Dort stehen jetzt die
+          beiden Mitgliedsgemeinden mit Verweis auf ihre eigenen Websites und
+          das Regions-Zeichen — dasselbe Abzeichen wie oben rechts im Hero. */}
+      <div class="vv-footer__region">
+        <div class="vv-footer__communes">
+          <h3>Mitgliedsgemeinden</h3>
+          <ul>
+            <li>
+              <a href="https://www.gruenhainichen.com" target="_blank" rel="noopener noreferrer">
+                Gemeinde Grünhainichen
+                <VvIcon name="arrow-up-right" size={14} />
+              </a>
+              <span>Borstendorf · Grünhainichen · Waldkirchen</span>
+            </li>
+            <li>
+              <a href="https://www.boernichen.de" target="_blank" rel="noopener noreferrer">
+                Gemeinde Börnichen/Erzgeb.
+                <VvIcon name="arrow-up-right" size={14} />
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <a
+          class="vv-footer__erzgebirge"
+          href="https://www.erzgebirge-tourismus.de"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Tourismusregion Erzgebirge — öffnet in neuem Fenster"
+        >
+          <img
+            src="/images/logos/erzgebirge.jpg"
+            alt=""
+            width="86"
+            height="56"
+            loading="lazy"
+            decoding="async"
+          />
+        </a>
+      </div>
     </div>
   </div>
 </footer>
@@ -162,6 +203,54 @@ const columns = [
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: var(--vv-space-6);
   }
+  /* Mitgliedsgemeinden + Regions-Zeichen im vorher leeren Bereich */
+  .vv-footer__region {
+    grid-column: 1 / -1;
+    margin-top: var(--vv-space-7);
+    padding-top: var(--vv-space-6);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--vv-space-6);
+    flex-wrap: wrap;
+  }
+  .vv-footer__communes ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--vv-space-3); }
+  .vv-footer__communes a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--vv-sky-200);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--vv-dur-fast);
+  }
+  .vv-footer__communes a:hover { color: var(--vv-white); }
+  .vv-footer__communes a :global(svg) { color: var(--vv-green-400); flex: none; }
+  .vv-footer__communes span {
+    display: block;
+    font-size: var(--vv-fs-sm);
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 2px;
+  }
+
+  /* Weißes Abzeichen wie im Hero — das Zeichen ist für dunkle Flächen nicht gemacht */
+  .vv-footer__erzgebirge {
+    flex: none;
+    background: var(--vv-white);
+    border-radius: var(--vv-radius-md);
+    padding: 8px 10px;
+    line-height: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+    transition: transform var(--vv-dur-fast);
+  }
+  .vv-footer__erzgebirge:hover { transform: translateY(-2px); }
+  .vv-footer__erzgebirge img { display: block; height: auto; }
+
+  @media (max-width: 640px) {
+    .vv-footer__region { flex-direction: column; align-items: flex-start; }
+  }
+
   .vv-footer__col h3 {
     color: var(--vv-white);
     font-size: var(--vv-fs-sm);
