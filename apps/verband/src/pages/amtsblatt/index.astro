@@ -14,9 +14,16 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import VvPageHeader from '../../components/global/VvPageHeader.astro';
 import VvIcon from '../../components/primitives/VvIcon.astro';
-import { fetchAmtsblaetter } from '../../lib/cms-wordpress';
+import { fetchAmtsblaetter, fetchAmtsblattInfos, fetchAmtsblattKontakt } from '../../lib/cms-wordpress';
 
 const items = await fetchAmtsblaetter();
+/* Anzeigenpreise und Terminplan liegen im selben Inhaltstyp, tragen aber
+   keine Ausgabennummer. Sie kommen aus dem Redaktionssystem, nicht fest
+   eingetragen — Grünhainichen hat die beiden Adressen im Quelltext stehen,
+   und der Terminplan trägt eine Jahreszahl im Dateinamen. */
+const infos = await fetchAmtsblattInfos();
+const kontakt = await fetchAmtsblattKontakt();
+const anschrift = (kontakt?.anschrift ?? '').split(/\r?\n/).map((z) => z.trim()).filter(Boolean);
 
 const byYear = new Map<number, typeof items>();
 for (const it of items) {
@@ -53,6 +60,8 @@ function mb(bytes: number): string {
   />
   <div class="vv-pagebody">
     <div class="vv-container">
+     <div class="vv-ab__layout">
+      <div class="vv-ab__main">
       {years.map((year) => (
         <section class="vv-ab__year">
           <h2>{year}</h2>
@@ -81,13 +90,194 @@ function mb(bytes: number): string {
       {items.length === 0 && (
         <p class="vv-ab__empty">Aktuell sind keine Amtsblatt-Ausgaben verfügbar.</p>
       )}
+      </div>
+
+      {/* Der Kasten steht auch auf den Seiten von Grünhainichen und
+          Börnichen — dort hieß er „Wissenswertes" bzw. „Rund ums Amtsblatt".
+          Hier fehlte er. */}
+      <aside class="vv-ab__info" aria-labelledby="rund-ums-amtsblatt">
+        <h2 class="vv-ab__info-titel" id="rund-ums-amtsblatt">Rund ums Amtsblatt</h2>
+
+        {infos.length > 0 && (
+          <ul class="vv-ab__docs" role="list">
+            {infos.map((d) => (
+              <li>
+                <a class="vv-ab__doc" href={d.pdfUrl} target="_blank" rel="noopener">
+                  <span class="vv-ab__doc-tag">PDF</span>
+                  <span class="vv-ab__doc-name">{d.titel}</span>
+                  <VvIcon name="arrow-up-right" size={14} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <dl class="vv-ab__fakten">
+          <dt>Erscheinungsweise</dt>
+          <dd>Monatlich, zu Beginn des Monats.</dd>
+
+          <dt>Auflage</dt>
+          <dd>2.310 Exemplare</dd>
+
+          <dt>Verteilung</dt>
+          <dd>Kostenlose Zustellung an alle Haushalte der Verbandsgemeinden.</dd>
+
+          <dt>Abgabetermin</dt>
+          <dd>
+            Beiträge, Berichte und Inserate in der Regel Mitte des Vormonats.
+            Die genauen Daten stehen im Terminplan.
+          </dd>
+
+          <dt>Herausgeber</dt>
+          <dd>
+            Verwaltungsverband „Wildenstein", vertreten durch die
+            Verbandsvorsitzende und die Bürgermeister der Verbandsgemeinden.
+          </dd>
+        </dl>
+
+        {kontakt?.fuehrende_person && (
+          <div class="vv-ab__kontakt">
+            <p class="vv-ab__kontakt-rolle">Ansprechpartnerin</p>
+            <p class="vv-ab__kontakt-name">
+              {kontakt.fuehrende_person}
+              {kontakt.funktion && <span> · {kontakt.funktion}</span>}
+            </p>
+            {anschrift.length > 0 && (
+              <p class="vv-ab__kontakt-adresse">
+                {anschrift.map((z, i) => <>{i > 0 && <br />}{z}</>)}
+              </p>
+            )}
+            <ul class="vv-ab__kontakt-wege" role="list">
+              {kontakt.telefon && (
+                <li>
+                  <a href={`tel:${kontakt.telefon.replace(/[^\d+]/g, '')}`}>
+                    <VvIcon name="phone" size={15} />{kontakt.telefon}
+                  </a>
+                </li>
+              )}
+              {kontakt.email && (
+                <li>
+                  <a href={`mailto:${kontakt.email}`}>
+                    <VvIcon name="mail" size={15} />{kontakt.email}
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+      </aside>
+     </div>
     </div>
   </div>
 </BaseLayout>
 
 <style>
   .vv-pagebody { padding-block: var(--vv-space-7) var(--vv-space-9); background: var(--vv-white); }
-  .vv-pagebody .vv-container { max-width: 860px; }
+  /* Breiter als die 860 px von vorher, weil jetzt der Kasten daneben steht.
+     Die Liste selbst bleibt über minmax(0, 1fr) bei gut lesbarer Breite. */
+  .vv-pagebody .vv-container { max-width: 1120px; }
+
+  .vv-ab__layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--vv-space-7); align-items: start; }
+  @media (min-width: 900px) {
+    .vv-ab__layout { grid-template-columns: minmax(0, 1fr) 20rem; gap: var(--vv-space-8); }
+    /* Der Kasten bleibt beim Scrollen der langen Jahresliste stehen. */
+    .vv-ab__info { position: sticky; top: var(--vv-space-5); }
+  }
+
+  /* === Rund ums Amtsblatt =================================== */
+  .vv-ab__info {
+    display: grid;
+    gap: var(--vv-space-5);
+    padding: var(--vv-space-5);
+    background: var(--vv-bg-alt);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+  }
+  .vv-ab__info-titel {
+    margin: 0;
+    font-size: var(--vv-fs-lg);
+    line-height: 1.25;
+    color: var(--vv-navy-800);
+    border-left: 3px solid var(--vv-sky-500);
+    padding-left: var(--vv-space-3);
+  }
+
+  .vv-ab__docs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--vv-space-2); }
+  .vv-ab__doc {
+    display: flex;
+    align-items: center;
+    gap: var(--vv-space-3);
+    min-height: 44px;
+    padding: var(--vv-space-3);
+    background: var(--vv-white);
+    border: 1px solid var(--vv-border-soft);
+    border-radius: var(--vv-radius-md);
+    text-decoration: none;
+    color: var(--vv-navy-800);
+    font-weight: 600;
+    font-size: var(--vv-fs-sm);
+    line-height: 1.3;
+  }
+  .vv-ab__doc:hover { border-color: var(--vv-sky-400); box-shadow: var(--vv-shadow-sm); }
+  .vv-ab__doc-tag {
+    flex: none;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--vv-alert-600);
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  /* Lange Dokumenttitel wie „Terminplan für die Amtsblätter
+     (Redaktionsschlusskalender)" müssen umbrechen dürfen. */
+  .vv-ab__doc-name { flex: 1; min-width: 0; overflow-wrap: break-word; }
+  .vv-ab__doc :global(svg) { flex: none; color: var(--vv-sky-500); }
+
+  .vv-ab__fakten { margin: 0; display: grid; gap: var(--vv-space-3); }
+  .vv-ab__fakten dt {
+    font-size: var(--vv-fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--vv-text-muted);
+  }
+  .vv-ab__fakten dd {
+    margin: 2px 0 0;
+    font-size: var(--vv-fs-sm);
+    line-height: 1.55;
+    color: var(--vv-text);
+  }
+
+  .vv-ab__kontakt {
+    padding-top: var(--vv-space-4);
+    border-top: 1px solid var(--vv-border-soft);
+  }
+  .vv-ab__kontakt-rolle {
+    margin: 0;
+    font-size: var(--vv-fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--vv-text-muted);
+  }
+  .vv-ab__kontakt-name { margin: 3px 0 0; font-weight: 600; color: var(--vv-navy-800); font-size: var(--vv-fs-sm); }
+  .vv-ab__kontakt-name span { font-weight: 500; color: var(--vv-text-muted); }
+  .vv-ab__kontakt-adresse { margin: var(--vv-space-2) 0 0; font-size: var(--vv-fs-sm); color: var(--vv-text-muted); line-height: 1.5; }
+  .vv-ab__kontakt-wege { list-style: none; margin: var(--vv-space-2) 0 0; padding: 0; display: grid; }
+  .vv-ab__kontakt-wege a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    color: var(--vv-link);
+    text-decoration: none;
+    font-size: var(--vv-fs-sm);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .vv-ab__kontakt-wege a:hover { text-decoration: underline; }
+  .vv-ab__kontakt-wege :global(svg) { flex: none; color: var(--vv-sky-500); }
 
   .vv-ab__year { margin-bottom: var(--vv-space-6); }
   .vv-ab__year h2 {

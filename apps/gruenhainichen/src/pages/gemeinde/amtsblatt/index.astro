@@ -128,7 +128,11 @@ const fmtFull  = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long
           <dd>Texte, Berichte und Inserate i. d. R. Mitte des Vormonats. Genaue Daten siehe Terminplan.</dd>
 
           <dt>Herausgeber</dt>
-          <dd>Verwaltungsverband „Wildenstein"<br />vertreten durch den Verbandsvorsitzenden und die Bürgermeister der Verbandsgemeinden</dd>
+          <!-- „die Verbandsvorsitzende": Kathrin Ardelt hat den Vorsitz
+               (siehe gemeinde/verwaltung.astro und den Inhaltstyp personen).
+               Hier stand „den Verbandsvorsitzenden" — die Börnichen-Seite
+               formuliert es seit Längerem richtig. -->
+          <dd>Verwaltungsverband „Wildenstein"<br />vertreten durch die Verbandsvorsitzende und die Bürgermeister der Verbandsgemeinden</dd>
         </dl>
 
         <div class="grh-amtsblatt__contact">

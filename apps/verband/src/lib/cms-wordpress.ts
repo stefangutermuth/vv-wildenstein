@@ -1332,13 +1332,42 @@ interface WPAmtsblattRaw {
   };
 }
 
-let amtsblattPromise: Promise<AmtsblattAusgabe[]> | null = null;
-export function fetchAmtsblaetter(): Promise<AmtsblattAusgabe[]> {
+/**
+ * Ein Blatt aus dem Inhaltstyp, das KEINE Monatsausgabe ist.
+ *
+ * „Anzeigenpreise" und der „Terminplan" liegen im selben Inhaltstyp wie die
+ * Ausgaben, tragen aber keine Nummer im Titel. Sie gehören nicht in die
+ * Jahresliste, wohl aber in den Kasten daneben — Grünhainichen hatte sie
+ * dort mit fest eingetragenen Adressen stehen, die mit jedem Jahreswechsel
+ * veralten.
+ */
+export interface AmtsblattInfo {
+  id: number;
+  titel: string;
+  pdfUrl: string;
+}
+
+interface AmtsblattBestand {
+  ausgaben: AmtsblattAusgabe[];
+  infos: AmtsblattInfo[];
+}
+
+let amtsblattPromise: Promise<AmtsblattBestand> | null = null;
+function ladeBestand(): Promise<AmtsblattBestand> {
   if (!amtsblattPromise) amtsblattPromise = ladeAmtsblaetter();
   return amtsblattPromise;
 }
 
-async function ladeAmtsblaetter(): Promise<AmtsblattAusgabe[]> {
+export async function fetchAmtsblaetter(): Promise<AmtsblattAusgabe[]> {
+  return (await ladeBestand()).ausgaben;
+}
+
+/** Die Blätter ohne Ausgabennummer — Anzeigenpreise, Terminplan. */
+export async function fetchAmtsblattInfos(): Promise<AmtsblattInfo[]> {
+  return (await ladeBestand()).infos;
+}
+
+async function ladeAmtsblaetter(): Promise<AmtsblattBestand> {
   const roh: WPAmtsblattRaw[] = [];
 
   // 71 Ausgaben heute; zwei Seiten à 100 reichen weit in die Zukunft.
@@ -1371,7 +1400,7 @@ async function ladeAmtsblaetter(): Promise<AmtsblattAusgabe[]> {
     if (teil.length < 100) break;
   }
 
-  return roh
+  const alle = roh
     .map((p) => {
       const feld = p.vv_amtsblatt;
       const titel = decodeEntities(p.title?.rendered ?? '');
@@ -1407,9 +1436,60 @@ async function ladeAmtsblaetter(): Promise<AmtsblattAusgabe[]> {
         _istAusgabe: feld?.ausgabeMonat != null || nr != null,
       };
     })
-    .filter((a) => a._istAusgabe && a.pdfUrl)
-    .map(({ _istAusgabe, ...a }) => a)
-    .sort((a, b) => (b.jahr !== a.jahr ? b.jahr - a.jahr : b.monat - a.monat));
+    .filter((a) => a.pdfUrl);
+
+  return {
+    ausgaben: alle
+      .filter((a) => a._istAusgabe)
+      .map(({ _istAusgabe, ...a }) => a)
+      .sort((a, b) => (b.jahr !== a.jahr ? b.jahr - a.jahr : b.monat - a.monat)),
+    /* Ohne Nummer im Titel: kein Monatsblatt, sondern ein Dauerdokument.
+       Alphabetisch, damit die Reihenfolge nicht am Post-Datum hängt. */
+    infos: alle
+      .filter((a) => !a._istAusgabe)
+      .map((a) => ({ id: a.id, titel: a.titel, pdfUrl: a.pdfUrl }))
+      .sort((a, b) => a.titel.localeCompare(b.titel, 'de')),
+  };
+}
+
+/**
+ * Die Ansprechpartnerin für das Amtsblatt, aus dem Inhaltstyp `amter`.
+ *
+ * Verankert am Amt „Kultur / Tourismus" (Slug `kultur-tourismus`) — dort
+ * sitzt die Sachbearbeiterin, kein Amt nennt das Amtsblatt selbst. Fest
+ * eingetragen stünde der Name hier, bis ihn jemand bemerkt: genau dieser
+ * Fehler ist dem Projekt am 17.08.2026 mit einer Kita-Leitung passiert und
+ * hat scripts/pruefe-doppelte-daten.mjs hervorgebracht.
+ *
+ * Verschwindet das Amt oder wird es umbenannt, kommt null zurück und der
+ * Kasten bleibt ohne Kontaktangaben — lieber keine Angabe als eine falsche.
+ */
+let amtsblattKontaktPromise: Promise<VvKontakt | null> | null = null;
+export function fetchAmtsblattKontakt(): Promise<VvKontakt | null> {
+  if (!amtsblattKontaktPromise) amtsblattKontaktPromise = ladeAmtsblattKontakt();
+  return amtsblattKontaktPromise;
+}
+
+async function ladeAmtsblattKontakt(): Promise<VvKontakt | null> {
+  const abbruch = new AbortController();
+  const wecker = setTimeout(() => abbruch.abort(), 20_000);
+  try {
+    const url = new URL(`${WP_BASE}/amter`);
+    url.searchParams.set('slug', 'kultur-tourismus');
+    url.searchParams.set('_fields', 'vv_kontakt');
+    const res = await fetch(url.toString(), {
+      headers: { Accept: 'application/json', ...buildAuthHeader() },
+      signal: abbruch.signal,
+    });
+    if (!res.ok) return null;
+    const rohe = (await res.json()) as Array<{ vv_kontakt?: VvKontakt }>;
+    return rohe[0]?.vv_kontakt ?? null;
+  } catch (err) {
+    console.warn('[verband] Amtsblatt-Kontakt nicht abrufbar:', err);
+    return null;
+  } finally {
+    clearTimeout(wecker);
+  }
 }
 
 /* ============================================================
