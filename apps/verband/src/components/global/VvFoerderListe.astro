@@ -44,13 +44,49 @@ function kurztitel(grundlage: string | undefined, nr: number): string {
   const rl = /RL\s+LEADER\s*\/\s*(\d{4})/i.exec(grundlage)?.[1];
   const veroeffentlicht = /veröffentlicht\s+am\s+([\d.]+)/i.exec(grundlage)?.[1];
   const basis = rl ? `Bewilligungen nach RL LEADER/${rl}` : 'Bewilligungen';
-  return veroeffentlicht ? `${basis} — veröffentlicht am ${veroeffentlicht}` : basis;
+  return veroeffentlicht ? `${basis} (veröffentlicht am ${veroeffentlicht})` : basis;
 }
+
+/**
+ * Unterscheidungsmerkmal für gleichnamige Abschnitte.
+ *
+ * Nach RL LEADER/2014 wurde über Jahre hinweg bewilligt — die Überschrift
+ * allein wiederholt sich dann. Das Merkmal kommt aus dem Text des Abschnitts
+ * und benennt AUSDRÜCKLICH, worauf sich die Jahreszahl bezieht: ein
+ * Bewilligungsdatum („bewilligt durch das Landratsamt am 16.11.2021") ist
+ * etwas anderes als das Antragsjahr aus der Anmerkung („basieren auf Anträgen
+ * der Verwaltung aus dem Jahr 2020"). Beides in dieselbe Form zu gießen
+ * würde eines der beiden falsch beschriften.
+ */
+function merkmal(b: Foerderblock): string | undefined {
+  const text = b.massnahmen.map((m) => `${m.titel} ${m.textHtml}`).join(' ');
+  const bewilligt = [...text.matchAll(/bewilligt[^.]{0,40}?am\s+\d{2}\.\d{2}\.((?:19|20)\d{2})/gi)]
+    .map((m) => Number(m[1]));
+  if (bewilligt.length > 0) return `bewilligt ${Math.max(...bewilligt)}`;
+  const antrag = /aus\s+dem\s+Jahr\s+((?:19|20)\d{2})/i.exec(b.anmerkungHtml ?? '')?.[1];
+  if (antrag) return `Anträge von ${antrag}`;
+  const irgendwann = [...text.matchAll(/\b(?:19|20)\d{2}\b/g)].map((m) => Number(m[0]));
+  return irgendwann.length > 0 ? String(Math.max(...irgendwann)) : undefined;
+}
+
+const rohTitel = bloecke.map((b, i) => kurztitel(b.grundlage, i + 1));
+const mehrfach = new Set(rohTitel.filter((t, i) => rohTitel.indexOf(t) !== i));
+const titelListe = rohTitel.map((t, i) => {
+  const m = mehrfach.has(t) ? merkmal(bloecke[i]) : undefined;
+  return m ? `${t} (${m})` : t;
+});
 
 const anker = (t: string) =>
   t.toLowerCase()
     .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/ß/g, 'ss')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/* Sprungziele müssen auch dann eindeutig sein, wenn zwei Abschnitte weder
+   über die Richtlinie noch über ein Jahr zu unterscheiden sind. */
+const ankerListe = titelListe.map((t, i) => {
+  const a = anker(t) || `abschnitt-${i + 1}`;
+  return titelListe.findIndex((x) => anker(x) === anker(t)) === i ? a : `${a}-${i + 1}`;
+});
 ---
 <div class="vv-foerder">
 
@@ -87,8 +123,8 @@ const anker = (t: string) =>
 
   {/* Förderbescheide, je Förderprogramm ein Abschnitt. */}
   {bloecke.map((b, i) => {
-    const titel = kurztitel(b.grundlage, i + 1);
-    const id = anker(titel);
+    const titel = titelListe[i];
+    const id = ankerListe[i];
     const bandZeigen = b.logos.length > 0 && (i === 0 || bloecke[i - 1].logoGruppe !== b.logoGruppe);
     return (
       <section class="vv-foerder__block" aria-labelledby={id}>
