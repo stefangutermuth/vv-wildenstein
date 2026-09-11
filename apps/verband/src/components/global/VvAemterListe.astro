@@ -158,6 +158,8 @@ function zerlegeZeiten(text?: string): { zeilen: Zeitzeile[]; hinweis?: string }
     color: var(--vv-navy-800);
     text-decoration: none;
     line-height: 1.25;
+    /* Der Amtsname ist der Verweis auf die Amtsseite und war nur 25 px hoch. */
+    min-height: 40px;
   }
   .vv-amt__titel:hover span:first-child { text-decoration: underline; }
   .vv-amt__titel :global(svg) { color: var(--vv-sky-500); flex: none; }
@@ -177,9 +179,13 @@ function zerlegeZeiten(text?: string): { zeilen: Zeitzeile[]; hinweis?: string }
   .vv-amt__zusatz { color: var(--vv-text-muted); font-size: var(--vv-fs-sm); line-height: 1.4; }
   .vv-amt__leer { color: var(--vv-text-muted); opacity: .5; }
 
+  /* Telefon und E-Mail sind hier die eigentliche Handlung — 23 px Höhe
+     waren zu knapp. 36 px statt 44, weil in einer Spalte mehrere davon
+     untereinander stehen und die Liste sonst auseinanderfällt. */
   .vv-amt__zeile {
     display: inline-flex;
     align-items: center;
+    min-height: 36px;
     gap: 7px;
     color: var(--vv-link);
     font-size: var(--vv-fs-sm);

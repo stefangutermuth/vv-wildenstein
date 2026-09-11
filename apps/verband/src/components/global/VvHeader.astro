@@ -172,6 +172,12 @@ import VvIcon from '../primitives/VvIcon.astro';
     color: var(--vv-white);
     transition: color var(--vv-dur-fast);
   }
+  /* Auf dem Telefon sind E-Mail und Telefon die einzigen Ziele in dieser
+     Leiste — und mit 23 px Höhe zu knapp zum Treffen. Die Leiste wird
+     dadurch etwas höher; das ist sie wert. */
+  @media (max-width: 1023px) {
+    .vv-header__utility-links a { min-height: 40px; }
+  }
   .vv-header__utility-links a:hover { color: var(--vv-sky-400); }
   @media (max-width: 720px) {
     .vv-header__utility-tag { display: none; }
@@ -260,7 +266,13 @@ import VvIcon from '../primitives/VvIcon.astro';
   .vv-header__dropdown :global(svg) { color: var(--vv-green-600); flex-shrink: 0; }
 
   /* Burger */
-  .vv-header__burger { display: inline-flex; color: var(--vv-navy-800); padding: 6px; }
+  /* 44×44: das ist auf dem Telefon DIE Bedienung für das ganze Menü, und
+     mit padding: 6px um ein 26-px-Zeichen kam sie nur auf 38×38. */
+  .vv-header__burger {
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--vv-navy-800); padding: 9px;
+    min-width: 44px; min-height: 44px;
+  }
   @media (min-width: 1024px) { .vv-header__burger { display: none; } }
 
   /* Mobile-Panel */

@@ -551,8 +551,13 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
     page-break-inside: avoid; /* Safari/legacy */
     margin-bottom: var(--grh-space-5);
   }
+  /* Auf dem Telefon ist dieses Menü die gesamte Navigation. Spaltenköpfe
+     kamen auf 33 px, Unterverweise auf 30 px — beides unter der Größe, die
+     man mit dem Daumen sicher trifft. */
   .grh-mega__col-head {
-    display: block;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
     font-family: var(--grh-font-display);
     font-size: var(--grh-fs-lg);
     font-weight: 500;
@@ -579,7 +584,9 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
     margin: 0;
   }
   .grh-mega__sublink {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
     padding: 4px 0;
     color: var(--grh-stone-700);
     font-size: 15px;

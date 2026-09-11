@@ -326,7 +326,14 @@ const GA_ID = 'G-53WWV26GSF';
     font-size: 0.82rem;
     color: var(--grh-stone-400, #8D9388);
   }
-  .grh-consent__legal a { color: inherit; }
+  /* Datenschutzerklärung und Impressum im Hinweis waren 16 px hohe
+     Textzeilen. Sie stehen in einem Fließsatz, deshalb kein eigener Block —
+     nur etwas Luft nach oben und unten, damit man sie trifft. */
+  .grh-consent__legal a {
+    color: inherit;
+    display: inline-block;
+    padding-block: 6px;
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .grh-consent__btn { transition: none; }

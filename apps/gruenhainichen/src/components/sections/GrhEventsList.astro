@@ -472,7 +472,9 @@ const monShort = (d: Date) => fmtMon.format(d).replace('.', '');
     font-weight: 700;
     margin-right: 4px;
   }
+  /* Die Filter kamen auf 33 px Höhe. */
   .grh-evs__chip {
+    min-height: 40px;
     border: 1px solid var(--grh-line);
     background: transparent;
     color: var(--grh-stone-700);

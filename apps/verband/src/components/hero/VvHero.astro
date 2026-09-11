@@ -71,7 +71,7 @@ const nowMin =
   Number(berlinNow.find((p) => p.type === 'minute')?.value ?? 0);
 const freibad = freibadStatus(freibadData, nowMin);
 ---
-<section class="vv-hero vv-hero--stack">
+<section class="vv-hero vv-hero--stack" style={`--vv-hero-foto: url("${image}")`}>
   <div class="vv-hero__media">
     <img src={image} alt={imageAlt} fetchpriority="high" decoding="async" />
     <div class="vv-hero__scrim"></div>
@@ -189,6 +189,7 @@ const freibad = freibadStatus(freibadData, nowMin);
   }
   .vv-hero__media { position: absolute; inset: 0; z-index: -2; }
   .vv-hero__media img { width: 100%; height: 100%; object-fit: cover; }
+
   .vv-hero__scrim {
     position: absolute; inset: 0; z-index: 1;
     background:
@@ -200,7 +201,8 @@ const freibad = freibadStatus(freibadData, nowMin);
   }
   .vv-hero__credit {
     position: absolute; right: 10px; bottom: 8px;
-    font-size: 11px; color: rgba(255, 255, 255, 0.75); letter-spacing: 0.02em;
+    /* Der Bildnachweis ist eine Rechtsangabe — lesbar, aber zurückhaltend. */
+    font-size: 12px; color: rgba(255, 255, 255, 0.78); letter-spacing: 0.02em;
   }
   /* Regions-Logo (Erzgebirge) — weißes Badge oben rechts */
   .vv-hero__region {
@@ -227,6 +229,12 @@ const freibad = freibadStatus(freibadData, nowMin);
     color: var(--vv-white); font-size: var(--vv-fs-hero); font-weight: 700;
     line-height: 1.08; letter-spacing: -0.02em; text-shadow: 0 2px 24px rgba(10, 18, 64, 0.45);
     hyphens: auto; overflow-wrap: break-word; /* langes Wort mit Trennstrich statt mittendrin */
+    /* Kein Ausbalancieren: h1 erbt aus dem Reset text-wrap: balance, und
+       zusammen mit hyphens: auto trennte das „Verwaltungsver-band", obwohl
+       das Wort mit 325 px in die 342 px breite Zeile passt — die Trennung
+       diente nur der gleichmäßigeren Zeilenlänge. Ohne Balance greift die
+       Trennung erst, wenn das Wort wirklich nicht passt. */
+    text-wrap: wrap;
   }
   .vv-hero__lead {
     margin-top: var(--vv-space-4); font-size: var(--vv-fs-md); line-height: 1.6;
@@ -240,7 +248,17 @@ const freibad = freibadStatus(freibadData, nowMin);
     display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: var(--vv-space-3); margin-top: var(--vv-space-8);
   }
-  @media (min-width: 780px) { .vv-hero__gboxes { grid-template-columns: repeat(5, 1fr); } }
+  /* 5 Spalten erst ab 900 px, und als minmax(0, 1fr).
+     Vorher stand hier repeat(5, 1fr) ab 780 px. Ein 1fr hat als Untergrenze
+     die min-content-Breite — „EURORANDO" und „Bekanntmachungen" sprengten
+     ihre Spalte, das Gitter wurde 837 px breit und .vv-hero schnitt den
+     Überhang ab: zwischen 780 und 836 px fehlte die fünfte Box zur Hälfte.
+     Das traf iPad Air (820 px) und iPad Pro 11" (834 px) im Hochformat.
+     minmax(0, 1fr) erlaubt echtes Schrumpfen, der Wortumbruch unten fängt
+     den Rest ab. */
+  @media (min-width: 900px) {
+    .vv-hero__gboxes { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  }
   .vv-gbox {
     position: relative; display: flex; flex-direction: column; gap: 3px; height: 100%;
     padding: var(--vv-space-4) var(--vv-space-4) var(--vv-space-5);
@@ -254,7 +272,11 @@ const freibad = freibadStatus(freibadData, nowMin);
   .vv-gbox:hover { transform: translateY(-4px); background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.72)); border-color: var(--vv-sky-400); box-shadow: 0 24px 46px -18px rgba(11, 22, 82, 0.5); }
   .vv-gbox__top { display: flex; align-items: center; flex-wrap: wrap; gap: var(--vv-space-3); margin-bottom: 6px; padding-right: 26px; }
   .vv-gbox__icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: var(--vv-radius-md); background: var(--vv-sky-50); color: var(--vv-navy-700); flex-shrink: 0; }
-  .vv-gbox__label { font-weight: 700; font-size: var(--vv-fs-md); line-height: 1.2; color: var(--vv-navy-800); }
+  .vv-gbox__label {
+    font-weight: 700; font-size: var(--vv-fs-md); line-height: 1.2; color: var(--vv-navy-800);
+    /* Notbremse gegen abgeschnittene Namen in schmalen Spalten */
+    hyphens: auto; overflow-wrap: break-word; min-width: 0;
+  }
   .vv-gbox__sub { font-size: var(--vv-fs-sm); color: var(--vv-gray-700); font-weight: 500; }
 
   /* Live-Status-Badge (Freibad) */
@@ -263,7 +285,7 @@ const freibad = freibadStatus(freibadData, nowMin);
     width: fit-content;
     padding: 3px 10px 3px 8px;
     border-radius: var(--vv-radius-pill);
-    font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
     border: 1px solid transparent;
   }
   .vv-gbox__live[data-state="open"] {
@@ -306,7 +328,56 @@ const freibad = freibadStatus(freibadData, nowMin);
   .vv-chip__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--vv-sky-50); color: var(--vv-navy-700); flex-shrink: 0; }
   .vv-chip__body { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
   .vv-chip__label { font-weight: 700; font-size: var(--vv-fs-sm); }
-  .vv-chip__sub { font-size: 11px; color: var(--vv-gray-700); font-weight: 500; }
+  .vv-chip__sub { font-size: 12px; color: var(--vv-gray-700); font-weight: 500; }
   .vv-chip :global(.vv-chip__arrow) { margin-left: auto; color: var(--vv-gray-400); flex-shrink: 0; transition: transform var(--vv-dur-fast), color var(--vv-dur-fast); }
   .vv-chip:hover :global(.vv-chip__arrow) { color: var(--vv-green-600); transform: translateX(3px); }
+  /* Auf schmalen Bildschirmen taugt das Foto nicht als Hintergrund der
+     ganzen Fläche: der Held wird dort rund 1350 px hoch (1,7 Bildschirme),
+     und object-fit: cover zeigte von einem 2560×1700-Motiv nur einen
+     18-%-Streifen der Breite, über die volle Höhe gezogen. Das Foto steht
+     deshalb als querformatiges Band oben, darunter trägt die Markenfarbe.
+
+     Umgesetzt als ZWEI HINTERGRUNDEBENEN derselben Fläche statt als Bild
+     plus Schleier darüber: mit einem eigenen Überlagerungselement fehlte das
+     Foto beim ersten Zeichnen und erschien erst, wenn irgendetwas ein
+     Neuzeichnen erzwang — ein Kompositionsproblem, das sich mit z-index
+     nicht zuverlässig beheben ließ. Eine Fläche, eine Zeichnung.
+
+     --vv-hero-band trägt die Bandhöhe: dieselbe Größe steuert die Höhe des
+     Fotos UND die Stelle, an der der Verlauf deckend wird. Beide können
+     dadurch nicht auseinanderlaufen.
+
+     Das <img> entfällt hier; das Motiv ist an dieser Stelle schmückend, die
+     Aussage der Seite steht in Überschrift und Vorspann. */
+  @media (max-width: 899px) {
+    .vv-hero {
+      --vv-hero-band: clamp(230px, 72vw, 330px);
+      align-items: flex-start;
+    }
+    .vv-hero__media img,
+    .vv-hero__scrim { display: none; }
+
+    .vv-hero__media {
+      background-image:
+        linear-gradient(180deg,
+          rgba(19, 38, 123, 0.40) 0,
+          rgba(19, 38, 123, 0.36) calc(var(--vv-hero-band) * 0.34),
+          rgba(19, 38, 123, 0.72) calc(var(--vv-hero-band) * 0.74),
+          #13267b var(--vv-hero-band),
+          #13267b 100%),
+        var(--vv-hero-foto, none),
+        linear-gradient(180deg, #13267b 0 40%, var(--vv-navy-900) 100%);
+      background-size: 100% 100%, auto var(--vv-hero-band), 100% 100%;
+      background-position: 0 0, 50% 0, 0 0;
+      background-repeat: no-repeat, no-repeat, no-repeat;
+    }
+
+    /* Der Bildnachweis saß am unteren Rand der Bildfläche — die reicht jetzt
+       über den ganzen Helden. Er gehört an den Fuß des Bandes. */
+    .vv-hero__credit {
+      top: calc(var(--vv-hero-band) - 22px);
+      bottom: auto;
+    }
+  }
+
 </style>

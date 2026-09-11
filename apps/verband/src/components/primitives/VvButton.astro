@@ -40,6 +40,9 @@ const target = external ? '_blank' : undefined;
     align-items: center;
     gap: var(--vv-space-2);
     padding: 0.72em 1.35em;
+    /* 0.72em Innenabstand auf 16 px Schrift ergaben 33 px Gesamthöhe — zu
+       wenig für einen Daumen. 44 px ist die gängige Untergrenze. */
+    min-height: 44px;
     background: var(--_bg);
     color: var(--_fg);
     border: 1.5px solid var(--_border);

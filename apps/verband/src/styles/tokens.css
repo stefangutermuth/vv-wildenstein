@@ -76,7 +76,9 @@
   --vv-fs-2xl:  1.953rem;
   --vv-fs-3xl:  2.441rem;
   --vv-fs-4xl:  3.052rem;
-  --vv-fs-hero: clamp(2.25rem, 5.2vw, 4rem);
+  /* Untergrenze von 2.25rem auf 1.95rem: bei 375 px brach
+     „Verwaltungsverband" sonst mit Trennstrich mitten im Wort um. */
+  --vv-fs-hero: clamp(1.95rem, 5.2vw, 4rem);
 
   --vv-lh-tight:  1.15;
   --vv-lh-snug:   1.3;

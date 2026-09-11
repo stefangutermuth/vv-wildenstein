@@ -823,14 +823,16 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
     line-height: 1.5;
   }
 
+  /* War 18 px hoch — als Ziel für einen Finger unbrauchbar. */
   .grh-news2__alerts-more {
     display: inline-flex;
     align-items: center;
+    min-height: 40px;
     gap: 6px;
     color: var(--grh-alert-600);
-    font-size: 11px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.18em;
     font-weight: 700;
     text-decoration: none;
     align-self: flex-start;

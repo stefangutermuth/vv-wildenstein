@@ -194,7 +194,14 @@ const columns = [
      Telefon und E-Mail brachen unter ihr Symbol um. */
   .vv-footer__contact { font-style: normal; margin-top: var(--vv-space-5); display: flex; flex-direction: column; gap: var(--vv-space-3); }
   .vv-footer__contact p { display: flex; align-items: flex-start; gap: 10px; font-size: var(--vv-fs-sm); line-height: 1.5; }
-  .vv-footer__contact a { color: var(--vv-sky-200); transition: color var(--vv-dur-fast); }
+  /* Telefon und E-Mail sind im Fuß die häufigste Handlung. Als reine
+     Textzeile waren sie 21 px hoch und damit unter der Mindestgröße für ein
+     Tippziel; inline-flex mit Mindesthöhe macht sie treffbar, ohne die
+     Anschrift auseinanderzuziehen. */
+  .vv-footer__contact a {
+    display: inline-flex; align-items: center; min-height: 32px;
+    color: var(--vv-sky-200); transition: color var(--vv-dur-fast);
+  }
   .vv-footer__contact a:hover { color: var(--vv-white); }
   .vv-footer__contact :global(svg) { color: var(--vv-green-400); flex-shrink: 0; margin-top: 3px; }
 

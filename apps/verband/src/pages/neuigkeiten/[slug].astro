@@ -64,8 +64,9 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long'
     padding-bottom: var(--vv-space-3);
     border-bottom: 1px solid var(--vv-border-soft);
   }
+  /* 11 → 12 px: kleiner ist die Rubrik auf dem Telefon nicht mehr lesbar. */
   .vv-post__cat {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em;
     font-weight: 700; color: var(--vv-green-800);
   }
   .vv-post__back {

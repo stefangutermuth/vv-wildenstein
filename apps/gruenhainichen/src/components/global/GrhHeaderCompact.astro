@@ -175,8 +175,13 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     transition: color var(--grh-dur-fast);
   }
   .grh-headerc__sub a:hover { color: var(--grh-forest-900); }
-  @media (max-width: 720px) {
-    /* Mobile: nur das Wappen — Schriftzug + Subline ausblenden */
+  /* 899 statt 720 px: Schriftzug (383 px) + Werkzeuge (381 px) + Abstand und
+     Innenränder brauchen 852 px. Zwischen 721 und 851 px passte die Kopfzeile
+     also nicht in das Fenster — die Seite ließ sich dort um bis zu 51 px
+     waagerecht schieben, der Menüknopf ragte rechts hinaus. Das traf jedes
+     Tablet im Hochformat (768, 810, 820, 834 px). */
+  @media (max-width: 899px) {
+    /* Nur das Wappen — Schriftzug + Subline ausblenden */
     .grh-headerc__brandtext { display: none; }
     .grh-headerc__inner { min-height: 88px; }
     .grh-header--compact.is-scrolled .grh-headerc__inner { min-height: 72px; }
@@ -339,6 +344,8 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     align-items: center;
     gap: var(--grh-space-3);
     padding: 10px 16px 10px 14px;
+    /* 33 px waren zu wenig für DIE Bedienung des Menüs auf dem Telefon. */
+    min-height: 44px;
     border-radius: var(--grh-radius-pill);
     background: var(--grh-forest-900);
     color: var(--grh-cream-50);

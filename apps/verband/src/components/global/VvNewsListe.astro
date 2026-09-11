@@ -82,7 +82,9 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
   .vv-newsindex__body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   .vv-newsindex__meta {
     display: inline-flex; gap: var(--vv-space-3); align-items: center;
-    font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+    /* 10 px waren auf dem Telefon kaum zu lesen — und hier stehen Rubrik
+       und Datum, also die Einordnung jedes Eintrags. */
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
     color: var(--vv-text-muted); font-weight: 700;
   }
   .vv-newsindex__cat { color: var(--vv-green-800); }

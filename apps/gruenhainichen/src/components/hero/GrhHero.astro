@@ -202,7 +202,13 @@ const {
   /* --- Linke Spalte ------------------------------------------ */
   .grh-hero__copy {
     position: relative;
-    padding: var(--grh-space-8) var(--grh-gutter) var(--grh-space-7);
+    /* Unten mehr Luft als die 48 px von --grh-space-7: die Ortsangabe und die
+       Scroll-Marke sitzen absolut am Fuß dieses Kastens und reichten 11 bzw.
+       46 px in den Textbereich hinein. Solange die Schnellverweise in eine
+       Zeile passten, fiel das nicht auf — sobald sie umbrachen, lag
+       „09579 Grünhainichen …" über „Sperrungen". Ab 980 px gilt weiter der
+       eigene Wert weiter unten. */
+    padding: var(--grh-space-8) var(--grh-gutter) calc(var(--grh-space-7) + 72px);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -264,6 +270,8 @@ const {
   .grh-hero__quicklink {
     display: inline-flex;
     align-items: center;
+    /* War 27 px hoch — als Tippziel zu knapp. */
+    min-height: 40px;
     gap: 8px;
     font-size: var(--grh-fs-sm);
     color: var(--grh-cream-50);
@@ -479,8 +487,10 @@ const {
     -webkit-backdrop-filter: blur(8px);
     border-radius: var(--grh-radius-pill);
   }
+  /* 40×40: mit 32×32 lag der Knopf unter der Mindestgröße für einen Finger,
+     und auf dem Telefon ist er der einzige Weg, das nächste Bild zu sehen. */
   .grh-slider__btn {
-    width: 32px; height: 32px;
+    width: 40px; height: 40px;
     border-radius: 50%;
     color: var(--grh-cream-50);
     display: grid; place-items: center;
@@ -498,26 +508,44 @@ const {
     list-style: none;
     margin: 0; padding: 0;
   }
+  /* Der sichtbare Punkt bleibt 6 px; die Schaltfläche darum wird 32×32 und
+     bekommt den Punkt als Hintergrund. Vorher war das Tippziel selbst 6×6 px
+     groß — auf einem Telefon praktisch nicht zu treffen. Der Zwischenraum
+     schrumpft entsprechend, damit die Punktreihe optisch gleich bleibt. */
+  .grh-slider__dots { gap: 0; }
   .grh-slider__dots button {
+    width: 32px; height: 32px;
+    background: none;
+    display: grid; place-items: center;
+    transition: none;
+  }
+  .grh-slider__dots button::before {
+    content: '';
     width: 6px; height: 6px;
     border-radius: 50%;
     background: rgba(250, 247, 241, 0.35);
     transition: background var(--grh-dur-fast), width var(--grh-dur-base);
   }
-  .grh-slider__dots button:hover { background: rgba(250, 247, 241, 0.6); }
-  .grh-slider__dots button.is-active {
+  .grh-slider__dots button:hover::before { background: rgba(250, 247, 241, 0.6); }
+  .grh-slider__dots button.is-active { width: 48px; }
+  .grh-slider__dots button.is-active::before {
     background: var(--grh-candle-500);
     width: 22px;
     border-radius: 999px;
   }
 
   /* --- Scroll-Hinweis ---------------------------------------- */
-  /* Mobile: am unteren Hero-Rand mittig */
+  /* Am unteren Hero-Rand rechts. Mittig gesetzt lag er unter den
+     Schnellverweisen: die Reihe reicht bis etwa x=392, die Marke saß bei
+     768 px Fensterbreite auf x=345…423 — „Sperrungen" und „SCROLLEN" lagen
+     übereinander. Rechts außen ist er frei, und ab 980 px steht er ohnehin
+     dort. */
   .grh-hero__scroll {
     position: absolute;
     bottom: var(--grh-space-3);
-    left: 50%;
-    transform: translateX(-50%);
+    left: auto;
+    right: var(--grh-gutter);
+    transform: none;
     z-index: 5;
     display: inline-flex;
     flex-direction: column;

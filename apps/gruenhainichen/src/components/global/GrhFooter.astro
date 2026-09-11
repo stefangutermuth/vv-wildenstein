@@ -162,9 +162,12 @@ const year = new Date().getFullYear();
     gap: 6px;
     font-size: var(--grh-fs-sm);
   }
+  /* Telefon und E-Mail sind im Fuß die häufigste Handlung — 22 px Höhe
+     waren zu knapp zum Treffen. */
   .grh-footer__contact a {
     display: inline-flex;
     align-items: center;
+    min-height: 34px;
     gap: 8px;
     color: var(--grh-cream-50);
     opacity: 0.85;
@@ -205,7 +208,12 @@ const year = new Date().getFullYear();
     padding: 0;
     margin: 0;
   }
+  /* Die Verweise waren nur 17 px hoch; in einer Liste untereinander ist das
+     kaum sicher zu treffen. 34 px lässt die Spalten noch kompakt. */
   .grh-footer__col a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
     color: var(--grh-cream-50);
     opacity: 0.78;
     font-size: var(--grh-fs-sm);
@@ -233,10 +241,11 @@ const year = new Date().getFullYear();
   .grh-footer__col-cta {
     display: inline-flex;
     align-items: center;
+    min-height: 40px;
     gap: 6px;
     margin-top: 6px;
     color: var(--grh-candle-500) !important;
-    font-size: 11px;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.16em;
     font-weight: 600;
@@ -307,13 +316,18 @@ const year = new Date().getFullYear();
     margin: 0;
     flex-wrap: wrap;
   }
+  /* Impressum, Datenschutz, Cookie-Einstellungen und Barrierefreiheit sind
+     Pflichtangaben — und waren 12 px hoch bei 10 px Schrift. */
   .grh-footer__bottom a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
     color: var(--grh-cream-50);
     opacity: 0.7;
     text-decoration: none;
     text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-size: 10px;
+    letter-spacing: 0.14em;
+    font-size: 12px;
     transition: opacity var(--grh-dur-fast);
   }
   .grh-footer__bottom a:hover { opacity: 1; }
