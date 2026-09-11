@@ -57,14 +57,22 @@ jobs:
         uses: actions/cache@v4
         with:
           path: apps/gruenhainichen/.wp-cache
-          # v3 seit 04.09.2026 (v2: vv_amtsblatt, v3: + groesse): Der Zwischenspeicher erneuert sich nur, wenn sich
-          # Inhalte ändern (modified_gmt). Kommt ein neues REST-Feld hinzu —
-          # wie vv_amtsblatt —, bleibt das Datum gleich und der Build läuft mit
-          # einer Antwort, die das Feld nicht kennt. Bei jeder Schema-Änderung
-          # an der Schnittstelle diese Versionsnummer hochzählen.
-          key: wp-cache-grh-v3-${{ github.run_id }}
+          # v4 seit 11.09.2026 (v2: vv_amtsblatt, v3: + groesse, v4: vv_amtsblatt
+          # existiert wirklich). Der Zwischenspeicher erneuert sich nur, wenn
+          # sich Inhalte ändern (modified_gmt). Kommt ein neues REST-Feld hinzu
+          # — wie vv_amtsblatt —, bleibt das Datum gleich und der Build läuft
+          # mit einer Antwort, die das Feld nicht kennt. Bei jeder
+          # Schema-Änderung an der Schnittstelle diese Versionsnummer hochzählen.
+          #
+          # v4: vv-rest-amtsblatt.php registrierte das Feld bis heute NICHT —
+          # es gab nur die Route vvw/v1/amtsblatt. v2 und v3 wurden also für
+          # ein Feld hochgezählt, das nie ankam. Seit Plugin-Version 1.1.0
+          # liefert wp/v2/amtsblatt_download es tatsächlich; ohne diesen
+          # Sprung würde der Build weiter aus dem alten Zwischenspeicher
+          # bauen, und alle 69 Ausgaben stünden weiter auf „folgt".
+          key: wp-cache-grh-v4-${{ github.run_id }}
           restore-keys: |
-            wp-cache-grh-v3-
+            wp-cache-grh-v4-
 
       - name: Astro bauen (LIVE — Inhalte aus vv-wildenstein.com, indexierbar)
         run: npm run build:gruenhainichen
