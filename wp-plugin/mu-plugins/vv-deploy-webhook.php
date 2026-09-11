@@ -42,18 +42,29 @@ function vv_deploy_is_relevant_post_type( $post_type ) {
 	if ( in_array( $post_type, $ignore, true ) ) {
 		return false;
 	}
-	// Inhalte, die das Börnichen-Frontend live nutzt → lösen einen Rebuild aus:
-	//  post (News), page, amtsblatt_download (Amtsblatt), profile (Vereine/Leben),
-	//  tourismus (Unterkünfte/Ausflugsziele) + verwandte CPTs.
+	/* Inhaltstypen, die eines der Frontends liest. Diese Liste MUSS mit dem
+	   übereinstimmen, was die Astro-Apps abrufen — sonst erscheint eine
+	   Änderung erst mit dem nächtlichen Lauf, also bis zu einen Tag später,
+	   und niemand bekommt eine Meldung darüber.
+
+	   Am 11.09.2026 fehlten vier: amter, personen, vvw_stelle und vvw_room.
+	   Die Liste stammte aus der Zeit, als nur Börnichen bestand; die vier
+	   Typen kamen später mit den Verbands- und Grünhainichen-Seiten dazu.
+	   Wer ein Amt bearbeitete, sah die Änderung nicht — das Frontend
+	   aktualisierte sich erst am nächsten Morgen. */
 	$relevant = array(
-		'post',
+		'post',                // Neuigkeiten
 		'page',
-		'amtsblatt_download',
-		'profile',
-		'tourismus',
+		'amtsblatt_download',  // Amtsblatt-Ausgaben
+		'profile',             // Vereine, Leben, Gewerbe
+		'tourismus',           // Unterkünfte, Ausflugsziele
 		'gemeinderatssitzung',
 		'ausschreibungen',
 		'verein',
+		'amter',               // Ämter: /verwaltung und /amter/<slug>
+		'personen',            // Gremien, Verbandsversammlung
+		'vvw_stelle',          // Stellenanzeigen (rest_base: stellenanzeigen)
+		'vvw_room',            // Raumvermietung
 	);
 	if ( in_array( $post_type, $relevant, true ) ) {
 		return true;
