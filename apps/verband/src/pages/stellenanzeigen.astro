@@ -1,0 +1,29 @@
+---
+/**
+ * Weiterleitung: Die Stellenanzeigen lagen bis zum 11.09.2026 hier als
+ * Bild-Kurzcodes. Alte Lesezeichen und Suchtreffer sollen weiter ankommen.
+ *
+ * Bewusst eine eigene Seite statt `redirects` in der Astro-Konfiguration:
+ * Die erzeugt absolute Adressen aus `site` — auf der Vorschau-Domain führte
+ * das zur alten Live-Seite. Mit relativem Ziel stimmt es auf beiden.
+ */
+const ziel = '/wirtschaft/stellenanzeigen/';
+---
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Stellenanzeigen — weitergeleitet</title>
+    <meta http-equiv="refresh" content={`0;url=${ziel}`} />
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={ziel} />
+  </head>
+  <body>
+    <p>
+      Die Stellenanzeigen finden Sie jetzt unter
+      <a href={ziel}>Wirtschaft › Stellenanzeigen</a>.
+    </p>
+    <script is:inline define:vars={{ ziel }}>
+      location.replace(ziel);
+    </script>
+  </body>
+</html>
