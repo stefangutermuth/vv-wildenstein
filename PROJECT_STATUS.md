@@ -8,8 +8,14 @@
 > Deploy nicht mehr gesetzt.
 >
 > **Aktuelle Quellen:**
+> [docs/STAND-2026-09-11.md](docs/STAND-2026-09-11.md) — **jüngster Stand**: Auslieferungskette,
+> mu-Plugin-Ablagen, offene Punkte, wiederkehrende Fallstricke ·
 > [docs/PROJECT-BRIEF.md](docs/PROJECT-BRIEF.md) für den Aufbau ·
 > [docs/GO-LIVE-2026-08-16.md](docs/GO-LIVE-2026-08-16.md) für Domains, Server und offene Punkte
+>
+> Auch der Abschnitt „mu-Plugins … Quelle versioniert in `docs/wordpress/`" weiter unten ist
+> überholt: ausgeliefert wird inzwischen `wp-plugin/mu-plugins/`. Beide Ordner existieren
+> parallel — welche Datei wo liegt, steht im Stand vom 11.09.
 >
 > Für Börnichen und den Mängelmelder stimmt der Inhalt weiterhin.
 
