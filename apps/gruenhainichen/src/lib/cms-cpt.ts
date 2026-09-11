@@ -40,11 +40,20 @@ const GRH_ORTSTEILE = new Set<string>(['gruenhainichen', 'borstendorf', 'waldkir
 
 interface WPTerm { id: number; slug: string; name: string; taxonomy: string }
 
+/* Ein Medien-Eintrag aus wp/v2/media — sowohl eingebettet (featuredmedia,
+   attachment) als auch direkt abgerufen (Raumgalerien).
+   NUR EINMAL deklarieren: weiter unten stand dieselbe Schnittstelle ein
+   zweites Mal, mit source_url als PFLICHTfeld und ohne width in den Größen.
+   TypeScript führt gleichnamige Schnittstellen zusammen, und die Mitglieder
+   widersprachen sich — fünf Fehler, die sich bis in fetchRoomGallery
+   fortpflanzten.
+   source_url ist optional, weil die REST-Schnittstelle es auslassen kann;
+   pickImage gibt deshalb string | undefined zurück. */
 interface WPMedia {
   source_url?: string;
   mime_type?: string;
   alt_text?: string;
-  media_details?: { sizes?: Record<string, { source_url: string; width: number }> };
+  media_details?: { sizes?: Record<string, { source_url: string }> };
 }
 
 interface WPCPTBase {
@@ -637,14 +646,6 @@ async function fetchVVWRooms(): Promise<VVWv1Room[]> {
   }
 }
 
-interface WPMedia {
-  id: number;
-  source_url: string;
-  alt_text?: string;
-  media_details?: { sizes?: Record<string, { source_url: string }> };
-  post?: number;
-}
-
 async function fetchRoomGallery(roomId: number): Promise<Array<{ src: string; alt: string }>> {
   try {
     const url = new URL(`${WP_BASE}/media`);
@@ -656,12 +657,17 @@ async function fetchRoomGallery(roomId: number): Promise<Array<{ src: string; al
     });
     if (!res.ok) return [];
     const media = (await res.json()) as WPMedia[];
-    return media.map((m) => ({
-      src: m.media_details?.sizes?.large?.source_url
-         ?? m.media_details?.sizes?.medium_large?.source_url
-         ?? m.source_url,
-      alt: m.alt_text ?? '',
-    }));
+    /* Ohne Adresse kein Bild: liefert die Schnittstelle zu einem Eintrag
+       weder eine Größe noch source_url, entstand vorher ein <img> mit
+       src="undefined". Solche Einträge fallen jetzt heraus. */
+    return media
+      .map((m) => ({
+        src: m.media_details?.sizes?.large?.source_url
+           ?? m.media_details?.sizes?.medium_large?.source_url
+           ?? m.source_url,
+        alt: m.alt_text ?? '',
+      }))
+      .filter((b): b is { src: string; alt: string } => Boolean(b.src));
   } catch (err) {
     console.warn('[cms-cpt] media parent fetch fehler:', (err as Error).message);
     return [];

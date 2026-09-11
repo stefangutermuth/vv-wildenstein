@@ -397,10 +397,14 @@ const AMTSBLATT_INFO_CAT = 189; // downloadkategorie „amtsblatt-informationen"
 
 interface WPAmtsblatt {
   id: number;
-  title: { rendered: string
-  /** Von vv-rest-amtsblatt.php nachgereicht: PDF, Datum, Ausgabennummer */
-  vv_amtsblatt?: { pdfUrl: string | null; veroeffentlicht: string | null; ausgabeMonat: number | null; ausgabeJahr: number | null };
-};
+  /* Hier fehlte die schließende Klammer von `title`, wodurch vv_amtsblatt
+     INNERHALB von title lag. Der Code liest p.vv_amtsblatt — das gab es nach
+     dieser Deklaration nicht, TypeScript meldete es zu Recht. */
+  title: { rendered: string };
+  /** Soll vv-rest-amtsblatt.php nachreichen: PDF, Datum, Ausgabennummer.
+      ACHTUNG: das Plugin registriert derzeit nur die eigene Route
+      vvw/v1/amtsblatt und KEIN REST-Feld — das Feld kommt hier nie an. */
+  vv_amtsblatt?: { pdfUrl?: string | null; veroeffentlicht?: string | null; ausgabeMonat?: number | null; ausgabeJahr?: number | null };
   date: string;
   link: string;
   downloadkategorie?: number[];
