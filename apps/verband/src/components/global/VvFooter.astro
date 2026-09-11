@@ -108,27 +108,44 @@ const columns = [
       ))}
 
       {/* Unter den Linkspalten war viel leere Fläche. Dort stehen jetzt die
-          beiden Mitgliedsgemeinden mit Verweis auf ihre eigenen Websites und
-          das Regions-Zeichen — dasselbe Abzeichen wie oben rechts im Hero. */}
+          beiden Mitgliedsgemeinden mit ihren Wappen und Verweis auf ihre
+          eigenen Websites, dazu das Regions-Zeichen — dasselbe Abzeichen wie
+          oben rechts im Hero. Ohne Überschrift: Die Wappen sagen bereits,
+          worum es geht. */}
       <div class="vv-footer__region">
-        <div class="vv-footer__communes">
-          <h3>Mitgliedsgemeinden</h3>
-          <ul>
-            <li>
-              <a href="https://www.gruenhainichen.com" target="_blank" rel="noopener noreferrer">
-                Gemeinde Grünhainichen
-                <VvIcon name="arrow-up-right" size={14} />
-              </a>
-              <span>Borstendorf · Grünhainichen · Waldkirchen</span>
-            </li>
-            <li>
-              <a href="https://www.boernichen.de" target="_blank" rel="noopener noreferrer">
-                Gemeinde Börnichen/Erzgeb.
-                <VvIcon name="arrow-up-right" size={14} />
-              </a>
-            </li>
-          </ul>
-        </div>
+        <ul class="vv-footer__communes">
+          <li>
+            <a href="https://www.gruenhainichen.com" target="_blank" rel="noopener noreferrer">
+              <img
+                src="/images/wappen/gruenhainichen.png"
+                alt=""
+                width="228" height="261" loading="lazy" decoding="async"
+              />
+              <span class="vv-footer__commune-text">
+                <span class="vv-footer__commune-name">
+                  Gemeinde Grünhainichen
+                  <VvIcon name="arrow-up-right" size={14} />
+                </span>
+                <span class="vv-footer__commune-sub">Borstendorf · Grünhainichen · Waldkirchen</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="https://www.boernichen.de" target="_blank" rel="noopener noreferrer">
+              <img
+                src="/images/wappen/boernichen.png"
+                alt=""
+                width="512" height="512" loading="lazy" decoding="async"
+              />
+              <span class="vv-footer__commune-text">
+                <span class="vv-footer__commune-name">
+                  Gemeinde Börnichen/Erzgeb.
+                  <VvIcon name="arrow-up-right" size={14} />
+                </span>
+              </span>
+            </a>
+          </li>
+        </ul>
 
         <a
           class="vv-footer__erzgebirge"
@@ -203,31 +220,54 @@ const columns = [
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: var(--vv-space-6);
   }
-  /* Mitgliedsgemeinden + Regions-Zeichen im vorher leeren Bereich */
+  /* Mitgliedsgemeinden + Regions-Zeichen im vorher leeren Bereich.
+     Die Linkspalten sind unterschiedlich lang; der Abstand nach oben ist
+     deshalb knapp gehalten, damit der Block nicht abgehängt wirkt. */
   .vv-footer__region {
     grid-column: 1 / -1;
-    margin-top: var(--vv-space-7);
-    padding-top: var(--vv-space-6);
+    margin-top: var(--vv-space-5);
+    padding-top: var(--vv-space-5);
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: var(--vv-space-6);
     flex-wrap: wrap;
   }
-  .vv-footer__communes ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--vv-space-3); }
+  .vv-footer__communes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--vv-space-4);
+  }
   .vv-footer__communes a {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--vv-space-3);
     color: var(--vv-sky-200);
-    font-weight: 600;
     text-decoration: none;
     transition: color var(--vv-dur-fast);
   }
   .vv-footer__communes a:hover { color: var(--vv-white); }
-  .vv-footer__communes a :global(svg) { color: var(--vv-green-400); flex: none; }
-  .vv-footer__communes span {
+  /* Wappen: heller Grund, damit die Farben auf dem Navy nicht verschwinden */
+  .vv-footer__communes img {
+    width: 38px;
+    height: auto;
+    flex: none;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 6px;
+    padding: 3px 4px;
+  }
+  .vv-footer__commune-text { display: block; min-width: 0; }
+  .vv-footer__commune-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+  }
+  .vv-footer__commune-name :global(svg) { color: var(--vv-green-400); flex: none; }
+  .vv-footer__commune-sub {
     display: block;
     font-size: var(--vv-fs-sm);
     color: rgba(255, 255, 255, 0.55);
