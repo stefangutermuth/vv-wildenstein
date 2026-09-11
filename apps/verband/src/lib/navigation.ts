@@ -67,7 +67,7 @@ export const navigation: NavItem[] = [
     children: [
       { label: 'Überblick & Unternehmen', href: '/wirtschaft' },
       { label: 'Dienstleistungen',           href: '/wirtschaft#dienstleistungen' },
-      { label: 'Stellenanzeigen der Firmen', href: '/stellenanzeigen' },
+      { label: 'Stellenanzeigen',            href: '/wirtschaft/stellenanzeigen' },
       { label: 'Vergabe / Ausschreibungen', href: '/vergabeausschreibungen' },
       { label: 'Gewerbeeintrag melden',   href: '/informationen/gewerbeeintrag' },
     ],

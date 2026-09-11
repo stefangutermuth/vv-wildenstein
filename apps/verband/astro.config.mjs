@@ -22,6 +22,11 @@ export default defineConfig({
           lastmod: new Date(),
         }),
       ],
+  // Die Stellenanzeigen lagen bis 11.09.2026 als Bild-Kurzcodes unter
+  // /stellenanzeigen. Alte Lesezeichen und Suchtreffer landen weiter richtig.
+  redirects: {
+    '/stellenanzeigen': '/wirtschaft/stellenanzeigen',
+  },
   build: {
     inlineStylesheets: 'auto',
   },
