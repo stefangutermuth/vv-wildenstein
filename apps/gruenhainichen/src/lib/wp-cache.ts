@@ -104,7 +104,16 @@ async function ensureFreshness(wpBase: string): Promise<boolean> {
   if (freshChecked) return true;
   freshChecked = true;
 
-  const cts = ['posts', 'tourismus', 'verein', 'profile', 'personen', 'amter', 'gemeinderatssitzung', 'amtsblatt_download', 'vvw_room'];
+  /* REST-Basen, deren jüngstes modified_gmt über „frisch oder veraltet"
+     entscheidet. Jeder Inhaltstyp, den diese App über cachedFetch holt, MUSS
+     hier stehen — sonst ändert sich der Inhalt, der Zwischenspeicher hält
+     sich trotzdem für aktuell und der Build liefert die alte Antwort aus.
+
+     `stellenanzeigen` (Inhaltstyp vvw_stelle) fehlte bis 18.09.2026: an dem
+     Tag wurde eine Anzeige ersetzt, sonst änderte sich nichts — und
+     gruenhainichen.com hätte die entfernte Anzeige weiter gezeigt und die
+     neue nicht. */
+  const cts = ['posts', 'tourismus', 'verein', 'profile', 'personen', 'amter', 'gemeinderatssitzung', 'amtsblatt_download', 'vvw_room', 'stellenanzeigen'];
   let latest = '';
   let abbrueche = 0;
   for (const t of cts) {
