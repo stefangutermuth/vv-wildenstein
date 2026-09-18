@@ -9,7 +9,14 @@
  *              Jetzt: eine Anzeige = ein Eintrag, mit Ablaufdatum und
  *              Standort-Auswahl für alle drei Websites.
  * Author:      GUMU
- * Version:     1.0.0
+ * Version:     1.1.0
+ *
+ * 1.1.0 — Kurzcode [vvw_stellenanzeigen] für die alte, noch öffentliche
+ *         Verbandsseite. Deren Seite „Stellenanzeigen" war ein handgemachter
+ *         Spiegel aus zwei Bildern; am 18.09.2026 wurde eine Anzeige ersetzt,
+ *         die drei Astro-Seiten zogen mit, vv-wildenstein.com nicht — die
+ *         Verwaltung musste nachfragen. Jetzt liest auch diese Seite aus dem
+ *         Inhaltstyp.
  *
  * Installation: nach wp-content/mu-plugins/vv-stellenanzeigen.php kopieren.
  */
@@ -48,6 +55,7 @@ final class VV_Stellenanzeigen {
 
 		add_action( 'rest_api_init', array( __CLASS__, 'rest_felder' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'hinweis_abgelaufen' ) );
+		add_shortcode( 'vvw_stellenanzeigen', array( __CLASS__, 'kurzcode' ) );
 	}
 
 	public static function registriere(): void {
@@ -385,6 +393,144 @@ final class VV_Stellenanzeigen {
 			},
 			'schema' => array( 'type' => 'object' ),
 		) );
+	}
+
+	/**
+	 * [vvw_stellenanzeigen website="verband"]
+	 *
+	 * Gibt die Anzeigen aus dem Inhaltstyp aus — für die alte Verbandsseite,
+	 * die nicht über Astro gebaut wird. Dieselben Regeln wie im Astro-
+	 * Frontend (apps/verband/src/lib/cms-wordpress.ts, fetchWordPressStellen):
+	 *   - abgelaufene Anzeigen (Feld „läuft ab am" vor heute) fallen weg
+	 *   - nur Anzeigen ohne Standort, für „Alle Websites" oder für diese Website
+	 *   - nächste Bewerbungsfrist zuerst, Anzeigen ohne Frist danach
+	 * Weichen die beiden voneinander ab, zeigen zwei Seiten verschiedene
+	 * Anzeigen — genau das war der Fehler, der diesen Kurzcode nötig machte.
+	 */
+	public static function kurzcode( $atts ): string {
+		$atts    = shortcode_atts( array( 'website' => 'verband' ), $atts, 'vvw_stellenanzeigen' );
+		$website = sanitize_key( $atts['website'] );
+		$heute   = current_time( 'Y-m-d' );
+
+		$eintraege = get_posts( array(
+			'post_type'      => self::TYP,
+			'post_status'    => 'publish',
+			'posts_per_page' => 100,
+			'no_found_rows'  => true,
+		) );
+
+		$stellen = array();
+		foreach ( $eintraege as $p ) {
+			$bis = (string) get_post_meta( $p->ID, '_vvw_stelle_bis', true );
+			if ( $bis !== '' && $bis < $heute ) {
+				continue;
+			}
+			$orte = wp_get_post_terms( $p->ID, self::TAX_ORT, array( 'fields' => 'slugs' ) );
+			$orte = is_wp_error( $orte ) ? array() : $orte;
+			if ( $orte && ! in_array( 'verband-weit', $orte, true ) && ! in_array( $website, $orte, true ) ) {
+				continue;
+			}
+			$stellen[] = $p;
+		}
+
+		usort( $stellen, static function ( $a, $b ) {
+			$fa = (string) get_post_meta( $a->ID, '_vvw_stelle_frist', true );
+			$fb = (string) get_post_meta( $b->ID, '_vvw_stelle_frist', true );
+			if ( $fa !== '' && $fb !== '' ) { return strcmp( $fa, $fb ); }
+			if ( $fa !== '' ) { return -1; }
+			if ( $fb !== '' ) { return 1; }
+			return strcmp( $a->post_title, $b->post_title );
+		} );
+
+		if ( ! $stellen ) {
+			return '<p class="vvw-stellen-leer">Derzeit liegen keine Stellenanzeigen vor.</p>';
+		}
+
+		$datum = static function ( string $iso ): string {
+			return $iso === '' ? '' : (string) mysql2date( 'j. F Y', $iso . ' 12:00:00' );
+		};
+		$m = static function ( int $id, string $feld ): string {
+			return trim( (string) get_post_meta( $id, '_vvw_stelle_' . $feld, true ) );
+		};
+
+		ob_start();
+		?>
+		<style>
+			.vvw-stellen { display: grid; gap: 28px; margin: 8px 0 32px; }
+			@media (min-width: 900px) { .vvw-stellen { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+			.vvw-stelle { border: 1px solid #e2e7ef; border-radius: 10px; padding: 22px 24px; background: #fff; }
+			.vvw-stelle h3 { margin: 0 0 4px; font-size: 1.2rem; line-height: 1.3; }
+			.vvw-stelle__firma { margin: 0; font-weight: 600; }
+			.vvw-stelle__fakten { margin: 6px 0 0; font-size: .9rem; color: #5b6576; }
+			.vvw-stelle__bild { display: block; margin-top: 16px; }
+			.vvw-stelle__bild img { width: 100%; height: auto; border-radius: 6px; border: 1px solid #e2e7ef; }
+			.vvw-stelle__text { margin-top: 14px; font-size: .95rem; line-height: 1.6; }
+			.vvw-stelle__text p { margin: 0 0 .7em; }
+			.vvw-stelle__frist { margin: 12px 0 0; font-size: .95rem; }
+			.vvw-stelle__aktionen { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid #e2e7ef; font-size: .95rem; }
+			.vvw-stelle__knopf { display: inline-block; padding: 9px 16px; border-radius: 8px; background: #13267b; color: #fff !important; font-weight: 600; text-decoration: none !important; }
+			.vvw-stelle__knopf:hover { background: #24329b; }
+		</style>
+		<div class="vvw-stellen">
+		<?php foreach ( $stellen as $p ) :
+			$id        = $p->ID;
+			$datei_id  = (int) $m( $id, 'datei' );
+			$datei_url = $datei_id ? (string) wp_get_attachment_url( $datei_id ) : '';
+			$ist_bild  = $datei_id && wp_attachment_is_image( $datei_id );
+			$fakten    = array_filter( array(
+				$m( $id, 'ort' ),
+				$m( $id, 'umfang' ),
+				$m( $id, 'ab' ) !== '' ? 'ab ' . $datum( $m( $id, 'ab' ) ) : '',
+			) );
+			?>
+			<article class="vvw-stelle">
+				<h3><?php echo esc_html( get_the_title( $p ) ); ?></h3>
+				<?php if ( $m( $id, 'arbeitgeber' ) !== '' ) : ?>
+					<p class="vvw-stelle__firma"><?php echo esc_html( $m( $id, 'arbeitgeber' ) ); ?></p>
+				<?php endif; ?>
+				<?php if ( $fakten ) : ?>
+					<p class="vvw-stelle__fakten"><?php echo esc_html( implode( ' · ', $fakten ) ); ?></p>
+				<?php endif; ?>
+
+				<?php if ( $ist_bild ) :
+					$gross = wp_get_attachment_image_src( $datei_id, 'large' ); ?>
+					<a class="vvw-stelle__bild" href="<?php echo esc_url( $datei_url ); ?>" target="_blank" rel="noopener">
+						<img src="<?php echo esc_url( $gross ? $gross[0] : $datei_url ); ?>"
+						     alt="<?php echo esc_attr( 'Aushang: ' . get_the_title( $p ) ); ?>" loading="lazy">
+					</a>
+				<?php endif; ?>
+
+				<?php if ( trim( $p->post_content ) !== '' ) : ?>
+					<div class="vvw-stelle__text"><?php echo wp_kses_post( $p->post_content ); ?></div>
+				<?php endif; ?>
+
+				<?php if ( $m( $id, 'frist' ) !== '' ) : ?>
+					<p class="vvw-stelle__frist"><strong>Bewerbungsfrist:</strong> <?php echo esc_html( $datum( $m( $id, 'frist' ) ) ); ?></p>
+				<?php endif; ?>
+
+				<?php
+				$hat_aktion = ( $datei_url && ! $ist_bild ) || $m( $id, 'email' ) !== '' || $m( $id, 'telefon' ) !== '' || $m( $id, 'website' ) !== '';
+				if ( $hat_aktion ) : ?>
+					<div class="vvw-stelle__aktionen">
+						<?php if ( $datei_url && ! $ist_bild ) : ?>
+							<a class="vvw-stelle__knopf" href="<?php echo esc_url( $datei_url ); ?>" target="_blank" rel="noopener">Anzeige als PDF öffnen</a>
+						<?php endif; ?>
+						<?php if ( $m( $id, 'email' ) !== '' ) : ?>
+							<a href="mailto:<?php echo esc_attr( $m( $id, 'email' ) ); ?>"><?php echo esc_html( $m( $id, 'email' ) ); ?></a>
+						<?php endif; ?>
+						<?php if ( $m( $id, 'telefon' ) !== '' ) : ?>
+							<a href="tel:<?php echo esc_attr( preg_replace( '/[^\d+]/', '', $m( $id, 'telefon' ) ) ); ?>"><?php echo esc_html( $m( $id, 'telefon' ) ); ?></a>
+						<?php endif; ?>
+						<?php if ( $m( $id, 'website' ) !== '' ) : ?>
+							<a href="<?php echo esc_url( $m( $id, 'website' ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( preg_replace( '#^https?://#', '', rtrim( $m( $id, 'website' ), '/' ) ) ); ?></a>
+						<?php endif; ?>
+					</div>
+				<?php endif; ?>
+			</article>
+		<?php endforeach; ?>
+		</div>
+		<?php
+		return (string) ob_get_clean();
 	}
 }
 
