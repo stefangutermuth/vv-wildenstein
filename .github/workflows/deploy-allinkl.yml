@@ -57,6 +57,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: apps/gruenhainichen/.wp-cache
+          # v5 seit 19.09.2026: ein in WordPress auf Entwurf gesetztes Profil blieb
+          # in der zwischengespeicherten Listenantwort hängen. Beim Entfernen eines
+          # Beitrags ebenfalls hochzählen.
           # v4 seit 11.09.2026 (v2: vv_amtsblatt, v3: + groesse, v4: vv_amtsblatt
           # existiert wirklich). Der Zwischenspeicher erneuert sich nur, wenn
           # sich Inhalte ändern (modified_gmt). Kommt ein neues REST-Feld hinzu
@@ -70,9 +73,9 @@ jobs:
           # liefert wp/v2/amtsblatt_download es tatsächlich; ohne diesen
           # Sprung würde der Build weiter aus dem alten Zwischenspeicher
           # bauen, und alle 69 Ausgaben stünden weiter auf „folgt".
-          key: wp-cache-grh-v4-${{ github.run_id }}
+          key: wp-cache-grh-v5-${{ github.run_id }}
           restore-keys: |
-            wp-cache-grh-v4-
+            wp-cache-grh-v5-
 
       - name: Astro bauen (LIVE — Inhalte aus vv-wildenstein.com, indexierbar)
         run: npm run build:gruenhainichen
