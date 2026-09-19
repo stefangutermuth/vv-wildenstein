@@ -93,15 +93,19 @@ const {
   .grh-spread2__numeral-wrap {
     position: absolute;
     z-index: -1;
-    top: -28px;
+    /* Die Karten der Startseite schneiden alles ab, was über ihren Rand
+       ragt. Deshalb bleibt die Ziffer mit etwas Luft im Rahmen, und die
+       Zeilenhöhe ist groß genug, dass die kursiven Ziffern nicht über
+       ihren Kasten hinausstehen. */
+    top: 12px;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     pointer-events: none;
     user-select: none;
   }
-  .grh-spread2:not(.is-reverse) .grh-spread2__numeral-wrap { right: 0; }
-  .grh-spread2.is-reverse .grh-spread2__numeral-wrap       { left: 0; align-items: flex-start; }
+  .grh-spread2:not(.is-reverse) .grh-spread2__numeral-wrap { right: 0.12em; }
+  .grh-spread2.is-reverse .grh-spread2__numeral-wrap       { left: 0.12em; align-items: flex-start; }
 
   .grh-spread2__numeral {
     font-family: var(--grh-font-display);
@@ -110,7 +114,8 @@ const {
     /* Etwas kleiner als früher, damit die Zahl hinter der Überschrift
        bleibt und nicht in den Fließtext hineinreicht */
     font-size: clamp(10rem, 22vw, 20rem);
-    line-height: 0.8;
+    line-height: 1.1;
+    padding-inline: 0.06em;
     letter-spacing: -0.06em;
     color: var(--grh-forest-700);
     opacity: 0.07;
