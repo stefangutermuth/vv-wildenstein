@@ -34,7 +34,6 @@ const wappenFor = {
           <span class="grh-triptych__icon" aria-hidden="true">
             <img src={wappenFor[o.key]} alt="" loading="lazy" />
           </span>
-          <span class="grh-triptych__num" aria-hidden="true">{String(o.index).padStart(2, '0')}</span>
         </div>
 
         <div class="grh-triptych__body">
@@ -95,17 +94,6 @@ const wappenFor = {
     background: linear-gradient(160deg, #2A6B43, #1A3D27);
   }
 
-  .grh-triptych__num {
-    position: absolute;
-    top: var(--grh-space-3);
-    left: var(--grh-space-3);
-    font-family: var(--grh-font-display);
-    font-style: italic;
-    font-size: 13px;
-    letter-spacing: 0.3em;
-    color: var(--grh-cream-50);
-    text-shadow: 0 1px 4px rgba(0,0,0,0.45);
-  }
   .grh-triptych__icon {
     position: absolute;
     bottom: var(--grh-space-3);

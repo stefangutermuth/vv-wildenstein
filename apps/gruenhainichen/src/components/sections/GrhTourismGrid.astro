@@ -67,7 +67,6 @@ const tiles = [
       <a class={`grh-strip__tile grh-strip__tile--${t.tone}`} href={t.href}>
         <span class="grh-strip__bg" style={`background-image: url('${t.image}')`} aria-hidden="true"></span>
         <span class={`grh-strip__overlay grh-strip__overlay--${t.tone}`} aria-hidden="true"></span>
-        <span class="grh-strip__num" aria-hidden="true">{t.num}</span>
         <span class="grh-strip__icon" aria-hidden="true">
           <GrhIcon name={t.icon as any} size={36} />
         </span>
@@ -248,14 +247,6 @@ const tiles = [
     background: linear-gradient(180deg, transparent 0%, rgba(20, 43, 31, 0.85) 70%, rgba(20, 43, 31, 0.92) 100%);
   }
 
-  .grh-strip__num {
-    font-family: var(--grh-font-display);
-    font-style: italic;
-    font-size: 13px;
-    letter-spacing: 0.3em;
-    color: var(--grh-candle-500);
-    align-self: start;
-  }
   .grh-strip__icon {
     align-self: start;
     justify-self: end;
