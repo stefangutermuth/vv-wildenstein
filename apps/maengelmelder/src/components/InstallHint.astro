@@ -88,7 +88,8 @@
   .ih__body { flex: 1; display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
   .ih__body strong { font-size: 0.95rem; }
   .ih__body span { font-size: 0.82rem; color: var(--text-soft); }
-  .ih__share { width: 1em; height: 1em; vertical-align: -0.15em; fill: var(--vv-blue); }
+  /* per innerHTML eingefuegt, traegt kein Astro-Scope-Attribut */
+  :global(.ih__share) { width: 1em; height: 1em; vertical-align: -0.15em; fill: var(--vv-blue); }
   /* Installieren-Button bricht auf eigene, volle Zeile um (passt auch auf schmale Handys) */
   .ih__action { order: 4; flex: 1 0 100%; justify-content: center; padding: 0.6em 1.1em; font-size: 0.92rem; }
   .ih__close {
