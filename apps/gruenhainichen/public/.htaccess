@@ -45,6 +45,11 @@ RewriteRule ^tafel/(.*)$ https://alt.gruenhainichen.com/tafel/$1 [R=301,L]
 RewriteRule ^gemeinde/amtsblatt/einreichen/?$  /gemeinde/amtsblatt/ [R=302,L]
 RewriteRule ^gemeinde/raeume(/.*)?$            /gemeinde/ [R=302,L]
 
+# Mängelmelder: eigene App für beide Gemeinden. Die beiden Pfade standen
+# eine Zeit lang als tote Links auf der Seite — wer sie noch gespeichert hat,
+# landet trotzdem richtig.
+RewriteRule ^(leben/)?maengelmelder/?$ https://melder.vv-wildenstein.com/ [R=301,L]
+
 # --- Gemeinde ------------------------------------------------------
 RewriteRule ^gemeinde-gruenhainichen/amtsblatt/?$        /gemeinde/amtsblatt/ [R=301,L]
 RewriteRule ^gemeinde-gruenhainichen/feuerwehren/?$      /gemeinde/feuerwehren/ [R=301,L]
