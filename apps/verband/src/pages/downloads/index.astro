@@ -33,12 +33,12 @@ const fachbereiche = gruppen.filter((g) => !istAmtsblatt(g.titel));
 const anzahl = fachbereiche.reduce((n, g) => n + g.dateien.length, 0);
 ---
 <BaseLayout
-  title="Downloads — Verwaltungsverband Wildenstein"
-  description="Anträge, Formulare und Satzungen des Verwaltungsverbands Wildenstein zum Herunterladen — nach Fachbereich sortiert."
+  title="Downloads · Verwaltungsverband Wildenstein"
+  description="Anträge, Formulare und Satzungen des Verwaltungsverbands Wildenstein zum Herunterladen, sortiert nach Fachbereich."
 >
   <VvPageHeader
     title="Downloads"
-    intro={`${anzahl} Anträge, Formulare und Satzungen zum Herunterladen — sortiert nach Fachbereich.`}
+    intro={`${anzahl} Anträge, Formulare und Satzungen zum Herunterladen, sortiert nach Fachbereich.`}
   />
   <div class="vv-pagebody">
     <div class="vv-container">

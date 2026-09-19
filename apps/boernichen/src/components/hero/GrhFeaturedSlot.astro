@@ -15,7 +15,7 @@ const { eyebrow, title, subtitle, ctas = [], logo, logoAlt = '' } = Astro.props;
 // Reduce auf einen Primary-CTA — der Slot soll kein Buffet sein
 const primary = ctas[0];
 ---
-<a class="grh-pin grh-reveal" href={primary?.href ?? '#'} aria-label={`${eyebrow ?? ''} — ${title}`}>
+<a class="grh-pin grh-reveal" href={primary?.href ?? '#'} aria-label={`${eyebrow ?? ''} · ${title}`}>
   {logo && (
     <span class="grh-pin__logo" aria-hidden="true">
       <img src={logo} alt={logoAlt} loading="eager" decoding="async" />

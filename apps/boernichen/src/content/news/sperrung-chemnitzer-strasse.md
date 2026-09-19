@@ -1,5 +1,5 @@
 ---
-title: "Sperrung Chemnitzer Straße – Bauarbeiten an der Wendt-&-Kühn-Welt"
+title: "Sperrung Chemnitzer Straße: Bauarbeiten an der Wendt-&-Kühn-Welt"
 date: 2026-04-22
 category: sperrung
 ortsteil: gruenhainichen

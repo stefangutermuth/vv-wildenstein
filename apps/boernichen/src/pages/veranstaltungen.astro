@@ -15,12 +15,12 @@ const isExternal = (h: string) => /^https?:/i.test(h);
 <GrhPage
   title="Veranstaltungen"
   eyebrow="Kalender"
-  description="Veranstaltungen und Termine in Börnichen/Erzgeb. — Feste, Konzerte und Gemeindeleben."
+  description="Veranstaltungen und Termine in Börnichen/Erzgeb.: Feste, Konzerte und Gemeindeleben."
   wide
 >
   {events.length === 0 ? (
     <p class="grh-evp__empty">
-      Aktuell sind keine Termine eingetragen. Schauen Sie bald wieder vorbei —
+      Aktuell sind keine Termine eingetragen. Schauen Sie bald wieder vorbei,
       neue Veranstaltungen werden hier laufend ergänzt.
     </p>
   ) : (

@@ -28,12 +28,12 @@ const { nummer, seiten, alle } = Astro.props as {
 const news = alle.slice((nummer - 1) * PRO_SEITE, nummer * PRO_SEITE);
 ---
 <BaseLayout
-  title={`Neuigkeiten — Seite ${nummer} von ${seiten} — Verwaltungsverband Wildenstein`}
+  title={`Neuigkeiten · Seite ${nummer} von ${seiten} · Verwaltungsverband Wildenstein`}
   description="Ältere Neuigkeiten und Bekanntmachungen des Verwaltungsverbands Wildenstein."
 >
   <VvPageHeader
     title="Neuigkeiten & Bekanntmachungen"
-    intro={`Ältere Meldungen — Seite ${nummer} von ${seiten}.`}
+    intro={`Ältere Meldungen, Seite ${nummer} von ${seiten}.`}
   />
 
   <div class="vv-newsindex">

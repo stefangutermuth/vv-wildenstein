@@ -7,7 +7,7 @@ import { getTourism } from '../../lib/cms-cpt';
 const CATEGORIES: Record<string, { label: string; lead: string; matchers: RegExp[] }> = {
   sehenswuerdigkeiten: {
     label: 'Sehenswürdigkeiten',
-    lead: 'Kirchen, Denkmäler, historische Plätze — was unsere Region geprägt hat.',
+    lead: 'Kirchen, Denkmäler, historische Plätze: was unsere Region geprägt hat.',
     matchers: [/sehensw/i, /denkmal/i, /kirche/i],
   },
   museum: {
@@ -27,7 +27,7 @@ const CATEGORIES: Record<string, { label: string; lead: string; matchers: RegExp
   },
   wandern: {
     label: 'Wandern',
-    lead: 'Vom Schachwanderweg bis zum Zschopautalweg — Touren durchs Erzgebirge.',
+    lead: 'Vom Schachwanderweg bis zum Zschopautalweg: Touren durchs Erzgebirge.',
     matchers: [/wander/i, /weg/i, /tour/i],
   },
   radfahren: {

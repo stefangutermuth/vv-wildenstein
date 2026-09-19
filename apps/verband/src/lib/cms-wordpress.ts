@@ -541,8 +541,8 @@ function rewriteContentUrls(
   out = out.replace(
     /\[contact-form-7[^\]]*\]/gi,
     '<p class="vv-hinweis">Das Online-Formular steht hier nicht zur Verfügung. ' +
-      'Schreiben Sie uns bitte an <a href="mailto:info@vv-wildenstein.com">info@vv-wildenstein.com</a> ' +
-      '— wir nehmen Ihre Angaben auf.</p>',
+      'Schreiben Sie uns bitte an <a href="mailto:info@vv-wildenstein.com">info@vv-wildenstein.com</a>. ' +
+      'Wir nehmen Ihre Angaben dann auf.</p>',
   );
   // Skripte/Stylesheets aus dem WP-Inhalt: laufen im statischen Build ohne die
   // Plugin-Abhängigkeiten nicht und würden als Roh-Text auf der Seite landen
@@ -1762,7 +1762,7 @@ export interface Foerderuebersicht {
  */
 const FOERDER_LOGOS: { muster: RegExp; alt: string }[] = [
   { muster: /Logo-EU_NEU/i,   alt: 'Kofinanziert von der Europäischen Union' },
-  { muster: /SMUL_LO_EPLR/i,  alt: 'EPLR – Entwicklungsprogramm für den ländlichen Raum im Freistaat Sachsen 2014–2020, Europäischer Landwirtschaftsfonds für die Entwicklung des ländlichen Raums' },
+  { muster: /SMUL_LO_EPLR/i,  alt: 'EPLR: Entwicklungsprogramm für den ländlichen Raum im Freistaat Sachsen 2014–2020, Europäischer Landwirtschaftsfonds für die Entwicklung des ländlichen Raums' },
   { muster: /LEADER-\d+x\d+/, alt: 'Verein zur Entwicklung der Erzgebirgsregion Flöha- und Zschopautal e. V.' },
   { muster: /Leader/i,        alt: 'LEADER' },
 ];

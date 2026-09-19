@@ -89,7 +89,7 @@
       </span>
       <input type="search" placeholder="Sehenswürdigkeit, Termin, Ortsteil…" autocomplete="off" data-grh-fab-search />
     </div>
-    <p class="grh-fab__hint">Live-Suche in News, Veranstaltungen und Seiten — wird im nächsten Schritt freigeschaltet.</p>
+    <p class="grh-fab__hint">Die Live-Suche in News, Veranstaltungen und Seiten wird im nächsten Schritt freigeschaltet.</p>
   </section>
 
   <!-- Mängelmelder-Panel (kurz, nur Hinweis + CTA) -->
@@ -104,8 +104,8 @@
       </button>
     </header>
     <p class="grh-fab__lead">
-      Defekte Straßenlampen, Schlaglöcher, wilder Müll oder beschädigte Schilder —
-      lass es uns wissen, wir kümmern uns.
+      Defekte Straßenlampen, Schlaglöcher, wilder Müll oder beschädigte Schilder?
+      Lass es uns wissen, wir kümmern uns.
     </p>
     {/* Der Mängelmelder ist eine eigene App für beide Gemeinden und läuft
         unter melder.vv-wildenstein.com — eine Seite /maengelmelder gab es
@@ -117,7 +117,7 @@
       </svg>
     </a>
     <p class="grh-fab__hint">
-      Mit Foto und Standort auf der Karte — für Grünhainichen und Börnichen.
+      Mit Foto und Standort auf der Karte, für Grünhainichen und Börnichen.
     </p>
   </section>
 
@@ -726,7 +726,7 @@
       const btn = form.querySelector<HTMLButtonElement>('.grh-fab__submit');
       if (btn) {
         const original = btn.textContent;
-        btn.textContent = 'Vielen Dank — wir melden uns!';
+        btn.textContent = 'Vielen Dank, wir melden uns!';
         btn.disabled = true;
         setTimeout(() => {
           btn.textContent = original;

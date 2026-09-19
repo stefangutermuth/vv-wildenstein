@@ -6,7 +6,7 @@ import { ANLIEGEN_LABELS } from '~/lib/melder';
 const anliegen = Object.entries(ANLIEGEN_LABELS); // [slug, label]
 ---
 
-<BaseLayout title="Mangel einreichen – Mängelmelder VV Wildenstein">
+<BaseLayout title="Mangel einreichen · Mängelmelder VV Wildenstein">
   <section class="submit container">
     <h1 class="submit__title">Mangel einreichen</h1>
     <p class="submit__intro">
@@ -150,10 +150,10 @@ const anliegen = Object.entries(ANLIEGEN_LABELS); // [slug, label]
           map.setView([lat, lng], 17);
           setPin(lat, lng, data[0].display_name);
         } else {
-          pickedEl.textContent = 'Adresse nicht gefunden — bitte direkt auf die Karte tippen.';
+          pickedEl.textContent = 'Adresse nicht gefunden. Bitte tippen Sie direkt auf die Karte.';
         }
       } catch {
-        pickedEl.textContent = 'Suche nicht möglich — bitte direkt auf die Karte tippen.';
+        pickedEl.textContent = 'Suche nicht möglich. Bitte tippen Sie direkt auf die Karte.';
       }
     };
     document.getElementById('addr-btn')!.addEventListener('click', search);

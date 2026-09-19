@@ -5,7 +5,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
 <header class="grh-header grh-header--compact" data-grh-header>
   <div class="grh-container grh-headerc__inner">
     <div class="grh-headerc__brand">
-      <a href="/" class="grh-headerc__brandhome" aria-label="Gemeinde Grünhainichen – Startseite">
+      <a href="/" class="grh-headerc__brandhome" aria-label="Gemeinde Grünhainichen · Startseite">
         <GrhWappen size={72} />
       </a>
       <span class="grh-headerc__brandtext">
@@ -526,7 +526,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
       pill.setAttribute(
         'aria-label',
         'Freibad Borstendorf: ' + (jetzt ? z.label : 'ab ' + kurz(z.von)) +
-        (z.hinweis ? ' — ' + z.hinweis : '') + '. Zur Seite Baden.'
+        (z.hinweis ? ', ' + z.hinweis : '') + '. Zur Seite Baden.'
       );
       if (z.hinweis) pill.title = z.hinweis;
 

@@ -22,7 +22,7 @@ const showKontakt = hasKontakt && !contentHasContact;
 <GrhPage
   title={item.title}
   eyebrow="Erleben & Entdecken"
-  description={`${item.title} — Tourismus in und um Börnichen/Erzgeb.`}
+  description={`${item.title} · Tourismus in und um Börnichen/Erzgeb.`}
   breadcrumb={[{ label: 'Tourismus', href: '/tourismus' }]}
 >
   {item.image && (
@@ -38,10 +38,10 @@ const showKontakt = hasKontakt && !contentHasContact;
       <h2>Impressionen</h2>
       <div class="grh-gallery">
         {item.gallery.map((g, n) => (
-          <a class="grh-gallery__item" href={g.full} aria-label={g.alt || `${item.title} – Bild ${n + 1}`}>
+          <a class="grh-gallery__item" href={g.full} aria-label={g.alt || `${item.title} · Bild ${n + 1}`}>
             <img
               src={g.url}
-              alt={g.alt || `${item.title} – Bild ${n + 1}`}
+              alt={g.alt || `${item.title} · Bild ${n + 1}`}
               loading="lazy"
               decoding="async"
             />
