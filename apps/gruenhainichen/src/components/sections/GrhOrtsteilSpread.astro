@@ -117,7 +117,12 @@ const wappenFor = {
     border: 1px solid rgba(250, 247, 241, 0.6);
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     overflow: hidden;
-    padding: 6px;
+    /* 12 px statt 6: Erst ab hier passt das Wappen komplett in den Kreis.
+       Bei 60 px Bildkante ragten die Ecken des Schilds (Grünhainichen) und
+       der Schriftring des Siegels (Borstendorf) über den runden Rand hinaus
+       und wurden abgeschnitten — 72 / √2 ≈ 51 px ist die größte Kante, die
+       ein Quadrat im Kreis haben darf. */
+    padding: 12px;
   }
   .grh-triptych__icon :global(img) {
     width: 100%; height: 100%;
