@@ -97,15 +97,17 @@ export const navigation: NavItem[] = [
     href: '/veranstaltungen',
     children: [
       { label: 'Alle Veranstaltungen', href: '/veranstaltungen' },
+      { label: 'EURORANDO 2026', href: '/veranstaltungen/eurorando-2026' },
+      // Bewusst als Letztes und mit Jahreszahl: Das Fest ist vorbei, die
+      // Seiten bleiben als Rückblick erreichbar.
       {
-        label: 'Heimatfest',
+        label: 'Heimatfest (2024)',
         href: '/veranstaltungen/heimatfest',
         children: [
           { label: 'Rückblick / Bilder',  href: '/veranstaltungen/heimatfest/rueckblick' },
           { label: 'Jubiläumsprodukte',   href: '/veranstaltungen/heimatfest/jubilaeumsprodukte' },
         ],
       },
-      { label: 'EURORANDO 2026', href: '/veranstaltungen/eurorando-2026' },
     ],
   },
 ];
