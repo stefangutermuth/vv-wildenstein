@@ -1,7 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-const PORTRAIT = 'https://grh.g-konzeption.de//wp-content/uploads/2018/09/IMG_1425.jpg';
+// Liegt bewusst im Projekt: Vorher zeigte der Pfad auf grh.g-konzeption.de,
+// eine längst abgeschaltete Entwicklungsdomain — das Bild war seit dem
+// Go-Live nie zu sehen. Original: WP-Mediathek vv-wildenstein.com, IMG_1425.jpg (2018).
+const PORTRAIT = '/images/gemeinde/buergermeister-robert-arnold.jpg';
 ---
 <BaseLayout title="Bürgermeister Robert Arnold · Grünhainichen" header="compact">
 
@@ -138,8 +141,9 @@ const PORTRAIT = 'https://grh.g-konzeption.de//wp-content/uploads/2018/09/IMG_14
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* Person steht im Original links — Crop so verschieben, dass sie mittig sitzt */
-    object-position: 35% center;
+    /* Person steht im Original im linken Viertel (1200×800) — bei 3:4-Beschnitt
+       rückt sie mit 12 % ins linke Drittel, der Ort bleibt rechts im Bild */
+    object-position: 12% center;
   }
   .grh-bm-intro { min-width: 0; }
   .grh-bm-role {
