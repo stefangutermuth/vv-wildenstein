@@ -23,9 +23,15 @@ const {
 } = Astro.props;
 ---
 <article class={`grh-spread2 grh-spread2--${topic} ${reverse ? 'is-reverse' : ''}`}>
-  {/* Riesige Hintergrund-Numeral */}
-  <span class="grh-spread2__numeral grh-numeral" aria-hidden="true">{numeral}</span>
-  {numeralLabel && <span class="grh-spread2__numeral-label" aria-hidden="true">{numeralLabel}</span>}
+  {/* Riesige Hintergrund-Numeral. Die frühere Beschriftung darunter
+      („Punkte auf jedem Engelflügel") wird bewusst nicht mehr gezeigt: Sie
+      hing frei oben rechts und lief je nach Textlänge in die Eyebrow oder
+      die Überschrift hinein. Die Zahl wird ohnehin in der Faktenzeile
+      erklärt; numeralLabel bleibt als Prop erhalten, damit die Aufrufe in
+      index.astro nicht angefasst werden müssen. */}
+  <span class="grh-spread2__numeral-wrap" aria-hidden="true">
+    <span class="grh-spread2__numeral grh-numeral">{numeral}</span>
+  </span>
 
   <div class="grh-spread2__media">
     {image ? (
@@ -84,37 +90,31 @@ const {
     .grh-spread2.is-reverse .grh-spread2__media { order: 2; }
   }
 
-  .grh-spread2__numeral {
+  .grh-spread2__numeral-wrap {
     position: absolute;
     z-index: -1;
-    font-family: var(--grh-font-display);
-    font-style: italic;
-    font-weight: 300;
-    font-size: clamp(12rem, 28vw, 26rem);
-    line-height: 0.85;
-    letter-spacing: -0.06em;
-    color: var(--grh-forest-700);
-    opacity: 0.08;
-    top: -40px;
+    top: -28px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
     pointer-events: none;
     user-select: none;
   }
-  .grh-spread2:not(.is-reverse) .grh-spread2__numeral { right: -2vw; }
-  .grh-spread2.is-reverse .grh-spread2__numeral       { left:  -2vw; }
+  .grh-spread2:not(.is-reverse) .grh-spread2__numeral-wrap { right: 0; }
+  .grh-spread2.is-reverse .grh-spread2__numeral-wrap       { left: 0; align-items: flex-start; }
 
-  .grh-spread2__numeral-label {
-    position: absolute;
-    z-index: 0;
-    top: var(--grh-space-2);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.32em;
-    color: var(--grh-stone-400);
-    opacity: 0.65;
+  .grh-spread2__numeral {
+    font-family: var(--grh-font-display);
+    font-style: italic;
+    font-weight: 300;
+    /* Etwas kleiner als früher, damit die Zahl hinter der Überschrift
+       bleibt und nicht in den Fließtext hineinreicht */
+    font-size: clamp(10rem, 22vw, 20rem);
+    line-height: 0.8;
+    letter-spacing: -0.06em;
+    color: var(--grh-forest-700);
+    opacity: 0.07;
   }
-  .grh-spread2:not(.is-reverse) .grh-spread2__numeral-label { right: 4vw; }
-  .grh-spread2.is-reverse .grh-spread2__numeral-label       { left:  4vw; }
-
   .grh-spread2__media {
     aspect-ratio: 5 / 6;
     overflow: hidden;
