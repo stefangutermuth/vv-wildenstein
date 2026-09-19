@@ -1,12 +1,220 @@
 ---
+/**
+ * Leben in unserer Gemeinde: Einstiegsseite für Alltag, Familie und Freizeit.
+ *
+ * Verknüpft die vorhandenen Inhaltstypen aus vv-wildenstein.com miteinander:
+ * Kita-Profile (Anzahl), Vereine (Anzahl), Stellenanzeigen (Anzahl),
+ * die nächsten Termine und die aktuellen Neuigkeiten. Die Zahlen auf den
+ * Kacheln kommen also aus dem Redaktionssystem und bleiben von selbst aktuell.
+ */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import GrhPagePlaceholder from '../../components/global/GrhPagePlaceholder.astro';
+import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
+import GrhSection from '../../components/sections/GrhSection.astro';
+import GrhEventsList from '../../components/sections/GrhEventsList.astro';
+import GrhNewsCard from '../../components/cards/GrhNewsCard.astro';
+import GrhButton from '../../components/primitives/GrhButton.astro';
+import GrhIcon from '../../components/primitives/GrhIcon.astro';
+import { getEvents, getNews } from '../../lib/cms';
+import { getKitaProfile, getVereine } from '../../lib/cms-cpt';
+import { getStellen } from '../../lib/cms-wordpress';
+
+const [kitas, vereine, stellen, eventsAll, newsAll] = await Promise.all([
+  getKitaProfile(),
+  getVereine(),
+  getStellen().catch(() => []),
+  getEvents(),
+  getNews(),
+]);
+
+const events = eventsAll.slice(0, 4).map((e) => ({
+  title: e.title,
+  startDate: e.startDate,
+  endDate: e.endDate,
+  location: e.location,
+  ortsteil: e.ortsteil,
+  teaser: e.teaser,
+  featured: e.featured,
+  image: e.image,
+  href: e.href,
+}));
+
+const news = newsAll.filter((n) => n.category !== 'sperrung').slice(0, 3);
+
+const zahl = (n: number, einzahl: string, mehrzahl: string) =>
+  n === 1 ? `1 ${einzahl}` : `${n} ${mehrzahl}`;
+
+interface Bereich {
+  href: string;
+  icon: string;
+  label: string;
+  sub: string;
+  extern?: boolean;
+}
+
+const bereiche: Bereich[] = [
+  { href: '/leben/kita',        icon: 'blocks', label: 'Kita & Hort',   sub: kitas.length ? zahl(kitas.length, 'Einrichtung', 'Einrichtungen') : 'Borstendorf · Grünhainichen' },
+  { href: '/leben/grundschule', icon: 'school', label: 'Grundschule',   sub: 'Zwei Standorte' },
+  { href: '/leben/buecherei',   icon: 'book',   label: 'Bücherei',      sub: 'Lesen & Ausleihen' },
+  { href: '/leben/kirche',      icon: 'church', label: 'Kirche',        sub: 'Gemeinden & Gottesdienste' },
+  { href: '/leben/gesundheit',  icon: 'user',   label: 'Gesundheit',    sub: 'Ärzte, Apotheke, Pflege' },
+  { href: '/leben/einkaufen',   icon: 'basket', label: 'Einkaufen',     sub: 'Hofläden & Geschäfte' },
+  { href: '/leben/heiraten',    icon: 'rings',  label: 'Heiraten',      sub: 'Standesamt vor Ort' },
+  { href: '/vereine',           icon: 'star',   label: 'Vereine',       sub: vereine.length ? zahl(vereine.length, 'Verein', 'Vereine') : 'Freizeit & Ehrenamt' },
+  { href: '/leben/lebendiger-adventskalender', icon: 'schwibbogen', label: 'Lebendiger Adventskalender', sub: 'Jeden Abend ein Türchen' },
+];
+
+const kurzeWege: Bereich[] = [
+  { href: '/gewerbe/stellenausschreibungen', icon: 'document', label: 'Stellenangebote', sub: stellen.length ? zahl(stellen.length, 'offene Stelle', 'offene Stellen') : 'Arbeiten in der Gemeinde' },
+  { href: 'https://melder.vv-wildenstein.com/', icon: 'map-pin', label: 'Schaden melden', sub: 'Schlagloch, Lampe, Müll', extern: true },
+  { href: '/gemeinde/amtsblatt', icon: 'document', label: 'Amtsblatt', sub: 'Alle Ausgaben als PDF' },
+  { href: '/kontakt', icon: 'phone', label: 'Verwaltung', sub: 'Sprechzeiten & Ansprechpartner' },
+];
 ---
-<BaseLayout title="Leben in unserer Gemeinde · Grünhainichen" header="compact">
-  <GrhPagePlaceholder
+<BaseLayout
+  title="Leben in unserer Gemeinde · Grünhainichen"
+  description="Kita, Schule, Bücherei, Kirche, Gesundheit, Einkaufen, Vereine und Termine: alles für den Alltag in Borstendorf, Grünhainichen und Waldkirchen."
+  header="compact"
+>
+  <GrhPageHeader
     title="Leben in unserer Gemeinde"
     breadcrumb="Startseite · Leben"
-    description="Alles rund um Alltag, Familie und Freizeit."
-    hints={["Übersicht aller Lebensbereiche","Schnellzugang Schule/Kita","Veranstaltungs-Highlights"]}
+    lead="Was den Alltag hier ausmacht: von der Kita über die Bücherei bis zum Vereinsabend. Hier finden Sie alle Lebensbereiche auf einen Blick, dazu die nächsten Termine und Neuigkeiten."
   />
+
+  <GrhSection tone="cream" padding="lg" eyebrow="Lebensbereiche" title="Alles für den Alltag." align="left">
+    <div class="grh-lb__grid">
+      {bereiche.map((b) => (
+        <a href={b.href} class="grh-lb__tile">
+          <span class="grh-lb__tile-icon"><GrhIcon name={b.icon as any} size={22} /></span>
+          <span class="grh-lb__tile-label">{b.label}</span>
+          <span class="grh-lb__tile-sub">{b.sub}</span>
+        </a>
+      ))}
+    </div>
+  </GrhSection>
+
+  {/* Die Terminliste bringt Überschrift und Kalender-Knopf selbst mit */}
+  <GrhSection tone="paper" padding="lg" align="left">
+    {events.length > 0 ? (
+      <GrhEventsList events={events} />
+    ) : (
+      <p class="grh-lb__leer">Aktuell sind keine Termine eingetragen. <a href="/veranstaltungen">Zum Kalender</a></p>
+    )}
+  </GrhSection>
+
+  <GrhSection tone="cream" padding="lg" eyebrow="Aktuelles" title="Neues aus Verwaltung und Gemeinde." align="left">
+    {news.length > 0 ? (
+      <div class="grh-lb__news">
+        {news.map((n) => (
+          <GrhNewsCard
+            title={n.title}
+            date={n.date}
+            category={n.category}
+            excerpt={n.excerpt}
+            image={n.image}
+            href={n.href}
+          />
+        ))}
+      </div>
+    ) : (
+      <p class="grh-lb__leer">Zurzeit gibt es keine neuen Meldungen.</p>
+    )}
+    <div class="grh-lb__cta">
+      <GrhButton href="/neuigkeiten" variant="ghost">Alle Neuigkeiten</GrhButton>
+    </div>
+  </GrhSection>
+
+  <GrhSection tone="sage" padding="lg" eyebrow="Kurze Wege" title="Schnell erledigt." align="left">
+    <div class="grh-lb__grid grh-lb__grid--vier">
+      {kurzeWege.map((b) => (
+        <a
+          href={b.href}
+          class="grh-lb__tile"
+          target={b.extern ? '_blank' : undefined}
+          rel={b.extern ? 'noopener' : undefined}
+        >
+          <span class="grh-lb__tile-icon"><GrhIcon name={b.icon as any} size={22} /></span>
+          <span class="grh-lb__tile-label">{b.label}</span>
+          <span class="grh-lb__tile-sub">{b.sub}</span>
+        </a>
+      ))}
+    </div>
+  </GrhSection>
 </BaseLayout>
+
+<style>
+  /* Kacheln wie im Block „Vereinsleben und Alltag“ auf der Startseite,
+     nur mit mehr Luft, weil sie hier die Hauptsache sind. */
+  .grh-lb__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-3);
+  }
+  @media (min-width: 540px)  { .grh-lb__grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 900px)  { .grh-lb__grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1200px) {
+    .grh-lb__grid { grid-template-columns: repeat(3, 1fr); }
+    .grh-lb__grid--vier { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .grh-lb__tile {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--grh-space-6) var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--grh-dur-fast), border-color var(--grh-dur-fast), background var(--grh-dur-fast);
+  }
+  .grh-lb__tile:hover {
+    transform: translateY(-3px);
+    border-color: var(--grh-moss-500);
+    background: var(--grh-sage-100);
+  }
+  .grh-lb__tile:focus-visible {
+    outline: 3px solid var(--grh-candle-500);
+    outline-offset: 2px;
+  }
+  .grh-lb__tile-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-800);
+    display: grid; place-items: center;
+    margin-bottom: var(--grh-space-2);
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-lb__tile:hover .grh-lb__tile-icon {
+    background: var(--grh-forest-800);
+    color: var(--grh-candle-500);
+  }
+  .grh-lb__tile-label {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .grh-lb__tile-sub {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--grh-stone-400);
+    line-height: 1.4;
+  }
+
+  .grh-lb__news {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 540px)  { .grh-lb__news { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1024px) { .grh-lb__news { grid-template-columns: repeat(3, 1fr); } }
+
+  .grh-lb__cta { margin-top: var(--grh-space-6); }
+  .grh-lb__leer { color: var(--grh-stone-700); }
+</style>
