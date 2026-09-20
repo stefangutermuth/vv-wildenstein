@@ -89,7 +89,6 @@ export const navigation: NavItem[] = [
       { label: 'Freizeit',                   href: '/vereine' },
       { label: 'Gemeinde Bücherei',          href: '/leben/buecherei' },
       { label: 'Kirche',                     href: '/leben/kirche' },
-      { label: 'Lebendiger Adventskalender', href: '/leben/lebendiger-adventskalender' },
     ],
   },
   {
@@ -98,6 +97,7 @@ export const navigation: NavItem[] = [
     children: [
       { label: 'Alle Veranstaltungen', href: '/veranstaltungen' },
       { label: 'EURORANDO 2026', href: '/veranstaltungen/eurorando-2026' },
+      { label: 'Lebendiger Adventskalender', href: '/leben/lebendiger-adventskalender' },
       // Bewusst als Letztes und mit Jahreszahl: Das Fest ist vorbei, die
       // Seiten bleiben als Rückblick erreichbar.
       {

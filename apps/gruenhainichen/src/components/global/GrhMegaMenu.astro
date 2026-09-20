@@ -15,6 +15,20 @@ const upcomingEvents = (await getCollection('events'))
   .sort((a, b) => a.data.startDate.valueOf() - b.data.startDate.valueOf())
   .slice(0, 3);
 
+/* Feste Spaltenaufteilung der Navigation. Der frühere automatische
+   Spaltenfluss verteilte die Blöcke nach Höhe und riss dabei
+   Zusammengehöriges auseinander. Ein Menüpunkt, der hier nicht
+   genannt ist, landet in der letzten Spalte, damit nichts verloren geht. */
+const spalten: string[][] = [
+  ['Gemeinde'],
+  ['Neuigkeiten', 'Tourismus'],
+  ['Leben', 'Gewerbe', 'Vereine'],
+  ['Veranstaltungen'],
+];
+const zugeordnet = new Set(spalten.flat());
+const navSpalten = spalten.map((labels) => labels.map((l) => nav.find((n) => n.label === l)).filter(Boolean) as typeof nav);
+navSpalten[navSpalten.length - 1].push(...nav.filter((n) => !zugeordnet.has(n.label)));
+
 const fmtShortDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit' });
 const fmtDay   = new Intl.DateTimeFormat('de-DE', { day: '2-digit' });
 const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
@@ -121,7 +135,9 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
           weitere Spalten nach rechts hinaus aufmachen würde. */}
       <div class="grh-mega__navscroll">
       <nav class="grh-mega__columns" aria-label="Vollständige Navigation">
-        {nav.map((item) => (
+        {navSpalten.map((gruppe) => (
+        <div class="grh-mega__colgroup">
+        {gruppe.map((item) => (
           <section class="grh-mega__col">
             <a href={item.href} class="grh-mega__col-head">
               {item.label}
@@ -153,6 +169,8 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
               </ul>
             )}
           </section>
+        ))}
+        </div>
         ))}
       </nav>
       </div>
@@ -565,21 +583,33 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
     }
     .grh-mega__feature,
     .grh-mega__foot { flex: 0 0 auto; }
+    .grh-mega__colgroup { gap: var(--grh-space-3); }
+
+    /* Mit der Maus reichen kleinere Zeilen; so rücken die Spalten enger
+       zusammen und passen meist ohne Scrollen auf den Bildschirm. */
+    .grh-mega__col-head { min-height: 36px; padding-bottom: 6px; margin-bottom: 4px; }
+    .grh-mega__sublink  { min-height: 30px; padding: 2px 0; font-size: 14.5px; }
+    .grh-mega__sublist3 { margin: 0 0 4px var(--grh-space-3); }
+    .grh-mega__sublist3 a { padding: 1px 0; }
   }
 
-  /* Kompakte Navigation — Multi-Column-Flow füllt Lücken automatisch */
+  /* Vier feste Spalten auf dem Desktop, zwei auf dem Tablet, eine auf dem
+     Telefon. Die Gruppen sind oben im Frontmatter festgelegt. */
   .grh-mega__columns {
-    /* min. Spaltenbreite ~18em; Browser ermittelt die optimale Spaltenanzahl */
-    columns: 18em;
-    column-gap: var(--grh-space-6);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4) var(--grh-space-6);
   }
+  @media (min-width: 600px)  { .grh-mega__columns { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1024px) { .grh-mega__columns { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
-  .grh-mega__col {
-    display: block;
-    break-inside: avoid;
-    page-break-inside: avoid; /* Safari/legacy */
-    margin-bottom: var(--grh-space-5);
+  .grh-mega__colgroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-4);
+    min-width: 0;
   }
+  .grh-mega__col { display: block; }
   /* Auf dem Telefon ist dieses Menü die gesamte Navigation. Spaltenköpfe
      kamen auf 33 px, Unterverweise auf 30 px — beides unter der Größe, die
      man mit dem Daumen sicher trifft. */
