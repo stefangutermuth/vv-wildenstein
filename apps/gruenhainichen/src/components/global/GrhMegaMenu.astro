@@ -115,6 +115,11 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
       </header>
 
       <div class="grh-mega__content">
+      {/* Eigener Scrollrahmen: Auf dem Desktop scrollt nur dieser Bereich
+          (und die Live-Spalte), nicht das ganze Menü. Der Rahmen ist nötig,
+          weil das Mehrspalten-Layout der Navigation bei fester Höhe sonst
+          weitere Spalten nach rechts hinaus aufmachen würde. */}
+      <div class="grh-mega__navscroll">
       <nav class="grh-mega__columns" aria-label="Vollständige Navigation">
         {nav.map((item) => (
           <section class="grh-mega__col">
@@ -150,6 +155,7 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
           </section>
         ))}
       </nav>
+      </div>
 
       {/* === Live-Blöcke: vertikal rechts neben der Navigation ================ */}
       <aside class="grh-mega__live" data-grh-mega-block="live" aria-label="Aktuelle Infos">
@@ -536,6 +542,29 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
       grid-template-columns: minmax(0, 1fr) 280px;
       gap: var(--grh-space-7);
     }
+
+    /* Auf dem Desktop füllt das Menü immer die ganze Höhe: Kopfzeile und
+       die Zeile mit Claim und Empfehlung stehen fest, dazwischen scrollen
+       Navigation und Live-Spalte jeweils für sich. Man muss also nie nach
+       unten scrollen, um den Fuß zu sehen. Auf dem Telefon bleibt es beim
+       durchgehenden Scrollen. */
+    .grh-mega__main { overflow: hidden; }
+    .grh-mega__content {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding-bottom: 0;
+    }
+    .grh-mega__navscroll,
+    .grh-mega__live {
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--grh-line) transparent;
+      padding-bottom: var(--grh-space-5);
+    }
+    .grh-mega__feature,
+    .grh-mega__foot { flex: 0 0 auto; }
   }
 
   /* Kompakte Navigation — Multi-Column-Flow füllt Lücken automatisch */
