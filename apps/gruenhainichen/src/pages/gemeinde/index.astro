@@ -1,12 +1,385 @@
 ---
+/**
+ * Gemeinde: Einstiegsseite für Verwaltung, Politik und Ortsteile.
+ *
+ * Verknüpft die vorhandenen Inhalte aus vv-wildenstein.com: die Ämter des
+ * Verwaltungsverbands (mit Link auf die jeweilige Amtsseite), die jüngste
+ * Gemeinderatssitzung und das aktuelle Amtsblatt. Dazu die drei Ortsteile
+ * aus der lokalen Sammlung.
+ */
+import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import GrhPagePlaceholder from '../../components/global/GrhPagePlaceholder.astro';
+import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
+import GrhSection from '../../components/sections/GrhSection.astro';
+import GrhButton from '../../components/primitives/GrhButton.astro';
+import GrhIcon from '../../components/primitives/GrhIcon.astro';
+import { getAemter, getAmtsblaetter, getPostsByCategory } from '../../lib/cms-cpt';
+
+/* Sitzungen kommen wie auf der Gemeinderat-Seite aus den Beiträgen der
+   Kategorie gemeinderat-gruenhainichen; der eigene Sitzungs-Inhaltstyp in
+   WordPress wird nicht gepflegt (letzter Eintrag Januar 2025). */
+const [aemterRoh, sitzungen, amtsblaetter, ortsteileRoh] = await Promise.all([
+  getAemter().catch(() => []),
+  getPostsByCategory('gemeinderat-gruenhainichen', 1).catch(() => []),
+  getAmtsblaetter().catch(() => []),
+  getCollection('ortsteile'),
+]);
+
+const ortsteile = ortsteileRoh.sort((a, b) => a.data.order - b.data.order);
+const sitzung = sitzungen[0];
+const amtsblatt = amtsblaetter.find((a) => a.pdfUrl) ?? amtsblaetter[0];
+
+const fmtDatum = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+const monate = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+/* Kurze Orientierung je Amt. Die Amtsseiten selbst liegen beim
+   Verwaltungsverband; hier steht nur, wofür man dort richtig ist. */
+const amtHinweise: Record<string, string> = {
+  'einwohnermeldeamt-passwesen':     'An- und Ummeldung, Ausweise, Pässe',
+  'standesamt':                      'Geburt, Eheschließung, Sterbefall',
+  'gewerbeamt':                      'Gewerbe an-, um- und abmelden',
+  'ordnungsamt-kommunale-praevention': 'Ordnung, Sicherheit, Prävention',
+  'bauamt-liegenschaften':           'Bauen, Grundstücke, Liegenschaften',
+  'finanzverwaltung':                'Steuern, Gebühren, Gemeindekasse',
+  'hauptamt':                        'Organisation und Verwaltungsleitung',
+  'personalamt-ffw':                 'Personal und Freiwillige Feuerwehr',
+  'kindertagesstaetten':             'Kita-Plätze und Elternbeiträge',
+  'soziales':                        'Soziale Angelegenheiten',
+  'kultur-tourismus':                'Veranstaltungen, Kultur, Tourismus',
+  'archiv':                          'Archiv und Datenschutz',
+  'sekretariat':                     'Zentrale, Termine, Post',
+  'foerdermittelstelle':             'Förderprogramme und Anträge',
+};
+
+/* Reihenfolge: die Ämter, mit denen Bürgerinnen und Bürger am häufigsten
+   zu tun haben, zuerst; der Rest alphabetisch. */
+const vorne = ['einwohnermeldeamt-passwesen', 'standesamt', 'gewerbeamt', 'ordnungsamt-kommunale-praevention', 'bauamt-liegenschaften', 'finanzverwaltung', 'kindertagesstaetten'];
+const aemter = [...aemterRoh].sort((a, b) => {
+  const ia = vorne.indexOf(a.slug), ib = vorne.indexOf(b.slug);
+  if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  return a.title.localeCompare(b.title, 'de');
+});
+
+interface Bereich {
+  href: string;
+  icon: string;
+  label: string;
+  sub: string;
+}
+const bereiche: Bereich[] = [
+  { href: '/gemeinde/buergermeister', icon: 'user',     label: 'Bürgermeister',  sub: 'Robert Arnold, seit 2018' },
+  { href: '/gemeinde/gemeinderat',    icon: 'building', label: 'Gemeinderat',    sub: 'Mitglieder, Sitzungen, Beschlüsse' },
+  { href: '/gemeinde/verwaltung',     icon: 'building', label: 'Verwaltung',     sub: 'Verwaltungsverband Wildenstein' },
+  { href: '/gemeinde/amtsblatt',      icon: 'document', label: 'Amtsblatt',      sub: 'Alle Ausgaben als PDF' },
+  { href: '/gemeinde/feuerwehren',    icon: 'star',     label: 'Feuerwehren',    sub: 'Vier Freiwillige Feuerwehren' },
+  { href: '/gemeinde/bauleitplanung', icon: 'map-pin',  label: 'Bauleitplanung', sub: 'Bebauungs- und Flächennutzungspläne' },
+  { href: '/gemeinde/geschichte',     icon: 'clock',    label: 'Geschichte',     sub: 'Von 1300 bis heute' },
+  { href: '/gemeinde/ortsteile',      icon: 'tree',     label: 'Ortsteile',      sub: 'Borstendorf, Grünhainichen, Waldkirchen' },
+];
 ---
-<BaseLayout title="Gemeinde · Grünhainichen" header="compact">
-  <GrhPagePlaceholder
-    title="Gemeinde"
+<BaseLayout
+  title="Gemeinde · Grünhainichen"
+  description="Bürgermeister, Gemeinderat, Verwaltung, Ämter, Amtsblatt, Feuerwehren und die drei Ortsteile der Gemeinde Grünhainichen im Erzgebirge."
+  header="compact"
+>
+  <GrhPageHeader
+    title="Gemeinde Grünhainichen"
     breadcrumb="Startseite · Gemeinde"
-    description="Übersichts-Seite zur Gemeinde Grünhainichen mit Borstendorf und Waldkirchen."
-    hints={["Bürgermeister-Vorstellung","Verwaltungsadresse + Sprechzeiten","Ortsteile-Block","Aktuelle Sitzungstermine","Direktzugang Amtsblatt"]}
+    lead="Drei Ortsteile, ein Gemeinderat, eine gemeinsame Verwaltung im Verwaltungsverband Wildenstein. Hier finden Sie die Ansprechpartner, Ämter und Unterlagen der Gemeinde."
   />
+
+  <GrhSection tone="cream" padding="lg" eyebrow="Überblick" title="Politik und Verwaltung." align="left">
+    <div class="grh-gm__grid">
+      {bereiche.map((b) => (
+        <a href={b.href} class="grh-gm__tile">
+          <span class="grh-gm__tile-icon"><GrhIcon name={b.icon as any} size={22} /></span>
+          <span class="grh-gm__tile-label">{b.label}</span>
+          <span class="grh-gm__tile-sub">{b.sub}</span>
+        </a>
+      ))}
+    </div>
+  </GrhSection>
+
+  <GrhSection tone="paper" padding="lg" eyebrow="Ämter" title="Wer ist wofür zuständig?" subtitle="Die Verwaltung der Gemeinde übernimmt der Verwaltungsverband Wildenstein in Grünhainichen. Jedes Amt hat dort eine eigene Seite mit Ansprechpartnern, Sprechzeiten und Formularen." align="left">
+    {aemter.length > 0 ? (
+      <ul class="grh-gm__aemter">
+        {aemter.map((a) => (
+          <li>
+            <a href={a.link} class="grh-gm__amt" target="_blank" rel="noopener">
+              <span class="grh-gm__amt-text">
+                <span class="grh-gm__amt-name">{a.title}</span>
+                {amtHinweise[a.slug] && <span class="grh-gm__amt-sub">{amtHinweise[a.slug]}</span>}
+              </span>
+              <span class="grh-gm__amt-pfeil" aria-hidden="true"><GrhIcon name="arrow-right" size={14} /></span>
+              <span class="grh-sr-only">(öffnet vv-wildenstein.com in neuem Tab)</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="grh-gm__leer">Die Ämterliste ist gerade nicht erreichbar. <a href="https://vv-wildenstein.com/verband/" target="_blank" rel="noopener">Zum Verwaltungsverband</a></p>
+    )}
+    <div class="grh-gm__kontakt">
+      <div>
+        <span class="grh-gm__kontakt-label">Gemeindeverwaltung</span>
+        <p>Chemnitzer Straße 41<br />09579 Grünhainichen</p>
+      </div>
+      <div>
+        <span class="grh-gm__kontakt-label">Sprechzeiten</span>
+        <p>Di 9–12 &amp; 13–18 Uhr<br />Do 9–12 &amp; 13–16 Uhr<br />Fr 9–12 Uhr</p>
+      </div>
+      <div>
+        <span class="grh-gm__kontakt-label">Kontakt</span>
+        <p><a href="tel:+4937294170-0">037294 / 170-0</a><br /><a href="mailto:info@wildenstein.ws">info@wildenstein.ws</a></p>
+      </div>
+    </div>
+  </GrhSection>
+
+  <GrhSection tone="cream" padding="lg" eyebrow="Aktuell" title="Aus Rat und Amt." align="left">
+    <div class="grh-gm__aktuell">
+      <a class="grh-gm__karte" href={sitzung ? `/neuigkeiten/${sitzung.slug}/` : '/gemeinde/gemeinderat'}>
+        <span class="grh-gm__karte-eyebrow">Gemeinderat</span>
+        <span class="grh-gm__karte-titel">{sitzung ? sitzung.title : 'Sitzungen des Gemeinderats'}</span>
+        <span class="grh-gm__karte-sub">{sitzung ? `Veröffentlicht am ${fmtDatum.format(sitzung.date)}` : 'Termine und Unterlagen'}</span>
+        <span class="grh-gm__karte-cta">{sitzung ? 'Weiterlesen' : 'Zum Gemeinderat'} <GrhIcon name="arrow-right" size={12} /></span>
+      </a>
+      <a class="grh-gm__karte" href={amtsblatt?.pdfUrl ?? '/gemeinde/amtsblatt'} target={amtsblatt?.pdfUrl ? '_blank' : undefined} rel={amtsblatt?.pdfUrl ? 'noopener' : undefined}>
+        <span class="grh-gm__karte-eyebrow">Amtsblatt</span>
+        <span class="grh-gm__karte-titel">{amtsblatt ? `Ausgabe ${monate[amtsblatt.monat - 1] ?? ''} ${amtsblatt.jahr}` : 'Amtsblatt der Gemeinde'}</span>
+        <span class="grh-gm__karte-sub">{amtsblatt ? `Erschienen am ${fmtDatum.format(amtsblatt.date)}` : 'Alle Ausgaben als PDF'}</span>
+        <span class="grh-gm__karte-cta">{amtsblatt?.pdfUrl ? 'PDF öffnen' : 'Zum Amtsblatt'} <GrhIcon name="arrow-right" size={12} /></span>
+      </a>
+      <a class="grh-gm__karte" href="/gemeinde/buergermeister">
+        <span class="grh-gm__karte-eyebrow">Bürgermeister</span>
+        <span class="grh-gm__karte-titel">Robert Arnold</span>
+        <span class="grh-gm__karte-sub">Ortsteilgespräche und Termine nach Vereinbarung</span>
+        <span class="grh-gm__karte-cta">Termin vereinbaren <GrhIcon name="arrow-right" size={12} /></span>
+      </a>
+    </div>
+    <div class="grh-gm__cta">
+      <GrhButton href="/gemeinde/gemeinderat" variant="ghost">Zum Gemeinderat</GrhButton>
+      <GrhButton href="/gemeinde/amtsblatt" variant="ghost">Alle Amtsblätter</GrhButton>
+    </div>
+  </GrhSection>
+
+  <GrhSection tone="sage" padding="lg" eyebrow="Ortsteile" title="Drei Orte, eine Gemeinde." align="left">
+    <div class="grh-gm__orte">
+      {ortsteile.map((o) => (
+        <a href={`/gemeinde/ortsteile/${o.data.key}`} class="grh-gm__ort">
+          <span class="grh-gm__ort-bild">
+            <img src={o.data.image} alt={`Eindruck aus ${o.data.name}`} loading="lazy" decoding="async" />
+          </span>
+          <span class="grh-gm__ort-name">{o.data.name}</span>
+          <span class="grh-gm__ort-tagline">{o.data.tagline}</span>
+        </a>
+      ))}
+    </div>
+  </GrhSection>
 </BaseLayout>
+
+<style>
+  .grh-gm__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-3);
+  }
+  @media (min-width: 540px)  { .grh-gm__grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 900px)  { .grh-gm__grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .grh-gm__tile {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--grh-space-6) var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--grh-dur-fast), border-color var(--grh-dur-fast), background var(--grh-dur-fast);
+  }
+  .grh-gm__tile:hover {
+    transform: translateY(-3px);
+    border-color: var(--grh-moss-500);
+    background: var(--grh-sage-100);
+  }
+  .grh-gm__tile:focus-visible { outline: 3px solid var(--grh-candle-500); outline-offset: 2px; }
+  .grh-gm__tile-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--grh-paper-100);
+    color: var(--grh-forest-800);
+    display: grid; place-items: center;
+    margin-bottom: var(--grh-space-2);
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-gm__tile:hover .grh-gm__tile-icon { background: var(--grh-forest-800); color: var(--grh-candle-500); }
+  .grh-gm__tile-label {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-lg);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .grh-gm__tile-sub {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--grh-stone-400);
+    line-height: 1.4;
+  }
+
+  /* === Ämterliste ============================================ */
+  .grh-gm__aemter {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0 var(--grh-space-7);
+    border-top: 1px solid var(--grh-line);
+  }
+  @media (min-width: 760px) { .grh-gm__aemter { grid-template-columns: 1fr 1fr; } }
+  .grh-gm__aemter li { border-bottom: 1px solid var(--grh-line); }
+  .grh-gm__amt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--grh-space-4);
+    min-height: 60px;
+    padding: 12px 4px;
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left var(--grh-dur-fast), color var(--grh-dur-fast);
+  }
+  .grh-gm__amt:hover { padding-left: 10px; }
+  .grh-gm__amt:hover .grh-gm__amt-name { color: var(--grh-moss-600); }
+  .grh-gm__amt:focus-visible { outline: 3px solid var(--grh-candle-500); outline-offset: -3px; border-radius: 6px; }
+  .grh-gm__amt-text { display: flex; flex-direction: column; gap: 2px; }
+  .grh-gm__amt-name {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-md);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    line-height: 1.25;
+    transition: color var(--grh-dur-fast);
+  }
+  .grh-gm__amt-sub { font-size: 13px; color: var(--grh-stone-700); line-height: 1.4; }
+  .grh-gm__amt-pfeil {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--grh-line);
+    display: grid; place-items: center;
+    color: var(--grh-forest-800);
+    transition: background var(--grh-dur-fast), color var(--grh-dur-fast), border-color var(--grh-dur-fast);
+  }
+  .grh-gm__amt:hover .grh-gm__amt-pfeil { background: var(--grh-forest-800); color: var(--grh-candle-500); border-color: var(--grh-forest-800); }
+  .grh-sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .grh-gm__leer { color: var(--grh-stone-700); }
+
+  .grh-gm__kontakt {
+    margin-top: var(--grh-space-7);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+    padding: var(--grh-space-5) var(--grh-space-6);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+  }
+  @media (min-width: 720px) { .grh-gm__kontakt { grid-template-columns: repeat(3, 1fr); } }
+  .grh-gm__kontakt-label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+    color: var(--grh-moss-600);
+    margin-bottom: 6px;
+  }
+  .grh-gm__kontakt p { margin: 0; font-size: var(--grh-fs-sm); line-height: 1.65; color: var(--grh-stone-700); }
+  .grh-gm__kontakt a { color: var(--grh-forest-900); text-decoration: none; }
+  .grh-gm__kontakt a:hover { color: var(--grh-moss-600); }
+
+  /* === Aktuell ============================================== */
+  .grh-gm__aktuell {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-4);
+  }
+  @media (min-width: 760px) { .grh-gm__aktuell { grid-template-columns: repeat(3, 1fr); } }
+  .grh-gm__karte {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: var(--grh-space-6) var(--grh-space-5);
+    background: var(--grh-paper-100);
+    border: 1px solid transparent;
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast), background var(--grh-dur-fast);
+  }
+  .grh-gm__karte:hover { border-color: var(--grh-candle-500); background: var(--grh-cream-50); transform: translateY(-2px); }
+  .grh-gm__karte:focus-visible { outline: 3px solid var(--grh-candle-500); outline-offset: 2px; }
+  .grh-gm__karte-eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+    color: var(--grh-moss-600);
+  }
+  .grh-gm__karte-titel {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--grh-forest-900);
+  }
+  .grh-gm__karte-sub { font-size: var(--grh-fs-sm); color: var(--grh-stone-700); line-height: 1.5; }
+  .grh-gm__karte-cta {
+    margin-top: auto;
+    padding-top: var(--grh-space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 600;
+    color: var(--grh-forest-800);
+  }
+  .grh-gm__cta { margin-top: var(--grh-space-6); display: flex; flex-wrap: wrap; gap: var(--grh-space-3); }
+
+  /* === Ortsteile ============================================ */
+  .grh-gm__orte {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 720px) { .grh-gm__orte { grid-template-columns: repeat(3, 1fr); } }
+  .grh-gm__ort { display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: inherit; }
+  .grh-gm__ort-bild {
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--grh-radius-md);
+    margin-bottom: var(--grh-space-2);
+  }
+  .grh-gm__ort-bild img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--grh-ease-out); }
+  .grh-gm__ort:hover .grh-gm__ort-bild img { transform: scale(1.04); }
+  .grh-gm__ort-name {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.015em;
+  }
+  .grh-gm__ort-tagline { font-size: var(--grh-fs-sm); color: var(--grh-stone-700); }
+</style>
