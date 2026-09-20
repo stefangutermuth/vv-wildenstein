@@ -73,7 +73,7 @@ export const navigation: NavItem[] = [
     href: '/gewerbe',
     children: [
       { label: 'Übersicht',              href: '/gewerbe' },
-      { label: 'Stellenausschreibungen', href: '/gewerbe/stellenausschreibungen', wip: true },
+      { label: 'Stellenausschreibungen', href: '/gewerbe/stellenausschreibungen' },
     ],
   },
   { label: 'Vereine', href: '/vereine' },
