@@ -45,3 +45,15 @@ h4 { font-size: var(--grh-fs-lg); line-height: var(--grh-lh-snug); }
   letter-spacing: -0.025em;
   color: var(--grh-text-on-dark);
 }
+
+/* === Keine Kursive ==========================================
+   Gestaltungsentscheidung vom 20.09.2026: Die Seite verwendet keinen
+   kursiven Schnitt mehr, auch nicht für Hervorhebungen im Fließtext oder
+   für Zitate. Betonung läuft über Farbe und Gewicht. Alle früheren
+   „font-style: italic“ in den Komponenten stehen deshalb auf normal;
+   diese Regel fängt zusätzlich die Browser-Voreinstellung für em, i,
+   cite, address und Zitate ab, damit auch Inhalte aus WordPress ohne
+   Kursive erscheinen. */
+em, i, cite, dfn, var, address, blockquote, q {
+  font-style: normal;
+}
