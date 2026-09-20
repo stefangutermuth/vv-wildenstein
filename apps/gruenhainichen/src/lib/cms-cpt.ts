@@ -720,7 +720,14 @@ export interface FreibadStatus {
   stand: string;
 }
 
-export async function getFreibadStatus(): Promise<FreibadStatus | null> {
+let freibadLaufend: Promise<FreibadStatus | null> | null = null;
+
+export function getFreibadStatus(): Promise<FreibadStatus | null> {
+  if (!freibadLaufend) freibadLaufend = ladeFreibadStatus();
+  return freibadLaufend;
+}
+
+async function ladeFreibadStatus(): Promise<FreibadStatus | null> {
   try {
     // Bewusst ohne den Platten-Zwischenspeicher: Dessen Erneuerung hängt an
     // Änderungen im Redaktionssystem. Ob das Bad heute offen hat, ändert sich
@@ -866,7 +873,21 @@ export interface Servicehinweis {
   gueltigBis: string;
 }
 
-export async function getServicehinweise(): Promise<Servicehinweis[]> {
+/* Einmal pro Bauvorgang, nicht einmal pro Seite. Der Fuß steht auf jeder
+   Seite und ruft diese Funktion auf; ohne diese Klammer ging beim Bau am
+   19.09.2026 jede der 581 Seiten einzeln in den 8-Sekunden-Timeout, weil
+   vv-wildenstein.com gerade nicht antwortete: 78 Minuten Bauzeit für einen
+   Hinweis, der am Ende ohnehin leer blieb. Der Platten-Zwischenspeicher
+   bleibt bewusst außen vor (siehe unten), aber innerhalb eines Builds ist
+   die Antwort dieselbe. */
+let hinweiseLaufend: Promise<Servicehinweis[]> | null = null;
+
+export function getServicehinweise(): Promise<Servicehinweis[]> {
+  if (!hinweiseLaufend) hinweiseLaufend = ladeServicehinweise();
+  return hinweiseLaufend;
+}
+
+async function ladeServicehinweise(): Promise<Servicehinweis[]> {
   try {
     // Ohne Platten-Zwischenspeicher: Ein Hinweis, der eine geänderte
     // Öffnungszeit ankündigt, ist nur solange etwas wert, wie er stimmt.
