@@ -135,12 +135,14 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     z-index: var(--grh-z-sticky);
     background: var(--grh-cream-50);
     border-bottom: 1px solid var(--grh-line);
-    transition: backdrop-filter var(--grh-dur-base), background var(--grh-dur-base);
+    transition: box-shadow var(--grh-dur-base);
   }
+  /* Beim Scrollen bekommt der Kopf nur einen leichten Schatten. Vorher lag
+     er halbtransparent mit backdrop-filter über der Seite; in Edge flackerte
+     das, weil die Weichzeichnung bei jeder Bewegung darunter (Hero-Bilder,
+     Animationen) neu gerechnet wird. Ein deckender Kopf ist ruhig. */
   .grh-header--compact.is-scrolled {
-    background: rgba(250, 247, 241, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px -18px rgba(20, 43, 31, 0.35);
   }
   .grh-headerc__inner {
     display: flex;
@@ -477,22 +479,11 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     box-shadow:
       0 0 24px 6px  rgba(232, 182, 88, 0.16),
       0 0 50px 18px rgba(232, 182, 88, 0.08);
-    opacity: 0.2;
+    /* Fester, leiser Schein ohne Animation. Das frühere „Atmen“ war die
+       zweite Flackerquelle in Edge; der Effekt war ohnehin kaum sichtbar. */
+    opacity: 0.6;
     z-index: -1;
     pointer-events: none;
-    will-change: opacity;
-    animation: grh-burger-breathe 5.5s ease-in-out infinite;
-  }
-  .grh-headerc__burger:hover::before,
-  .grh-headerc__burger:focus-visible::before {
-    animation-play-state: paused;
-  }
-  @keyframes grh-burger-breathe {
-    0%, 100% { opacity: 0.2; }
-    50%      { opacity: 1; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .grh-headerc__burger::before { animation: none; }
   }
   .grh-headerc__burger:hover {
     background: var(--grh-forest-800);
