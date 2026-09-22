@@ -179,7 +179,16 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
-    map.setPadding({ left: window.innerWidth > 720 ? 430 : 0, top: 0, right: 0, bottom: window.innerWidth > 720 ? 0 : 260 });
+    /* Die Routen-Tafel deckt links 400 px ab (auf dem Telefon unten). Das
+       Padding sorgt dafür, dass alle Kamera-Flüge und das Einpassen der
+       Routen den freien Teil der Karte meinen, nicht die Fläche hinter
+       der Tafel. */
+    const setzePadding = () => {
+      const schmal = window.innerWidth <= 720;
+      map.setPadding({ left: schmal ? 0 : 440, top: schmal ? 0 : 16, right: schmal ? 0 : 70, bottom: schmal ? Math.round(window.innerHeight * 0.45) : 16 });
+    };
+    setzePadding();
+    map.on('resize', setzePadding);
 
     let aktiv: string | null = null;
     let dreiD = true;
@@ -217,6 +226,13 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
       }
       const hash = location.hash.replace('#', '');
       if (hash && daten.routen.some((r) => r.id === hash)) waehle(hash, true);
+      else {
+        /* Startansicht: alle drei Routen im freien Teil der Karte */
+        const alle = new maplibregl.LngLatBounds(daten.routen[0].coords[0], daten.routen[0].coords[0]);
+        daten.routen.forEach((r) => r.coords.forEach((c) => alle.extend(c)));
+        const cam = map.cameraForBounds(alle, { padding: 40 });
+        if (cam) map.jumpTo({ center: cam.center, zoom: (cam.zoom ?? 12) - 0.15, pitch: 58, bearing: -18 });
+      }
     });
 
     /* === Kompass ======================================================= */
