@@ -230,8 +230,37 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     transition: width 260ms var(--grh-ease-out), border-color var(--grh-dur-fast), background var(--grh-dur-fast);
   }
   .grh-headerc__suche.is-open {
-    width: min(360px, 44vw);
+    width: min(480px, 46vw);
     border-color: var(--grh-forest-900);
+    transition-delay: 140ms; /* erst verschwinden Wetter und Symbole, dann geht die Pille auf */
+  }
+
+  /* Solange gesucht wird, blenden Wetter, Freibad und Social-Symbole weich
+     aus und geben ihren Platz frei; Wappen und Name bleiben stehen. */
+  .grh-headerc__weather,
+  .grh-headerc__fb,
+  .grh-headerc__social {
+    max-width: 260px;
+    transition: opacity 180ms ease, max-width 260ms var(--grh-ease-out), margin 260ms var(--grh-ease-out), padding 260ms var(--grh-ease-out);
+  }
+  .grh-headerc__tools.is-searching .grh-headerc__weather,
+  .grh-headerc__tools.is-searching .grh-headerc__fb,
+  .grh-headerc__tools.is-searching .grh-headerc__social {
+    opacity: 0;
+    max-width: 0;
+    margin: 0;
+    padding-inline: 0;
+    border-width: 0;
+    overflow: hidden;
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 160ms ease, max-width 260ms var(--grh-ease-out) 120ms, margin 260ms var(--grh-ease-out) 120ms, padding 260ms var(--grh-ease-out) 120ms, border-width 0s 120ms, visibility 0s 380ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-headerc__suche, .grh-headerc__weather, .grh-headerc__fb, .grh-headerc__social,
+    .grh-headerc__tools.is-searching .grh-headerc__weather,
+    .grh-headerc__tools.is-searching .grh-headerc__fb,
+    .grh-headerc__tools.is-searching .grh-headerc__social { transition: none; }
   }
   .grh-headerc__suche:not(.is-open):hover {
     background: var(--grh-forest-900);
@@ -543,15 +572,18 @@ import GrhIcon from '../primitives/GrhIcon.astro';
 
     initSuche({ input, liste, prefix: 'grh-header-treffer' });
 
+    const tools = wrap.closest<HTMLElement>('.grh-headerc__tools');
     const oeffnen = () => {
+      tools?.classList.add('is-searching');
       wrap.classList.add('is-open');
       knopf.setAttribute('aria-expanded', 'true');
       input.removeAttribute('tabindex');
       zu?.removeAttribute('tabindex');
       ladeIndex();
-      window.setTimeout(() => input.focus(), 120);
+      window.setTimeout(() => input.focus(), 260);
     };
     const schliessen = () => {
+      tools?.classList.remove('is-searching');
       wrap.classList.remove('is-open');
       knopf.setAttribute('aria-expanded', 'false');
       input.setAttribute('tabindex', '-1');
