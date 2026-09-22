@@ -15,26 +15,44 @@ interface Props {
       verzögertem, asynchronem Laden blitzte es in Edge bei jedem Umbau
       der Kopfzeile (z. B. beim Schließen der Suche) kurz weg. */
   eager?: boolean;
+  /** Als Hintergrundbild statt <img>: Edge bearbeitet <img>-Elemente mit
+      seiner „Bildverbesserung“ nach und zeichnet sie bei jedem Neuaufbau
+      der Zeile kurz roh, was in der Kopfzeile als Blitzen sichtbar war.
+      Hintergrundbilder lässt es in Ruhe. */
+  asBackground?: boolean;
 }
-const { size = 56, class: extra = '', variant = 'color', eager = false } = Astro.props;
+const { size = 56, class: extra = '', variant = 'color', eager = false, asBackground = false } = Astro.props;
+const alt = 'Wappen der Gemeinde Grünhainichen, zusammengesetzt aus den Wappen der drei Ortsteile';
 ---
-<img
-  src="/images/logos/wappen-grh.png"
-  alt="Wappen der Gemeinde Grünhainichen, zusammengesetzt aus den Wappen der drei Ortsteile"
-  width={size}
-  height={size}
-  loading={eager ? 'eager' : 'lazy'}
-  decoding={eager ? 'sync' : 'async'}
-  fetchpriority={eager ? 'high' : undefined}
-  class={`grh-wappen grh-wappen--${variant} ${extra}`}
-  style={`width:${size}px;height:auto;`}
-/>
+{asBackground ? (
+  <span
+    role="img"
+    aria-label={alt}
+    class={`grh-wappen grh-wappen--bg grh-wappen--${variant} ${extra}`}
+    style={`width:${size}px;height:${size}px;`}
+  ></span>
+) : (
+  <img
+    src="/images/logos/wappen-grh.png"
+    alt={alt}
+    width={size}
+    height={size}
+    loading={eager ? 'eager' : 'lazy'}
+    decoding={eager ? 'sync' : 'async'}
+    fetchpriority={eager ? 'high' : undefined}
+    class={`grh-wappen grh-wappen--${variant} ${extra}`}
+    style={`width:${size}px;height:auto;`}
+  />
+)}
 
 <style>
   .grh-wappen {
     display: inline-block;
     flex-shrink: 0;
     object-fit: contain;
+  }
+  .grh-wappen--bg {
+    background: url('/images/logos/wappen-grh.png') center / contain no-repeat;
   }
   .grh-wappen--mono-light {
     filter: brightness(0) invert(1) opacity(0.92);

@@ -6,7 +6,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   <div class="grh-container grh-headerc__inner">
     <div class="grh-headerc__brand">
       <a href="/" class="grh-headerc__brandhome" aria-label="Gemeinde Grünhainichen · Startseite">
-        <GrhWappen size={72} eager />
+        <GrhWappen size={72} eager asBackground />
       </a>
       <span class="grh-headerc__brandtext">
         <a href="/" class="grh-headerc__name">Grünhainichen</a>
@@ -159,6 +159,15 @@ import GrhIcon from '../primitives/GrhIcon.astro';
      Suche schließt und Wetter und Symbole zurückkommen), und genau dabei
      blitzte das Wappen in Edge. Deshalb keine Skalierung mehr: Der Kopf
      wird beim Scrollen nur noch niedriger, Wappen und Name bleiben gleich. */
+  .grh-headerc__brand {
+    /* Dauerhaft eigene Ebene, damit die Überblendungen rechts (Wetter,
+       Symbole) den Schriftzug samt Wappen nicht neu zeichnen lassen. */
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  .grh-headerc__weather, .grh-headerc__fb, .grh-headerc__social, .grh-headerc__suche {
+    will-change: opacity, max-width, width;
+  }
 
   .grh-headerc__brandtext {
     display: flex;
