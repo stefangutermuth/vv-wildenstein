@@ -261,30 +261,43 @@ const {
     max-width: 38ch;
   }
 
+  /* Schnellverweise als Knöpfe. Als schlichte Textzeile gingen sie im Hero
+     unter (Rückmeldung 22.09.2026). Jetzt Pillen mit Rand und leichter
+     Füllung, Symbol in Gold; sie brechen bei wenig Platz untereinander. */
   .grh-hero__quick {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--grh-space-2) var(--grh-space-4);
-    margin-top: var(--grh-space-3);
+    gap: var(--grh-space-3);
+    margin-top: var(--grh-space-4);
   }
   .grh-hero__quicklink {
     display: inline-flex;
     align-items: center;
-    /* War 27 px hoch — als Tippziel zu knapp. */
-    min-height: 40px;
-    gap: 8px;
-    font-size: var(--grh-fs-sm);
+    gap: 10px;
+    min-height: 46px;
+    padding: 0 20px 0 16px;
+    border-radius: var(--grh-radius-pill);
+    border: 1px solid rgba(250, 247, 241, 0.35);
+    background: rgba(250, 247, 241, 0.07);
     color: var(--grh-cream-50);
-    opacity: 0.78;
+    font-size: var(--grh-fs-sm);
+    font-weight: 600;
+    letter-spacing: 0.01em;
     text-decoration: none;
-    padding-bottom: 4px;
-    border-bottom: 1px solid transparent;
-    transition: border-color var(--grh-dur-fast), opacity var(--grh-dur-fast), color var(--grh-dur-fast);
+    transition: background var(--grh-dur-fast), border-color var(--grh-dur-fast), color var(--grh-dur-fast), transform var(--grh-dur-fast);
   }
+  .grh-hero__quicklink :global(svg) { color: var(--grh-candle-500); flex-shrink: 0; }
   .grh-hero__quicklink:hover {
-    opacity: 1;
-    color: var(--grh-candle-300);
-    border-color: var(--grh-candle-500);
+    background: var(--grh-cream-50);
+    border-color: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    transform: translateY(-1px);
+  }
+  .grh-hero__quicklink:hover :global(svg) { color: var(--grh-forest-800); }
+  .grh-hero__quicklink:focus-visible { outline: 3px solid var(--grh-candle-500); outline-offset: 2px; }
+  @media (max-width: 480px) {
+    .grh-hero__quick { flex-direction: column; align-items: stretch; }
+    .grh-hero__quicklink { justify-content: flex-start; }
   }
 
   .grh-hero__sidetag {
