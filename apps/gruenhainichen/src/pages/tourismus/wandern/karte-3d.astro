@@ -433,9 +433,10 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
   .grh-w3__wrap {
     position: relative;
     width: 100%;
-    height: calc(100vh - 130px);
-    min-height: 560px;
-    max-height: 960px;
+    /* Niedriger als der Bildschirm, damit die Quellenzeile darunter ohne Scrollen zu sehen ist */
+    height: calc(100vh - 230px);
+    min-height: 520px;
+    max-height: 800px;
     background: #DCE6DC;
     border-top: 1px solid var(--grh-line);
     border-bottom: 1px solid var(--grh-line);
