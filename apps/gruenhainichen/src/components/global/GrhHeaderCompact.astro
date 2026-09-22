@@ -267,6 +267,15 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   }
   .grh-headerc__suche-input::-webkit-search-cancel-button { display: none; }
   .grh-headerc__suche.is-open .grh-headerc__suche-input { opacity: 1; }
+  /* Der Fokusring liegt nicht auf dem Eingabefeld (das zeichnete zwei
+     Rahmen mitten in die Pille), sondern als weicher Schein um die Pille.
+     Das !important ist nötig, weil reset.css den Ring für alle Eingabefelder
+     mit !important erzwingt; die Pille übernimmt die Aufgabe sichtbar. */
+  .grh-headerc__suche-input:focus,
+  .grh-headerc__suche-input:focus-visible { outline: none !important; box-shadow: none; }
+  .grh-headerc__suche.is-open:has(.grh-headerc__suche-input:focus-visible) {
+    box-shadow: 0 0 0 3px rgba(232, 182, 88, 0.45);
+  }
   .grh-headerc__suche-zu {
     flex: 0 0 32px;
     width: 32px; height: 32px;
