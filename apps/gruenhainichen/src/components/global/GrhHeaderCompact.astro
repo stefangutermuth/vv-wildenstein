@@ -352,27 +352,39 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     cursor: pointer;
     transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
     justify-self: end;
-    /* Sehr sanftes „Atmen" — diffuser Goldschein um den Button */
+    position: relative;
+    isolation: isolate;
+  }
+  /* Sehr sanftes „Atmen“: diffuser Goldschein um den Button. Der Schein
+     liegt auf einem eigenen Element und wird nur in seiner Deckkraft
+     animiert. Vorher wurde der box-shadow des Buttons selbst animiert;
+     das zwingt den Browser in jedem Bild zum Neuzeichnen, und unter dem
+     halbtransparenten, weichgezeichneten Kopf (backdrop-filter) flackerte
+     das in Edge sichtbar. Deckkraft läuft dagegen auf dem Compositor. */
+  .grh-headerc__burger::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+      0 0 24px 6px  rgba(232, 182, 88, 0.16),
+      0 0 50px 18px rgba(232, 182, 88, 0.08);
+    opacity: 0.2;
+    z-index: -1;
+    pointer-events: none;
+    will-change: opacity;
     animation: grh-burger-breathe 5.5s ease-in-out infinite;
   }
-  .grh-headerc__burger:hover,
-  .grh-headerc__burger:focus-visible {
+  .grh-headerc__burger:hover::before,
+  .grh-headerc__burger:focus-visible::before {
     animation-play-state: paused;
   }
   @keyframes grh-burger-breathe {
-    0%, 100% {
-      box-shadow:
-        0 0 16px 4px  rgba(232, 182, 88, 0.04),
-        0 0 30px 10px rgba(232, 182, 88, 0.02);
-    }
-    50% {
-      box-shadow:
-        0 0 24px 6px  rgba(232, 182, 88, 0.16),
-        0 0 50px 18px rgba(232, 182, 88, 0.08);
-    }
+    0%, 100% { opacity: 0.2; }
+    50%      { opacity: 1; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .grh-headerc__burger { animation: none; }
+    .grh-headerc__burger::before { animation: none; }
   }
   .grh-headerc__burger:hover {
     background: var(--grh-forest-800);
@@ -406,7 +418,20 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   if (compactHeader) {
     let ticking = false;
     const update = () => {
-      compactHeader.classList.toggle('is-scrolled', window.scrollY > 24);
+      /* Mit Hysterese: Der Kopf wird beim Schrumpfen 42 px niedriger.
+         Auf kurzen Seiten rutschte dadurch die Scrollposition wieder
+         unter die Schwelle, der Kopf wuchs, die Position sprang zurück,
+         und so weiter: ein sichtbares Flackern. Deshalb zwei Schwellen
+         mit Abstand, und gar kein Schrumpfen, wenn die Seite nicht weit
+         genug scrollen kann. */
+      const y = window.scrollY;
+      const spielraum = document.documentElement.scrollHeight - window.innerHeight;
+      const istKlein = compactHeader.classList.contains('is-scrolled');
+      let klein = istKlein;
+      if (spielraum < 120) klein = false;
+      else if (!istKlein && y > 48) klein = true;
+      else if (istKlein && y < 4) klein = false;
+      if (klein !== istKlein) compactHeader.classList.toggle('is-scrolled', klein);
       ticking = false;
     };
     window.addEventListener('scroll', () => {
