@@ -75,12 +75,15 @@ const {
       <div class="grh-hero__quick grh-text-reveal" style="transition-delay: 520ms;">
         <a href="/neuigkeiten" class="grh-hero__quicklink">
           <GrhIcon name="document" size={16} /><span>Aktuelles</span>
+          <span class="grh-hero__quickpfeil" aria-hidden="true"><GrhIcon name="arrow-right" size={14} /></span>
         </a>
         <a href="/veranstaltungen" class="grh-hero__quicklink">
           <GrhIcon name="calendar" size={16} /><span>Veranstaltungen</span>
+          <span class="grh-hero__quickpfeil" aria-hidden="true"><GrhIcon name="arrow-right" size={14} /></span>
         </a>
         <a href="/neuigkeiten/sperrungen" class="grh-hero__quicklink">
           <GrhIcon name="map-pin" size={16} /><span>Sperrungen</span>
+          <span class="grh-hero__quickpfeil" aria-hidden="true"><GrhIcon name="arrow-right" size={14} /></span>
         </a>
       </div>
 
@@ -289,6 +292,15 @@ const {
     transition: background var(--grh-dur-fast), border-color var(--grh-dur-fast), color var(--grh-dur-fast), transform var(--grh-dur-fast);
   }
   .grh-hero__quicklink :global(svg) { color: var(--grh-candle-500); flex-shrink: 0; }
+  .grh-hero__quickpfeil {
+    margin-left: auto;
+    display: inline-flex;
+    color: var(--grh-cream-50);
+    opacity: 0.7;
+    transition: transform var(--grh-dur-fast), opacity var(--grh-dur-fast);
+  }
+  .grh-hero__quickpfeil :global(svg) { color: inherit; }
+  .grh-hero__quicklink:hover .grh-hero__quickpfeil { transform: translateX(3px); opacity: 1; }
   .grh-hero__quicklink:hover {
     background: var(--grh-cream-50);
     border-color: var(--grh-cream-50);
@@ -296,6 +308,7 @@ const {
     transform: translateY(-1px);
   }
   .grh-hero__quicklink:hover :global(svg) { color: var(--grh-forest-800); }
+  .grh-hero__quicklink:hover .grh-hero__quickpfeil { color: var(--grh-forest-900); }
   .grh-hero__quicklink:focus-visible { outline: 3px solid var(--grh-candle-500); outline-offset: 2px; }
   @media (max-width: 480px) {
     .grh-hero__quick { width: 100%; }
