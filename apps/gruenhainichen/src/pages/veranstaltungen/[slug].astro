@@ -4,7 +4,9 @@ import GrhCPTDetail from '../../components/global/GrhCPTDetail.astro';
 import { getEvents } from '../../lib/cms';
 
 export async function getStaticPaths() {
-  const list = await getEvents();
+  // Auch vergangene Termine: Der Kalender verlinkt sein Archiv, und ohne
+  // diese Seiten liefen 288 Verweise ins Leere (Prüfung 22.09.2026).
+  const list = await getEvents({ includePast: true });
   return list.map((e) => ({
     params: { slug: e.slug },
     props: { event: e },
