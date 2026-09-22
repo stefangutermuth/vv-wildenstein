@@ -9,7 +9,8 @@ type IconName =
   | 'arrow-right' | 'arrow-down' | 'menu' | 'close' | 'search' | 'phone' | 'mail'
   | 'map-pin' | 'calendar' | 'clock' | 'document' | 'building' | 'user'
   | 'hiking' | 'bike' | 'bed' | 'utensils' | 'tree' | 'star'
-  | 'blocks' | 'school' | 'church' | 'book' | 'basket' | 'rings';
+  | 'blocks' | 'school' | 'church' | 'book' | 'basket' | 'rings'
+  | 'flag' | 'car' | 'bus' | 'signpost' | 'footprints' | 'arrow-left';
 
 interface Props {
   name: IconName;
@@ -70,6 +71,30 @@ const ariaProps = ariaHidden
 
   {name === 'rings' && (
     <g><circle cx="9" cy="14" r="5.5" /><circle cx="15" cy="14" r="5.5" /><path d="m12 3 1.8 2.5-1.8 2-1.8-2z" /></g>
+  )}
+
+  {name === 'flag' && (
+    <g><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></g>
+  )}
+
+  {name === 'car' && (
+    <g><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></g>
+  )}
+
+  {name === 'bus' && (
+    <g><path d="M8 6v6" /><path d="M15 6v6" /><path d="M2 12h19.6" /><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3" /><circle cx="7" cy="18" r="2" /><path d="M9 18h5" /><circle cx="16" cy="18" r="2" /></g>
+  )}
+
+  {name === 'signpost' && (
+    <g><path d="M12 13v8" /><path d="M12 3v3" /><path d="M18 6a2 2 0 0 1 1.387.56l2.307 2.22a1 1 0 0 1 0 1.44l-2.307 2.22A2 2 0 0 1 18 13H6a2 2 0 0 1-1.387-.56l-2.306-2.22a1 1 0 0 1 0-1.44l2.306-2.22A2 2 0 0 1 6 6z" /></g>
+  )}
+
+  {name === 'footprints' && (
+    <g><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z" /><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z" /><path d="M16 17h4" /><path d="M4 13h4" /></g>
+  )}
+
+  {name === 'arrow-left' && (
+    <g><line x1="20" y1="12" x2="4" y2="12" /><polyline points="10 18 4 12 10 6" /></g>
   )}
 
   {name === 'chess-knight' && (

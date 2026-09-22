@@ -71,54 +71,82 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
           <svg class="grh-w3__tafel-pfeil" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="grh-w3__inhalt" id="grh-w3-inhalt">
-          <div class="grh-w3__filter" role="group" aria-label="Routen filtern">
-            <button type="button" class="grh-w3__chip is-active" data-grh-w3-filter="alle">Alle</button>
-            <button type="button" class="grh-w3__chip" data-grh-w3-filter="leicht">Leicht</button>
-            <button type="button" class="grh-w3__chip" data-grh-w3-filter="mittel">Mittel</button>
-            <button type="button" class="grh-w3__chip" data-grh-w3-filter="anspruchsvoll">Anspruchsvoll</button>
-          </div>
-          <ul class="grh-w3__liste">
-            {routen.map((r) => (
-              <li>
-                <button type="button" class="grh-w3__route" data-grh-w3-route={r.id} data-schwierigkeit={r.schwierigkeit} aria-expanded="false">
-                  <span class="grh-w3__route-farbe" style={`background:${r.farbe}`} aria-hidden="true"></span>
-                  <span class="grh-w3__route-text">
-                    <span class="grh-w3__route-ort">{r.ortsteil} · {r.typ}</span>
-                    <span class="grh-w3__route-name">{r.name}</span>
-                    <span class="grh-w3__route-kenn">
-                      <span><GrhIcon name="hiking" size={13} /> {r.km} km</span>
-                      <span><GrhIcon name="clock" size={13} /> {r.dauer}</span>
-                      <span><GrhIcon name="arrow-down" size={13} class="grh-w3__auf" /> {r.aufstieg} hm</span>
-                      <span class={`grh-w3__grad grh-w3__grad--${r.schwierigkeit}`}>{schwierigkeitLabel[r.schwierigkeit]}</span>
+          {/* Ansicht 1: Filter + Liste */}
+          <div data-grh-w3-liste-ansicht>
+            <div class="grh-w3__filter" role="group" aria-label="Routen filtern">
+              <button type="button" class="grh-w3__chip is-active" data-grh-w3-filter="alle">Alle</button>
+              <button type="button" class="grh-w3__chip" data-grh-w3-filter="leicht">Leicht</button>
+              <button type="button" class="grh-w3__chip" data-grh-w3-filter="mittel">Mittel</button>
+              <button type="button" class="grh-w3__chip" data-grh-w3-filter="anspruchsvoll">Anspruchsvoll</button>
+            </div>
+            <ul class="grh-w3__liste">
+              {routen.map((r) => (
+                <li>
+                  <button type="button" class="grh-w3__route" data-grh-w3-route={r.id} data-schwierigkeit={r.schwierigkeit}>
+                    <span class="grh-w3__route-farbe" style={`background:${r.farbe}`} aria-hidden="true"></span>
+                    <span class="grh-w3__route-text">
+                      <span class="grh-w3__route-ort">{r.ortsteil} · {r.typ}</span>
+                      <span class="grh-w3__route-name">{r.name}</span>
+                      <span class="grh-w3__route-kenn">
+                        <span><GrhIcon name="hiking" size={13} /> {r.km} km</span>
+                        <span><GrhIcon name="clock" size={13} /> {r.dauer}</span>
+                        <span><GrhIcon name="arrow-down" size={13} class="grh-w3__auf" /> {r.aufstieg} hm</span>
+                        <span class={`grh-w3__grad grh-w3__grad--${r.schwierigkeit}`}>{schwierigkeitLabel[r.schwierigkeit]}</span>
+                      </span>
                     </span>
+                    <span class="grh-w3__route-pfeil" aria-hidden="true"><GrhIcon name="arrow-right" size={16} /></span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div class="grh-w3__legende">
+              {Object.entries(artLabel).map(([k, v]) => (
+                <span class="grh-w3__legende-item"><i class={`grh-w3__legende-punkt grh-w3__legende-punkt--${k}`}></i>{v}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Ansicht 2: eine Route im Detail, mit Zurück-Knopf */}
+          <div data-grh-w3-detail-ansicht hidden>
+            <button type="button" class="grh-w3__zurueck" data-grh-w3-zurueck>
+              <GrhIcon name="arrow-left" size={16} /> Alle Routen
+            </button>
+            {routen.map((r) => (
+              <article class="grh-w3__detail" data-grh-w3-detail={r.id} hidden>
+                <header class="grh-w3__detail-kopf" style={`border-color:${r.farbe}`}>
+                  <span class="grh-w3__route-ort">{r.ortsteil} · {r.typ}</span>
+                  <h2 class="grh-w3__detail-name">{r.name}</h2>
+                  <span class="grh-w3__route-kenn">
+                    <span><GrhIcon name="hiking" size={13} /> {r.km} km</span>
+                    <span><GrhIcon name="clock" size={13} /> {r.dauer}</span>
+                    <span><GrhIcon name="arrow-down" size={13} class="grh-w3__auf" /> {r.aufstieg} hm</span>
+                    <span class={`grh-w3__grad grh-w3__grad--${r.schwierigkeit}`}>{schwierigkeitLabel[r.schwierigkeit]}</span>
                   </span>
-                </button>
-                <div class="grh-w3__detail" data-grh-w3-detail={r.id} hidden>
-                  <p class="grh-w3__kurz">{r.kurz}</p>
-                  <figure class="grh-w3__profil">
-                    <svg viewBox="0 0 320 90" preserveAspectRatio="none" data-grh-w3-profil={r.id} aria-label={`Höhenprofil ${r.name}`} role="img"></svg>
-                    <figcaption><span>{r.minHoehe} m</span><span>↑ {r.aufstieg} hm · ↓ {r.abstieg} hm</span><span>{r.maxHoehe} m</span></figcaption>
-                  </figure>
-                  <p class="grh-w3__text">{r.beschreibung}</p>
-                  <dl class="grh-w3__fakten">
-                    <div><dt>Start</dt><dd>{r.start}</dd></div>
-                    <div><dt>Parken</dt><dd>{r.parken}</dd></div>
-                    <div><dt>Bus &amp; Bahn</dt><dd>{r.oepnv}</dd></div>
-                    <div><dt>Markierung</dt><dd>{r.markierung}</dd></div>
-                  </dl>
-                  <div class="grh-w3__aktionen">
-                    <a class="grh-w3__btn grh-w3__btn--primär" href={r.gpx} download>GPX</a>
-                    <a class="grh-w3__btn" href={`https://www.google.com/maps/dir/?api=1&destination=${r.coords[0][1]},${r.coords[0][0]}`} target="_blank" rel="noopener">Anfahrt</a>
-                    <button type="button" class="grh-w3__btn" data-grh-w3-flug={r.id}>Rundflug</button>
-                  </div>
-                  <p class="grh-w3__hinweis">{r.hinweis}</p>
+                </header>
+                <p class="grh-w3__kurz">{r.kurz}</p>
+                <figure class="grh-w3__profil">
+                  <svg viewBox="0 0 320 90" preserveAspectRatio="none" data-grh-w3-profil={r.id} aria-label={`Höhenprofil ${r.name}`} role="img"></svg>
+                  <figcaption><span>{r.minHoehe} m</span><span>↑ {r.aufstieg} hm · ↓ {r.abstieg} hm</span><span>{r.maxHoehe} m</span></figcaption>
+                </figure>
+                <div class="grh-w3__aktionen">
+                  <a class="grh-w3__btn grh-w3__btn--primär" href={r.gpx} download>GPX laden</a>
+                  <a class="grh-w3__btn" href={`https://www.google.com/maps/dir/?api=1&destination=${r.coords[0][1]},${r.coords[0][0]}`} target="_blank" rel="noopener">Anfahrt</a>
+                  <button type="button" class="grh-w3__btn" data-grh-w3-flug={r.id}>Rundflug</button>
                 </div>
-              </li>
-            ))}
-          </ul>
-          <div class="grh-w3__legende">
-            {Object.entries(artLabel).map(([k, v]) => (
-              <span class="grh-w3__legende-item"><i class={`grh-w3__legende-punkt grh-w3__legende-punkt--${k}`}></i>{v}</span>
+                <p class="grh-w3__text">{r.beschreibung}</p>
+                <ul class="grh-w3__fakten">
+                  <li><span class="grh-w3__fakt-icon"><GrhIcon name="flag" size={16} /></span><span><b>Start</b>{r.start}</span></li>
+                  <li><span class="grh-w3__fakt-icon"><GrhIcon name="car" size={16} /></span><span><b>Parken</b>{r.parken}</span></li>
+                  <li><span class="grh-w3__fakt-icon"><GrhIcon name="bus" size={16} /></span><span><b>Bus &amp; Bahn</b>{r.oepnv}</span></li>
+                  <li><span class="grh-w3__fakt-icon"><GrhIcon name="signpost" size={16} /></span><span><b>Markierung</b>{r.markierung}</span></li>
+                  <li><span class="grh-w3__fakt-icon"><GrhIcon name="footprints" size={16} /></span><span><b>Untergrund</b>{r.untergrund}</span></li>
+                </ul>
+                <div class="grh-w3__highlights">
+                  <span class="grh-w3__highlights-titel">Nicht verpassen</span>
+                  <ul>{r.highlights.map((h: string) => <li>{h}</li>)}</ul>
+                </div>
+                <p class="grh-w3__hinweis">{r.hinweis}</p>
+              </article>
             ))}
           </div>
         </div>
@@ -181,7 +209,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
     /* Die Routen-Tafel deckt links 400 px ab (auf dem Telefon unten). Das
        Padding sorgt dafür, dass alle Kamera-Flüge und das Einpassen der
        Routen den freien Teil der Karte meinen, nicht die Fläche hinter
@@ -283,21 +311,28 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
       const cam = map.cameraForBounds(boundsVon(r), { padding: 60 });
       if (cam) map.flyTo({ center: cam.center, zoom: (cam.zoom ?? 13) - (dreiD ? 0.2 : 0), pitch: dreiD ? 58 : 0, bearing: dreiD ? -18 : 0, duration: dauer, essential: true });
     }
+    const listeAnsicht = document.querySelector<HTMLElement>('[data-grh-w3-liste-ansicht]');
+    const detailAnsicht = document.querySelector<HTMLElement>('[data-grh-w3-detail-ansicht]');
+    const inhalt = document.querySelector<HTMLElement>('.grh-w3__inhalt');
     function waehle(id: string | null, zoom: boolean) {
-      aktiv = aktiv === id ? null : id;
-      knoepfe.forEach((b) => b.setAttribute('aria-expanded', String(b.dataset.grhW3Route === aktiv)));
+      aktiv = id;
       details.forEach((d) => { if (d.dataset.grhW3Detail === aktiv) d.removeAttribute('hidden'); else d.setAttribute('hidden', ''); });
       hebe(aktiv);
       if (aktiv) {
         const r = daten.routen.find((x) => x.id === aktiv)!;
+        listeAnsicht?.setAttribute('hidden', ''); detailAnsicht?.removeAttribute('hidden');
+        if (inhalt) inhalt.scrollTop = 0;
         if (zoom) flieg(r);
         zeichneProfil(r);
         tafel?.classList.remove('is-zu');
         document.querySelector('[data-grh-w3-tafel-toggle]')?.setAttribute('aria-expanded', 'true');
-        document.querySelector<HTMLElement>(`[data-grh-w3-route="${aktiv}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         history.replaceState(null, '', `#${aktiv}`);
-      } else history.replaceState(null, '', location.pathname);
+      } else {
+        detailAnsicht?.setAttribute('hidden', ''); listeAnsicht?.removeAttribute('hidden');
+        history.replaceState(null, '', location.pathname);
+      }
     }
+    document.querySelector('[data-grh-w3-zurueck]')?.addEventListener('click', () => waehle(null, false));
     knoepfe.forEach((b) => b.addEventListener('click', () => waehle(b.dataset.grhW3Route ?? null, true)));
 
     /* Rundflug: die Kamera kreist einmal um die Route */
@@ -356,7 +391,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     }
     dimKnopf?.addEventListener('click', () => setzeDim(!dreiD));
     document.querySelector('[data-grh-w3-alle]')?.addEventListener('click', () => {
-      if (aktiv) waehle(aktiv, false);
+      if (aktiv) waehle(null, false);
       map.fitBounds(REGION, { padding: 40, pitch: dreiD ? 55 : 0, bearing: dreiD ? -18 : 0, duration: 1400 } as any);
     });
     const ebene = document.querySelector<HTMLButtonElement>('[data-grh-w3-ebene]');
@@ -373,7 +408,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
       poiMarker.forEach((m) => (m.getElement().style.display = an ? '' : 'none'));
     });
     const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false, showUserLocation: true });
-    map.addControl(geo, 'top-left');
+    map.addControl(geo, 'top-right');
     (geo as any)._container.style.display = 'none';
     document.querySelector('[data-grh-w3-standort]')?.addEventListener('click', () => geo.trigger());
     const wrap = el.closest<HTMLElement>('[data-grh-w3-wrap]')!;
@@ -447,6 +482,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
   :global(.grh-w3__popup .maplibregl-popup-tip) { border-top-color: var(--grh-cream-50); }
   :global(.maplibregl-ctrl-group) { border-radius: 10px !important; box-shadow: 0 4px 14px -6px rgba(20, 43, 31, 0.5) !important; }
   :global(.maplibregl-ctrl-bottom-right) { bottom: 0; }
+  :global(.maplibregl-ctrl-bottom-left) { display: none; }
   :global(.maplibregl-ctrl-attrib) { font-family: var(--grh-font-body); font-size: 10px; }
 
   /* Tafel: wie auf der flachen Karte */
@@ -484,11 +520,12 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
   .grh-w3__chip.is-active { background: var(--grh-forest-900); color: var(--grh-cream-50); border-color: var(--grh-forest-900); }
   .grh-w3__liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   .grh-w3__liste li[hidden] { display: none; }
-  .grh-w3__route { width: 100%; text-align: left; display: grid; grid-template-columns: 5px 1fr; gap: 12px; padding: 12px 14px 12px 0; border: 1px solid var(--grh-line); border-radius: var(--grh-radius-md); background: var(--grh-cream-50); color: inherit; font: inherit; cursor: pointer; overflow: hidden; transition: border-color var(--grh-dur-fast); }
-  .grh-w3__route:hover { border-color: var(--grh-moss-500); }
-  .grh-w3__route[aria-expanded="true"] { border-color: var(--grh-forest-900); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-  .grh-w3__route-farbe { display: block; height: 100%; }
-  .grh-w3__route-text { display: flex; flex-direction: column; gap: 3px; }
+  .grh-w3__route { width: 100%; text-align: left; display: grid; grid-template-columns: 5px 1fr auto; align-items: center; gap: 12px; padding: 12px 12px 12px 0; border: 1px solid var(--grh-line); border-radius: var(--grh-radius-md); background: var(--grh-cream-50); color: inherit; font: inherit; cursor: pointer; overflow: hidden; transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast); }
+  .grh-w3__route:hover { border-color: var(--grh-moss-500); transform: translateX(2px); }
+  .grh-w3__route-farbe { display: block; height: 100%; align-self: stretch; }
+  .grh-w3__route-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .grh-w3__route-pfeil { color: var(--grh-stone-400); display: inline-flex; }
+  .grh-w3__route:hover .grh-w3__route-pfeil { color: var(--grh-forest-900); }
   .grh-w3__route-ort { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
   .grh-w3__route-name { font-family: var(--grh-font-display); font-size: var(--grh-fs-md); font-weight: 500; line-height: 1.2; color: var(--grh-forest-900); }
   .grh-w3__route-kenn { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 3px; font-size: 12.5px; color: var(--grh-stone-700); }
@@ -498,16 +535,28 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
   .grh-w3__grad--leicht { background: var(--grh-sage-100); color: var(--grh-forest-800); }
   .grh-w3__grad--mittel { background: rgba(232, 182, 88, 0.25); color: #6B4E0E; }
   .grh-w3__grad--anspruchsvoll { background: rgba(194, 65, 12, 0.14); color: #8A2E0A; }
-  .grh-w3__detail { border: 1px solid var(--grh-forest-900); border-top: 0; border-radius: 0 0 var(--grh-radius-md) var(--grh-radius-md); padding: 14px 14px 16px; background: var(--grh-paper-100); display: flex; flex-direction: column; gap: 12px; }
+
+  /* Detailansicht */
+  [data-grh-w3-liste-ansicht][hidden], [data-grh-w3-detail-ansicht][hidden] { display: none; }
+  .grh-w3__zurueck { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 14px 8px 10px; border-radius: var(--grh-radius-pill); border: 1px solid var(--grh-line); background: var(--grh-cream-50); color: var(--grh-forest-900); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .grh-w3__zurueck:hover { background: var(--grh-forest-900); color: var(--grh-cream-50); border-color: var(--grh-forest-900); }
+  .grh-w3__detail { display: flex; flex-direction: column; gap: 14px; }
   .grh-w3__detail[hidden] { display: none; }
+  .grh-w3__detail-kopf { display: flex; flex-direction: column; gap: 4px; padding-left: 12px; border-left: 4px solid var(--grh-forest-900); }
+  .grh-w3__detail-name { margin: 0; font-family: var(--grh-font-display); font-size: var(--grh-fs-xl); font-weight: 500; line-height: 1.15; letter-spacing: -0.015em; color: var(--grh-forest-900); }
   .grh-w3__kurz { margin: 0; font-family: var(--grh-font-display); font-size: var(--grh-fs-md); color: var(--grh-forest-800); line-height: 1.4; }
   .grh-w3__profil { margin: 0; }
   .grh-w3__profil svg { display: block; width: 100%; height: 84px; background: var(--grh-cream-50); border: 1px solid var(--grh-line); border-radius: 8px; cursor: crosshair; touch-action: none; }
   .grh-w3__profil figcaption { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: var(--grh-stone-400); letter-spacing: 0.04em; }
   .grh-w3__text { margin: 0; font-size: 13px; line-height: 1.6; color: var(--grh-stone-700); }
-  .grh-w3__fakten { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
-  .grh-w3__fakten dt { font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
-  .grh-w3__fakten dd { margin: 2px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--grh-forest-900); }
+  .grh-w3__fakten { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .grh-w3__fakten li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; font-size: 12.5px; line-height: 1.45; color: var(--grh-forest-900); }
+  .grh-w3__fakten b { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); margin-bottom: 1px; }
+  .grh-w3__fakt-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--grh-paper-100); color: var(--grh-forest-800); display: grid; place-items: center; }
+  .grh-w3__highlights { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--grh-paper-100); border-radius: var(--grh-radius-md); }
+  .grh-w3__highlights-titel { font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
+  .grh-w3__highlights ul { margin: 0; padding: 0 0 0 18px; font-size: 12.5px; line-height: 1.6; color: var(--grh-forest-900); }
+  .grh-w3__highlights li::marker { color: var(--grh-candle-500); }
   .grh-w3__aktionen { display: flex; flex-wrap: wrap; gap: 6px; }
   .grh-w3__btn { display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border-radius: var(--grh-radius-pill); border: 1px solid var(--grh-forest-900); background: var(--grh-cream-50); color: var(--grh-forest-900); font: inherit; font-size: 12.5px; font-weight: 600; text-decoration: none; cursor: pointer; }
   .grh-w3__btn--primär { background: var(--grh-forest-900); color: var(--grh-cream-50); }
