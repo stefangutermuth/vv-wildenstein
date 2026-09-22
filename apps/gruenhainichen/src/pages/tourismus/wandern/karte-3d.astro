@@ -327,6 +327,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     const detailAnsicht = document.querySelector<HTMLElement>('[data-grh-w3-detail-ansicht]');
     const inhalt = document.querySelector<HTMLElement>('.grh-w3__inhalt');
     function waehle(id: string | null, zoom: boolean) {
+      if (typeof flugStopp === 'function') flugStopp();
       aktiv = id;
       details.forEach((d) => { if (d.dataset.grhW3Detail === aktiv) d.removeAttribute('hidden'); else d.setAttribute('hidden', ''); });
       hebe(aktiv);
@@ -351,17 +352,37 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     document.querySelector('[data-grh-w3-zurueck]')?.addEventListener('click', () => waehle(null, false));
     knoepfe.forEach((b) => b.addEventListener('click', () => waehle(b.dataset.grhW3Route ?? null, true)));
 
-    /* Rundflug: die Kamera kreist einmal um die Route */
+    /* Rundflug: die Kamera kreist so lange um die Route, bis man eingreift
+       oder den Knopf erneut drückt. */
     let flugTimer: number | undefined;
-    document.querySelectorAll<HTMLButtonElement>('[data-grh-w3-flug]').forEach((b) => b.addEventListener('click', () => {
-      const r = daten.routen.find((x) => x.id === b.dataset.grhW3Flug); if (!r) return;
+    let flugFrame: number | undefined;
+    let flugKnopf: HTMLButtonElement | null = null;
+    function flugStopp() {
       window.clearTimeout(flugTimer);
+      if (flugFrame) cancelAnimationFrame(flugFrame);
+      flugFrame = undefined;
+      if (flugKnopf) { flugKnopf.textContent = 'Rundflug'; flugKnopf.setAttribute('aria-pressed', 'false'); }
+      flugKnopf = null;
+    }
+    document.querySelectorAll<HTMLButtonElement>('[data-grh-w3-flug]').forEach((b) => b.addEventListener('click', () => {
+      if (flugKnopf === b) { flugStopp(); return; }
+      flugStopp();
+      const r = daten.routen.find((x) => x.id === b.dataset.grhW3Flug); if (!r) return;
+      flugKnopf = b; b.textContent = 'Rundflug stoppen'; b.setAttribute('aria-pressed', 'true');
       if (!dreiD) setzeDim(true);
       const cam = map.cameraForBounds(boundsVon(r), { padding: 60 }); if (!cam) return;
       map.flyTo({ center: cam.center, zoom: (cam.zoom ?? 13) - 0.1, pitch: 62, bearing: -40, duration: 1400 });
-      flugTimer = window.setTimeout(() => map.rotateTo(320, { duration: 14000, easing: (t) => t }), 1500);
+      flugTimer = window.setTimeout(() => {
+        let letzte = performance.now();
+        const drehe = (t: number) => {
+          const dt = Math.min(60, t - letzte); letzte = t;
+          map.setBearing(map.getBearing() + dt * 0.012); // gut 20 Sekunden für eine Runde
+          flugFrame = requestAnimationFrame(drehe);
+        };
+        flugFrame = requestAnimationFrame(drehe);
+      }, 1500);
     }));
-    map.on('mousedown', () => window.clearTimeout(flugTimer));
+    for (const ev of ['mousedown', 'touchstart', 'wheel']) map.getCanvas().addEventListener(ev, flugStopp, { passive: true });
 
     /* === Filter ======================================================== */
     document.querySelectorAll<HTMLButtonElement>('[data-grh-w3-filter]').forEach((chip) => chip.addEventListener('click', () => {
