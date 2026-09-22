@@ -1,0 +1,447 @@
+---
+/**
+ * Interaktive Wanderkarte (Vorschau, nicht verlinkt, nicht indexiert).
+ *
+ * Die Routen liegen als JSON unter src/data/wanderrouten/: Koordinaten,
+ * Höhenprofil, Kennzahlen und Text je Route. Neue Route = neue Datei dort
+ * (plus GPX unter public/wanderrouten/). Später soll die Karte unter
+ * „Wandern“ erscheinen; bis dahin läuft sie hier als Muster.
+ */
+import 'leaflet/dist/leaflet.css';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhPageHeader from '../../../components/global/GrhPageHeader.astro';
+import GrhIcon from '../../../components/primitives/GrhIcon.astro';
+import suedschleife from '../../../data/wanderrouten/suedschleife.json';
+import waldkirchen from '../../../data/wanderrouten/waldkirchen.json';
+import muehlentour from '../../../data/wanderrouten/muehlentour.json';
+
+const routen = [suedschleife, waldkirchen, muehlentour];
+
+/* Für die Karte nur das Nötige, damit die Seite schlank bleibt */
+const kartenDaten = routen.map((r) => ({
+  id: r.id, name: r.name, farbe: r.farbe, coords: r.coords, elev: r.elev,
+  km: r.km, aufstieg: r.aufstieg, minHoehe: r.minHoehe, maxHoehe: r.maxHoehe, start: r.start,
+}));
+
+const schwierigkeitLabel: Record<string, string> = { leicht: 'Leicht', mittel: 'Mittel', anspruchsvoll: 'Anspruchsvoll' };
+const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
+---
+<BaseLayout
+  title="Wanderkarte (Vorschau) · Grünhainichen"
+  description="Interaktive Karte der Rundwanderwege rund um Grünhainichen, Borstendorf und Waldkirchen."
+  header="compact"
+  noindex
+>
+  <GrhPageHeader
+    title="Wanderwege auf der Karte"
+    breadcrumb="Startseite · Tourismus · Wandern"
+    lead="Alle Rundwege rund um Grünhainichen auf einer Karte: Route auswählen, Höhenprofil ansehen, GPX aufs Handy laden und losgehen."
+    count={routen.length}
+    countLabel="Routen · Vorschau"
+  />
+
+  <section class="grh-wk">
+    <div class="grh-container">
+      <div class="grh-wk__vorschau">
+        <GrhIcon name="map-pin" size={14} />
+        <span>Vorschau mit {routen.length} Muster-Routen ({gesamtKm} km) aus OpenStreetMap. Diese Seite ist nicht verlinkt und für Suchmaschinen gesperrt.</span>
+      </div>
+
+      <div class="grh-wk__layout">
+        {/* === Karte ================================================= */}
+        <div class="grh-wk__karte-wrap">
+          <div class="grh-wk__karte" id="grh-wk-karte" data-grh-wk-karte aria-label="Karte der Wanderwege" role="region"></div>
+          <div class="grh-wk__werkzeuge">
+            <button type="button" class="grh-wk__tool" data-grh-wk-alle title="Alle Routen zeigen" aria-label="Alle Routen zeigen">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+            </button>
+            <button type="button" class="grh-wk__tool" data-grh-wk-ebene title="Gelände ein/aus" aria-label="Geländekarte ein- oder ausschalten" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+            </button>
+            <button type="button" class="grh-wk__tool" data-grh-wk-standort title="Mein Standort" aria-label="Meinen Standort anzeigen">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+            </button>
+            <button type="button" class="grh-wk__tool" data-grh-wk-voll title="Vollbild" aria-label="Karte im Vollbild">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
+            </button>
+          </div>
+          <div class="grh-wk__legende" aria-hidden="true">
+            {routen.map((r) => (
+              <button type="button" class="grh-wk__legende-item" data-grh-wk-legende={r.id}>
+                <span class="grh-wk__legende-farbe" style={`background:${r.farbe}`}></span>{r.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* === Seitenleiste: Liste + Detail ========================== */}
+        <aside class="grh-wk__seite">
+          <div class="grh-wk__filter" role="group" aria-label="Routen filtern">
+            <button type="button" class="grh-wk__chip is-active" data-grh-wk-filter="alle">Alle</button>
+            <button type="button" class="grh-wk__chip" data-grh-wk-filter="leicht">Leicht</button>
+            <button type="button" class="grh-wk__chip" data-grh-wk-filter="mittel">Mittel</button>
+            <button type="button" class="grh-wk__chip" data-grh-wk-filter="anspruchsvoll">Anspruchsvoll</button>
+          </div>
+
+          <ul class="grh-wk__liste" data-grh-wk-liste>
+            {routen.map((r) => (
+              <li>
+                <button type="button" class="grh-wk__route" data-grh-wk-route={r.id} data-schwierigkeit={r.schwierigkeit} aria-expanded="false">
+                  <span class="grh-wk__route-farbe" style={`background:${r.farbe}`} aria-hidden="true"></span>
+                  <span class="grh-wk__route-text">
+                    <span class="grh-wk__route-ort">{r.ortsteil} · {r.typ}</span>
+                    <span class="grh-wk__route-name">{r.name}</span>
+                    <span class="grh-wk__route-kenn">
+                      <span><GrhIcon name="hiking" size={13} /> {r.km} km</span>
+                      <span><GrhIcon name="clock" size={13} /> {r.dauer}</span>
+                      <span><GrhIcon name="arrow-down" size={13} class="grh-wk__auf" /> {r.aufstieg} hm</span>
+                      <span class={`grh-wk__grad grh-wk__grad--${r.schwierigkeit}`}>{schwierigkeitLabel[r.schwierigkeit]}</span>
+                    </span>
+                  </span>
+                </button>
+
+                <div class="grh-wk__detail" data-grh-wk-detail={r.id} hidden>
+                  <p class="grh-wk__kurz">{r.kurz}</p>
+                  <figure class="grh-wk__profil">
+                    <svg viewBox="0 0 320 90" preserveAspectRatio="none" data-grh-wk-profil={r.id} aria-label={`Höhenprofil ${r.name}`} role="img"></svg>
+                    <figcaption>
+                      <span>{r.minHoehe} m</span>
+                      <span>Höhenprofil · ↑ {r.aufstieg} hm · ↓ {r.abstieg} hm</span>
+                      <span>{r.maxHoehe} m</span>
+                    </figcaption>
+                  </figure>
+                  <p class="grh-wk__text">{r.beschreibung}</p>
+                  <dl class="grh-wk__fakten">
+                    <div><dt>Start</dt><dd>{r.start}</dd></div>
+                    <div><dt>Parken</dt><dd>{r.parken}</dd></div>
+                    <div><dt>Bus &amp; Bahn</dt><dd>{r.oepnv}</dd></div>
+                    <div><dt>Markierung</dt><dd>{r.markierung}</dd></div>
+                    <div><dt>Untergrund</dt><dd>{r.untergrund}</dd></div>
+                  </dl>
+                  <ul class="grh-wk__highlights">
+                    {r.highlights.map((h: string) => <li>{h}</li>)}
+                  </ul>
+                  <div class="grh-wk__aktionen">
+                    <a class="grh-wk__btn grh-wk__btn--primär" href={r.gpx} download>GPX herunterladen</a>
+                    <a class="grh-wk__btn" href={`https://www.google.com/maps/dir/?api=1&destination=${r.coords[0][1]},${r.coords[0][0]}&travelmode=driving`} target="_blank" rel="noopener">Anfahrt zum Start</a>
+                    <button type="button" class="grh-wk__btn" data-grh-wk-teilen={r.id}>Link kopieren</button>
+                  </div>
+                  <p class="grh-wk__hinweis">{r.hinweis}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
+
+      <p class="grh-wk__quelle">Kartendaten © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL), Geländekarte © <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (CC-BY-SA), Höhendaten EU-DEM über Open Topo Data. Die Kartenkacheln werden von OpenStreetMap bzw. OpenTopoMap geladen; dabei wird Ihre IP-Adresse an diese Anbieter übertragen.</p>
+    </div>
+  </section>
+
+  <script type="application/json" id="grh-wk-daten" set:html={JSON.stringify(kartenDaten)} />
+</BaseLayout>
+
+<script>
+  import L from 'leaflet';
+
+  type Route = { id: string; name: string; farbe: string; coords: [number, number][]; elev: (number | null)[]; km: number; aufstieg: number; minHoehe: number; maxHoehe: number; start: string };
+  const daten = JSON.parse(document.getElementById('grh-wk-daten')?.textContent ?? '[]') as Route[];
+  const el = document.querySelector<HTMLElement>('[data-grh-wk-karte]');
+  if (el && daten.length) {
+    /* === Karte ========================================================= */
+    const karte = L.map(el, { zoomControl: false, scrollWheelZoom: true });
+    L.control.zoom({ position: 'bottomright' }).addTo(karte);
+    L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(karte);
+    const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
+    const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenStreetMap, © OpenTopoMap (CC-BY-SA)' });
+    osm.addTo(karte);
+    let topoAn = false;
+
+    const startIcon = (farbe: string) => L.divIcon({
+      className: 'grh-wk__start',
+      html: `<span style="background:${farbe}"></span>`,
+      iconSize: [18, 18], iconAnchor: [9, 9],
+    });
+
+    const linien = new Map<string, { line: L.Polyline; halo: L.Polyline; start: L.Marker; bounds: L.LatLngBounds }>();
+    for (const r of daten) {
+      const latlngs = r.coords.map(([lon, lat]) => [lat, lon] as [number, number]);
+      const halo = L.polyline(latlngs, { color: '#FAF7F1', weight: 9, opacity: 0.9, lineJoin: 'round' }).addTo(karte);
+      const line = L.polyline(latlngs, { color: r.farbe, weight: 4.5, opacity: 0.95, lineJoin: 'round' }).addTo(karte);
+      const start = L.marker(latlngs[0], { icon: startIcon(r.farbe), title: `Start: ${r.name}` }).addTo(karte);
+      line.bindTooltip(`<strong>${r.name}</strong><br>${r.km} km · ↑ ${r.aufstieg} hm`, { sticky: true, className: 'grh-wk__tip' });
+      line.on('click', () => waehle(r.id, true));
+      start.on('click', () => waehle(r.id, true));
+      line.on('mouseover', () => hebeHervor(r.id));
+      line.on('mouseout', () => hebeHervor(aktiv));
+      linien.set(r.id, { line, halo, start, bounds: line.getBounds() });
+    }
+    const alleBounds = L.latLngBounds(daten.flatMap((r) => r.coords.map(([lon, lat]) => [lat, lon] as [number, number])));
+    karte.fitBounds(alleBounds, { padding: [30, 30] });
+
+    /* === Auswahl ======================================================= */
+    let aktiv: string | null = null;
+    const knoepfe = document.querySelectorAll<HTMLButtonElement>('[data-grh-wk-route]');
+    const details = document.querySelectorAll<HTMLElement>('[data-grh-wk-detail]');
+
+    function hebeHervor(id: string | null) {
+      linien.forEach((v, k) => {
+        const aktivOderKeine = id === null || id === k;
+        v.line.setStyle({ opacity: aktivOderKeine ? 0.95 : 0.3, weight: id === k ? 6 : 4.5 });
+        v.halo.setStyle({ opacity: aktivOderKeine ? 0.9 : 0.2 });
+        if (id === k) { v.halo.bringToFront(); v.line.bringToFront(); v.start.setZIndexOffset(1000); }
+        else v.start.setZIndexOffset(0);
+      });
+    }
+
+    function waehle(id: string | null, zoom: boolean) {
+      aktiv = aktiv === id ? null : id;
+      knoepfe.forEach((b) => b.setAttribute('aria-expanded', String(b.dataset.grhWkRoute === aktiv)));
+      details.forEach((d) => { if (d.dataset.grhWkDetail === aktiv) d.removeAttribute('hidden'); else d.setAttribute('hidden', ''); });
+      document.querySelectorAll<HTMLElement>('[data-grh-wk-legende]').forEach((l) => l.classList.toggle('is-active', l.dataset.grhWkLegende === aktiv));
+      hebeHervor(aktiv);
+      if (aktiv) {
+        const v = linien.get(aktiv);
+        if (v && zoom) karte.fitBounds(v.bounds, { padding: [40, 40] });
+        zeichneProfil(aktiv);
+        const btn = document.querySelector<HTMLElement>(`[data-grh-wk-route="${aktiv}"]`);
+        if (btn && window.innerWidth < 900) btn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', `#${aktiv}`);
+      } else {
+        history.replaceState(null, '', location.pathname);
+      }
+    }
+    knoepfe.forEach((b) => b.addEventListener('click', () => waehle(b.dataset.grhWkRoute ?? null, true)));
+    document.querySelectorAll<HTMLElement>('[data-grh-wk-legende]').forEach((l) => l.addEventListener('click', () => waehle(l.dataset.grhWkLegende ?? null, true)));
+
+    /* === Filter ======================================================== */
+    document.querySelectorAll<HTMLButtonElement>('[data-grh-wk-filter]').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const f = chip.dataset.grhWkFilter;
+        document.querySelectorAll('[data-grh-wk-filter]').forEach((c) => c.classList.toggle('is-active', c === chip));
+        knoepfe.forEach((b) => {
+          const passt = f === 'alle' || b.dataset.schwierigkeit === f;
+          (b.parentElement as HTMLElement).hidden = !passt;
+          const v = linien.get(b.dataset.grhWkRoute ?? '');
+          if (v) {
+            if (passt) { v.halo.addTo(karte); v.line.addTo(karte); v.start.addTo(karte); }
+            else { v.halo.remove(); v.line.remove(); v.start.remove(); }
+          }
+        });
+        if (aktiv && f !== 'alle' && document.querySelector(`[data-grh-wk-route="${aktiv}"][data-schwierigkeit="${f}"]`) === null) waehle(aktiv, false);
+      });
+    });
+
+    /* === Höhenprofil mit Kartenmarke ================================== */
+    const profilMarke = L.circleMarker([0, 0], { radius: 7, color: '#FAF7F1', weight: 2, fillColor: '#E8B658', fillOpacity: 1 });
+    function zeichneProfil(id: string) {
+      const r = daten.find((x) => x.id === id); const svg = document.querySelector<SVGSVGElement>(`[data-grh-wk-profil="${id}"]`);
+      if (!r || !svg || svg.dataset.fertig) return;
+      const W = 320, H = 90, pad = 4;
+      const werte = r.elev.map((e) => e ?? r.minHoehe);
+      const min = Math.min(...werte), max = Math.max(...werte), span = Math.max(1, max - min);
+      const x = (i: number) => pad + (i / (werte.length - 1)) * (W - 2 * pad);
+      const y = (v: number) => H - pad - ((v - min) / span) * (H - 2 * pad - 6);
+      const pfad = werte.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+      svg.innerHTML = `<path d="${pfad} L${x(werte.length - 1).toFixed(1)} ${H} L${pad} ${H} Z" fill="${r.farbe}" fill-opacity="0.18"/>`
+        + `<path d="${pfad}" fill="none" stroke="${r.farbe}" stroke-width="2" vector-effect="non-scaling-stroke"/>`
+        + `<line data-cursor x1="-10" x2="-10" y1="0" y2="${H}" stroke="#1A3D27" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>`;
+      svg.dataset.fertig = '1';
+      const cursor = svg.querySelector<SVGLineElement>('[data-cursor]')!;
+      const bewege = (ev: PointerEvent) => {
+        const rect = svg.getBoundingClientRect(); const t = Math.min(1, Math.max(0, (ev.clientX - rect.left) / rect.width));
+        const i = Math.round(t * (werte.length - 1)); const [lon, lat] = r.coords[i];
+        cursor.setAttribute('x1', String(x(i))); cursor.setAttribute('x2', String(x(i)));
+        profilMarke.setLatLng([lat, lon]).addTo(karte);
+        profilMarke.bindTooltip(`${werte[i]} m · km ${((i / (werte.length - 1)) * r.km).toFixed(1)}`, { permanent: true, direction: 'top', offset: [0, -8], className: 'grh-wk__tip' }).openTooltip();
+      };
+      svg.addEventListener('pointermove', bewege);
+      svg.addEventListener('pointerleave', () => { profilMarke.remove(); cursor.setAttribute('x1', '-10'); cursor.setAttribute('x2', '-10'); });
+    }
+
+    /* === Werkzeuge ===================================================== */
+    document.querySelector('[data-grh-wk-alle]')?.addEventListener('click', () => { if (aktiv) waehle(aktiv, false); karte.fitBounds(alleBounds, { padding: [30, 30] }); });
+    const ebene = document.querySelector<HTMLButtonElement>('[data-grh-wk-ebene]');
+    ebene?.addEventListener('click', () => {
+      topoAn = !topoAn;
+      if (topoAn) { osm.remove(); topo.addTo(karte); } else { topo.remove(); osm.addTo(karte); }
+      ebene.setAttribute('aria-pressed', String(topoAn));
+      linien.forEach((v) => { v.halo.bringToFront(); v.line.bringToFront(); });
+    });
+    let standort: L.CircleMarker | null = null;
+    document.querySelector('[data-grh-wk-standort]')?.addEventListener('click', () => {
+      karte.locate({ setView: true, maxZoom: 15 });
+    });
+    karte.on('locationfound', (e) => {
+      if (standort) standort.remove();
+      standort = L.circleMarker(e.latlng, { radius: 8, color: '#FAF7F1', weight: 2, fillColor: '#2B4C8C', fillOpacity: 1 }).addTo(karte).bindTooltip('Ihr Standort');
+    });
+    karte.on('locationerror', () => alert('Der Standort konnte nicht ermittelt werden. Bitte die Standortfreigabe im Browser erlauben.'));
+    const wrap = el.parentElement as HTMLElement;
+    document.querySelector('[data-grh-wk-voll]')?.addEventListener('click', () => {
+      if (!document.fullscreenElement) wrap.requestFullscreen?.(); else document.exitFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => setTimeout(() => karte.invalidateSize(), 150));
+
+    document.querySelectorAll<HTMLButtonElement>('[data-grh-wk-teilen]').forEach((b) => b.addEventListener('click', async () => {
+      const url = `${location.origin}${location.pathname}#${b.dataset.grhWkTeilen}`;
+      try { await navigator.clipboard.writeText(url); b.textContent = 'Link kopiert'; setTimeout(() => (b.textContent = 'Link kopieren'), 1800); } catch { prompt('Link zum Kopieren:', url); }
+    }));
+
+    /* Direktlink #route-id öffnet die Route */
+    const hash = location.hash.replace('#', '');
+    if (hash && linien.has(hash)) waehle(hash, true);
+  }
+</script>
+
+<style>
+  .grh-wk { padding-block: var(--grh-space-6) var(--grh-space-9); }
+  .grh-wk__vorschau {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-bottom: var(--grh-space-5);
+    padding: 8px 14px;
+    border-radius: var(--grh-radius-pill);
+    background: rgba(232, 182, 88, 0.16);
+    border: 1px solid var(--grh-candle-500);
+    color: var(--grh-forest-900);
+    font-size: 13px;
+  }
+  .grh-wk__layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 900px) {
+    .grh-wk__layout { grid-template-columns: minmax(0, 1fr) 400px; align-items: start; }
+  }
+
+  /* === Karte =================================================== */
+  .grh-wk__karte-wrap {
+    position: relative;
+    border-radius: var(--grh-radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--grh-line);
+    background: var(--grh-paper-100);
+  }
+  @media (min-width: 900px) { .grh-wk__karte-wrap { position: sticky; top: 104px; } }
+  .grh-wk__karte { height: 62vh; min-height: 420px; }
+  .grh-wk__karte-wrap:fullscreen .grh-wk__karte { height: 100vh; }
+  .grh-wk__karte-wrap:fullscreen { border-radius: 0; }
+  .grh-wk__werkzeuge {
+    position: absolute; top: 12px; right: 12px; z-index: 500;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .grh-wk__tool {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--grh-line);
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    display: grid; place-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px -6px rgba(20, 43, 31, 0.4);
+  }
+  .grh-wk__tool:hover, .grh-wk__tool[aria-pressed="true"] { background: var(--grh-forest-900); color: var(--grh-cream-50); border-color: var(--grh-forest-900); }
+  .grh-wk__legende {
+    position: absolute; left: 12px; top: 12px; z-index: 500;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .grh-wk__legende-item {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px 6px 8px;
+    border-radius: var(--grh-radius-pill);
+    border: 1px solid var(--grh-line);
+    background: rgba(250, 247, 241, 0.94);
+    color: var(--grh-forest-900);
+    font: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+  .grh-wk__legende-item.is-active { background: var(--grh-forest-900); color: var(--grh-cream-50); border-color: var(--grh-forest-900); }
+  .grh-wk__legende-farbe { width: 14px; height: 4px; border-radius: 2px; }
+  @media (max-width: 600px) { .grh-wk__legende { display: none; } }
+
+  :global(.grh-wk__start span) {
+    display: block; width: 18px; height: 18px; border-radius: 50%;
+    border: 3px solid var(--grh-cream-50);
+    box-shadow: 0 2px 8px rgba(20, 43, 31, 0.4);
+  }
+  :global(.grh-wk__tip) {
+    font-family: var(--grh-font-body); font-size: 12px; line-height: 1.4;
+    color: var(--grh-forest-900); background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line); border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(20, 43, 31, 0.4);
+  }
+  :global(.leaflet-container) { font-family: var(--grh-font-body); background: var(--grh-paper-100); }
+  :global(.leaflet-control-zoom a) { color: var(--grh-forest-900) !important; }
+
+  /* === Seitenleiste ============================================ */
+  .grh-wk__filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--grh-space-4); }
+  .grh-wk__chip {
+    padding: 7px 14px;
+    border-radius: var(--grh-radius-pill);
+    border: 1px solid var(--grh-line);
+    background: var(--grh-cream-50);
+    color: var(--grh-forest-900);
+    font: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+  }
+  .grh-wk__chip.is-active { background: var(--grh-forest-900); color: var(--grh-cream-50); border-color: var(--grh-forest-900); }
+  .grh-wk__liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--grh-space-3); }
+  .grh-wk__liste li[hidden] { display: none; }
+  .grh-wk__route {
+    width: 100%; text-align: left;
+    display: grid; grid-template-columns: 6px 1fr; gap: 14px;
+    padding: 14px 16px 14px 0;
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    background: var(--grh-cream-50);
+    color: inherit; font: inherit;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-wk__route:hover { border-color: var(--grh-moss-500); transform: translateY(-1px); }
+  .grh-wk__route[aria-expanded="true"] { border-color: var(--grh-forest-900); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .grh-wk__route-farbe { display: block; height: 100%; }
+  .grh-wk__route-text { display: flex; flex-direction: column; gap: 4px; }
+  .grh-wk__route-ort { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
+  .grh-wk__route-name { font-family: var(--grh-font-display); font-size: var(--grh-fs-lg); font-weight: 500; line-height: 1.2; color: var(--grh-forest-900); }
+  .grh-wk__route-kenn { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 4px; font-size: 13px; color: var(--grh-stone-700); }
+  .grh-wk__route-kenn span { display: inline-flex; align-items: center; gap: 5px; }
+  .grh-wk__route-kenn :global(.grh-wk__auf) { transform: rotate(180deg); }
+  .grh-wk__grad { padding: 1px 8px; border-radius: var(--grh-radius-pill); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; }
+  .grh-wk__grad--leicht { background: var(--grh-sage-100); color: var(--grh-forest-800); }
+  .grh-wk__grad--mittel { background: rgba(232, 182, 88, 0.25); color: #6B4E0E; }
+  .grh-wk__grad--anspruchsvoll { background: rgba(194, 65, 12, 0.14); color: #8A2E0A; }
+
+  .grh-wk__detail {
+    border: 1px solid var(--grh-forest-900); border-top: 0;
+    border-radius: 0 0 var(--grh-radius-md) var(--grh-radius-md);
+    padding: var(--grh-space-4) var(--grh-space-4) var(--grh-space-5);
+    background: var(--grh-paper-100);
+    display: flex; flex-direction: column; gap: var(--grh-space-4);
+  }
+  .grh-wk__detail[hidden] { display: none; }
+  .grh-wk__kurz { margin: 0; font-family: var(--grh-font-display); font-size: var(--grh-fs-md); color: var(--grh-forest-800); line-height: 1.4; }
+  .grh-wk__profil { margin: 0; }
+  .grh-wk__profil svg { display: block; width: 100%; height: 90px; background: var(--grh-cream-50); border: 1px solid var(--grh-line); border-radius: 8px; cursor: crosshair; touch-action: none; }
+  .grh-wk__profil figcaption { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: var(--grh-stone-400); letter-spacing: 0.04em; }
+  .grh-wk__text { margin: 0; font-size: var(--grh-fs-sm); line-height: 1.65; color: var(--grh-stone-700); }
+  .grh-wk__fakten { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+  .grh-wk__fakten dt { font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
+  .grh-wk__fakten dd { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: var(--grh-forest-900); }
+  .grh-wk__highlights { margin: 0; padding: 0 0 0 18px; font-size: 13px; line-height: 1.6; color: var(--grh-forest-900); }
+  .grh-wk__highlights li::marker { color: var(--grh-candle-500); }
+  .grh-wk__aktionen { display: flex; flex-wrap: wrap; gap: 8px; }
+  .grh-wk__btn {
+    display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px;
+    border-radius: var(--grh-radius-pill);
+    border: 1px solid var(--grh-forest-900);
+    background: var(--grh-cream-50); color: var(--grh-forest-900);
+    font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer;
+  }
+  .grh-wk__btn--primär { background: var(--grh-forest-900); color: var(--grh-cream-50); }
+  .grh-wk__btn:hover { background: var(--grh-forest-800); color: var(--grh-cream-50); border-color: var(--grh-forest-800); }
+  .grh-wk__hinweis { margin: 0; font-size: 11.5px; line-height: 1.5; color: var(--grh-stone-400); }
+  .grh-wk__quelle { margin-top: var(--grh-space-5); font-size: 11.5px; line-height: 1.6; color: var(--grh-stone-400); }
+  .grh-wk__quelle a { color: inherit; }
+</style>

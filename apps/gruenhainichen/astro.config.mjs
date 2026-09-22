@@ -11,6 +11,8 @@ export default defineConfig({
         // Raummiete noch nicht freigegeben: erreichbar zum Ansehen,
         // aber nicht in der Sitemap (die Seiten tragen zusätzlich noindex).
         !page.includes('/gemeinde/raeume') &&
+        // Wanderkarte: Vorschau, nicht verlinkt, trägt noindex.
+        !page.includes('/tourismus/wandern/karte') &&
         !page.includes('/404'),
       changefreq: 'weekly',
       lastmod: new Date(),
