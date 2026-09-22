@@ -1,6 +1,12 @@
 ---
 import '@fontsource-variable/fraunces';
 import '@fontsource-variable/inter';
+/* Dieselben Dateien, die das Fontsource-CSS lädt, nur als URL: Damit können
+   sie im <head> vorgeladen werden. Ohne Preload entdeckt der Browser die
+   Schrift erst nach dem CSS und tauscht sichtbar von der Ersatzschrift um
+   (Flackern beim ersten Laden). */
+import frauncesUrl from '@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2?url';
+import interUrl from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import '../styles/tokens.css';
 import '../styles/reset.css';
 import '../styles/typography.css';
@@ -62,6 +68,10 @@ const orgJsonLd = {
     {/* Staging-Schutz: kein Index für Vorschau-Subdomain (grh.vv-wildenstein.com) */}
     {(noindex || import.meta.env.PUBLIC_STAGING === 'true') && <meta name="robots" content="noindex,nofollow" />}
     <link rel="canonical" href={canonical} />
+    <link rel="preload" as="font" type="font/woff2" href={frauncesUrl} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={interUrl} crossorigin />
+    {/* Ohne JavaScript bleiben Einblend-Elemente sonst unsichtbar */}
+    <noscript><style>{`.grh-reveal, .grh-text-reveal, .grh-numeral { opacity: 1 !important; transform: none !important; }`}</style></noscript>
     <link rel="icon" type="image/png" href="/images/logos/wappen-grh.png" />
     <link rel="apple-touch-icon" href="/images/logos/wappen-grh.png" />
     <meta name="theme-color" content="#1A3D27" />
@@ -103,6 +113,10 @@ const orgJsonLd = {
           }
         }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
         reveals.forEach((el) => io.observe(el));
+        // Sicherheitsnetz: Was nach drei Sekunden noch nicht eingeblendet ist,
+        // wird eingeblendet. Kein Inhalt darf von einem Beobachter abhängen,
+        // der in einem Browser mal nicht feuert.
+        window.setTimeout(() => reveals.forEach((el) => el.classList.add('is-visible')), 3000);
       } else {
         reveals.forEach((el) => el.classList.add('is-visible'));
       }

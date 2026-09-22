@@ -336,7 +336,13 @@ const wasserradInner = prepareSvg(wasserradRaw);
     var path = window.location.pathname;
     var isHomepage = path === '/' || path === '' || path === '/index.html';
 
-    if (reduce || (!force && !isHomepage)) {
+    // Nur einmal je Sitzung: Der Merker wurde bisher zwar gesetzt, aber nie
+    // abgefragt, deshalb lief die Einblendung bei jedem Aufruf der Startseite
+    // erneut, 1,9 Sekunden mit gesperrtem Scrollen.
+    var schonGezeigt = false;
+    try { schonGezeigt = sessionStorage.getItem('grh-loader-shown') === '1'; } catch (e) {}
+
+    if (reduce || (!force && (!isHomepage || schonGezeigt))) {
       loader.parentNode && loader.parentNode.removeChild(loader);
       return;
     }

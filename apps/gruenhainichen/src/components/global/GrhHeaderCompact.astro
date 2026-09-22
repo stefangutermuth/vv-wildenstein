@@ -375,7 +375,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   /* Mobile: Wetter und Social aus — nur Burger bleibt */
   @media (max-width: 720px) {
     .grh-headerc__social,
-    .grh-headerc__weather { display: none; }
+    .grh-headerc__weather, .grh-headerc__weather[hidden] { display: none; }
     /* Die Suche bleibt auch auf dem Telefon in der Kopfzeile erreichbar */
     .grh-headerc__suche { display: flex; }
   }
@@ -386,6 +386,18 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     align-items: center;
     gap: 8px;
     padding: 6px 14px 6px 8px;
+    min-width: 150px; /* Platz steht von Anfang an, damit beim Eintreffen der Daten nichts springt */
+    box-sizing: border-box;
+    transition: opacity 260ms ease;
+  }
+  /* Bis die Daten da sind: unsichtbar, aber im Platz. Vorher war der Chip
+     display:none und schob beim Erscheinen Menü und Symbole zur Seite. */
+  .grh-headerc__weather[hidden] {
+    display: inline-flex;
+    visibility: hidden;
+    opacity: 0;
+  }
+  .grh-headerc__weather {
     border-radius: var(--grh-radius-pill);
     border: 1px solid var(--grh-line);
     color: var(--grh-forest-900);
