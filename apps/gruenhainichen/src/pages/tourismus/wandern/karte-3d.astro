@@ -64,12 +64,16 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
       </div>
 
       <div class="grh-w3__tafel" data-grh-w3-tafel>
-        <button type="button" class="grh-w3__tafel-kopf" data-grh-w3-tafel-toggle aria-expanded="true" aria-controls="grh-w3-inhalt">
+        <div class="grh-w3__tafel-kopf">
           <span class="grh-w3__tafel-griff" aria-hidden="true"></span>
-          <span class="grh-w3__tafel-titel">{routen.length} Rundwege</span>
-          <span class="grh-w3__tafel-sub">{gesamtKm} km · 3D-Vorschau</span>
-          <svg class="grh-w3__tafel-pfeil" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
+          <span class="grh-w3__tafel-titel" data-grh-w3-titel>Wanderwege</span>
+          <button type="button" class="grh-w3__zurueck" data-grh-w3-zurueck hidden>
+            <GrhIcon name="arrow-left" size={16} /> Alle Routen
+          </button>
+          <button type="button" class="grh-w3__tafel-toggle" data-grh-w3-tafel-toggle aria-expanded="true" aria-controls="grh-w3-inhalt" aria-label="Tafel auf- oder zuklappen">
+            <svg class="grh-w3__tafel-pfeil" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
         <div class="grh-w3__inhalt" id="grh-w3-inhalt">
           {/* Ansicht 1: Filter + Liste */}
           <div data-grh-w3-liste-ansicht>
@@ -108,9 +112,6 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
 
           {/* Ansicht 2: eine Route im Detail, mit Zurück-Knopf */}
           <div data-grh-w3-detail-ansicht hidden>
-            <button type="button" class="grh-w3__zurueck" data-grh-w3-zurueck>
-              <GrhIcon name="arrow-left" size={16} /> Alle Routen
-            </button>
             {routen.map((r) => (
               <article class="grh-w3__detail" data-grh-w3-detail={r.id} hidden>
                 <header class="grh-w3__detail-kopf" style={`border-color:${r.farbe}`}>
@@ -324,9 +325,12 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
       aktiv = id;
       details.forEach((d) => { if (d.dataset.grhW3Detail === aktiv) d.removeAttribute('hidden'); else d.setAttribute('hidden', ''); });
       hebe(aktiv);
+      const titel = document.querySelector<HTMLElement>('[data-grh-w3-titel]');
+      const zurueck = document.querySelector<HTMLElement>('[data-grh-w3-zurueck]');
       if (aktiv) {
         const r = daten.routen.find((x) => x.id === aktiv)!;
         listeAnsicht?.setAttribute('hidden', ''); detailAnsicht?.removeAttribute('hidden');
+        titel?.setAttribute('hidden', ''); zurueck?.removeAttribute('hidden');
         if (inhalt) inhalt.scrollTop = 0;
         if (zoom) flieg(r);
         zeichneProfil(r);
@@ -335,6 +339,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
         history.replaceState(null, '', `#${aktiv}`);
       } else {
         detailAnsicht?.setAttribute('hidden', ''); listeAnsicht?.removeAttribute('hidden');
+        zurueck?.setAttribute('hidden', ''); titel?.removeAttribute('hidden');
         history.replaceState(null, '', location.pathname);
       }
     }
@@ -499,11 +504,16 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     background: rgba(250, 247, 241, 0.97); border: 1px solid var(--grh-line); border-radius: var(--grh-radius-lg);
     box-shadow: 0 24px 60px -24px rgba(20, 43, 31, 0.5); overflow: hidden;
   }
-  .grh-w3__tafel-kopf { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; width: 100%; padding: 14px 16px; border: 0; border-bottom: 1px solid var(--grh-line); background: transparent; color: var(--grh-forest-900); font: inherit; text-align: left; cursor: pointer; }
+  .grh-w3__tafel-kopf { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; border-bottom: 1px solid var(--grh-line); color: var(--grh-forest-900); }
   .grh-w3__tafel-griff { display: none; }
-  .grh-w3__tafel-titel { font-family: var(--grh-font-display); font-size: var(--grh-fs-lg); font-weight: 500; }
-  .grh-w3__tafel-sub { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
-  .grh-w3__tafel-pfeil { transition: transform 240ms var(--grh-ease-out); color: var(--grh-stone-400); }
+  .grh-w3__tafel-titel { flex: 1 1 auto; font-family: var(--grh-font-display); font-size: var(--grh-fs-lg); font-weight: 500; }
+  .grh-w3__tafel-titel[hidden] { display: none; }
+  .grh-w3__zurueck { flex: 1 1 auto; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 8px 10px; border-radius: var(--grh-radius-pill); border: 1px solid var(--grh-line); background: var(--grh-cream-50); color: var(--grh-forest-900); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; max-width: max-content; }
+  .grh-w3__zurueck[hidden] { display: none; }
+  .grh-w3__zurueck:hover { background: var(--grh-forest-900); color: var(--grh-cream-50); border-color: var(--grh-forest-900); }
+  .grh-w3__tafel-toggle { margin-left: auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: transparent; color: var(--grh-stone-400); display: grid; place-items: center; cursor: pointer; }
+  .grh-w3__tafel-toggle:hover { background: var(--grh-paper-100); color: var(--grh-forest-900); }
+  .grh-w3__tafel-pfeil { transition: transform 240ms var(--grh-ease-out); }
   .grh-w3__tafel.is-zu .grh-w3__tafel-pfeil { transform: rotate(180deg); }
   .grh-w3__inhalt { overflow-y: auto; padding: 14px 14px 18px; scrollbar-width: thin; }
   .grh-w3__tafel.is-zu .grh-w3__inhalt { display: none; }
@@ -514,8 +524,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     /* Zugeklappt bleibt die Lade unten; die Desktop-Regel „bottom: auto“ zöge sie sonst nach oben */
     .grh-w3__tafel.is-zu { bottom: 8px; top: auto; max-height: none; }
     .grh-w3__tafel-titel { white-space: nowrap; font-size: var(--grh-fs-md); }
-    .grh-w3__tafel-sub { font-size: 10px; }
-    .grh-w3__tafel-kopf { padding-top: 18px; position: relative; }
+    .grh-w3__tafel-kopf { padding-top: 18px; }
     .grh-w3__tafel-griff { display: block; position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; border-radius: 2px; background: var(--grh-line); }
     .grh-w3__tafel-pfeil { transform: rotate(0); }
     .grh-w3__kompass { bottom: auto; top: 16px; left: 16px; right: auto; }
@@ -545,8 +554,6 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
 
   /* Detailansicht */
   [data-grh-w3-liste-ansicht][hidden], [data-grh-w3-detail-ansicht][hidden] { display: none; }
-  .grh-w3__zurueck { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 14px 8px 10px; border-radius: var(--grh-radius-pill); border: 1px solid var(--grh-line); background: var(--grh-cream-50); color: var(--grh-forest-900); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
-  .grh-w3__zurueck:hover { background: var(--grh-forest-900); color: var(--grh-cream-50); border-color: var(--grh-forest-900); }
   .grh-w3__detail { display: flex; flex-direction: column; gap: 14px; }
   .grh-w3__detail[hidden] { display: none; }
   .grh-w3__detail-kopf { display: flex; flex-direction: column; gap: 4px; padding-left: 12px; border-left: 4px solid var(--grh-forest-900); }
