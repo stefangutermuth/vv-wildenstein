@@ -1,0 +1,140 @@
+[
+ {
+  "name": "Grünhainichen",
+  "lat": 50.7677,
+  "lon": 13.1536,
+  "stufe": 1
+ },
+ {
+  "name": "Borstendorf",
+  "lat": 50.7733,
+  "lon": 13.1778,
+  "stufe": 1
+ },
+ {
+  "name": "Waldkirchen",
+  "lat": 50.7661,
+  "lon": 13.117,
+  "stufe": 1
+ },
+ {
+  "name": "Zschopenthal",
+  "lat": 50.7663,
+  "lon": 13.0936,
+  "stufe": 2
+ },
+ {
+  "name": "Börnichen",
+  "lat": 50.7504,
+  "lon": 13.1382,
+  "stufe": 2
+ },
+ {
+  "name": "Zschopau",
+  "lat": 50.747,
+  "lon": 13.0696,
+  "stufe": 2
+ },
+ {
+  "name": "Augustusburg",
+  "lat": 50.8144,
+  "lon": 13.101,
+  "stufe": 2
+ },
+ {
+  "name": "Lengefeld",
+  "lat": 50.7193,
+  "lon": 13.1928,
+  "stufe": 2
+ },
+ {
+  "name": "Eppendorf",
+  "lat": 50.7989,
+  "lon": 13.2306,
+  "stufe": 2
+ },
+ {
+  "name": "Leubsdorf",
+  "lat": 50.8004,
+  "lon": 13.1645,
+  "stufe": 2
+ },
+ {
+  "name": "Krumhermersdorf",
+  "lat": 50.7385,
+  "lon": 13.1045,
+  "stufe": 2
+ },
+ {
+  "name": "Witzschdorf",
+  "lat": 50.7754,
+  "lon": 13.0773,
+  "stufe": 2
+ },
+ {
+  "name": "Pockau",
+  "lat": 50.7055,
+  "lon": 13.2253,
+  "stufe": 2
+ },
+ {
+  "name": "Floßmühle",
+  "lat": 50.7606,
+  "lon": 13.1792,
+  "stufe": 3
+ },
+ {
+  "name": "Stolzenhain",
+  "lat": 50.7549,
+  "lon": 13.168,
+  "stufe": 3
+ },
+ {
+  "name": "Schwarzmühle",
+  "lat": 50.7524,
+  "lon": 13.156,
+  "stufe": 3
+ },
+ {
+  "name": "Neuer Anbau",
+  "lat": 50.7503,
+  "lon": 13.1626,
+  "stufe": 3
+ },
+ {
+  "name": "Wünschendorf",
+  "lat": 50.7412,
+  "lon": 13.1767,
+  "stufe": 3
+ },
+ {
+  "name": "Marbach",
+  "lat": 50.7879,
+  "lon": 13.1334,
+  "stufe": 3
+ },
+ {
+  "name": "Schellenberg",
+  "lat": 50.8009,
+  "lon": 13.1375,
+  "stufe": 3
+ },
+ {
+  "name": "Hohndorf",
+  "lat": 50.7234,
+  "lon": 13.0922,
+  "stufe": 3
+ },
+ {
+  "name": "Hahn",
+  "lat": 50.7795,
+  "lon": 13.0875,
+  "stufe": 3
+ },
+ {
+  "name": "Scheibe",
+  "lat": 50.7935,
+  "lon": 13.1252,
+  "stufe": 3
+ }
+]

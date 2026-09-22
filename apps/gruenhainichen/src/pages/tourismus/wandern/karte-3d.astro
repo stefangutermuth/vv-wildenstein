@@ -18,11 +18,13 @@ import suedschleife from '../../../data/wanderrouten/suedschleife.json';
 import waldkirchen from '../../../data/wanderrouten/waldkirchen.json';
 import muehlentour from '../../../data/wanderrouten/muehlentour.json';
 import pois from '../../../data/wanderrouten/pois.json';
+import orte from '../../../data/wanderrouten/orte.json';
 
 const routen = [suedschleife, waldkirchen, muehlentour];
 const kartenDaten = {
   routen: routen.map((r) => ({ id: r.id, name: r.name, farbe: r.farbe, coords: r.coords, elev: r.elev, km: r.km, aufstieg: r.aufstieg, minHoehe: r.minHoehe, maxHoehe: r.maxHoehe })),
   pois,
+  orte,
 };
 const schwierigkeitLabel: Record<string, string> = { leicht: 'Leicht', mittel: 'Mittel', anspruchsvoll: 'Anspruchsvoll' };
 const artLabel: Record<string, string> = { aussicht: 'Aussicht', kultur: 'Sehenswert', muehle: 'Mühle', baden: 'Baden', parken: 'Parken' };
@@ -140,7 +142,8 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
 
   type Route = { id: string; name: string; farbe: string; coords: [number, number][]; elev: (number | null)[]; km: number; aufstieg: number; minHoehe: number; maxHoehe: number };
   type Poi = { id: string; name: string; art: string; lat: number; lon: number; text: string };
-  const daten = JSON.parse(document.getElementById('grh-w3-daten')?.textContent ?? '{}') as { routen: Route[]; pois: Poi[] };
+  type Ort = { name: string; lat: number; lon: number; stufe: number };
+  const daten = JSON.parse(document.getElementById('grh-w3-daten')?.textContent ?? '{}') as { routen: Route[]; pois: Poi[]; orte: Ort[] };
   const el = document.querySelector<HTMLElement>('[data-grh-w3-karte]');
 
   const webgl = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
@@ -224,6 +227,19 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
         const m = new maplibregl.Marker({ element: d, anchor: 'center' }).setLngLat([p.lon, p.lat]).setPopup(popup).addTo(map);
         poiMarker.push(m);
       }
+      /* Ortsnamen: die drei Ortsteile immer, Nachbarorte ab Zoom 11,5,
+         Weiler ab Zoom 13. So bleibt die Karte weit draußen ruhig. */
+      const ortMarker: { m: maplibregl.Marker; stufe: number }[] = [];
+      for (const o of daten.orte ?? []) {
+        const d = document.createElement('div'); d.className = `grh-w3__ort grh-w3__ort--${o.stufe}`; d.textContent = o.name;
+        ortMarker.push({ m: new maplibregl.Marker({ element: d, anchor: 'center' }).setLngLat([o.lon, o.lat]).addTo(map), stufe: o.stufe });
+      }
+      const zeigeOrte = () => {
+        const z = map.getZoom();
+        ortMarker.forEach(({ m, stufe }) => { m.getElement().style.display = (stufe === 1 || (stufe === 2 && z >= 11.5) || (stufe === 3 && z >= 13)) ? '' : 'none'; });
+      };
+      zeigeOrte(); map.on('zoom', zeigeOrte);
+
       const hash = location.hash.replace('#', '');
       if (hash && daten.routen.some((r) => r.id === hash)) waehle(hash, true);
       else {
@@ -411,6 +427,18 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
   :global(.grh-w3__poi--baden)    { background: #2A6B43; }
   :global(.grh-w3__poi--parken)   { background: #666B61; }
   :global(.grh-w3__poi:hover) { transform: scale(1.12); }
+  :global(.grh-w3__ort) {
+    pointer-events: none;
+    font-family: var(--grh-font-body);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--grh-cream-50);
+    text-shadow: 0 0 3px rgba(20, 43, 31, 0.9), 0 0 8px rgba(20, 43, 31, 0.7), 0 1px 2px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+  }
+  :global(.grh-w3__ort--1) { font-family: var(--grh-font-display); font-weight: 500; font-size: 17px; letter-spacing: 0.02em; text-transform: none; }
+  :global(.grh-w3__ort--2) { font-size: 11.5px; text-transform: uppercase; }
+  :global(.grh-w3__ort--3) { font-size: 10px; text-transform: uppercase; opacity: 0.85; }
   :global(.grh-w3__marke) { width: 16px; height: 16px; border-radius: 50%; background: var(--grh-candle-500); border: 2px solid var(--grh-cream-50); box-shadow: 0 2px 8px rgba(20, 43, 31, 0.5); position: relative; }
   :global(.grh-w3__marke::after) { content: attr(data-label); position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); white-space: nowrap; font: 600 11px/1.3 var(--grh-font-body); color: var(--grh-forest-900); background: var(--grh-cream-50); border: 1px solid var(--grh-line); border-radius: 6px; padding: 3px 7px; }
   :global(.grh-w3__popup .maplibregl-popup-content) { font-family: var(--grh-font-body); font-size: 13px; line-height: 1.5; color: var(--grh-forest-900); background: var(--grh-cream-50); border-radius: 10px; padding: 12px 14px; box-shadow: 0 10px 30px -12px rgba(20, 43, 31, 0.5); }
