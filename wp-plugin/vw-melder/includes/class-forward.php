@@ -93,6 +93,12 @@ final class VW_Melder_Forward {
             .vwfwd-sent .dashicons { font-size:15px; width:15px; height:15px; vertical-align:text-bottom; }
             .vwfwd-note { font-size:12.5px; margin:3px 0 0; }
             .vwfwd-by { color:#646970; font-size:11.5px; margin-top:2px; }
+            .vwfwd-target { border:0; padding:0; margin:2px 0 10px; }
+            .vwfwd-target legend { padding:0; margin:0 0 3px; }
+            .vwfwd-target label { display:block; font-size:12.5px; line-height:1.6; margin:1px 0; }
+            .vwfwd-target input[type=radio] { margin:0 5px 0 0; }
+            .vwfwd-target input:disabled + span { color:#a7aaad; }
+            #vwfwd-alt-wrap { margin:0 0 8px; }
         </style>
 
         <?php if ( $test_mode ) : ?>
@@ -103,52 +109,93 @@ final class VW_Melder_Forward {
             ); ?></div>
         <?php endif; ?>
 
-        <?php if ( $rcpt['email'] === '' ) : ?>
-            <p class="vwfwd-warn">
-                <?php esc_html_e( 'Für die Kategorie dieser Meldung ist keine Zuständigen-E-Mail hinterlegt.', 'vw-melder' ); ?>
-                <?php if ( $rcpt['category'] !== '' ) : ?>
-                    <br><span class="description"><?php echo esc_html( sprintf( __( 'Kategorie: %s — bitte unter „Anliegen“ eine E-Mail eintragen.', 'vw-melder' ), $rcpt['category'] ) ); ?></span>
-                <?php endif; ?>
-            </p>
-        <?php else : ?>
+        <?php
+        $has_rcpt   = $rcpt['email'] !== '';
+        $default_tg = $has_rcpt ? 'zustaendig' : 'alternativ';
+        ?>
+        <?php if ( $has_rcpt ) : ?>
             <p class="vwfwd-to">
                 <?php esc_html_e( 'Zuständig:', 'vw-melder' ); ?>
                 <strong><?php echo esc_html( $rcpt['person'] !== '' ? $rcpt['person'] : $rcpt['email'] ); ?></strong>
                 <?php if ( $rcpt['person'] !== '' ) : ?><br><code><?php echo esc_html( $rcpt['email'] ); ?></code><?php endif; ?>
                 <br><span class="description"><?php echo esc_html( sprintf( __( 'Kategorie: %s', 'vw-melder' ), $rcpt['category'] ) ); ?></span>
             </p>
-            <p>
-                <label for="vwfwd-note"><strong><?php esc_html_e( 'Kurze Notiz (optional):', 'vw-melder' ); ?></strong></label>
-                <textarea id="vwfwd-note" rows="3" class="widefat" placeholder="<?php esc_attr_e( 'z. B. Bitte um zeitnahe Prüfung …', 'vw-melder' ); ?>"></textarea>
+        <?php else : ?>
+            <p class="vwfwd-warn">
+                <?php esc_html_e( 'Für die Kategorie ist keine Zuständigen-E-Mail hinterlegt — du kannst unten an eine Alternative senden.', 'vw-melder' ); ?>
+                <?php if ( $rcpt['category'] !== '' ) : ?>
+                    <br><span class="description"><?php echo esc_html( sprintf( __( 'Kategorie: %s (E-Mail unter „Anliegen“ pflegbar)', 'vw-melder' ), $rcpt['category'] ) ); ?></span>
+                <?php endif; ?>
             </p>
-            <p>
-                <button type="button" class="button button-primary" id="vwfwd-send" style="width:100%">
-                    <span class="dashicons dashicons-email-alt" style="vertical-align:text-bottom"></span>
-                    <?php echo $test_mode ? esc_html__( 'Test senden', 'vw-melder' ) : esc_html__( 'Senden', 'vw-melder' ); ?>
-                </button>
-            </p>
-            <p id="vwfwd-msg" class="vwfwd-msg" style="display:none"></p>
         <?php endif; ?>
+
+        <fieldset class="vwfwd-target">
+            <legend><strong><?php esc_html_e( 'Senden an:', 'vw-melder' ); ?></strong></legend>
+            <label><input type="radio" name="vwfwd-target" value="zustaendig" <?php checked( $default_tg, 'zustaendig' ); disabled( ! $has_rcpt ); ?>> <span><?php esc_html_e( 'Nur an Zuständige', 'vw-melder' ); ?></span></label>
+            <label><input type="radio" name="vwfwd-target" value="beide" <?php disabled( ! $has_rcpt ); ?>> <span><?php esc_html_e( 'Zuständige + Alternative', 'vw-melder' ); ?></span></label>
+            <label><input type="radio" name="vwfwd-target" value="alternativ" <?php checked( $default_tg, 'alternativ' ); ?>> <span><?php esc_html_e( 'Nur an Alternative', 'vw-melder' ); ?></span></label>
+        </fieldset>
+
+        <p id="vwfwd-alt-wrap">
+            <label for="vwfwd-alt"><strong><?php esc_html_e( 'Alternative E-Mail:', 'vw-melder' ); ?></strong></label>
+            <input type="email" id="vwfwd-alt" class="widefat" placeholder="name@beispiel.de" autocomplete="off">
+        </p>
+
+        <p>
+            <label for="vwfwd-note"><strong><?php esc_html_e( 'Kurze Notiz (optional):', 'vw-melder' ); ?></strong></label>
+            <textarea id="vwfwd-note" rows="3" class="widefat" placeholder="<?php esc_attr_e( 'z. B. Bitte um zeitnahe Prüfung …', 'vw-melder' ); ?>"></textarea>
+        </p>
+        <p>
+            <button type="button" class="button button-primary" id="vwfwd-send" style="width:100%">
+                <span class="dashicons dashicons-email-alt" style="vertical-align:text-bottom"></span>
+                <?php echo $test_mode ? esc_html__( 'Test senden', 'vw-melder' ) : esc_html__( 'Senden', 'vw-melder' ); ?>
+            </button>
+        </p>
+        <p id="vwfwd-msg" class="vwfwd-msg" style="display:none"></p>
 
         <div id="vwfwd-log"><?php self::render_history( self::get_history( $post->ID ) ); ?></div>
 
-        <?php if ( $rcpt['email'] !== '' ) : ?>
         <script>
         ( function () {
             var btn = document.getElementById( 'vwfwd-send' );
             if ( ! btn ) { return; }
-            var note = document.getElementById( 'vwfwd-note' );
-            var msg  = document.getElementById( 'vwfwd-msg' );
-            var log  = document.getElementById( 'vwfwd-log' );
-            var busy = <?php echo wp_json_encode( __( 'Wird gesendet …', 'vw-melder' ) ); ?>;
-            var label = btn.innerHTML;
+            var note    = document.getElementById( 'vwfwd-note' );
+            var alt     = document.getElementById( 'vwfwd-alt' );
+            var msg     = document.getElementById( 'vwfwd-msg' );
+            var log     = document.getElementById( 'vwfwd-log' );
+            var altWrap = document.getElementById( 'vwfwd-alt-wrap' );
+            var busy    = <?php echo wp_json_encode( __( 'Wird gesendet …', 'vw-melder' ) ); ?>;
+            var needAlt = <?php echo wp_json_encode( __( 'Bitte eine Alternative-E-Mail eingeben.', 'vw-melder' ) ); ?>;
+            var label   = btn.innerHTML;
+
+            var targetVal = function () {
+                var r = document.querySelector( 'input[name="vwfwd-target"]:checked' );
+                return r ? r.value : 'zustaendig';
+            };
+            var syncAlt = function () {
+                var needsAlt = targetVal() !== 'zustaendig';
+                if ( alt ) { alt.disabled = ! needsAlt; }
+                if ( altWrap ) { altWrap.style.opacity = needsAlt ? '1' : '0.5'; }
+            };
+            Array.prototype.forEach.call( document.querySelectorAll( 'input[name="vwfwd-target"]' ), function ( r ) {
+                r.addEventListener( 'change', syncAlt );
+            } );
+            syncAlt();
+
             btn.addEventListener( 'click', function () {
+                var tv = targetVal();
+                if ( tv !== 'zustaendig' && ( ! alt || ! alt.value.trim() ) ) {
+                    msg.style.display = 'block'; msg.className = 'vwfwd-msg err'; msg.textContent = needAlt;
+                    return;
+                }
                 btn.disabled = true; btn.textContent = busy; msg.style.display = 'none';
                 var body = new URLSearchParams();
                 body.append( 'action', <?php echo wp_json_encode( self::ACTION ); ?> );
                 body.append( 'post_id', <?php echo (int) $post->ID; ?> );
                 body.append( '_ajax_nonce', <?php echo wp_json_encode( wp_create_nonce( self::NONCE ) ); ?> );
                 body.append( 'note', note ? note.value : '' );
+                body.append( 'target', tv );
+                body.append( 'alt_email', alt ? alt.value : '' );
                 fetch( ajaxurl, { method: 'POST', credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() } )
                     .then( function ( r ) { return r.json(); } )
@@ -158,6 +205,7 @@ final class VW_Melder_Forward {
                             msg.className = 'vwfwd-msg ok';
                             msg.textContent = ( res.data && res.data.message ) || 'Gesendet.';
                             if ( note ) { note.value = ''; }
+                            if ( alt ) { alt.value = ''; }
                             if ( res.data && res.data.log_html ) { log.innerHTML = res.data.log_html; }
                         } else {
                             msg.className = 'vwfwd-msg err';
@@ -172,7 +220,6 @@ final class VW_Melder_Forward {
             } );
         } )();
         </script>
-        <?php endif; ?>
         <?php
     }
 
@@ -187,8 +234,10 @@ final class VW_Melder_Forward {
             wp_send_json_error( [ 'message' => __( 'Keine Berechtigung.', 'vw-melder' ) ] );
         }
 
-        $note = isset( $_POST['note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['note'] ) ) : '';
-        $res  = self::send( $post_id, $note );
+        $note   = isset( $_POST['note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['note'] ) ) : '';
+        $target = isset( $_POST['target'] ) ? sanitize_key( wp_unslash( $_POST['target'] ) ) : 'zustaendig';
+        $alt    = isset( $_POST['alt_email'] ) ? sanitize_email( wp_unslash( $_POST['alt_email'] ) ) : '';
+        $res    = self::send( $post_id, $note, '', $target, $alt );
 
         if ( empty( $res['ok'] ) ) {
             wp_send_json_error( [ 'message' => (string) $res['message'] ] );
@@ -205,21 +254,51 @@ final class VW_Melder_Forward {
      * Verschickt die Weiterleitung als E-Mail und protokolliert sie an der Meldung.
      * Kapselt die eigentliche Logik (auch per WP-CLI/Test aufrufbar).
      *
+     * @param string $target 'zustaendig' (nur Kategorie-Adresse) | 'beide' (Kategorie + Alternative) | 'alternativ' (nur Alternative)
      * @return array{ok:bool,to:string,test:bool,message:string}
      */
-    public static function send( int $post_id, string $note = '', string $by = '' ): array {
+    public static function send( int $post_id, string $note = '', string $by = '', string $target = 'zustaendig', string $alt_email = '' ): array {
         $post = get_post( $post_id );
         if ( ! $post || $post->post_type !== 'vw_meldung' ) {
-            return [ 'ok' => false, 'to' => '', 'test' => false, 'message' => __( 'Meldung nicht gefunden.', 'vw-melder' ) ];
+            return self::err( __( 'Meldung nicht gefunden.', 'vw-melder' ) );
         }
 
         $rcpt      = self::recipient_for( $post_id );
         $test_mode = VW_Melder_Settings::forward_test_mode();
-        $to        = $test_mode ? VW_Melder_Settings::forward_test_email() : $rcpt['email'];
-        if ( $to === '' || ! is_email( $to ) ) {
-            return [ 'ok' => false, 'to' => '', 'test' => $test_mode, 'message' => $test_mode
-                ? __( 'Keine gültige Test-E-Mail in den Einstellungen hinterlegt.', 'vw-melder' )
-                : __( 'Für die Kategorie dieser Meldung ist keine gültige E-Mail hinterlegt.', 'vw-melder' ) ];
+        $target    = in_array( $target, [ 'zustaendig', 'beide', 'alternativ' ], true ) ? $target : 'zustaendig';
+        $alt       = sanitize_email( trim( $alt_email ) );
+
+        $needs_rcpt = ( $target === 'zustaendig' || $target === 'beide' );
+        $needs_alt  = ( $target === 'beide' || $target === 'alternativ' );
+
+        // Echte Empfängerliste je nach Auswahl zusammenstellen
+        $recipients = [];
+        if ( $needs_rcpt ) {
+            if ( $rcpt['email'] === '' || ! is_email( $rcpt['email'] ) ) {
+                return self::err( __( 'Für die Kategorie dieser Meldung ist keine gültige E-Mail hinterlegt.', 'vw-melder' ), $test_mode );
+            }
+            $recipients[] = $rcpt['email'];
+        }
+        if ( $needs_alt ) {
+            if ( $alt === '' || ! is_email( $alt ) ) {
+                return self::err( __( 'Bitte eine gültige Alternative-E-Mail eingeben.', 'vw-melder' ), $test_mode );
+            }
+            $recipients[] = $alt;
+        }
+        $recipients = array_values( array_unique( array_filter( $recipients ) ) );
+        if ( $recipients === [] ) {
+            return self::err( __( 'Kein Empfänger ausgewählt.', 'vw-melder' ), $test_mode );
+        }
+
+        // Test-Modus: alles an die Test-Adresse, echte Ziele werden protokolliert.
+        if ( $test_mode ) {
+            $test_to = VW_Melder_Settings::forward_test_email();
+            if ( $test_to === '' || ! is_email( $test_to ) ) {
+                return self::err( __( 'Keine gültige Test-E-Mail in den Einstellungen hinterlegt.', 'vw-melder' ), true );
+            }
+            $send_to = [ $test_to ];
+        } else {
+            $send_to = $recipients;
         }
 
         $user    = wp_get_current_user();
@@ -228,7 +307,7 @@ final class VW_Melder_Forward {
             $by = ( $user && $user->exists() ) ? $user->display_name : __( 'System', 'vw-melder' );
         }
 
-        $intro = self::intro_html( $note, $by, $rcpt, $test_mode, $to );
+        $intro = self::intro_html( $note, $by, $rcpt, $recipients, $test_mode, $send_to );
         $html  = VW_Melder_Export::render_document( [ $post ], true, $intro );
 
         $subject = sprintf( __( 'Mängelmeldung #%1$d: %2$s', 'vw-melder' ), $post_id, get_the_title( $post_id ) );
@@ -238,49 +317,72 @@ final class VW_Melder_Forward {
         $reply_to = $u_email !== '' ? $u_email : ( VW_Melder_Settings::notify_recipients()[0] ?? get_option( 'admin_email' ) );
         $headers  = [ 'Content-Type: text/html; charset=UTF-8', 'Reply-To: ' . $reply_to ];
 
-        if ( ! wp_mail( $to, $subject, $html, $headers ) ) {
-            return [ 'ok' => false, 'to' => $to, 'test' => $test_mode, 'message' => __( 'E-Mail-Versand fehlgeschlagen (wp_mail).', 'vw-melder' ) ];
+        if ( ! wp_mail( $send_to, $subject, $html, $headers ) ) {
+            return self::err( __( 'E-Mail-Versand fehlgeschlagen (wp_mail).', 'vw-melder' ), $test_mode );
         }
 
+        $human     = self::recipients_label( $recipients, $rcpt );
         $history   = self::get_history( $post_id );
         $history[] = [
-            'time'     => gmdate( 'c' ),
-            'user'     => $by,
-            'to'       => $rcpt['email'],
-            'to_real'  => $to,
-            'person'   => $rcpt['person'],
-            'category' => $rcpt['category'],
-            'note'     => $note,
-            'test'     => $test_mode ? 1 : 0,
+            'time'       => gmdate( 'c' ),
+            'user'       => $by,
+            'label'      => $human,
+            'recipients' => $recipients,
+            'to_real'    => implode( ', ', $send_to ),
+            'target'     => $target,
+            'person'     => $rcpt['person'],
+            'category'   => $rcpt['category'],
+            'note'       => $note,
+            'test'       => $test_mode ? 1 : 0,
         ];
         update_post_meta( $post_id, self::HISTORY_META, $history );
 
-        return [ 'ok' => true, 'to' => $to, 'test' => $test_mode, 'message' => $test_mode
-            ? sprintf( __( '✓ Test-Mail an %s gesendet.', 'vw-melder' ), $to )
-            : sprintf( __( '✓ Weitergeleitet an %s.', 'vw-melder' ), $rcpt['person'] !== '' ? $rcpt['person'] : $to ) ];
+        return [
+            'ok'      => true,
+            'to'      => implode( ', ', $send_to ),
+            'test'    => $test_mode,
+            'message' => $test_mode
+                ? sprintf( __( '✓ Test-Mail gesendet (regulär an: %s).', 'vw-melder' ), $human )
+                : sprintf( __( '✓ Weitergeleitet an %s.', 'vw-melder' ), $human ),
+        ];
     }
 
-    /** Kopfblock der E-Mail (Notiz + Zuständigkeit), im Report-Layout. */
-    private static function intro_html( string $note, string $by, array $rcpt, bool $test, string $to ): string {
-        $person = trim( (string) ( $rcpt['person'] ?? '' ) );
-        $email  = (string) ( $rcpt['email'] ?? '' );
-        $zust   = $person !== '' ? $person . ( $email !== '' ? ' <' . $email . '>' : '' ) : $email;
+    private static function err( string $message, bool $test = false ): array {
+        return [ 'ok' => false, 'to' => '', 'test' => $test, 'message' => $message ];
+    }
+
+    /** Menschlich lesbare Empfänger-Bezeichnung (Person + Adresse, wenn die Person bekannt ist). */
+    private static function recipients_label( array $recipients, array $rcpt ): string {
+        $parts = [];
+        foreach ( $recipients as $r ) {
+            $parts[] = ( $r === ( $rcpt['email'] ?? '' ) && ( $rcpt['person'] ?? '' ) !== '' )
+                ? $rcpt['person'] . ' (' . $r . ')'
+                : $r;
+        }
+        return implode( ', ', $parts );
+    }
+
+    /** Kopfblock der E-Mail (Notiz + Empfänger), im Report-Layout. */
+    private static function intro_html( string $note, string $by, array $rcpt, array $recipients, bool $test, array $send_to ): string {
+        $to_label = self::recipients_label( $recipients, $rcpt );
 
         $rows  = '<tr><th>Weitergeleitet von</th><td>' . esc_html( $by ) . '</td></tr>';
-        $rows .= '<tr><th>Zuständig</th><td>' . esc_html( $zust !== '' ? $zust : '—' )
-            . ( $rcpt['category'] ? ' — ' . esc_html( (string) $rcpt['category'] ) : '' ) . '</td></tr>';
+        $rows .= '<tr><th>An</th><td>' . esc_html( $to_label !== '' ? $to_label : '—' ) . '</td></tr>';
+        if ( ! empty( $rcpt['category'] ) ) {
+            $rows .= '<tr><th>Kategorie</th><td>' . esc_html( (string) $rcpt['category'] ) . '</td></tr>';
+        }
 
         $note_html = $note !== '' ? nl2br( esc_html( $note ) ) : '<em>keine Notiz</em>';
 
         $banner = $test
             ? '<div style="background:#fcf3d9;border:1px solid #dba617;color:#8a6d00;border-radius:6px;padding:8px 12px;margin:0 0 14px;font-weight:600">'
-                . '⚠ TEST — diese Mail wäre regulär an ' . esc_html( $zust !== '' ? $zust : '—' ) . ' gegangen, wurde aber an ' . esc_html( $to ) . ' gesendet.'
+                . '⚠ TEST — reguläre Empfänger wären ' . esc_html( $to_label !== '' ? $to_label : '—' ) . ', gesendet an ' . esc_html( implode( ', ', $send_to ) ) . '.'
                 . '</div>'
             : '';
 
         return '<div class="handoff" style="border:2px solid #0a5f2b;border-radius:8px;padding:14px 18px;margin:0 0 20px;background:#f6faf7">'
             . $banner
-            . '<h2 style="margin:0 0 8px;color:#0a5f2b;font-size:15px">Weiterleitung an die zuständige Fachkraft</h2>'
+            . '<h2 style="margin:0 0 8px;color:#0a5f2b;font-size:15px">Weiterleitung einer Mängelmeldung</h2>'
             . '<table class="daten" style="margin:0 0 12px">' . $rows . '</table>'
             . '<div style="font-weight:600;color:#2a3196;margin:0 0 3px">Notiz der Verwaltung</div>'
             . '<div class="beschreibung">' . $note_html . '</div>'
@@ -307,9 +409,13 @@ final class VW_Melder_Forward {
             $when    = $ts ? wp_date( 'd.m.Y', $ts ) . ' um ' . wp_date( 'H:i', $ts ) . ' Uhr' : '';
             $test    = ! empty( $e['test'] );
             $to_real = (string) ( $e['to_real'] ?? ( $e['to'] ?? '' ) );
-            $person  = (string) ( $e['person'] ?? '' );
-            $real_to = (string) ( $e['to'] ?? '' );
-            $label   = $person !== '' ? $person . ( $real_to !== '' ? ' (' . $real_to . ')' : '' ) : $real_to;
+            // Neu: vorgefertigtes Empfänger-Label; Fallback auf alte Struktur (person/to)
+            $label = (string) ( $e['label'] ?? '' );
+            if ( $label === '' ) {
+                $person  = (string) ( $e['person'] ?? '' );
+                $real_to = (string) ( $e['to'] ?? '' );
+                $label   = $person !== '' ? $person . ( $real_to !== '' ? ' (' . $real_to . ')' : '' ) : $real_to;
+            }
 
             echo '<li><div class="vwfwd-sent"><span class="dashicons dashicons-yes-alt"></span> ';
             if ( $test ) {
