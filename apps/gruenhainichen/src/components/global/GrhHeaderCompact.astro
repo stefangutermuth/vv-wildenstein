@@ -374,8 +374,12 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   }
   /* Mobile: Wetter und Social aus — nur Burger bleibt */
   @media (max-width: 720px) {
-    .grh-headerc__social,
-    .grh-headerc__weather, .grh-headerc__weather[hidden] { display: none; }
+    /* Höhere Spezifität als die Grundregel weiter unten, die sonst gewinnt,
+       weil sie später im Stylesheet steht. Auf dem Telefon stand deshalb
+       ein leerer Wetter-Chip neben der Suche. */
+    .grh-header--compact .grh-headerc__social,
+    .grh-header--compact .grh-headerc__weather,
+    .grh-header--compact .grh-headerc__weather[hidden] { display: none; }
     /* Die Suche bleibt auch auf dem Telefon in der Kopfzeile erreichbar */
     .grh-headerc__suche { display: flex; }
   }
