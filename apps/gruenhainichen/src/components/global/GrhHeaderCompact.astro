@@ -85,13 +85,22 @@ import GrhIcon from '../primitives/GrhIcon.astro';
         </svg>
       </a>
 
-      {/* Öffnet das Suchfeld im schwebenden Menü unten rechts; die Suche
-          selbst lebt dort (GrhFloatingContact), hier ist nur der Einstieg. */}
-      <button type="button" class="grh-headerc__social grh-headerc__suche" aria-label="Suche öffnen" aria-expanded="false" aria-controls="grh-header-suche" data-grh-suche-open>
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
-        </svg>
-      </button>
+      {/* Suche: Die Lupe ist ein Feld, das nach links aufklappt. Wetter und
+          Social-Symbole rücken dabei beiseite; die Treffer hängen darunter. */}
+      <div class="grh-headerc__suche" data-grh-header-suche>
+        <button type="button" class="grh-headerc__suche-knopf" aria-label="Suche öffnen" aria-expanded="false" aria-controls="grh-header-suche-liste" data-grh-suche-open>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
+          </svg>
+        </button>
+        <input type="search" class="grh-headerc__suche-input" placeholder="Suchen…" autocomplete="off" aria-label="Suchbegriff" aria-controls="grh-header-suche-liste" tabindex="-1" data-grh-header-suche-input />
+        <button type="button" class="grh-headerc__suche-zu" aria-label="Suche schließen" tabindex="-1" data-grh-header-suche-close>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />
+          </svg>
+        </button>
+        <ul class="grh-suche__liste grh-headerc__suche-liste" id="grh-header-suche-liste" role="listbox" aria-label="Suchergebnisse" data-grh-header-suche-liste hidden></ul>
+      </div>
 
       <button
         type="button"
@@ -109,23 +118,6 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     </div>
   </div>
 
-  {/* Aufklappendes Suchfeld: hängt unter der Kopfzeile, rechts ausgerichtet,
-      auf dem Telefon über die ganze Breite. Öffnet sich über die Lupe. */}
-  <div class="grh-headerc__suchbox" id="grh-header-suche" data-grh-header-suche hidden>
-    <div class="grh-headerc__suchfeld">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
-      </svg>
-      <input type="search" placeholder="Was suchen Sie? Sehenswürdigkeit, Termin, Amt…" autocomplete="off" aria-label="Suchbegriff" aria-controls="grh-header-suche-liste" data-grh-header-suche-input />
-      <button type="button" class="grh-headerc__suchbox-close" aria-label="Suche schließen" data-grh-header-suche-close>
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-          <line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />
-        </svg>
-      </button>
-    </div>
-    <ul class="grh-suche__liste grh-headerc__suchliste" id="grh-header-suche-liste" role="listbox" aria-label="Suchergebnisse" data-grh-header-suche-liste hidden></ul>
-    <p class="grh-headerc__suchhinweis" data-grh-header-suche-hint>Sucht in Seiten, Neuigkeiten, Terminen, Ausflugszielen, Vereinen und Gewerbe.</p>
-  </div>
 </header>
 
 <style>
@@ -145,6 +137,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     box-shadow: 0 10px 30px -18px rgba(20, 43, 31, 0.35);
   }
   .grh-headerc__inner {
+    position: relative; /* Bezug für das aufgeklappte Suchfeld auf dem Telefon */
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -222,86 +215,101 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     gap: var(--grh-space-2);
   }
 
+  /* === Suche in der Kopfzeile ================================ */
   .grh-headerc__suche {
-    border: 0;
-    background: transparent;
-    font: inherit;
-    cursor: pointer;
-  }
-  .grh-headerc__suche[aria-expanded="true"] {
-    background: var(--grh-forest-900);
-    color: var(--grh-cream-50);
-    border-color: var(--grh-forest-900);
-  }
-
-  /* === Aufklappendes Suchfeld ================================ */
-  .grh-headerc__suchbox {
-    position: absolute;
-    top: 100%;
-    right: var(--grh-gutter);
-    width: min(520px, calc(100vw - 2 * var(--grh-gutter)));
-    margin-top: 10px;
-    padding: var(--grh-space-3);
-    background: var(--grh-cream-50);
-    border: 1px solid var(--grh-line);
-    border-radius: var(--grh-radius-md);
-    box-shadow: 0 24px 60px -24px rgba(20, 43, 31, 0.45);
-    z-index: var(--grh-z-overlay);
-    transform-origin: top right;
-    animation: grh-suchbox-auf 180ms var(--grh-ease-out) both;
-  }
-  .grh-headerc__suchbox[hidden] { display: none; }
-  @keyframes grh-suchbox-auf {
-    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-    to   { opacity: 1; transform: none; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .grh-headerc__suchbox { animation: none; }
-  }
-  .grh-headerc__suchfeld {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
+    position: relative;
+    display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 6px 8px 6px 16px;
+    height: 40px;
+    width: 40px;
+    box-sizing: border-box;
     border: 1px solid var(--grh-line);
     border-radius: var(--grh-radius-pill);
-    background: var(--grh-paper-100);
-    color: var(--grh-moss-600);
-  }
-  .grh-headerc__suchfeld:focus-within {
-    border-color: var(--grh-candle-500);
     background: var(--grh-cream-50);
+    overflow: visible;
+    transition: width 260ms var(--grh-ease-out), border-color var(--grh-dur-fast), background var(--grh-dur-fast);
   }
-  .grh-headerc__suchfeld input {
+  .grh-headerc__suche.is-open {
+    width: min(360px, 44vw);
+    border-color: var(--grh-forest-900);
+  }
+  .grh-headerc__suche:not(.is-open):hover {
+    background: var(--grh-forest-900);
+    border-color: var(--grh-forest-900);
+    color: var(--grh-cream-50);
+  }
+  .grh-headerc__suche-knopf {
+    flex: 0 0 38px;
+    width: 38px; height: 38px;
     border: 0;
-    background: transparent;
-    font: inherit;
-    font-size: 16px;
-    min-height: 40px;
-    color: var(--grh-forest-900);
-    outline: none;
-    width: 100%;
-  }
-  .grh-headerc__suchfeld input::-webkit-search-cancel-button { display: none; }
-  .grh-headerc__suchbox-close {
-    width: 36px; height: 36px;
     border-radius: 50%;
-    border: 0;
     background: transparent;
-    color: var(--grh-stone-700);
+    color: inherit;
     display: grid; place-items: center;
     cursor: pointer;
   }
-  .grh-headerc__suchbox-close:hover { background: var(--grh-paper-100); color: var(--grh-forest-900); }
-  .grh-headerc__suchliste { margin-top: var(--grh-space-3); border-top: 1px solid var(--grh-line); }
-  .grh-headerc__suchhinweis {
-    margin: var(--grh-space-3) 4px 2px;
-    font-size: 11px;
-    line-height: 1.5;
-    color: var(--grh-stone-400);
+  .grh-headerc__suche:not(.is-open) .grh-headerc__suche-knopf { color: var(--grh-forest-900); }
+  .grh-headerc__suche:not(.is-open):hover .grh-headerc__suche-knopf { color: var(--grh-cream-50); }
+  .grh-headerc__suche.is-open .grh-headerc__suche-knopf { color: var(--grh-moss-600); cursor: default; }
+  .grh-headerc__suche-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 0;
+    opacity: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 15px;
+    color: var(--grh-forest-900);
+    outline: none;
+    padding: 0;
+    transition: opacity 160ms ease 120ms;
   }
-  .grh-headerc__suchhinweis[hidden] { display: none; }
+  .grh-headerc__suche-input::-webkit-search-cancel-button { display: none; }
+  .grh-headerc__suche.is-open .grh-headerc__suche-input { opacity: 1; }
+  .grh-headerc__suche-zu {
+    flex: 0 0 32px;
+    width: 32px; height: 32px;
+    margin-right: 3px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--grh-stone-400);
+    display: none;
+    place-items: center;
+    cursor: pointer;
+  }
+  .grh-headerc__suche.is-open .grh-headerc__suche-zu { display: grid; }
+  .grh-headerc__suche-zu:hover { color: var(--grh-forest-900); }
+
+  /* Trefferliste: schlicht, ohne Rahmen und Trennlinien, nur ein Schatten */
+  .grh-headerc__suche-liste {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(440px, calc(100vw - 2 * var(--grh-gutter)));
+    padding: 6px;
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-md);
+    box-shadow: 0 24px 60px -24px rgba(20, 43, 31, 0.45), 0 2px 10px rgba(20, 43, 31, 0.06);
+    z-index: var(--grh-z-overlay);
+  }
+  /* Treffer entstehen per innerHTML ohne Astro-Scope, daher :global */
+  .grh-headerc__suche-liste :global(.grh-suche__result) { border-bottom: 0; padding: 10px 12px; }
+
+  /* Telefon: das offene Feld legt sich über die ganze Kopfzeile */
+  @media (max-width: 720px) {
+    .grh-headerc__suche.is-open {
+      position: absolute;
+      left: var(--grh-gutter);
+      right: var(--grh-gutter);
+      top: 50%;
+      transform: translateY(-50%);
+      width: auto;
+      z-index: 2;
+    }
+    .grh-headerc__suche-liste { right: 0; left: 0; width: auto; }
+  }
   .grh-headerc__social {
     width: 40px; height: 40px;
     border-radius: 50%;
@@ -322,7 +330,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     .grh-headerc__social,
     .grh-headerc__weather { display: none; }
     /* Die Suche bleibt auch auf dem Telefon in der Kopfzeile erreichbar */
-    .grh-headerc__suche { display: grid; }
+    .grh-headerc__suche { display: flex; }
   }
 
   /* === Wetter-Pille ========================================= */
@@ -517,33 +525,42 @@ import GrhIcon from '../primitives/GrhIcon.astro';
 
   /* === Suchfeld in der Kopfzeile ============================ */
   (() => {
-    const knopf = document.querySelector<HTMLButtonElement>('[data-grh-suche-open]');
-    const box   = document.querySelector<HTMLElement>('[data-grh-header-suche]');
-    const input = box?.querySelector<HTMLInputElement>('[data-grh-header-suche-input]');
-    const liste = box?.querySelector<HTMLElement>('[data-grh-header-suche-liste]');
-    if (!knopf || !box || !input || !liste) return;
+    const wrap  = document.querySelector<HTMLElement>('[data-grh-header-suche]');
+    const knopf = wrap?.querySelector<HTMLButtonElement>('[data-grh-suche-open]');
+    const input = wrap?.querySelector<HTMLInputElement>('[data-grh-header-suche-input]');
+    const liste = wrap?.querySelector<HTMLElement>('[data-grh-header-suche-liste]');
+    const zu    = wrap?.querySelector<HTMLButtonElement>('[data-grh-header-suche-close]');
+    if (!wrap || !knopf || !input || !liste) return;
 
-    initSuche({ input, liste, hinweis: box.querySelector<HTMLElement>('[data-grh-header-suche-hint]'), prefix: 'grh-header-treffer' });
+    initSuche({ input, liste, prefix: 'grh-header-treffer' });
 
     const oeffnen = () => {
-      box.removeAttribute('hidden');
+      wrap.classList.add('is-open');
       knopf.setAttribute('aria-expanded', 'true');
+      input.removeAttribute('tabindex');
+      zu?.removeAttribute('tabindex');
       ladeIndex();
-      window.setTimeout(() => input.focus(), 30);
+      window.setTimeout(() => input.focus(), 120);
     };
     const schliessen = () => {
-      box.setAttribute('hidden', '');
+      wrap.classList.remove('is-open');
       knopf.setAttribute('aria-expanded', 'false');
+      input.setAttribute('tabindex', '-1');
+      zu?.setAttribute('tabindex', '-1');
+      input.value = '';
+      liste.setAttribute('hidden', '');
+      liste.innerHTML = '';
     };
-    knopf.addEventListener('click', () => (box.hasAttribute('hidden') ? oeffnen() : schliessen()));
-    box.querySelector('[data-grh-header-suche-close]')?.addEventListener('click', () => { schliessen(); knopf.focus(); });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !box.hasAttribute('hidden')) { schliessen(); knopf.focus(); }
+    knopf.addEventListener('click', () => {
+      if (wrap.classList.contains('is-open')) input.focus();
+      else oeffnen();
     });
-    // Klick außerhalb schließt
+    zu?.addEventListener('click', () => { schliessen(); knopf.focus(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && wrap.classList.contains('is-open')) { schliessen(); knopf.focus(); }
+    });
     document.addEventListener('pointerdown', (e) => {
-      const ziel = e.target as Node;
-      if (!box.hasAttribute('hidden') && !box.contains(ziel) && !knopf.contains(ziel)) schliessen();
+      if (wrap.classList.contains('is-open') && !wrap.contains(e.target as Node)) schliessen();
     });
   })();
 
