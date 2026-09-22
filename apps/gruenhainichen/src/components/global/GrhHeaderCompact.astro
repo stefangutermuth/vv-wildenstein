@@ -85,6 +85,14 @@ import GrhIcon from '../primitives/GrhIcon.astro';
         </svg>
       </a>
 
+      {/* Öffnet das Suchfeld im schwebenden Menü unten rechts; die Suche
+          selbst lebt dort (GrhFloatingContact), hier ist nur der Einstieg. */}
+      <button type="button" class="grh-headerc__social grh-headerc__suche" aria-label="Suche öffnen" data-grh-suche-open>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
+        </svg>
+      </button>
+
       <button
         type="button"
         class="grh-headerc__burger"
@@ -194,6 +202,12 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     gap: var(--grh-space-2);
   }
 
+  .grh-headerc__suche {
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+  }
   .grh-headerc__social {
     width: 40px; height: 40px;
     border-radius: 50%;
@@ -213,6 +227,8 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   @media (max-width: 720px) {
     .grh-headerc__social,
     .grh-headerc__weather { display: none; }
+    /* Die Suche bleibt auch auf dem Telefon in der Kopfzeile erreichbar */
+    .grh-headerc__suche { display: grid; }
   }
 
   /* === Wetter-Pille ========================================= */

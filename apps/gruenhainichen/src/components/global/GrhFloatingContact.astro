@@ -87,9 +87,10 @@
           <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" />
         </svg>
       </span>
-      <input type="search" placeholder="Sehenswürdigkeit, Termin, Ortsteil…" autocomplete="off" data-grh-fab-search />
+      <input type="search" placeholder="Sehenswürdigkeit, Termin, Ortsteil…" autocomplete="off" data-grh-fab-search aria-label="Suchbegriff" aria-controls="grh-fab-suche-liste" />
     </div>
-    <p class="grh-fab__hint">Die Live-Suche in News, Veranstaltungen und Seiten wird im nächsten Schritt freigeschaltet.</p>
+    <ul class="grh-fab__results" id="grh-fab-suche-liste" data-grh-fab-results role="listbox" aria-label="Suchergebnisse" hidden></ul>
+    <p class="grh-fab__hint" data-grh-fab-search-hint>Sucht in Seiten, Neuigkeiten, Terminen, Ausflugszielen, Vereinen und Gewerbe.</p>
   </section>
 
   <!-- Mängelmelder-Panel (kurz, nur Hinweis + CTA) -->
@@ -617,6 +618,57 @@
     width: 100%;
   }
 
+  /* Die Treffer entstehen im Browser per innerHTML und tragen deshalb kein
+     Astro-Scope-Attribut; ihre Regeln müssen global sein. */
+  .grh-fab__results {
+    list-style: none;
+    margin: var(--grh-space-3) 0 0;
+    padding: 0;
+    max-height: 320px;
+    overflow-y: auto;
+    border-top: 1px solid var(--grh-line);
+  }
+  :global(.grh-fab__results[hidden]) { display: none; }
+  :global(.grh-fab__result) {
+    display: block;
+    padding: 9px 6px;
+    border-bottom: 1px solid var(--grh-line);
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+  }
+  :global(.grh-fab__result:hover),
+  :global(.grh-fab__result[aria-selected="true"]) {
+    background: var(--grh-sage-100);
+  }
+  :global(.grh-fab__result-kind) {
+    display: inline-block;
+    margin-bottom: 2px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    color: var(--grh-moss-600);
+  }
+  :global(.grh-fab__result-title) {
+    display: block;
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--grh-forest-900);
+    font-weight: 500;
+  }
+  :global(.grh-fab__result-sub) {
+    display: block;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--grh-stone-400);
+  }
+  :global(.grh-fab__result--leer) {
+    padding: 12px 6px;
+    font-size: 13px;
+    color: var(--grh-stone-700);
+  }
+
   /* === Mängelmelder-Panel =========================================== */
   .grh-fab__lead {
     font-size: 13px;
@@ -711,12 +763,119 @@
       });
     });
 
+    /* Suchknopf in der Kopfzeile: öffnet direkt das Suchfeld */
+    document.querySelectorAll<HTMLElement>('[data-grh-suche-open]').forEach((k) => {
+      k.addEventListener('click', () => {
+        showPanel('suche');
+        ladeIndex();
+        window.setTimeout(() => suche?.focus(), 50);
+      });
+    });
+
     /* Schließ-Buttons + Backdrop */
     closes.forEach((c) => c.addEventListener('click', closeAll));
 
     /* Escape schließt */
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && fab.dataset.state !== 'closed') closeAll();
+    });
+
+    /* === Live-Suche ==================================================
+       Der Index (/suche-index.json) entsteht beim Bau und wird erst
+       geladen, wenn jemand das Suchfeld benutzt. Gesucht wird im Browser:
+       jedes eingegebene Wort muss im Titel oder Zusatz vorkommen; Treffer
+       im Titelanfang und Seiten aus der Navigation stehen weiter oben. */
+    const suche   = fab.querySelector<HTMLInputElement>('[data-grh-fab-search]');
+    const liste   = fab.querySelector<HTMLUListElement>('[data-grh-fab-results]');
+    const hinweis = fab.querySelector<HTMLElement>('[data-grh-fab-search-hint]');
+    type Eintrag = { t: string; u: string; k: string; s?: string; x?: string; n?: string };
+    let index: Eintrag[] | null = null;
+    let laden: Promise<Eintrag[]> | null = null;
+    let auswahl = -1;
+
+    const art: Record<string, string> = {
+      seite: 'Seite', neuigkeit: 'Neuigkeit', termin: 'Termin', ausflug: 'Ausflugsziel',
+      verein: 'Verein', gewerbe: 'Gewerbe', kita: 'Kita',
+    };
+    const norm = (t: string) => t.toLowerCase()
+      .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const ladeIndex = () => {
+      if (!laden) {
+        laden = fetch('/suche-index.json')
+          .then((r) => (r.ok ? r.json() : []))
+          .then((d: Eintrag[]) => {
+            index = d.map((e) => ({ ...e, n: norm(e.t + ' ' + (e.s ?? '') + ' ' + (e.x ?? '')) }));
+            return index;
+          })
+          .catch(() => (index = []));
+      }
+      return laden;
+    };
+
+    const zeige = (treffer: Eintrag[], frage: string) => {
+      if (!liste) return;
+      auswahl = -1;
+      if (!frage) { liste.setAttribute('hidden', ''); liste.innerHTML = ''; hinweis?.removeAttribute('hidden'); return; }
+      hinweis?.setAttribute('hidden', '');
+      liste.removeAttribute('hidden');
+      if (treffer.length === 0) {
+        liste.innerHTML = '<li class="grh-fab__result--leer">Nichts gefunden. Versuchen Sie ein anderes Wort.</li>';
+        return;
+      }
+      liste.innerHTML = treffer.map((e, i) => {
+        const extern = /^https?:/.test(e.u);
+        return `<li role="option" id="grh-fab-treffer-${i}"><a class="grh-fab__result" href="${e.u}"${extern ? ' target="_blank" rel="noopener"' : ''}>`
+          + `<span class="grh-fab__result-kind">${art[e.k] ?? e.k}</span>`
+          + `<span class="grh-fab__result-title">${e.t.replace(/</g, '&lt;')}</span>`
+          + (e.s ? `<span class="grh-fab__result-sub">${e.s.replace(/</g, '&lt;')}</span>` : '')
+          + `</a></li>`;
+      }).join('');
+    };
+
+    const suchen = async () => {
+      const frage = (suche?.value ?? '').trim();
+      if (frage.length < 2) { zeige([], ''); return; }
+      const daten = index ?? (await ladeIndex());
+      const woerter = norm(frage).split(/\s+/).filter(Boolean);
+      const bewertet = daten
+        .map((e) => {
+          const text = e.n ?? '';
+          if (!woerter.every((w) => text.includes(w))) return null;
+          let punkte = 0;
+          const titel = norm(e.t);
+          if (titel.startsWith(woerter[0])) punkte += 3;
+          if (woerter.every((w) => titel.includes(w))) punkte += 2;
+          if (e.k === 'seite') punkte += 1;
+          return { e, punkte };
+        })
+        .filter((x): x is { e: Eintrag; punkte: number } => x !== null)
+        .sort((a, b) => b.punkte - a.punkte)
+        .slice(0, 8)
+        .map((x) => x.e);
+      zeige(bewertet, frage);
+    };
+
+    let warte: number | undefined;
+    suche?.addEventListener('input', () => {
+      window.clearTimeout(warte);
+      warte = window.setTimeout(suchen, 120);
+    });
+    suche?.addEventListener('focus', () => { ladeIndex(); });
+    suche?.addEventListener('keydown', (e) => {
+      const links = liste ? Array.from(liste.querySelectorAll<HTMLAnchorElement>('a.grh-fab__result')) : [];
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (links.length === 0) return;
+        e.preventDefault();
+        auswahl = e.key === 'ArrowDown' ? Math.min(auswahl + 1, links.length - 1) : Math.max(auswahl - 1, 0);
+        links.forEach((l, i) => l.setAttribute('aria-selected', String(i === auswahl)));
+        links[auswahl].scrollIntoView({ block: 'nearest' });
+        suche.setAttribute('aria-activedescendant', `grh-fab-treffer-${auswahl}`);
+      } else if (e.key === 'Enter') {
+        const ziel = links[auswahl >= 0 ? auswahl : 0];
+        if (ziel) { e.preventDefault(); ziel.click(); }
+      }
     });
 
     /* Form-Submit: vorerst nur Demo-Feedback */
