@@ -6,7 +6,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   <div class="grh-container grh-headerc__inner">
     <div class="grh-headerc__brand">
       <a href="/" class="grh-headerc__brandhome" aria-label="Gemeinde Grünhainichen · Startseite">
-        <GrhWappen size={72} />
+        <GrhWappen size={72} eager />
       </a>
       <span class="grh-headerc__brandtext">
         <a href="/" class="grh-headerc__name">Grünhainichen</a>
@@ -155,6 +155,10 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     color: inherit;
     transition: transform var(--grh-dur-base) var(--grh-ease-out);
     transform-origin: left center;
+    /* Eigene Ebene: Wenn rechts Wetter und Symbole ein- und ausblenden,
+       wird der Schriftzug samt Wappen nicht mit neu gezeichnet. */
+    will-change: transform;
+    backface-visibility: hidden;
   }
   .grh-header--compact.is-scrolled .grh-headerc__brand {
     transform: scale(0.78);
