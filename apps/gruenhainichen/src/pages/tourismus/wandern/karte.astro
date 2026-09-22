@@ -149,7 +149,17 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
   const el = document.querySelector<HTMLElement>('[data-grh-wk-karte]');
   if (el && daten.length) {
     /* === Karte ========================================================= */
-    const karte = L.map(el, { zoomControl: false, scrollWheelZoom: true });
+    /* Sichtbarer Ausschnitt: nur die Region. Im Norden bis Augustusburg
+       und Flöha, im Süden bis Lengefeld, im Westen bis Zschopau, im Osten
+       bis Eppendorf. Weiter lässt sich die Karte weder schieben noch
+       herauszoomen; die kleinste Zoomstufe ist die, bei der genau dieser
+       Ausschnitt ins Fenster passt. */
+    const region = L.latLngBounds([50.715, 13.05], [50.835, 13.26]);
+    /* zoomSnap 0.25: Die kleinste Zoomstufe darf auch zwischen zwei ganzen
+       Stufen liegen, sonst zeigt die Karte deutlich mehr als die Region. */
+    const karte = L.map(el, { zoomControl: false, scrollWheelZoom: true, maxBounds: region, maxBoundsViscosity: 1.0, zoomSnap: 0.25, zoomDelta: 0.5 });
+    const passeMinZoom = () => { const z = karte.getBoundsZoom(region, false); karte.setMinZoom(z); if (karte.getZoom() < z) karte.setZoom(z); };
+    karte.on('resize', passeMinZoom);
     L.control.zoom({ position: 'bottomright' }).addTo(karte);
     L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(karte);
     const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
@@ -178,6 +188,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     }
     const alleBounds = L.latLngBounds(daten.flatMap((r) => r.coords.map(([lon, lat]) => [lat, lon] as [number, number])));
     karte.fitBounds(alleBounds, { padding: [30, 30] });
+    passeMinZoom();
 
     /* === Auswahl ======================================================= */
     let aktiv: string | null = null;
