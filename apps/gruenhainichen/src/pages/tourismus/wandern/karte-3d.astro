@@ -1,0 +1,484 @@
+---
+/**
+ * Wanderkarte in 3D (Vorschau, nicht verlinkt, nicht indexiert).
+ *
+ * MapLibre GL mit Geländemodell und dem Luftbild des Freistaats Sachsen
+ * (DOP20, offene Daten, dl-de/by-2-0). Routen und Punkte kommen aus
+ * src/data/wanderrouten/. Die flache Karte bleibt unter /tourismus/wandern/karte/.
+ *
+ * Gelände: Terrarium-Kacheln (AWS Open Data, Mapzen). Für den Betrieb
+ * sollte das Gelände aus dem sächsischen DGM1 selbst gekachelt und auf
+ * dem eigenen Server abgelegt werden; dann bleibt außer dem Luftbild des
+ * Landes kein Fremdanbieter übrig.
+ */
+import 'maplibre-gl/dist/maplibre-gl.css';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GrhIcon from '../../../components/primitives/GrhIcon.astro';
+import suedschleife from '../../../data/wanderrouten/suedschleife.json';
+import waldkirchen from '../../../data/wanderrouten/waldkirchen.json';
+import muehlentour from '../../../data/wanderrouten/muehlentour.json';
+import pois from '../../../data/wanderrouten/pois.json';
+
+const routen = [suedschleife, waldkirchen, muehlentour];
+const kartenDaten = {
+  routen: routen.map((r) => ({ id: r.id, name: r.name, farbe: r.farbe, coords: r.coords, elev: r.elev, km: r.km, aufstieg: r.aufstieg, minHoehe: r.minHoehe, maxHoehe: r.maxHoehe })),
+  pois,
+};
+const schwierigkeitLabel: Record<string, string> = { leicht: 'Leicht', mittel: 'Mittel', anspruchsvoll: 'Anspruchsvoll' };
+const artLabel: Record<string, string> = { aussicht: 'Aussicht', kultur: 'Sehenswert', muehle: 'Mühle', baden: 'Baden', parken: 'Parken' };
+const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
+---
+<BaseLayout
+  title="Wanderkarte 3D (Vorschau) · Grünhainichen"
+  description="Rundwanderwege rund um Grünhainichen im Gelände: 3D-Karte mit Luftbild, Höhenprofil und Sehenswürdigkeiten."
+  header="compact"
+  noindex
+>
+  <section class="grh-w3">
+    <div class="grh-w3__wrap" data-grh-w3-wrap>
+      <div class="grh-w3__karte" data-grh-w3-karte aria-label="3D-Karte der Wanderwege" role="region"></div>
+
+      <div class="grh-w3__werkzeuge">
+        <button type="button" class="grh-w3__tool grh-w3__tool--text" data-grh-w3-dim aria-pressed="true" title="Zwischen 3D und flacher Karte wechseln">3D</button>
+        <button type="button" class="grh-w3__tool" data-grh-w3-alle title="Alle Routen zeigen" aria-label="Alle Routen zeigen">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+        </button>
+        <button type="button" class="grh-w3__tool" data-grh-w3-ebene aria-pressed="true" title="Luftbild ein/aus" aria-label="Luftbild ein- oder ausschalten">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="8" r="1.5"/></svg>
+        </button>
+        <button type="button" class="grh-w3__tool" data-grh-w3-pois aria-pressed="true" title="Sehenswürdigkeiten ein/aus" aria-label="Sehenswürdigkeiten ein- oder ausblenden">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        </button>
+        <button type="button" class="grh-w3__tool" data-grh-w3-standort title="Mein Standort" aria-label="Meinen Standort anzeigen">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+        </button>
+        <button type="button" class="grh-w3__tool" data-grh-w3-voll title="Vollbild" aria-label="Karte im Vollbild">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
+        </button>
+      </div>
+
+      <div class="grh-w3__kompass" data-grh-w3-kompass title="Nach Norden ausrichten" role="button" tabindex="0" aria-label="Karte nach Norden ausrichten">
+        <svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="rgba(250,247,241,0.95)" stroke="#D8D2C4"/><path data-grh-w3-nadel d="M20 6 L25 20 L20 34 L15 20 Z" fill="#1A3D27"/><path d="M20 6 L25 20 L15 20 Z" fill="#E8B658"/><text x="20" y="12" font-size="7" text-anchor="middle" fill="#FAF7F1" font-family="Inter,sans-serif" font-weight="700">N</text></svg>
+      </div>
+
+      <div class="grh-w3__tafel" data-grh-w3-tafel>
+        <button type="button" class="grh-w3__tafel-kopf" data-grh-w3-tafel-toggle aria-expanded="true" aria-controls="grh-w3-inhalt">
+          <span class="grh-w3__tafel-griff" aria-hidden="true"></span>
+          <span class="grh-w3__tafel-titel">{routen.length} Rundwege</span>
+          <span class="grh-w3__tafel-sub">{gesamtKm} km · 3D-Vorschau</span>
+          <svg class="grh-w3__tafel-pfeil" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="grh-w3__inhalt" id="grh-w3-inhalt">
+          <div class="grh-w3__filter" role="group" aria-label="Routen filtern">
+            <button type="button" class="grh-w3__chip is-active" data-grh-w3-filter="alle">Alle</button>
+            <button type="button" class="grh-w3__chip" data-grh-w3-filter="leicht">Leicht</button>
+            <button type="button" class="grh-w3__chip" data-grh-w3-filter="mittel">Mittel</button>
+            <button type="button" class="grh-w3__chip" data-grh-w3-filter="anspruchsvoll">Anspruchsvoll</button>
+          </div>
+          <ul class="grh-w3__liste">
+            {routen.map((r) => (
+              <li>
+                <button type="button" class="grh-w3__route" data-grh-w3-route={r.id} data-schwierigkeit={r.schwierigkeit} aria-expanded="false">
+                  <span class="grh-w3__route-farbe" style={`background:${r.farbe}`} aria-hidden="true"></span>
+                  <span class="grh-w3__route-text">
+                    <span class="grh-w3__route-ort">{r.ortsteil} · {r.typ}</span>
+                    <span class="grh-w3__route-name">{r.name}</span>
+                    <span class="grh-w3__route-kenn">
+                      <span><GrhIcon name="hiking" size={13} /> {r.km} km</span>
+                      <span><GrhIcon name="clock" size={13} /> {r.dauer}</span>
+                      <span><GrhIcon name="arrow-down" size={13} class="grh-w3__auf" /> {r.aufstieg} hm</span>
+                      <span class={`grh-w3__grad grh-w3__grad--${r.schwierigkeit}`}>{schwierigkeitLabel[r.schwierigkeit]}</span>
+                    </span>
+                  </span>
+                </button>
+                <div class="grh-w3__detail" data-grh-w3-detail={r.id} hidden>
+                  <p class="grh-w3__kurz">{r.kurz}</p>
+                  <figure class="grh-w3__profil">
+                    <svg viewBox="0 0 320 90" preserveAspectRatio="none" data-grh-w3-profil={r.id} aria-label={`Höhenprofil ${r.name}`} role="img"></svg>
+                    <figcaption><span>{r.minHoehe} m</span><span>↑ {r.aufstieg} hm · ↓ {r.abstieg} hm</span><span>{r.maxHoehe} m</span></figcaption>
+                  </figure>
+                  <p class="grh-w3__text">{r.beschreibung}</p>
+                  <dl class="grh-w3__fakten">
+                    <div><dt>Start</dt><dd>{r.start}</dd></div>
+                    <div><dt>Parken</dt><dd>{r.parken}</dd></div>
+                    <div><dt>Bus &amp; Bahn</dt><dd>{r.oepnv}</dd></div>
+                    <div><dt>Markierung</dt><dd>{r.markierung}</dd></div>
+                  </dl>
+                  <div class="grh-w3__aktionen">
+                    <a class="grh-w3__btn grh-w3__btn--primär" href={r.gpx} download>GPX</a>
+                    <a class="grh-w3__btn" href={`https://www.google.com/maps/dir/?api=1&destination=${r.coords[0][1]},${r.coords[0][0]}`} target="_blank" rel="noopener">Anfahrt</a>
+                    <button type="button" class="grh-w3__btn" data-grh-w3-flug={r.id}>Rundflug</button>
+                  </div>
+                  <p class="grh-w3__hinweis">{r.hinweis}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div class="grh-w3__legende">
+            {Object.entries(artLabel).map(([k, v]) => (
+              <span class={`grh-w3__legende-item grh-w3__poi--${k}`}><i></i>{v}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div class="grh-w3__fallback" data-grh-w3-fallback hidden>
+        <p>Die 3D-Ansicht braucht einen Browser mit WebGL. <a href="/tourismus/wandern/karte/">Zur flachen Karte</a></p>
+      </div>
+    </div>
+
+    <div class="grh-container">
+      <p class="grh-w3__quelle">Luftbild: © Staatsbetrieb Geobasisinformation und Vermessung Sachsen (GeoSN), <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener">dl-de/by-2-0</a>. Gelände: Mapzen/AWS Terrain Tiles (Vorschau). Kartengrafik und Wege: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL). Höhenprofile: EU-DEM über Open Topo Data. Beim Laden werden Kacheln von diesen Anbietern abgerufen; dabei wird Ihre IP-Adresse übertragen. Vorschau mit {routen.length} Muster-Routen, nicht verlinkt, für Suchmaschinen gesperrt. <a href="/tourismus/wandern/karte/">Zur flachen Karte</a></p>
+    </div>
+  </section>
+
+  <script type="application/json" id="grh-w3-daten" set:html={JSON.stringify(kartenDaten)} />
+</BaseLayout>
+
+<script>
+  import maplibregl from 'maplibre-gl';
+
+  type Route = { id: string; name: string; farbe: string; coords: [number, number][]; elev: (number | null)[]; km: number; aufstieg: number; minHoehe: number; maxHoehe: number };
+  type Poi = { id: string; name: string; art: string; lat: number; lon: number; text: string };
+  const daten = JSON.parse(document.getElementById('grh-w3-daten')?.textContent ?? '{}') as { routen: Route[]; pois: Poi[] };
+  const el = document.querySelector<HTMLElement>('[data-grh-w3-karte]');
+
+  const webgl = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
+  if (el && daten.routen && webgl) {
+    /* === Quellen ======================================================= */
+    const REGION: [[number, number], [number, number]] = [[13.05, 50.715], [13.26, 50.835]];
+    const DOP = 'https://geodienste.sachsen.de/wms_geosn_dop-rgb/guest?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=sn_dop_020&STYLES=&CRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=512&HEIGHT=512&FORMAT=image/jpeg';
+
+    const map = new maplibregl.Map({
+      container: el,
+      style: {
+        version: 8,
+        sources: {
+          osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19, attribution: '© OpenStreetMap' },
+          dop: { type: 'raster', tiles: [DOP], tileSize: 512, maxzoom: 19, attribution: '© GeoSN, dl-de/by-2-0' },
+          gelaende: { type: 'raster-dem', tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'], tileSize: 256, encoding: 'terrarium', maxzoom: 14 },
+        },
+        layers: [
+          { id: 'osm', type: 'raster', source: 'osm', layout: { visibility: 'none' } },
+          { id: 'dop', type: 'raster', source: 'dop', paint: { 'raster-saturation': -0.15, 'raster-contrast': 0.05 } },
+          { id: 'schatten', type: 'hillshade', source: 'gelaende', paint: { 'hillshade-exaggeration': 0.35, 'hillshade-shadow-color': '#1A3D27', 'hillshade-highlight-color': '#FAF7F1', 'hillshade-accent-color': '#2F7046' } },
+        ],
+        sky: { 'sky-color': '#BFD8EA', 'horizon-color': '#E4EEF2', 'fog-color': '#E4EEF2', 'fog-ground-blend': 0.6, 'horizon-fog-blend': 0.7, 'sky-horizon-blend': 0.6, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 12, 0.6, 16, 0] },
+        terrain: { source: 'gelaende', exaggeration: 1.35 },
+      } as any,
+      center: [13.135, 50.765],
+      zoom: 12.2,
+      pitch: 58,
+      bearing: -18,
+      maxBounds: [[12.98, 50.68], [13.33, 50.87]],
+      minZoom: 10.8,
+      maxZoom: 17.5,
+      maxPitch: 72,
+      attributionControl: false,
+    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+    map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+    map.setPadding({ left: window.innerWidth > 720 ? 430 : 0, top: 0, right: 0, bottom: window.innerWidth > 720 ? 0 : 260 });
+
+    let aktiv: string | null = null;
+    let dreiD = true;
+    const marker = new Map<string, maplibregl.Marker>();
+    const poiMarker: maplibregl.Marker[] = [];
+
+    map.on('load', () => {
+      /* Routen */
+      for (const r of daten.routen) {
+        map.addSource(`r-${r.id}`, { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: r.coords } } });
+        map.addLayer({ id: `halo-${r.id}`, type: 'line', source: `r-${r.id}`, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#FAF7F1', 'line-width': 8, 'line-opacity': 0.85 } });
+        map.addLayer({ id: `line-${r.id}`, type: 'line', source: `r-${r.id}`, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': r.farbe, 'line-width': 4.5, 'line-opacity': 0.98 } });
+        map.on('click', `line-${r.id}`, () => waehle(r.id, true));
+        map.on('mouseenter', `line-${r.id}`, () => { map.getCanvas().style.cursor = 'pointer'; hebe(r.id); });
+        map.on('mouseleave', `line-${r.id}`, () => { map.getCanvas().style.cursor = ''; hebe(aktiv); });
+        const s = document.createElement('div'); s.className = 'grh-w3__start'; s.innerHTML = `<span style="background:${r.farbe}"></span>`;
+        s.title = `Start: ${r.name}`; s.addEventListener('click', () => waehle(r.id, true));
+        marker.set(r.id, new maplibregl.Marker({ element: s, anchor: 'center' }).setLngLat(r.coords[0]).addTo(map));
+      }
+      /* Sehenswürdigkeiten */
+      const ICON: Record<string, string> = {
+        aussicht: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+        kultur: '<path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-6h6v6"/>',
+        muehle: '<circle cx="12" cy="12" r="3"/><path d="M12 2v7M12 15v7M2 12h7M15 12h7M5 5l5 5M14 14l5 5M19 5l-5 5M10 14l-5 5"/>',
+        baden: '<path d="M2 16c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5"/><path d="M2 20c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5"/><circle cx="16" cy="6" r="2"/>',
+        parken: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/>',
+      };
+      for (const p of daten.pois) {
+        const d = document.createElement('button'); d.type = 'button'; d.className = `grh-w3__poi grh-w3__poi--${p.art}`; d.setAttribute('aria-label', p.name);
+        d.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON[p.art] ?? ICON.kultur}</svg>`;
+        const popup = new maplibregl.Popup({ offset: 18, closeButton: false, className: 'grh-w3__popup', maxWidth: '260px' })
+          .setHTML(`<strong>${p.name}</strong><p>${p.text}</p>`);
+        const m = new maplibregl.Marker({ element: d, anchor: 'center' }).setLngLat([p.lon, p.lat]).setPopup(popup).addTo(map);
+        poiMarker.push(m);
+      }
+      const hash = location.hash.replace('#', '');
+      if (hash && daten.routen.some((r) => r.id === hash)) waehle(hash, true);
+    });
+
+    /* === Kompass ======================================================= */
+    const nadel = document.querySelector<SVGPathElement>('[data-grh-w3-nadel]');
+    const kompass = document.querySelector<HTMLElement>('[data-grh-w3-kompass]');
+    map.on('rotate', () => { kompass?.querySelector('svg')?.setAttribute('style', `transform: rotate(${-map.getBearing()}deg)`); });
+    const nachNorden = () => map.easeTo({ bearing: 0, duration: 600 });
+    kompass?.addEventListener('click', nachNorden);
+    kompass?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nachNorden(); } });
+    void nadel;
+
+    /* === Auswahl ======================================================= */
+    const knoepfe = document.querySelectorAll<HTMLButtonElement>('[data-grh-w3-route]');
+    const details = document.querySelectorAll<HTMLElement>('[data-grh-w3-detail]');
+    const tafel = document.querySelector<HTMLElement>('[data-grh-w3-tafel]');
+
+    function hebe(id: string | null) {
+      for (const r of daten.routen) {
+        if (!map.getLayer(`line-${r.id}`)) continue;
+        const an = id === null || id === r.id;
+        map.setPaintProperty(`line-${r.id}`, 'line-opacity', an ? 0.98 : 0.35);
+        map.setPaintProperty(`line-${r.id}`, 'line-width', id === r.id ? 6 : 4.5);
+        map.setPaintProperty(`halo-${r.id}`, 'line-opacity', an ? 0.85 : 0.25);
+      }
+    }
+    function boundsVon(r: Route) {
+      const b = new maplibregl.LngLatBounds(r.coords[0], r.coords[0]);
+      for (const c of r.coords) b.extend(c);
+      return b;
+    }
+    function flieg(r: Route, dauer = 1600) {
+      const cam = map.cameraForBounds(boundsVon(r), { padding: 60 });
+      if (cam) map.flyTo({ center: cam.center, zoom: (cam.zoom ?? 13) - (dreiD ? 0.2 : 0), pitch: dreiD ? 58 : 0, bearing: dreiD ? -18 : 0, duration: dauer, essential: true });
+    }
+    function waehle(id: string | null, zoom: boolean) {
+      aktiv = aktiv === id ? null : id;
+      knoepfe.forEach((b) => b.setAttribute('aria-expanded', String(b.dataset.grhW3Route === aktiv)));
+      details.forEach((d) => { if (d.dataset.grhW3Detail === aktiv) d.removeAttribute('hidden'); else d.setAttribute('hidden', ''); });
+      hebe(aktiv);
+      if (aktiv) {
+        const r = daten.routen.find((x) => x.id === aktiv)!;
+        if (zoom) flieg(r);
+        zeichneProfil(r);
+        tafel?.classList.remove('is-zu');
+        document.querySelector('[data-grh-w3-tafel-toggle]')?.setAttribute('aria-expanded', 'true');
+        document.querySelector<HTMLElement>(`[data-grh-w3-route="${aktiv}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', `#${aktiv}`);
+      } else history.replaceState(null, '', location.pathname);
+    }
+    knoepfe.forEach((b) => b.addEventListener('click', () => waehle(b.dataset.grhW3Route ?? null, true)));
+
+    /* Rundflug: die Kamera kreist einmal um die Route */
+    let flugTimer: number | undefined;
+    document.querySelectorAll<HTMLButtonElement>('[data-grh-w3-flug]').forEach((b) => b.addEventListener('click', () => {
+      const r = daten.routen.find((x) => x.id === b.dataset.grhW3Flug); if (!r) return;
+      window.clearTimeout(flugTimer);
+      if (!dreiD) setzeDim(true);
+      const cam = map.cameraForBounds(boundsVon(r), { padding: 60 }); if (!cam) return;
+      map.flyTo({ center: cam.center, zoom: (cam.zoom ?? 13) - 0.1, pitch: 62, bearing: -40, duration: 1400 });
+      flugTimer = window.setTimeout(() => map.rotateTo(320, { duration: 14000, easing: (t) => t }), 1500);
+    }));
+    map.on('mousedown', () => window.clearTimeout(flugTimer));
+
+    /* === Filter ======================================================== */
+    document.querySelectorAll<HTMLButtonElement>('[data-grh-w3-filter]').forEach((chip) => chip.addEventListener('click', () => {
+      const f = chip.dataset.grhW3Filter;
+      document.querySelectorAll('[data-grh-w3-filter]').forEach((c) => c.classList.toggle('is-active', c === chip));
+      knoepfe.forEach((b) => {
+        const passt = f === 'alle' || b.dataset.schwierigkeit === f;
+        (b.parentElement as HTMLElement).hidden = !passt;
+        const id = b.dataset.grhW3Route ?? '';
+        if (map.getLayer(`line-${id}`)) { map.setLayoutProperty(`line-${id}`, 'visibility', passt ? 'visible' : 'none'); map.setLayoutProperty(`halo-${id}`, 'visibility', passt ? 'visible' : 'none'); }
+        const m = marker.get(id); if (m) m.getElement().style.display = passt ? '' : 'none';
+      });
+    }));
+
+    /* === Höhenprofil ================================================== */
+    const profilMarke = new maplibregl.Marker({ element: (() => { const d = document.createElement('div'); d.className = 'grh-w3__marke'; return d; })(), anchor: 'center' });
+    function zeichneProfil(r: Route) {
+      const svg = document.querySelector<SVGSVGElement>(`[data-grh-w3-profil="${r.id}"]`); if (!svg || svg.dataset.fertig) return;
+      const W = 320, H = 90, pad = 4; const werte = r.elev.map((e) => e ?? r.minHoehe);
+      const min = Math.min(...werte), max = Math.max(...werte), span = Math.max(1, max - min);
+      const x = (i: number) => pad + (i / (werte.length - 1)) * (W - 2 * pad); const y = (v: number) => H - pad - ((v - min) / span) * (H - 2 * pad - 6);
+      const pfad = werte.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+      svg.innerHTML = `<path d="${pfad} L${x(werte.length - 1).toFixed(1)} ${H} L${pad} ${H} Z" fill="${r.farbe}" fill-opacity="0.18"/><path d="${pfad}" fill="none" stroke="${r.farbe}" stroke-width="2" vector-effect="non-scaling-stroke"/><line data-cursor x1="-10" x2="-10" y1="0" y2="${H}" stroke="#1A3D27" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>`;
+      svg.dataset.fertig = '1';
+      const cursor = svg.querySelector<SVGLineElement>('[data-cursor]')!;
+      svg.addEventListener('pointermove', (ev) => {
+        const rect = svg.getBoundingClientRect(); const t = Math.min(1, Math.max(0, (ev.clientX - rect.left) / rect.width));
+        const i = Math.round(t * (werte.length - 1));
+        cursor.setAttribute('x1', String(x(i))); cursor.setAttribute('x2', String(x(i)));
+        profilMarke.setLngLat(r.coords[i]).addTo(map);
+        profilMarke.getElement().dataset.label = `${werte[i]} m · km ${((i / (werte.length - 1)) * r.km).toFixed(1)}`;
+      });
+      svg.addEventListener('pointerleave', () => { profilMarke.remove(); cursor.setAttribute('x1', '-10'); cursor.setAttribute('x2', '-10'); });
+    }
+
+    /* === Werkzeuge ===================================================== */
+    const dimKnopf = document.querySelector<HTMLButtonElement>('[data-grh-w3-dim]');
+    function setzeDim(an: boolean) {
+      dreiD = an;
+      dimKnopf?.setAttribute('aria-pressed', String(an)); if (dimKnopf) dimKnopf.textContent = an ? '3D' : '2D';
+      map.setTerrain(an ? { source: 'gelaende', exaggeration: 1.35 } : null);
+      map.easeTo({ pitch: an ? 58 : 0, bearing: an ? -18 : 0, duration: 900 });
+    }
+    dimKnopf?.addEventListener('click', () => setzeDim(!dreiD));
+    document.querySelector('[data-grh-w3-alle]')?.addEventListener('click', () => {
+      if (aktiv) waehle(aktiv, false);
+      map.fitBounds(REGION, { padding: 40, pitch: dreiD ? 55 : 0, bearing: dreiD ? -18 : 0, duration: 1400 } as any);
+    });
+    const ebene = document.querySelector<HTMLButtonElement>('[data-grh-w3-ebene]');
+    ebene?.addEventListener('click', () => {
+      const luftbild = ebene.getAttribute('aria-pressed') !== 'true';
+      ebene.setAttribute('aria-pressed', String(luftbild));
+      map.setLayoutProperty('dop', 'visibility', luftbild ? 'visible' : 'none');
+      map.setLayoutProperty('osm', 'visibility', luftbild ? 'none' : 'visible');
+    });
+    const poiKnopf = document.querySelector<HTMLButtonElement>('[data-grh-w3-pois]');
+    poiKnopf?.addEventListener('click', () => {
+      const an = poiKnopf.getAttribute('aria-pressed') !== 'true';
+      poiKnopf.setAttribute('aria-pressed', String(an));
+      poiMarker.forEach((m) => (m.getElement().style.display = an ? '' : 'none'));
+    });
+    const geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false, showUserLocation: true });
+    map.addControl(geo, 'top-left');
+    (geo as any)._container.style.display = 'none';
+    document.querySelector('[data-grh-w3-standort]')?.addEventListener('click', () => geo.trigger());
+    const wrap = el.closest<HTMLElement>('[data-grh-w3-wrap]')!;
+    document.querySelector('[data-grh-w3-voll]')?.addEventListener('click', () => { if (!document.fullscreenElement) wrap.requestFullscreen?.(); else document.exitFullscreen(); });
+    document.addEventListener('fullscreenchange', () => setTimeout(() => map.resize(), 150));
+
+    const toggle = document.querySelector<HTMLButtonElement>('[data-grh-w3-tafel-toggle]');
+    toggle?.addEventListener('click', () => { const zu = tafel?.classList.toggle('is-zu'); toggle.setAttribute('aria-expanded', String(!zu)); });
+  } else {
+    document.querySelector('[data-grh-w3-fallback]')?.removeAttribute('hidden');
+  }
+</script>
+
+<style>
+  .grh-w3 { padding-block: 0 var(--grh-space-8); }
+  .grh-w3__wrap {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 130px);
+    min-height: 560px;
+    max-height: 960px;
+    background: #DCE6DC;
+    border-top: 1px solid var(--grh-line);
+    border-bottom: 1px solid var(--grh-line);
+    overflow: hidden;
+  }
+  .grh-w3__karte { position: absolute; inset: 0; }
+  .grh-w3__wrap:fullscreen { max-height: none; height: 100vh; border: 0; }
+
+  .grh-w3__werkzeuge { position: absolute; top: 16px; right: 16px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
+  .grh-w3__tool {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--grh-line); background: rgba(250, 247, 241, 0.96); color: var(--grh-forest-900);
+    display: grid; place-items: center; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700;
+    box-shadow: 0 4px 14px -6px rgba(20, 43, 31, 0.5);
+  }
+  .grh-w3__tool:hover, .grh-w3__tool[aria-pressed="true"] { background: var(--grh-forest-900); color: var(--grh-cream-50); border-color: var(--grh-forest-900); }
+  .grh-w3__tool--text[aria-pressed="false"] { background: rgba(250, 247, 241, 0.96); color: var(--grh-forest-900); }
+  .grh-w3__kompass { position: absolute; right: 16px; bottom: 120px; z-index: 5; cursor: pointer; filter: drop-shadow(0 4px 10px rgba(20, 43, 31, 0.35)); }
+  .grh-w3__kompass svg { transition: transform 200ms linear; }
+
+  :global(.grh-w3__start span) { display: block; width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--grh-cream-50); box-shadow: 0 2px 8px rgba(20, 43, 31, 0.5); cursor: pointer; }
+  :global(.grh-w3__poi) {
+    width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--grh-cream-50);
+    display: grid; place-items: center; cursor: pointer; color: var(--grh-cream-50);
+    box-shadow: 0 2px 10px rgba(20, 43, 31, 0.45); padding: 0;
+  }
+  :global(.grh-w3__poi--aussicht) { background: #2B4C8C; }
+  :global(.grh-w3__poi--kultur)   { background: #8A6410; }
+  :global(.grh-w3__poi--muehle)   { background: #6B4A2A; }
+  :global(.grh-w3__poi--baden)    { background: #2A6B43; }
+  :global(.grh-w3__poi--parken)   { background: #666B61; }
+  :global(.grh-w3__poi:hover) { transform: scale(1.12); }
+  :global(.grh-w3__marke) { width: 16px; height: 16px; border-radius: 50%; background: var(--grh-candle-500); border: 2px solid var(--grh-cream-50); box-shadow: 0 2px 8px rgba(20, 43, 31, 0.5); position: relative; }
+  :global(.grh-w3__marke::after) { content: attr(data-label); position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); white-space: nowrap; font: 600 11px/1.3 var(--grh-font-body); color: var(--grh-forest-900); background: var(--grh-cream-50); border: 1px solid var(--grh-line); border-radius: 6px; padding: 3px 7px; }
+  :global(.grh-w3__popup .maplibregl-popup-content) { font-family: var(--grh-font-body); font-size: 13px; line-height: 1.5; color: var(--grh-forest-900); background: var(--grh-cream-50); border-radius: 10px; padding: 12px 14px; box-shadow: 0 10px 30px -12px rgba(20, 43, 31, 0.5); }
+  :global(.grh-w3__popup .maplibregl-popup-content strong) { display: block; font-family: var(--grh-font-display); font-size: 15px; margin-bottom: 4px; }
+  :global(.grh-w3__popup .maplibregl-popup-content p) { margin: 0; color: var(--grh-stone-700); }
+  :global(.grh-w3__popup .maplibregl-popup-tip) { border-top-color: var(--grh-cream-50); }
+  :global(.maplibregl-ctrl-group) { border-radius: 10px !important; box-shadow: 0 4px 14px -6px rgba(20, 43, 31, 0.5) !important; }
+  :global(.maplibregl-ctrl-bottom-right) { bottom: 0; }
+  :global(.maplibregl-ctrl-attrib) { font-family: var(--grh-font-body); font-size: 10px; }
+
+  /* Tafel: wie auf der flachen Karte */
+  .grh-w3__tafel {
+    position: absolute; z-index: 6; left: 16px; top: 16px; bottom: 16px;
+    width: min(400px, calc(100% - 32px)); display: flex; flex-direction: column;
+    background: rgba(250, 247, 241, 0.97); border: 1px solid var(--grh-line); border-radius: var(--grh-radius-lg);
+    box-shadow: 0 24px 60px -24px rgba(20, 43, 31, 0.5); overflow: hidden;
+  }
+  .grh-w3__tafel-kopf { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; width: 100%; padding: 14px 16px; border: 0; border-bottom: 1px solid var(--grh-line); background: transparent; color: var(--grh-forest-900); font: inherit; text-align: left; cursor: pointer; }
+  .grh-w3__tafel-griff { display: none; }
+  .grh-w3__tafel-titel { font-family: var(--grh-font-display); font-size: var(--grh-fs-lg); font-weight: 500; }
+  .grh-w3__tafel-sub { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
+  .grh-w3__tafel-pfeil { transition: transform 240ms var(--grh-ease-out); color: var(--grh-stone-400); }
+  .grh-w3__tafel.is-zu .grh-w3__tafel-pfeil { transform: rotate(180deg); }
+  .grh-w3__inhalt { overflow-y: auto; padding: 14px 14px 18px; scrollbar-width: thin; }
+  .grh-w3__tafel.is-zu .grh-w3__inhalt { display: none; }
+  .grh-w3__tafel.is-zu { bottom: auto; }
+  @media (max-width: 720px) {
+    .grh-w3__wrap { height: calc(100vh - 88px); min-height: 520px; }
+    .grh-w3__tafel { left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-height: 55%; }
+    /* Zugeklappt bleibt die Lade unten; die Desktop-Regel „bottom: auto“ zöge sie sonst nach oben */
+    .grh-w3__tafel.is-zu { bottom: 8px; top: auto; max-height: none; }
+    .grh-w3__tafel-titel { white-space: nowrap; font-size: var(--grh-fs-md); }
+    .grh-w3__tafel-sub { font-size: 10px; }
+    .grh-w3__tafel-kopf { padding-top: 18px; position: relative; }
+    .grh-w3__tafel-griff { display: block; position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; border-radius: 2px; background: var(--grh-line); }
+    .grh-w3__tafel-pfeil { transform: rotate(0); }
+    .grh-w3__kompass { bottom: auto; top: 16px; left: 16px; right: auto; }
+    :global(.maplibregl-ctrl-bottom-right), :global(.maplibregl-ctrl-bottom-left) { display: none; }
+  }
+
+  .grh-w3__filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--grh-space-3); }
+  .grh-w3__chip { padding: 6px 12px; border-radius: var(--grh-radius-pill); border: 1px solid var(--grh-line); background: var(--grh-cream-50); color: var(--grh-forest-900); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .grh-w3__chip.is-active { background: var(--grh-forest-900); color: var(--grh-cream-50); border-color: var(--grh-forest-900); }
+  .grh-w3__liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .grh-w3__liste li[hidden] { display: none; }
+  .grh-w3__route { width: 100%; text-align: left; display: grid; grid-template-columns: 5px 1fr; gap: 12px; padding: 12px 14px 12px 0; border: 1px solid var(--grh-line); border-radius: var(--grh-radius-md); background: var(--grh-cream-50); color: inherit; font: inherit; cursor: pointer; overflow: hidden; transition: border-color var(--grh-dur-fast); }
+  .grh-w3__route:hover { border-color: var(--grh-moss-500); }
+  .grh-w3__route[aria-expanded="true"] { border-color: var(--grh-forest-900); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .grh-w3__route-farbe { display: block; height: 100%; }
+  .grh-w3__route-text { display: flex; flex-direction: column; gap: 3px; }
+  .grh-w3__route-ort { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
+  .grh-w3__route-name { font-family: var(--grh-font-display); font-size: var(--grh-fs-md); font-weight: 500; line-height: 1.2; color: var(--grh-forest-900); }
+  .grh-w3__route-kenn { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 3px; font-size: 12.5px; color: var(--grh-stone-700); }
+  .grh-w3__route-kenn span { display: inline-flex; align-items: center; gap: 5px; }
+  .grh-w3__route-kenn :global(.grh-w3__auf) { transform: rotate(180deg); }
+  .grh-w3__grad { padding: 1px 8px; border-radius: var(--grh-radius-pill); font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; }
+  .grh-w3__grad--leicht { background: var(--grh-sage-100); color: var(--grh-forest-800); }
+  .grh-w3__grad--mittel { background: rgba(232, 182, 88, 0.25); color: #6B4E0E; }
+  .grh-w3__grad--anspruchsvoll { background: rgba(194, 65, 12, 0.14); color: #8A2E0A; }
+  .grh-w3__detail { border: 1px solid var(--grh-forest-900); border-top: 0; border-radius: 0 0 var(--grh-radius-md) var(--grh-radius-md); padding: 14px 14px 16px; background: var(--grh-paper-100); display: flex; flex-direction: column; gap: 12px; }
+  .grh-w3__detail[hidden] { display: none; }
+  .grh-w3__kurz { margin: 0; font-family: var(--grh-font-display); font-size: var(--grh-fs-md); color: var(--grh-forest-800); line-height: 1.4; }
+  .grh-w3__profil { margin: 0; }
+  .grh-w3__profil svg { display: block; width: 100%; height: 84px; background: var(--grh-cream-50); border: 1px solid var(--grh-line); border-radius: 8px; cursor: crosshair; touch-action: none; }
+  .grh-w3__profil figcaption { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: var(--grh-stone-400); letter-spacing: 0.04em; }
+  .grh-w3__text { margin: 0; font-size: 13px; line-height: 1.6; color: var(--grh-stone-700); }
+  .grh-w3__fakten { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+  .grh-w3__fakten dt { font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
+  .grh-w3__fakten dd { margin: 2px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--grh-forest-900); }
+  .grh-w3__aktionen { display: flex; flex-wrap: wrap; gap: 6px; }
+  .grh-w3__btn { display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border-radius: var(--grh-radius-pill); border: 1px solid var(--grh-forest-900); background: var(--grh-cream-50); color: var(--grh-forest-900); font: inherit; font-size: 12.5px; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .grh-w3__btn--primär { background: var(--grh-forest-900); color: var(--grh-cream-50); }
+  .grh-w3__btn:hover { background: var(--grh-forest-800); color: var(--grh-cream-50); border-color: var(--grh-forest-800); }
+  .grh-w3__hinweis { margin: 0; font-size: 11px; line-height: 1.5; color: var(--grh-stone-400); }
+  .grh-w3__legende { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--grh-line); font-size: 11.5px; color: var(--grh-stone-700); }
+  .grh-w3__legende-item { display: inline-flex; align-items: center; gap: 6px; }
+  .grh-w3__legende-item i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--grh-cream-50); box-shadow: 0 0 0 1px var(--grh-line); }
+  .grh-w3__legende .grh-w3__poi--aussicht i { background: #2B4C8C; }
+  .grh-w3__legende .grh-w3__poi--kultur i   { background: #8A6410; }
+  .grh-w3__legende .grh-w3__poi--muehle i   { background: #6B4A2A; }
+  .grh-w3__legende .grh-w3__poi--baden i    { background: #2A6B43; }
+  .grh-w3__legende .grh-w3__poi--parken i   { background: #666B61; }
+  .grh-w3__fallback { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; background: var(--grh-paper-100); padding: var(--grh-space-6); text-align: center; }
+  .grh-w3__fallback[hidden] { display: none; }
+  .grh-w3__quelle { margin-top: var(--grh-space-4); font-size: 11.5px; line-height: 1.6; color: var(--grh-stone-400); }
+  .grh-w3__quelle a { color: inherit; }
+</style>

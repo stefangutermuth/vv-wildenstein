@@ -1,0 +1,107 @@
+[
+ {
+  "id": "fuchsturm",
+  "name": "Fuchsturm",
+  "art": "aussicht",
+  "lat": 50.76046,
+  "lon": 13.16539,
+  "text": "Aussichtsturm auf der Höhe über Grünhainichen mit Blick über das Flöhatal."
+ },
+ {
+  "id": "spieldose",
+  "name": "Große Freilandspieldose",
+  "art": "kultur",
+  "lat": 50.76707,
+  "lon": 13.153,
+  "text": "Das Wahrzeichen von Wendt & Kühn: eine begehbare Spieldose im Freien, direkt an der Manufaktur."
+ },
+ {
+  "id": "museum",
+  "name": "Museum Erzgebirgische Volkskunst",
+  "art": "kultur",
+  "lat": 50.77024,
+  "lon": 13.15827,
+  "text": "Holzkunst, Spielzeug und Engel: die Sammlung zur Volkskunst des Erzgebirges."
+ },
+ {
+  "id": "spanziehmuehle",
+  "name": "Spanziehmühle",
+  "art": "muehle",
+  "art2": "kultur",
+  "lat": 50.76854,
+  "lon": 13.15841,
+  "text": "Historische Mühle am Mühlenplatz, Station der 4-Mühlentour."
+ },
+ {
+  "id": "blaufarbenwerk",
+  "name": "Blaufarbenwerk Zschopenthal",
+  "art": "kultur",
+  "lat": 50.7663,
+  "lon": 13.09272,
+  "text": "Von 1687 bis 1848 wurde hier Kobaltblau für die Porzellanmalerei hergestellt."
+ },
+ {
+  "id": "rollemuehle",
+  "name": "Rolle-Mühle mit Hofladen",
+  "art": "muehle",
+  "lat": 50.7656,
+  "lon": 13.0928,
+  "text": "Wassermühle im Zschopautal mit Hofladen, Station der 4-Mühlentour."
+ },
+ {
+  "id": "stgeorg",
+  "name": "St. Georg Kirche Waldkirchen",
+  "art": "kultur",
+  "lat": 50.7659,
+  "lon": 13.10706,
+  "text": "Neurenaissance-Kirche von 1900/01, weithin sichtbar über dem Zschopautal."
+ },
+ {
+  "id": "zschopautalblick",
+  "name": "Blick ins Zschopautal",
+  "art": "aussicht",
+  "lat": 50.77061,
+  "lon": 13.10102,
+  "text": "Aussichtspunkt am Rundweg Waldkirchen."
+ },
+ {
+  "id": "teufelsnase",
+  "name": "Teufelsnase",
+  "art": "aussicht",
+  "lat": 50.75455,
+  "lon": 13.09365,
+  "text": "Felsnase über der Zschopau, ein Aussichtspunkt am Zschopautalweg."
+ },
+ {
+  "id": "teufelskanzel",
+  "name": "Teufelskanzel",
+  "art": "aussicht",
+  "lat": 50.78576,
+  "lon": 13.15798,
+  "text": "Aussichtspunkt im Wald nördlich von Grünhainichen."
+ },
+ {
+  "id": "waldmaennel",
+  "name": "Waldmännel",
+  "art": "kultur",
+  "lat": 50.77841,
+  "lon": 13.15346,
+  "text": "Holzfigur im Wald, ein beliebtes Ziel für Familien."
+ },
+ {
+  "id": "freibad",
+  "name": "Freibad Borstendorf",
+  "art": "baden",
+  "lat": 50.77251,
+  "lon": 13.18036,
+  "text": "Freibad am Ortsrand von Borstendorf, im Sommer geöffnet."
+ },
+ {
+  "id": "waldlabyrinth",
+  "name": "Waldlabyrinth am Schachwanderweg",
+  "art": "parken",
+  "lat": 50.77057,
+  "lon": 13.18435,
+  "text": "Parkplatz und Einstieg zum Schachwanderweg und zum Waldlabyrinth."
+ }
+]

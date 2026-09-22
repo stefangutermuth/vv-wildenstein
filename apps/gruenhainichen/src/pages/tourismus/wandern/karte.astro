@@ -407,6 +407,10 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
       border-radius: var(--grh-radius-lg);
     }
     .grh-wk__tafel.is-zu { max-height: none; }
+    /* Zugeklappt bleibt die Lade unten; die Desktop-Regel „bottom: auto“ zöge sie sonst nach oben */
+    .grh-wk__tafel.is-zu { bottom: 8px; top: auto; max-height: none; }
+    .grh-wk__tafel-titel { white-space: nowrap; font-size: var(--grh-fs-md); }
+    .grh-wk__tafel-sub { font-size: 10px; }
     .grh-wk__tafel-kopf { grid-template-columns: 1fr auto auto; padding-top: 18px; position: relative; }
     .grh-wk__tafel-griff {
       display: block; position: absolute; top: 7px; left: 50%; transform: translateX(-50%);

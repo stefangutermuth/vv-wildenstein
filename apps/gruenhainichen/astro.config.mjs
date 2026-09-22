@@ -13,6 +13,7 @@ export default defineConfig({
         !page.includes('/gemeinde/raeume') &&
         // Wanderkarte: Vorschau, nicht verlinkt, trägt noindex.
         !page.includes('/tourismus/wandern/karte') &&
+        !page.includes('/tourismus/wandern/karte-3d') &&
         !page.includes('/404'),
       changefreq: 'weekly',
       lastmod: new Date(),
