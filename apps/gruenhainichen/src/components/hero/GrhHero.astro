@@ -266,9 +266,11 @@ const {
      Füllung, Symbol in Gold; sie brechen bei wenig Platz untereinander. */
   .grh-hero__quick {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
     gap: var(--grh-space-3);
     margin-top: var(--grh-space-4);
+    width: min(100%, 280px);
   }
   .grh-hero__quicklink {
     display: inline-flex;
@@ -296,8 +298,7 @@ const {
   .grh-hero__quicklink:hover :global(svg) { color: var(--grh-forest-800); }
   .grh-hero__quicklink:focus-visible { outline: 3px solid var(--grh-candle-500); outline-offset: 2px; }
   @media (max-width: 480px) {
-    .grh-hero__quick { flex-direction: column; align-items: stretch; }
-    .grh-hero__quicklink { justify-content: flex-start; }
+    .grh-hero__quick { width: 100%; }
   }
 
   .grh-hero__sidetag {

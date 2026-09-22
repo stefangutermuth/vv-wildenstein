@@ -153,16 +153,12 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     gap: var(--grh-space-4);
     text-decoration: none;
     color: inherit;
-    transition: transform var(--grh-dur-base) var(--grh-ease-out);
-    transform-origin: left center;
-    /* Eigene Ebene: Wenn rechts Wetter und Symbole ein- und ausblenden,
-       wird der Schriftzug samt Wappen nicht mit neu gezeichnet. */
-    will-change: transform;
-    backface-visibility: hidden;
   }
-  .grh-header--compact.is-scrolled .grh-headerc__brand {
-    transform: scale(0.78);
-  }
+  /* Der Schriftzug wurde beim Scrollen auf 78 % skaliert. Ein skaliertes
+     Bild rastert der Browser bei jedem Umbau der Zeile neu (etwa wenn die
+     Suche schließt und Wetter und Symbole zurückkommen), und genau dabei
+     blitzte das Wappen in Edge. Deshalb keine Skalierung mehr: Der Kopf
+     wird beim Scrollen nur noch niedriger, Wappen und Name bleiben gleich. */
 
   .grh-headerc__brandtext {
     display: flex;
@@ -584,7 +580,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
       input.removeAttribute('tabindex');
       zu?.removeAttribute('tabindex');
       ladeIndex();
-      window.setTimeout(() => input.focus(), 260);
+      window.setTimeout(() => input.focus({ preventScroll: true }), 260);
     };
     const schliessen = () => {
       tools?.classList.remove('is-searching');
@@ -600,9 +596,9 @@ import GrhIcon from '../primitives/GrhIcon.astro';
       if (wrap.classList.contains('is-open')) input.focus();
       else oeffnen();
     });
-    zu?.addEventListener('click', () => { schliessen(); knopf.focus(); });
+    zu?.addEventListener('click', () => { schliessen(); knopf.focus({ preventScroll: true }); });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && wrap.classList.contains('is-open')) { schliessen(); knopf.focus(); }
+      if (e.key === 'Escape' && wrap.classList.contains('is-open')) { schliessen(); knopf.focus({ preventScroll: true }); }
     });
     document.addEventListener('pointerdown', (e) => {
       if (wrap.classList.contains('is-open') && !wrap.contains(e.target as Node)) schliessen();
