@@ -164,7 +164,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     </div>
 
     <div class="grh-container">
-      <p class="grh-w3__quelle">Luftbild: © Staatsbetrieb Geobasisinformation und Vermessung Sachsen (GeoSN), <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener">dl-de/by-2-0</a>. Gelände: Mapzen/AWS Terrain Tiles (Vorschau). Kartengrafik und Wege: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL). Höhenprofile: EU-DEM über Open Topo Data. Beim Laden werden Kacheln von diesen Anbietern abgerufen; dabei wird Ihre IP-Adresse übertragen. Vorschau mit {routen.length} Muster-Routen, nicht verlinkt, für Suchmaschinen gesperrt. <a href="/tourismus/wandern/karte/">Zur flachen Karte</a></p>
+      <p class="grh-w3__quelle">Luftbild © <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener">GeoSN, dl-de/by-2-0</a> · Gelände: Mapzen/AWS Terrain Tiles · Karte und Wege © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL) · Höhenprofile: EU-DEM über Open Topo Data. Beim Laden werden Kacheln dieser Anbieter abgerufen, dabei wird die IP-Adresse übertragen. Vorschau mit {routen.length} Muster-Routen, nicht verlinkt, für Suchmaschinen gesperrt. <a href="/tourismus/wandern/karte/">Zur flachen Karte</a></p>
     </div>
   </section>
 
@@ -429,14 +429,14 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
 </script>
 
 <style>
-  .grh-w3 { padding-block: 0 var(--grh-space-8); }
+  .grh-w3 { padding-block: 0 var(--grh-space-5); }
   .grh-w3__wrap {
     position: relative;
     width: 100%;
     /* Niedriger als der Bildschirm, damit die Quellenzeile darunter ohne Scrollen zu sehen ist */
-    height: calc(100vh - 230px);
-    min-height: 520px;
-    max-height: 800px;
+    height: calc(100vh - 195px);
+    min-height: 540px;
+    max-height: 860px;
     background: #DCE6DC;
     border-top: 1px solid var(--grh-line);
     border-bottom: 1px solid var(--grh-line);
@@ -580,6 +580,6 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
   .grh-w3__legende-punkt--parken   { background: #666B61; }
   .grh-w3__fallback { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; background: var(--grh-paper-100); padding: var(--grh-space-6); text-align: center; }
   .grh-w3__fallback[hidden] { display: none; }
-  .grh-w3__quelle { margin-top: var(--grh-space-3); font-size: 10px; line-height: 1.5; color: var(--grh-stone-400); opacity: 0.75; max-width: 980px; }
+  .grh-w3__quelle { margin: 10px 0 0; font-size: 10px; line-height: 1.5; color: var(--grh-stone-400); opacity: 0.75; }
   .grh-w3__quelle a { color: inherit; }
 </style>

@@ -130,7 +130,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     </div>
 
     <div class="grh-container">
-      <p class="grh-wk__quelle">Kartendaten © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL), Geländekarte © <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (CC-BY-SA), Höhendaten EU-DEM über Open Topo Data. Die Kartenkacheln werden von OpenStreetMap bzw. OpenTopoMap geladen; dabei wird Ihre IP-Adresse an diese Anbieter übertragen. Diese Seite ist eine Vorschau mit {routen.length} Muster-Routen aus OpenStreetMap; sie ist nicht verlinkt und für Suchmaschinen gesperrt.</p>
+      <p class="grh-wk__quelle">Karte und Wege © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL) · Gelände © <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (CC-BY-SA) · Höhenprofile: EU-DEM über Open Topo Data. Beim Laden werden Kacheln dieser Anbieter abgerufen, dabei wird die IP-Adresse übertragen. Vorschau mit {routen.length} Muster-Routen, nicht verlinkt, für Suchmaschinen gesperrt. <a href="/tourismus/wandern/karte-3d/">Zur 3D-Karte</a></p>
     </div>
   </section>
 
@@ -320,15 +320,15 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
 </script>
 
 <style>
-  .grh-wk { padding-block: 0 var(--grh-space-8); }
+  .grh-wk { padding-block: 0 var(--grh-space-5); }
 
   /* === Karte über die ganze Breite ============================ */
   .grh-wk__karte-wrap {
     position: relative;
     width: 100%;
-    height: calc(100vh - 230px);
-    min-height: 520px;
-    max-height: 800px;
+    height: calc(100vh - 195px);
+    min-height: 540px;
+    max-height: 860px;
     background: var(--grh-paper-100);
     border-top: 1px solid var(--grh-line);
     border-bottom: 1px solid var(--grh-line);
@@ -511,6 +511,6 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
   .grh-wk__btn--primär { background: var(--grh-forest-900); color: var(--grh-cream-50); }
   .grh-wk__btn:hover { background: var(--grh-forest-800); color: var(--grh-cream-50); border-color: var(--grh-forest-800); }
   .grh-wk__hinweis { margin: 0; font-size: 11px; line-height: 1.5; color: var(--grh-stone-400); }
-  .grh-wk__quelle { margin-top: var(--grh-space-3); font-size: 10px; line-height: 1.5; color: var(--grh-stone-400); opacity: 0.75; max-width: 980px; }
+  .grh-wk__quelle { margin: 10px 0 0; font-size: 10px; line-height: 1.5; color: var(--grh-stone-400); opacity: 0.75; }
   .grh-wk__quelle a { color: inherit; }
 </style>
