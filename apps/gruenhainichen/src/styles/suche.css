@@ -1,0 +1,56 @@
+/* === Trefferliste der Live-Suche ==========================================
+   Global, weil die Treffer im Browser per innerHTML entstehen und deshalb
+   kein Astro-Scope-Attribut tragen. Benutzt vom Feld in der Kopfzeile und
+   vom schwebenden Menü. */
+.grh-suche__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+}
+.grh-suche__liste[hidden] { display: none; }
+.grh-suche__result {
+  display: block;
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--grh-line);
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+}
+.grh-suche__liste li:last-child .grh-suche__result { border-bottom: 0; }
+.grh-suche__result:hover,
+.grh-suche__result[aria-selected="true"] {
+  background: var(--grh-sage-100);
+}
+.grh-suche__result:focus-visible {
+  outline: 3px solid var(--grh-candle-500);
+  outline-offset: -3px;
+}
+.grh-suche__kind {
+  display: inline-block;
+  margin-bottom: 2px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: var(--grh-moss-600);
+}
+.grh-suche__title {
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--grh-forest-900);
+  font-weight: 500;
+}
+.grh-suche__sub {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--grh-stone-400);
+}
+.grh-suche__leer {
+  padding: 12px 10px;
+  font-size: 13px;
+  color: var(--grh-stone-700);
+}
