@@ -172,8 +172,8 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     const linien = new Map<string, { line: L.Polyline; halo: L.Polyline; start: L.Marker; bounds: L.LatLngBounds }>();
     for (const r of daten) {
       const latlngs = r.coords.map(([lon, lat]) => [lat, lon] as [number, number]);
-      const halo = L.polyline(latlngs, { color: '#FAF7F1', weight: 9, opacity: 0.9, lineJoin: 'round' }).addTo(karte);
-      const line = L.polyline(latlngs, { color: r.farbe, weight: 4.5, opacity: 0.95, lineJoin: 'round' }).addTo(karte);
+      const halo = L.polyline(latlngs, { color: '#FFFFFF', weight: 11, opacity: 0.95, lineJoin: 'round' }).addTo(karte);
+      const line = L.polyline(latlngs, { color: r.farbe, weight: 6, opacity: 1, lineJoin: 'round' }).addTo(karte);
       const start = L.marker(latlngs[0], { icon: startIcon(r.farbe), title: `Start: ${r.name}` }).addTo(karte);
       line.bindTooltip(`<strong>${r.name}</strong><br>${r.km} km · ↑ ${r.aufstieg} hm`, { sticky: true, className: 'grh-wk__tip' });
       line.on('click', () => waehle(r.id, true));

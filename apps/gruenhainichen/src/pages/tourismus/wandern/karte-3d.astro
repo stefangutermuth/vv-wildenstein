@@ -237,8 +237,11 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
       /* Routen */
       for (const r of daten.routen) {
         map.addSource(`r-${r.id}`, { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: r.coords } } });
-        map.addLayer({ id: `halo-${r.id}`, type: 'line', source: `r-${r.id}`, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#FAF7F1', 'line-width': 8, 'line-opacity': 0.85 } });
-        map.addLayer({ id: `line-${r.id}`, type: 'line', source: `r-${r.id}`, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': r.farbe, 'line-width': 4.5, 'line-opacity': 0.98 } });
+        /* Drei Lagen, damit die Route auf dem Luftbild trägt: dunkler
+           Schatten außen, heller Saum, kräftige Farbe innen. */
+        map.addLayer({ id: `schatten-${r.id}`, type: 'line', source: `r-${r.id}`, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#142B1F', 'line-width': 14, 'line-opacity': 0.45, 'line-blur': 3 } });
+        map.addLayer({ id: `halo-${r.id}`, type: 'line', source: `r-${r.id}`, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#FFFFFF', 'line-width': 10, 'line-opacity': 0.95 } });
+        map.addLayer({ id: `line-${r.id}`, type: 'line', source: `r-${r.id}`, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': r.farbe, 'line-width': 6, 'line-opacity': 1 } });
         map.on('click', `line-${r.id}`, () => waehle(r.id, true));
         map.on('mouseenter', `line-${r.id}`, () => { map.getCanvas().style.cursor = 'pointer'; hebe(r.id); });
         map.on('mouseleave', `line-${r.id}`, () => { map.getCanvas().style.cursor = ''; hebe(aktiv); });
@@ -304,9 +307,11 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
       for (const r of daten.routen) {
         if (!map.getLayer(`line-${r.id}`)) continue;
         const an = id === null || id === r.id;
-        map.setPaintProperty(`line-${r.id}`, 'line-opacity', an ? 0.98 : 0.35);
-        map.setPaintProperty(`line-${r.id}`, 'line-width', id === r.id ? 6 : 4.5);
-        map.setPaintProperty(`halo-${r.id}`, 'line-opacity', an ? 0.85 : 0.25);
+        map.setPaintProperty(`line-${r.id}`, 'line-opacity', an ? 1 : 0.3);
+        map.setPaintProperty(`line-${r.id}`, 'line-width', id === r.id ? 8 : 6);
+        map.setPaintProperty(`halo-${r.id}`, 'line-opacity', an ? 0.95 : 0.2);
+        map.setPaintProperty(`halo-${r.id}`, 'line-width', id === r.id ? 13 : 10);
+        map.setPaintProperty(`schatten-${r.id}`, 'line-opacity', an ? 0.45 : 0.1);
       }
     }
     function boundsVon(r: Route) {
@@ -366,7 +371,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
         const passt = f === 'alle' || b.dataset.schwierigkeit === f;
         (b.parentElement as HTMLElement).hidden = !passt;
         const id = b.dataset.grhW3Route ?? '';
-        if (map.getLayer(`line-${id}`)) { map.setLayoutProperty(`line-${id}`, 'visibility', passt ? 'visible' : 'none'); map.setLayoutProperty(`halo-${id}`, 'visibility', passt ? 'visible' : 'none'); }
+        if (map.getLayer(`line-${id}`)) { for (const l of ['line', 'halo', 'schatten']) map.setLayoutProperty(`${l}-${id}`, 'visibility', passt ? 'visible' : 'none'); }
         const m = marker.get(id); if (m) m.getElement().style.display = passt ? '' : 'none';
       });
     }));
