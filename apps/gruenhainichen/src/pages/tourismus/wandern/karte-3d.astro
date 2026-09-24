@@ -162,6 +162,26 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
         </div>
       </div>
 
+      {/* Lade-Ebene: liegt über allem, bis Gelände, Luftbild und Wege
+          fertig gezeichnet sind, und blendet dann weich aus. */}
+      <div class="grh-w3__lader" data-grh-w3-lader role="status" aria-live="polite">
+        <div class="grh-w3__lader-inhalt">
+          <svg class="grh-w3__lader-bild" viewBox="0 0 160 100" aria-hidden="true">
+            <path class="grh-w3__lader-linie" style="--n:0" d="M14 78 C 34 52, 58 40, 82 42 S 132 56, 148 76" />
+            <path class="grh-w3__lader-linie" style="--n:1" d="M30 78 C 46 60, 64 52, 84 53 S 118 62, 132 77" />
+            <path class="grh-w3__lader-linie" style="--n:2" d="M48 78 C 58 67, 72 62, 86 63 S 106 68, 116 77" />
+            <path class="grh-w3__lader-linie" style="--n:3" d="M64 77 C 70 72, 78 70, 86 71 S 98 73, 102 77" />
+            <path class="grh-w3__lader-weg" d="M20 88 C 40 84, 52 66, 70 60 S 96 50, 110 58 S 132 80, 144 88" />
+            <circle class="grh-w3__lader-punkt" r="3.2">
+              <animateMotion dur="3.2s" repeatCount="indefinite" path="M20 88 C 40 84, 52 66, 70 60 S 96 50, 110 58 S 132 80, 144 88" />
+            </circle>
+          </svg>
+          <p class="grh-w3__lader-titel">Wanderwege rund um Grünhainichen</p>
+          <p class="grh-w3__lader-text" data-grh-w3-lader-text>Karte wird vorbereitet</p>
+          <span class="grh-w3__lader-balken" aria-hidden="true"><span></span></span>
+        </div>
+      </div>
+
       <div class="grh-w3__fallback" data-grh-w3-fallback hidden>
         <p>Die 3D-Ansicht braucht einen Browser mit WebGL. <a href="/tourismus/wandern/karte/">Zur flachen Karte</a></p>
       </div>
@@ -217,6 +237,36 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
       maxPitch: 72,
       attributionControl: false,
     });
+    /* === Lade-Ebene =====================================================
+       Erst weg, wenn die Karte nach dem Aufbau zum ersten Mal „idle“ ist:
+       dann sind Gelände, Luftbild und Wege gezeichnet und nichts ploppt
+       mehr nach. Mindestens 700 ms sichtbar, damit sie nicht nur blitzt;
+       nach 15 s geht sie in jedem Fall, falls ein Kacheldienst hängt. */
+    const lader = document.querySelector<HTMLElement>('[data-grh-w3-lader]');
+    const laderText = document.querySelector<HTMLElement>('[data-grh-w3-lader-text]');
+    const laderStart = performance.now();
+    let laderFertig = false;
+    const laderSchritt = (t: string) => { if (laderText && !laderFertig) laderText.textContent = t; };
+    const laderWeg = () => {
+      if (laderFertig || !lader) return;
+      laderFertig = true;
+      const rest = Math.max(0, 700 - (performance.now() - laderStart));
+      window.setTimeout(() => {
+        lader.classList.add('is-weg');
+        lader.setAttribute('aria-busy', 'false');
+        if (laderText) laderText.textContent = 'Karte geladen';
+        window.setTimeout(() => lader.remove(), 700);
+      }, rest);
+    };
+    lader?.setAttribute('aria-busy', 'true');
+    map.once('styledata', () => laderSchritt('Gelände wird aufgebaut'));
+    map.once('load', () => {
+      laderSchritt('Luftbild und Wege werden geladen');
+      map.once('idle', laderWeg);
+    });
+    map.on('error', () => { if (!map.loaded()) window.setTimeout(laderWeg, 3000); });
+    window.setTimeout(laderWeg, 15000);
+
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
@@ -459,6 +509,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     toggle?.addEventListener('click', () => { const zu = tafel?.classList.toggle('is-zu'); toggle.setAttribute('aria-expanded', String(!zu)); });
   } else {
     document.querySelector('[data-grh-w3-fallback]')?.removeAttribute('hidden');
+    document.querySelector('[data-grh-w3-lader]')?.remove();
   }
 </script>
 
@@ -614,6 +665,79 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
   .grh-w3__legende-punkt--muehle   { background: #6B4A2A; }
   .grh-w3__legende-punkt--baden    { background: #2A6B43; }
   .grh-w3__legende-punkt--parken   { background: #666B61; }
+  /* Lade-Ebene */
+  .grh-w3__lader {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(ellipse at 50% 45%, #24513A 0%, #1A3D27 55%, #142B1F 100%);
+    color: var(--grh-cream-50);
+    opacity: 1;
+    transition: opacity 0.65s ease, visibility 0s linear 0.65s;
+  }
+  .grh-w3__lader.is-weg { opacity: 0; visibility: hidden; pointer-events: none; }
+  .grh-w3__lader-inhalt { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: var(--grh-space-5); text-align: center; }
+  .grh-w3__lader-bild { width: min(220px, 55vw); height: auto; overflow: visible; margin-bottom: 6px; }
+  .grh-w3__lader-linie {
+    fill: none;
+    stroke: rgba(250, 247, 241, 0.55);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-dasharray: 160;
+    stroke-dashoffset: 160;
+    animation: grh-w3-linie 2.4s ease-in-out calc(var(--n) * 0.18s) infinite alternate;
+  }
+  .grh-w3__lader-weg {
+    fill: none;
+    stroke: #E8B658;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-dasharray: 2 4;
+    opacity: 0.85;
+  }
+  .grh-w3__lader-punkt { fill: #E8B658; }
+  .grh-w3__lader-titel {
+    margin: 0;
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.15rem, 2.2vw, 1.5rem);
+    letter-spacing: -0.01em;
+  }
+  .grh-w3__lader-text {
+    margin: 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    color: rgba(250, 247, 241, 0.7);
+    min-height: 1.4em;
+  }
+  .grh-w3__lader-balken {
+    position: relative;
+    width: 160px;
+    height: 3px;
+    margin-top: 4px;
+    border-radius: 3px;
+    background: rgba(250, 247, 241, 0.15);
+    overflow: hidden;
+  }
+  .grh-w3__lader-balken span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 40%;
+    border-radius: 3px;
+    background: #E8B658;
+    animation: grh-w3-balken 1.4s ease-in-out infinite;
+  }
+  @keyframes grh-w3-linie { to { stroke-dashoffset: 0; } }
+  @keyframes grh-w3-balken { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-w3__lader-linie { animation: none; stroke-dashoffset: 0; }
+    .grh-w3__lader-balken span { animation: none; width: 100%; opacity: 0.6; }
+    .grh-w3__lader-punkt { display: none; }
+  }
   .grh-w3__fallback { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; background: var(--grh-paper-100); padding: var(--grh-space-6); text-align: center; }
   .grh-w3__fallback[hidden] { display: none; }
   .grh-w3__quelle { margin: 10px 0 0; font-size: 10px; line-height: 1.5; color: var(--grh-stone-400); opacity: 0.75; }
