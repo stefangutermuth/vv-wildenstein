@@ -1,12 +1,276 @@
 ---
+/**
+ * Ortsteile: Übersicht über Borstendorf, Grünhainichen und Waldkirchen.
+ *
+ * Kurzporträts aus der lokalen Sammlung src/content/ortsteile (wie auf der
+ * Startseite), Kennzahlen aus den drei Ortsteil-Seiten, dazu je Ortsteil die
+ * Zahl der Vereine, Ausflugsziele und kommenden Termine aus WordPress.
+ */
+import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import GrhPagePlaceholder from '../../../components/global/GrhPagePlaceholder.astro';
+import GrhPageHeader from '../../../components/global/GrhPageHeader.astro';
+import GrhSection from '../../../components/sections/GrhSection.astro';
+import GrhOrtsteilSpread from '../../../components/sections/GrhOrtsteilSpread.astro';
+import GrhIcon from '../../../components/primitives/GrhIcon.astro';
+import { getTourism, getVereine } from '../../../lib/cms-cpt';
+import { getEvents } from '../../../lib/cms';
+
+const ortsteile = (await getCollection('ortsteile')).sort((a, b) => a.data.order - b.data.order);
+const spread = ortsteile.map((o, i) => ({
+  index: i + 1,
+  name: o.data.name,
+  key: o.data.key,
+  tagline: o.data.tagline,
+  description: o.data.description,
+  image: o.data.image,
+  href: `/gemeinde/ortsteile/${o.data.key}`,
+}));
+
+const [vereine, tourism, events] = await Promise.all([getVereine(), getTourism(), getEvents()]);
+const zaehle = (key: string, re: RegExp) => ({
+  vereine: vereine.filter((v) => v.ortsteil === key).length,
+  ziele: tourism.filter((t) => t.ortsteil === key).length,
+  termine: events.filter((e) => e.ortsteil === key || re.test(e.title) || re.test(e.location ?? '')).length,
+});
+
+/* Kennzahlen wie auf den Ortsteil-Seiten; dort mit Quelle und Stand gepflegt. */
+const steckbrief = [
+  {
+    key: 'borstendorf', name: 'Borstendorf', wappen: '/images/wappen/borstendorf.png',
+    einwohner: '1.080', stand: 'Mai 2022', hoehe: '454 m', dazu: '2015', dazuText: 'eingemeindet',
+    merkmal: 'Schachdorf, Waldlabyrinth, Freibad seit 1926',
+    ansprech: 'Ortsvorsteherin Frau Rothamel, dienstags 14 bis 17 Uhr in der ehemaligen Schule',
+    zahlen: zaehle('borstendorf', /borstendorf/i),
+  },
+  {
+    key: 'gruenhainichen', name: 'Grünhainichen', wappen: '/images/wappen/gruenhainichen.png',
+    einwohner: '≈ 1.340', stand: '2022', hoehe: '≈ 530 m', dazu: '1349', dazuText: 'erstmals erwähnt',
+    merkmal: 'Dorf der Engel, Wendt & Kühn, Freilandspieldose',
+    ansprech: 'Rathaus und Gemeindeverwaltung, Chemnitzer Straße 41',
+    zahlen: zaehle('gruenhainichen', /gr(ü|ue)nhainichen/i),
+  },
+  {
+    key: 'waldkirchen', name: 'Waldkirchen', wappen: '/images/wappen/waldkirchen.png',
+    einwohner: '≈ 941', stand: '31.07.2026', hoehe: '453 m', dazu: '2009', dazuText: 'zusammengeschlossen',
+    merkmal: 'Mutterkirche seit 1539, Zschopenthal, Bahnhof an der Zschopautalbahn',
+    ansprech: 'Mit dem Ortsteil Zschopenthal im Zschopautal',
+    zahlen: zaehle('waldkirchen', /waldkirchen|zschopenthal/i),
+  },
+];
+
+const chronik = [
+  { jahr: '1349', titel: 'Erste Erwähnungen', text: 'Grünhainichen erscheint als „Heinchin“ in den Urkunden, Waldkirchen 1349/1350.' },
+  { jahr: '1539', titel: 'Kirchspiel Waldkirchen', text: 'Mit der Reformation wird Waldkirchen Mutterkirche der Region. Grünhainichen und Borstendorf gehören bis 1848 dazu.' },
+  { jahr: '2009', titel: 'Grünhainichen und Waldkirchen', text: 'Am 1. März schließen sich beide Orte zu einer Gemeinde zusammen.' },
+  { jahr: '2015', titel: 'Borstendorf kommt dazu', text: 'Am 1. Januar wird Borstendorf eingegliedert. Seitdem besteht die Gemeinde aus drei Ortsteilen.' },
+];
 ---
-<BaseLayout title="Ortsteile · Grünhainichen" header="compact">
-  <GrhPagePlaceholder
+<BaseLayout
+  title="Ortsteile · Gemeinde Grünhainichen"
+  description="Borstendorf, Grünhainichen und Waldkirchen: die drei Ortsteile der Gemeinde Grünhainichen im Überblick, mit Kennzahlen, Geschichte und Karte."
+  header="compact"
+>
+  <GrhPageHeader
     title="Ortsteile"
-    breadcrumb="Gemeinde · Ortsteile"
-    description="Borstendorf, Grünhainichen und Waldkirchen im Überblick."
-    hints={["Kurzporträts der drei Orte","Karte","Verbindendes Wappen","Direktzugang Vereine je Ortsteil"]}
+    breadcrumb="Startseite · Gemeinde · Ortsteile"
+    lead="Drei Orte, drei Wappen, eine Gemeinde: das Schachdorf Borstendorf, das Dorf der Engel Grünhainichen und Waldkirchen im Zschopautal."
+    count={3}
+    countLabel="Ortsteile"
   />
+
+  <GrhSection tone="cream" padding="lg" eyebrow="Eine Heimat, drei Charaktere" title="Unsere Ortsteile" align="left">
+    <GrhOrtsteilSpread items={spread} />
+  </GrhSection>
+
+  <GrhSection tone="paper" padding="lg" eyebrow="Auf einen Blick" title="Die Ortsteile im Vergleich" align="left">
+    <div class="grh-otx-steck">
+      {steckbrief.map((o) => (
+        <a class="grh-otx-steck__karte" href={`/gemeinde/ortsteile/${o.key}`}>
+          <div class="grh-otx-steck__kopf">
+            <img src={o.wappen} alt={`Wappen von ${o.name}`} width="44" height="52" loading="lazy" />
+            <h3>{o.name}</h3>
+          </div>
+          <p class="grh-otx-steck__merkmal">{o.merkmal}</p>
+          <dl class="grh-otx-steck__daten">
+            <div><dt>Einwohner</dt><dd>{o.einwohner}<span>Stand {o.stand}</span></dd></div>
+            <div><dt>Höhe</dt><dd>{o.hoehe}<span>über NHN</span></dd></div>
+            <div><dt>Jahr</dt><dd>{o.dazu}<span>{o.dazuText}</span></dd></div>
+          </dl>
+          <ul class="grh-otx-steck__zahlen">
+            <li><strong>{o.zahlen.vereine}</strong> Vereine</li>
+            <li><strong>{o.zahlen.ziele}</strong> Ausflugsziele</li>
+            <li><strong>{o.zahlen.termine}</strong> Termine</li>
+          </ul>
+          <p class="grh-otx-steck__ansprech">{o.ansprech}</p>
+          <span class="grh-otx-steck__mehr">Zum Ortsteil <GrhIcon name="arrow-right" size={14} /></span>
+        </a>
+      ))}
+    </div>
+  </GrhSection>
+
+  <GrhSection tone="cream" padding="lg" eyebrow="Zusammengewachsen" title="Wie aus drei Orten eine Gemeinde wurde" align="left">
+    <div class="grh-otx-chronik-wrap">
+      <ol class="grh-otx-chronik">
+        {chronik.map((c) => (
+          <li>
+            <span class="grh-otx-chronik__jahr">{c.jahr}</span>
+            <div>
+              <h3>{c.titel}</h3>
+              <p>{c.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <figure class="grh-otx-karte">
+        <iframe
+          title="Karte der Gemeinde Grünhainichen mit ihren drei Ortsteilen (OpenStreetMap)"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=13.080%2C50.748%2C13.205%2C50.792&layer=mapnik"
+          loading="lazy"
+        ></iframe>
+        <figcaption>
+          <span>Waldkirchen im Westen, Grünhainichen in der Mitte, Borstendorf im Osten an der Flöha</span>
+          <a href="https://www.openstreetmap.org/#map=13/50.770/13.142" target="_blank" rel="noopener">Größere Karte <GrhIcon name="arrow-right" size={12} /></a>
+        </figcaption>
+      </figure>
+    </div>
+    <p class="grh-otx-weiter">Mehr zur Geschichte der Gemeinde: <a href="/gemeinde/geschichte/">Geschichte</a> · Verwaltung und Ansprechpartner: <a href="/gemeinde/verwaltung/">Gemeindeverwaltung</a></p>
+  </GrhSection>
 </BaseLayout>
+
+<style>
+  /* Steckbriefe */
+  .grh-otx-steck {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-5);
+  }
+  @media (min-width: 900px) { .grh-otx-steck { grid-template-columns: repeat(3, 1fr); } }
+  .grh-otx-steck__karte {
+    display: flex;
+    flex-direction: column;
+    gap: var(--grh-space-3);
+    padding: var(--grh-space-5);
+    background: var(--grh-cream-50);
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--grh-dur-fast), transform var(--grh-dur-fast);
+  }
+  .grh-otx-steck__karte:hover { border-color: var(--grh-moss-600); transform: translateY(-2px); }
+  .grh-otx-steck__kopf { display: flex; align-items: center; gap: var(--grh-space-3); }
+  .grh-otx-steck__kopf img { width: 44px; height: auto; flex: none; }
+  .grh-otx-steck__kopf h3 {
+    margin: 0;
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+  }
+  .grh-otx-steck__merkmal { margin: 0; font-size: var(--grh-fs-sm); color: var(--grh-stone-700); line-height: 1.5; }
+  .grh-otx-steck__daten {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: var(--grh-space-2);
+    margin: 0;
+    padding: var(--grh-space-3) 0;
+    border-top: 1px solid var(--grh-line);
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-otx-steck__daten dt {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    color: var(--grh-stone-400);
+  }
+  .grh-otx-steck__daten dd {
+    margin: 2px 0 0;
+    font-family: var(--grh-font-display);
+    font-size: 1.05rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    color: var(--grh-forest-900);
+  }
+  .grh-otx-steck__daten dd span {
+    display: block;
+    font-family: var(--grh-font-body);
+    font-size: 11px;
+    line-height: 1.35;
+    white-space: normal;
+    color: var(--grh-stone-400);
+  }
+  .grh-otx-steck__zahlen {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .grh-otx-steck__zahlen li {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--grh-sage-100);
+    font-size: 12px;
+    color: var(--grh-forest-800);
+  }
+  .grh-otx-steck__zahlen strong { font-weight: 700; }
+  .grh-otx-steck__ansprech { margin: 0; font-size: 13px; color: var(--grh-stone-700); line-height: 1.5; }
+  .grh-otx-steck__mehr {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--grh-moss-600);
+  }
+
+  /* Chronik + Karte */
+  .grh-otx-chronik-wrap {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--grh-space-6);
+    align-items: start;
+  }
+  @media (min-width: 900px) { .grh-otx-chronik-wrap { grid-template-columns: 1fr 1.2fr; } }
+  .grh-otx-chronik { list-style: none; margin: 0; padding: 0; }
+  .grh-otx-chronik li {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: var(--grh-space-4);
+    padding: var(--grh-space-4) 0;
+    border-bottom: 1px solid var(--grh-line);
+  }
+  .grh-otx-chronik li:first-child { padding-top: 0; }
+  .grh-otx-chronik__jahr {
+    font-family: var(--grh-font-display);
+    font-size: 1.6rem;
+    line-height: 1.1;
+    color: var(--grh-candle-600, var(--grh-candle-500));
+  }
+  .grh-otx-chronik h3 { margin: 0 0 4px; font-size: var(--grh-fs-md, 1rem); font-weight: 600; color: var(--grh-forest-900); }
+  .grh-otx-chronik p { margin: 0; font-size: var(--grh-fs-sm); color: var(--grh-stone-700); line-height: 1.55; }
+  .grh-otx-karte { margin: 0; }
+  .grh-otx-karte iframe {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--grh-line);
+    border-radius: var(--grh-radius-md);
+  }
+  .grh-otx-karte figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--grh-space-2);
+    margin-top: var(--grh-space-2);
+    font-size: 12px;
+    color: var(--grh-stone-400);
+  }
+  .grh-otx-karte figcaption a { color: var(--grh-moss-600); display: inline-flex; align-items: center; gap: 4px; }
+  .grh-otx-weiter { margin: var(--grh-space-6) 0 0; font-size: var(--grh-fs-sm); color: var(--grh-stone-700); }
+  .grh-otx-weiter a { color: var(--grh-moss-600); }
+</style>
