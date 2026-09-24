@@ -119,11 +119,24 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   </div>
 
 </header>
+{/* Der Kopf liegt fest über der Seite (position: fixed). Dieser Platzhalter
+    hält seinen Platz im Fluss und bleibt immer gleich hoch, egal ob der Kopf
+    gerade groß oder geschrumpft ist. */}
+<div class="grh-headerc__platz" aria-hidden="true"></div>
 
 <style>
+  /* Fest statt sticky: Ein sticky Kopf steht im Seitenfluss. Wenn er beim
+     Scrollen 42 px schrumpft, rutscht die Seite darunter nach oben, und
+     Edge korrigiert die Scrollposition um genau diese 42 px (Scroll-
+     Verankerung). Damit fiel man wieder unter die Schwelle, der Kopf
+     wuchs, die Position sprang zurück: Dauerflackern zwischen groß und
+     klein. Mit position: fixed und dem Platzhalter darunter ändert das
+     Schrumpfen die Seitenhöhe nicht mehr. */
   .grh-header--compact {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: var(--grh-z-sticky);
     background: var(--grh-cream-50);
     border-bottom: 1px solid var(--grh-line);
@@ -146,6 +159,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     transition: min-height var(--grh-dur-base);
   }
   .grh-header--compact.is-scrolled .grh-headerc__inner { min-height: 88px; }
+  .grh-headerc__platz { height: 131px; } /* 130 px Kopf + 1 px Linie */
 
   .grh-headerc__brand {
     display: inline-flex;
@@ -215,6 +229,7 @@ import GrhIcon from '../primitives/GrhIcon.astro';
     .grh-headerc__brandtext { display: none; }
     .grh-headerc__inner { min-height: 88px; }
     .grh-header--compact.is-scrolled .grh-headerc__inner { min-height: 72px; }
+    .grh-headerc__platz { height: 89px; }
   }
 
   /* === Tools (Wetter + Social + Burger) ===================== */
@@ -634,18 +649,13 @@ import GrhIcon from '../primitives/GrhIcon.astro';
   if (compactHeader) {
     let ticking = false;
     const update = () => {
-      /* Mit Hysterese: Der Kopf wird beim Schrumpfen 42 px niedriger.
-         Auf kurzen Seiten rutschte dadurch die Scrollposition wieder
-         unter die Schwelle, der Kopf wuchs, die Position sprang zurück,
-         und so weiter: ein sichtbares Flackern. Deshalb zwei Schwellen
-         mit Abstand, und gar kein Schrumpfen, wenn die Seite nicht weit
-         genug scrollen kann. */
+      /* Der Kopf liegt fest über der Seite und verändert beim Schrumpfen
+         die Seitenhöhe nicht mehr (siehe CSS). Die zwei Schwellen bleiben
+         als Ruhepolster gegen kleine Wackler beim Scrollen. */
       const y = window.scrollY;
-      const spielraum = document.documentElement.scrollHeight - window.innerHeight;
       const istKlein = compactHeader.classList.contains('is-scrolled');
       let klein = istKlein;
-      if (spielraum < 120) klein = false;
-      else if (!istKlein && y > 48) klein = true;
+      if (!istKlein && y > 48) klein = true;
       else if (istKlein && y < 4) klein = false;
       if (klein !== istKlein) compactHeader.classList.toggle('is-scrolled', klein);
       ticking = false;
