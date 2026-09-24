@@ -11,12 +11,14 @@ import 'leaflet/dist/leaflet.css';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import GrhPageHeader from '../../../components/global/GrhPageHeader.astro';
 import GrhIcon from '../../../components/primitives/GrhIcon.astro';
+import schachwanderweg from '../../../data/wanderrouten/schachwanderweg.json';
+import bambiniwanderweg from '../../../data/wanderrouten/bambiniwanderweg.json';
 import suedschleife from '../../../data/wanderrouten/suedschleife.json';
 import waldkirchen from '../../../data/wanderrouten/waldkirchen.json';
 import muehlentour from '../../../data/wanderrouten/muehlentour.json';
 import orte from '../../../data/wanderrouten/orte.json';
 
-const routen = [suedschleife, waldkirchen, muehlentour];
+const routen = [schachwanderweg, bambiniwanderweg, muehlentour, suedschleife, waldkirchen];
 
 /* Für die Karte nur das Nötige, damit die Seite schlank bleibt */
 const kartenDaten = routen.map((r) => ({
@@ -117,6 +119,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
                   <div class="grh-wk__aktionen">
                     <a class="grh-wk__btn grh-wk__btn--primär" href={r.gpx} download>GPX herunterladen</a>
                     <a class="grh-wk__btn" href={`https://www.google.com/maps/dir/?api=1&destination=${r.coords[0][1]},${r.coords[0][0]}&travelmode=driving`} target="_blank" rel="noopener">Anfahrt zum Start</a>
+                  {r.outdooractive && <a class="grh-wk__btn" href={r.outdooractive} target="_blank" rel="noopener">Outdooractive</a>}
                     <button type="button" class="grh-wk__btn" data-grh-wk-teilen={r.id}>Link kopieren</button>
                   </div>
                   <p class="grh-wk__hinweis">{r.hinweis}</p>
@@ -129,7 +132,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     </div>
 
     <div class="grh-container">
-      <p class="grh-wk__quelle">Karte und Wege © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL) · Gelände © <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (CC-BY-SA) · Höhenprofile: EU-DEM über Open Topo Data. Beim Laden werden Kacheln dieser Anbieter abgerufen, dabei wird die IP-Adresse übertragen. Vorschau mit {routen.length} Muster-Routen, nicht verlinkt, für Suchmaschinen gesperrt. <a href="/tourismus/wandern/karte-3d/">Zur 3D-Karte</a></p>
+      <p class="grh-wk__quelle">Karte und Wege © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL) · Gelände © <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (CC-BY-SA) · Themenwege: Tourdaten der Gemeinde über Outdooractive · Muster-Routen: OpenStreetMap, Höhen EU-DEM über Open Topo Data. Beim Laden werden Kacheln dieser Anbieter abgerufen, dabei wird die IP-Adresse übertragen. Vorschau mit {routen.length} Routen, nicht verlinkt, für Suchmaschinen gesperrt. <a href="/tourismus/wandern/karte-3d/">Zur 3D-Karte</a></p>
     </div>
   </section>
 

@@ -14,13 +14,15 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import GrhIcon from '../../../components/primitives/GrhIcon.astro';
+import schachwanderweg from '../../../data/wanderrouten/schachwanderweg.json';
+import bambiniwanderweg from '../../../data/wanderrouten/bambiniwanderweg.json';
 import suedschleife from '../../../data/wanderrouten/suedschleife.json';
 import waldkirchen from '../../../data/wanderrouten/waldkirchen.json';
 import muehlentour from '../../../data/wanderrouten/muehlentour.json';
 import pois from '../../../data/wanderrouten/pois.json';
 import orte from '../../../data/wanderrouten/orte.json';
 
-const routen = [suedschleife, waldkirchen, muehlentour];
+const routen = [schachwanderweg, bambiniwanderweg, muehlentour, suedschleife, waldkirchen];
 const kartenDaten = {
   routen: routen.map((r) => ({ id: r.id, name: r.name, farbe: r.farbe, coords: r.coords, elev: r.elev, km: r.km, aufstieg: r.aufstieg, minHoehe: r.minHoehe, maxHoehe: r.maxHoehe })),
   pois,
@@ -132,6 +134,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
                 <div class="grh-w3__aktionen">
                   <a class="grh-w3__btn grh-w3__btn--primär" href={r.gpx} download>GPX laden</a>
                   <a class="grh-w3__btn" href={`https://www.google.com/maps/dir/?api=1&destination=${r.coords[0][1]},${r.coords[0][0]}`} target="_blank" rel="noopener">Anfahrt</a>
+                  {r.outdooractive && <a class="grh-w3__btn" href={r.outdooractive} target="_blank" rel="noopener">Outdooractive</a>}
                   <button type="button" class="grh-w3__btn" data-grh-w3-flug={r.id}>Rundflug</button>
                 </div>
                 <p class="grh-w3__text">{r.beschreibung}</p>
@@ -165,7 +168,7 @@ const gesamtKm = routen.reduce((a, r) => a + r.km, 0).toFixed(1);
     </div>
 
     <div class="grh-container">
-      <p class="grh-w3__quelle">Luftbild © <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener">GeoSN, dl-de/by-2-0</a> · Gelände: Mapzen/AWS Terrain Tiles · Karte und Wege © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL) · Höhenprofile: EU-DEM über Open Topo Data. Beim Laden werden Kacheln dieser Anbieter abgerufen, dabei wird die IP-Adresse übertragen. Vorschau mit {routen.length} Muster-Routen, nicht verlinkt, für Suchmaschinen gesperrt. <a href="/tourismus/wandern/karte/">Zur flachen Karte</a></p>
+      <p class="grh-w3__quelle">Luftbild © <a href="https://www.govdata.de/dl-de/by-2-0" target="_blank" rel="noopener">GeoSN, dl-de/by-2-0</a> · Gelände: Mapzen/AWS Terrain Tiles · Karte und Wege © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a> (ODbL) · Themenwege: Tourdaten der Gemeinde über Outdooractive · Muster-Routen: OpenStreetMap, Höhen EU-DEM über Open Topo Data. Beim Laden werden Kacheln dieser Anbieter abgerufen, dabei wird die IP-Adresse übertragen. Vorschau mit {routen.length} Routen, nicht verlinkt, für Suchmaschinen gesperrt. <a href="/tourismus/wandern/karte/">Zur flachen Karte</a></p>
     </div>
   </section>
 
