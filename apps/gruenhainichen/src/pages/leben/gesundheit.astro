@@ -1,14 +1,24 @@
 ---
+/**
+ * Gesundheit: liest die Profile der Kategorien „Allgemeine Medizin“,
+ * „Zahnarzt“, „Physiotherapie“ und „Apotheke“ aus WordPress (Profile).
+ * Name, Ansprechpartner, Anschrift, Telefon, E-Mail, Website und
+ * Sprechzeiten pflegt der Verband dort. Hier stehen nur die Abschnitte.
+ */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getProfileNachKategorie } from '../../lib/cms-cpt';
 
 interface Praxis {
   name: string;
   person?: string;
-  street: string;
-  city: string;
+  street?: string;
+  city?: string;
   phone?: string;
+  mobil?: string;
   email?: string;
   website?: string;
+  zeiten?: string;
+  detail?: string;
 }
 
 interface Section {
@@ -18,78 +28,37 @@ interface Section {
   items: Praxis[];
 }
 
-const sections: Section[] = [
-  {
-    slug: 'hausarzt',
-    title: 'Allgemeinmedizin',
-    eyebrow: 'Hausarzt',
-    items: [
-      {
-        name: 'Arztpraxis Gunar Gläser',
-        street: 'Hohe Straße 6',
-        city: '09579 Grünhainichen',
-        phone: '037294 / 1250',
-        website: 'http://www.praxisggg.de/',
-      },
-    ],
-  },
-  {
-    slug: 'zahnaerzte',
-    title: 'Zahnärzte',
-    eyebrow: 'Zahnmedizin',
-    items: [
-      {
-        name: 'Zahnarztpraxis Anke Nüßler',
-        person: 'Anke Nüßler',
-        street: 'Chemnitzer Straße 45',
-        city: '09579 Grünhainichen',
-        phone: '037294 / 1207',
-      },
-      {
-        name: 'Dr. med. dent. Heinz-Peter Krause',
-        street: 'August-Bebel-Straße 58',
-        city: 'Borstendorf · 09579 Grünhainichen',
-        phone: '037294 / 7180',
-      },
-    ],
-  },
-  {
-    slug: 'physiotherapie',
-    title: 'Physiotherapie',
-    eyebrow: 'Bewegung & Reha',
-    items: [
-      {
-        name: 'Praxis Ines Holler',
-        person: 'Ines Holler',
-        street: 'Grete-Wendt-Straße 42',
-        city: '09579 Grünhainichen',
-        phone: '037294 / 1650',
-      },
-      {
-        name: 'Physiotherapie „in Balance"',
-        person: 'Diana Reichel',
-        street: 'Chemnitzer Straße 56',
-        city: '09579 Grünhainichen',
-        phone: '037294 / 79457',
-      },
-    ],
-  },
-  {
-    slug: 'apotheke',
-    title: 'Apotheke',
-    eyebrow: 'Medikamente vor Ort',
-    items: [
-      {
-        name: 'Apotheke Grünhainichen',
-        person: 'Apotheker Andreas Enger e. K.',
-        street: 'Chemnitzer Straße 44',
-        city: '09579 Grünhainichen',
-        phone: '037294 / 1264',
-        email: 'apotheke-gruenhainichen@gmx.de',
-      },
-    ],
-  },
+/* Abschnitte = Profilkategorien in WordPress. Ein Abschnitt ohne Einträge entfällt. */
+const ABSCHNITTE = [
+  { slug: 'hausarzt', kategorie: 'allgemeine-medizin', title: 'Allgemeinmedizin', eyebrow: 'Hausarzt' },
+  { slug: 'zahnarzt', kategorie: 'zahnarzt', title: 'Zahnärzte', eyebrow: 'Zahnmedizin' },
+  { slug: 'physiotherapie', kategorie: 'physiotherapie', title: 'Physiotherapie', eyebrow: 'Therapie' },
+  { slug: 'apotheke', kategorie: 'apotheke', title: 'Apotheke', eyebrow: 'Arzneimittel' },
 ];
+const leer = (v?: string) => (v && v.trim() ? v.trim() : undefined);
+const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+const sections: Section[] = (await Promise.all(ABSCHNITTE.map(async (a) => ({
+  slug: a.slug, title: a.title, eyebrow: a.eyebrow,
+  items: (await getProfileNachKategorie(a.kategorie))
+    .filter((p) => p.hatDetailseite) /* nur Grünhainichen und Einträge ohne Ortsteil */
+    .sort((x, y) => x.title.localeCompare(y.title, 'de'))
+    .map((p) => {
+      const k = p.kontakt ?? {};
+      return {
+        name: p.title,
+        person: leer(k.fuehrende_person),
+        street: leer(k.strasse_hausnummer),
+        city: leer(k.plz_ort),
+        phone: leer(k.telefon),
+        mobil: leer(k.mobil),
+        email: leer(k.email),
+        website: leer(k.website),
+        zeiten: leer(k.oeffnungszeiten),
+        detail: text(p.contentHtml).length > 0 ? `/gewerbe/${p.slug}/` : undefined,
+      };
+    }),
+})))).filter((s) => s.items.length > 0);
 
 function telHref(p: string): string {
   return 'tel:' + p.replace(/[^+\d]/g, '');
@@ -124,9 +93,9 @@ function telHref(p: string): string {
       <span class="grh-ges-eyebrow">Versorgung vor Ort</span>
       <h1>Gesundheit</h1>
       <p class="grh-ges-lead">
-        Hausarzt, Zahnärzte, Apotheke und Physiotherapie: alle
-        Adressen und Telefonnummern für eine schnelle medizinische Versorgung
-        in unserer Gemeinde auf einen Blick.
+        Alle Praxen und die Apotheke mit Adresse, Telefon und Sprechzeiten
+        für eine schnelle medizinische Versorgung in unserer Gemeinde auf
+        einen Blick.
       </p>
       <nav class="grh-ges-anchors" aria-label="Sprung zu Kategorien">
         {sections.map((s) => (
@@ -149,12 +118,15 @@ function telHref(p: string): string {
             <li class="grh-ges-card">
               {p.person && p.person !== p.name && <span class="grh-ges-card__person">{p.person}</span>}
               <h3>{p.name}</h3>
-              <p class="grh-ges-card__addr">
-                {p.street}<br />
-                {p.city}
-              </p>
+              {(p.street || p.city) && (
+                <p class="grh-ges-card__addr">
+                  {p.street}<br />
+                  {p.city}
+                </p>
+              )}
               <ul class="grh-ges-card__ways">
                 {p.phone && <li><span>Telefon</span><a href={telHref(p.phone)}>{p.phone}</a></li>}
+                {p.mobil && <li><span>Mobil</span><a href={telHref(p.mobil)}>{p.mobil}</a></li>}
                 {p.email && <li><span>E-Mail</span><a href={`mailto:${p.email}`}>{p.email}</a></li>}
                 {p.website && (
                   <li>
@@ -165,6 +137,13 @@ function telHref(p: string): string {
                   </li>
                 )}
               </ul>
+              {p.zeiten && (
+                <div class="grh-ges-card__zeiten">
+                  <span>Sprechzeiten</span>
+                  <p>{p.zeiten}</p>
+                </div>
+              )}
+              {p.detail && <a class="grh-ges-card__mehr" href={p.detail}>Mehr erfahren →</a>}
             </li>
           ))}
         </ul>
@@ -176,7 +155,7 @@ function telHref(p: string): string {
   <section class="grh-ges-hint">
     <div class="grh-container">
       <p>
-        <strong>Hinweis zu Sprechzeiten:</strong> Aktuelle Öffnungszeiten und
+        <strong>Hinweis zu Sprechzeiten:</strong> Kurzfristige Änderungen und
         Urlaubsvertretungen entnehmen Sie bitte den Internet-Auftritten oder
         Aushängen der jeweiligen Praxis.
       </p>
@@ -457,4 +436,8 @@ function telHref(p: string): string {
     color: var(--grh-forest-900);
     font-weight: 500;
   }
+  .grh-ges-card__zeiten { margin-top: var(--grh-space-3); padding-top: var(--grh-space-3); border-top: 1px solid var(--grh-line); }
+  .grh-ges-card__zeiten span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-stone-400); margin-bottom: 4px; }
+  .grh-ges-card__zeiten p { margin: 0; white-space: pre-line; font-size: 13px; line-height: 1.55; color: var(--grh-stone-700); }
+  .grh-ges-card__mehr { display: inline-block; margin-top: var(--grh-space-3); font-size: 12px; font-weight: 600; color: var(--grh-moss-600); }
 </style>
