@@ -13,16 +13,31 @@ export async function getStaticPaths() {
 
 const { profil } = Astro.props as { profil: Awaited<ReturnType<typeof getProfile>>[number] };
 const kategorie = profil.kategorien[0]?.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+
+/* Alle Profile aus WordPress haben ihre Detailseite hier, nicht nur Firmen.
+   Brotkrume und Zurück-Link richten sich deshalb nach der Kategorie: eine
+   Kirche gehört unter „Leben · Kirche“, nicht unter „Gewerbe“. */
+const BEREICHE: Array<{ kat: string[]; crumb: string; href: string; label: string }> = [
+  { kat: ['kirchen'], crumb: 'Leben · Kirche', href: '/leben/kirche/', label: 'Alle Kirchen' },
+  { kat: ['schule'], crumb: 'Leben · Grundschule', href: '/leben/grundschule/', label: 'Zur Grundschule' },
+  { kat: ['kindergarten', 'hort-waldis-kids'], crumb: 'Leben · Kita & Hort', href: '/leben/kita/', label: 'Alle Kitas' },
+  { kat: ['allgemeine-medizin', 'zahnarzt', 'physiotherapie', 'apotheke'], crumb: 'Leben · Gesundheit', href: '/leben/gesundheit/', label: 'Gesundheit' },
+  { kat: ['senioren'], crumb: 'Leben · Senioren', href: '/leben/', label: 'Leben in der Gemeinde' },
+];
+const bereich = BEREICHE.find((b) => b.kat.some((k) => profil.kategorien.includes(k)));
+const ort = profil.ortsteil ? ' · ' + profil.ortsteil.replace(/^./, c => c.toUpperCase()) : '';
+const crumb = (bereich?.crumb ?? 'Gewerbe') + ort;
+const seitenBereich = bereich ? bereich.crumb.split(' · ').pop() : 'Gewerbe';
 ---
-<BaseLayout title={`${profil.title} · Gewerbe · Grünhainichen`} header="compact">
+<BaseLayout title={`${profil.title} · ${seitenBereich} · Grünhainichen`} header="compact">
   <GrhCPTDetail
     title={profil.title}
-    breadcrumb={`Gewerbe${profil.ortsteil ? ' · ' + profil.ortsteil.replace(/^./, c => c.toUpperCase()) : ''}`}
+    breadcrumb={crumb}
     eyebrow={kategorie ?? 'Firma'}
     image={profil.image}
     contentHtml={profil.contentHtml}
     kontakt={profil.kontakt}
-    backHref="/gewerbe"
-    backLabel="Alle Firmen"
+    backHref={bereich?.href ?? '/gewerbe'}
+    backLabel={bereich?.label ?? 'Alle Firmen'}
   />
 </BaseLayout>
