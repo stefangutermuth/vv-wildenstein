@@ -64,6 +64,22 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 2. Drossel im Webhook umdrehen: **nach 90 s Ruhe bauen** statt beim ersten Speichern (heute können Korrekturen innerhalb von 90 s bis zum nächsten Morgen hängen).
 3. Auch **Änderungen in der Mediathek** (Bild tauschen, Bildunterschrift) lösen einen Neubau aus.
 
+## Bilder: zu kleine Uploads
+
+Die Websites laden immer das größte verfügbare Bild. Von 198 Originalen auf den
+Hauptseiten sind aber **84 unter 800 px breit** (Stand 28.09.2026), vor allem
+Wendt-&-Kühn-Termine mit 350 px, Plakate als Bildschirmfoto, Logos.
+
+- 28.09.: Mediathek per Bildabdruck (dHash, PHP/Imagick auf dem Server, Skript
+  `/tmp/bildabdruck.php`) nach größeren inhaltsgleichen Fassungen durchsucht und jeden
+  Treffer von Hand geprüft. 4 echte Treffer getauscht, 22 Einträge umgestellt
+  (Fachwerkhaus W&K 350 › 1000 px, Kinder-Führungen 350 › 940, Museum 472 › 1200,
+  Baustellenschild 400 › 996). Ähnliche, aber andere Motive (anderes Jahr, anderer
+  Geburtstag, anderer Flyer) bewusst nicht getauscht.
+- Offen: **Darstellungsschutz** auf der Website (kleine Bilder nicht auf volle Breite
+  aufblasen, sondern in echter Größe auf ruhiger Fläche) und Hinweis an den Verband
+  bzw. im Einreichformular: Bilder ab 1200 px, Plakate als Originaldatei.
+
 ## Reihenfolge, wie mit Stefan besprochen
 
 Klein anfangen, Seite für Seite: Kirchen und Grundschule sind erledigt. Nächste Kandidaten:
