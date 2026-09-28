@@ -309,6 +309,31 @@ export async function getProfile(): Promise<ProfilItem[]> {
   }));
 }
 
+/**
+ * Profile einer Kategorie (Slug der Taxonomie `profilkategorie`, z. B.
+ * „kirchen“, „schule“), auch solche aus Börnichen. Für Übersichtsseiten, die
+ * über die Gemeindegrenze hinaus zeigen, etwa die Kirchen des Kirchspiels.
+ * `hatDetailseite` sagt, ob unter /gewerbe/<slug> eine Seite gebaut wird
+ * (nur Einträge ohne oder mit Grünhainichener Ortsteil).
+ */
+export async function getProfileNachKategorie(kategorie: string): Promise<Array<ProfilItem & { hatDetailseite: boolean; gemeindeteile: string[] }>> {
+  const data = await fetchJson<WPCPTBase>('profile');
+  return data
+    .filter((p) => termSlugs(p, 'profilkategorie').includes(kategorie))
+    .map((p) => ({
+      slug: p.slug,
+      title: decodeEntities(p.title.rendered),
+      contentHtml: p.content?.rendered ?? '',
+      image: pickImage(p),
+      ortsteil: pickOrtsteil(termSlugs(p, 'gemeindeteil')),
+      kategorien: termSlugs(p, 'profilkategorie'),
+      kontakt: p.vv_kontakt,
+      link: p.link,
+      hatDetailseite: hasGrhOrtsteil(p),
+      gemeindeteile: termSlugs(p, 'gemeindeteil'),
+    }));
+}
+
 /* ============================================================
  * Personen (Gemeinderats-Mitglieder etc.)
  * ============================================================ */

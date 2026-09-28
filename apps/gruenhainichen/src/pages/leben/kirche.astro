@@ -1,70 +1,77 @@
 ---
+/**
+ * Kirchen: liest die Profile der Kategorie „Kirchen“ aus WordPress
+ * (vv-wildenstein.com › Profile). Name, Bild, Anschrift, Telefon, E-Mail,
+ * Website und Beschreibung pflegt der Verband dort; diese Seite legt nur
+ * Reihenfolge und Gestaltung fest.
+ */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getProfileNachKategorie } from '../../lib/cms-cpt';
 
 interface Kirche {
   ortsteil: string;
   name: string;
   image?: string;
-  imageAlt?: string;
   street?: string;
   city?: string;
   phone?: string;
+  mobil?: string;
   fax?: string;
   email?: string;
   website?: string;
-  pastor?: string;
+  person?: string;
   description?: string;
-  yearFounded?: string;
+  detail?: string;
 }
 
-const kirchen: Kirche[] = [
-  {
-    ortsteil: 'Grünhainichen',
-    name: 'Ev.-Luth. Kirchgemeinde Grünhainichen',
-    image: 'https://vv-wildenstein.com/wp-content/uploads/2022/06/IMG_9695-1000x667.jpg',
-    imageAlt: 'Kirche Grünhainichen',
-    street: 'Kirchstraße 4',
-    city: '09579 Grünhainichen',
-    phone: '037294 / 87 884',
-    fax:   '037294 / 87 885',
-    email: 'kg.gruenhainichen@evlks.de',
-    website: 'https://www.kirche-gruenhainichen.de',
-    pastor: 'Pfarrer Jens Meyer (Pfarrhaus Waldkirchen) · jens.meyer@evlks.de',
-    yearFounded: '1848',
-    description: 'Die Mutterkirche im Ortskern, gegründet als eigene Parochie am 31. Januar 1848. Gottesdienste, Kreise, Chor- und Kinderarbeit.',
-  },
-  {
-    ortsteil: 'Waldkirchen',
-    name: 'Ev.-Luth. Kirchgemeinde Waldkirchen',
-    image: '/images/orte/kirche-waldkirchen.jpg',
-    imageAlt: 'Kirche Waldkirchen/Erzgeb.',
-    street: 'Börnichener Straße 3',
-    city: '09579 Grünhainichen',
-    website: 'http://www.kirchgemeinde-waldkirchen-erzgebirge.de',
-    pastor: 'Pfarrer Jens Meyer',
-    yearFounded: '1539',
-    description: 'Mutterkirche der Region seit der Reformation. Grünhainichen und Borstendorf gehörten lange Zeit zur Parochie Waldkirchen. Mit dem Pfarrhaus, in dem auch der Pfarrer für die Schwestergemeinden seinen Dienstsitz hat.',
-  },
-  {
-    ortsteil: 'Borstendorf',
-    name: 'Ev.-Luth. Kirche Borstendorf',
-    description: 'Filialkirche der Parochie Grünhainichen mit eigener Tradition im Flöhatal. Informationen zu Gottesdiensten und Veranstaltungen über die Kirchgemeinde Grünhainichen.',
-    website: 'https://www.kirche-gruenhainichen.de',
-    yearFounded: 'Filialkirche',
-  },
-  {
-    ortsteil: 'Börnichen',
-    name: 'Ev.-Luth. Kirchgemeinde Börnichen',
-    image: 'https://vv-wildenstein.com/wp-content/uploads/2022/06/IMG_20211106_142234-1000x750.jpg',
-    imageAlt: 'Kirche Börnichen',
-    street: 'Försterweg 1',
-    city: '09437 Börnichen',
-    website: 'https://kirchgemeinde-boernichen.de',
-    pastor: 'Pfarrer Jens Meyer (Pfarrhaus Waldkirchen)',
-    yearFounded: '1900',
-    description: 'Am 27. März 1899 vom Kirchenvorstand beschlossen, am 26. Februar 1900 erster Spatenstich, am 8. Oktober 1900 mit großem Festakt geweiht. Schwesterkirche im Verwaltungsverband.',
-  },
+const ORTE: Array<[RegExp, string]> = [
+  [/gr(ü|ue)nhainichen/i, 'Grünhainichen'],
+  [/waldkirchen/i, 'Waldkirchen'],
+  [/borstendorf/i, 'Borstendorf'],
+  [/b(ö|oe)rnichen/i, 'Börnichen'],
 ];
+const REIHENFOLGE = ORTE.map(([, o]) => o);
+/* Ortsteil: zuerst aus dem Titel, dann aus der WordPress-Zuordnung. Die
+   meisten Profile haben dort (noch) keinen Ortsteil. */
+const ortAus = (titel: string, teile: string[]) =>
+  ORTE.find(([re]) => re.test(titel))?.[1]
+  ?? ORTE.find(([re]) => teile.some((t) => re.test(t)))?.[1]
+  ?? '';
+const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&[#\w]+;/g, (e) => ({ '&amp;': '&', '&#8211;': '-', '&#8220;': '„', '&#8221;': '“', '&#8222;': '„' } as Record<string, string>)[e] ?? ' ').replace(/\s+/g, ' ').trim();
+/* Kurzbeschreibung: das Feld „Informationen“, sonst die ersten Sätze des
+   Textes bis etwa 240 Zeichen. */
+const kurz = (html: string) => {
+  const t = text(html);
+  if (t.length <= 240) return t;
+  const saetze = t.match(/[^.!?]+[.!?]+/g) ?? [t];
+  let out = '';
+  for (const satz of saetze) { if ((out + satz).length > 240 && out) break; out += satz; }
+  return out.trim() || t.slice(0, 240) + ' …';
+};
+const leer = (v?: string) => (v && v.trim() ? v.trim() : undefined);
+
+const kirchen: Kirche[] = (await getProfileNachKategorie('kirchen'))
+  .map((p) => {
+    const k = p.kontakt ?? {};
+    const person = leer(k.fuehrende_person);
+    return {
+      ortsteil: ortAus(p.title, p.gemeindeteile),
+      name: p.title,
+      image: p.image,
+      street: leer(k.strasse_hausnummer),
+      city: leer(k.plz_ort),
+      phone: leer(k.telefon),
+      mobil: leer(k.mobil),
+      fax: leer(k.fax),
+      email: leer(k.email),
+      website: leer(k.website),
+      /* „Ev.-Luth. Kirchgemeinde …“ im Personenfeld ist kein Ansprechpartner */
+      person: person && !/kirch/i.test(person) ? person : undefined,
+      description: leer(k.informationen) ?? (leer(text(p.contentHtml)) ? kurz(p.contentHtml) : undefined),
+      detail: p.hatDetailseite && text(p.contentHtml).length > 240 ? `/gewerbe/${p.slug}/` : undefined,
+    };
+  })
+  .sort((a, b) => REIHENFOLGE.indexOf(a.ortsteil) - REIHENFOLGE.indexOf(b.ortsteil));
 ---
 <BaseLayout title="Kirchen · Gemeinde Grünhainichen" header="compact">
 
@@ -74,7 +81,7 @@ const kirchen: Kirche[] = [
       <span class="grh-kir-eyebrow">Glauben &amp; Gemeinschaft</span>
       <h1>Kirchen unserer Gemeinde</h1>
       <p class="grh-kir-lead">
-        Vier evangelisch-lutherische Kirchgemeinden prägen das Leben in
+        Die evangelisch-lutherischen Kirchgemeinden prägen das Leben in
         unseren Ortsteilen und der Nachbargemeinde Börnichen, von der
         <em>Mutterkirche Waldkirchen</em> (seit 1539) bis zur jüngsten
         Schwester in Börnichen (geweiht 1900).
@@ -89,18 +96,19 @@ const kirchen: Kirche[] = [
           <article class="grh-kir-card">
             {k.image && (
               <figure class="grh-kir-card__media">
-                <img src={k.image!} alt={k.imageAlt ?? k.name} loading="lazy" />
+                <img src={k.image!} alt={k.name} loading="lazy" />
               </figure>
             )}
             <div class="grh-kir-card__body">
               <header class="grh-kir-card__head">
                 <span class="grh-kir-card__ort">{k.ortsteil}</span>
-                {k.yearFounded && <span class="grh-kir-card__year">{k.yearFounded}</span>}
               </header>
               <h2>{k.name}</h2>
-              {k.description && <p class="grh-kir-card__desc">{k.description}</p>}
+              {k.description
+                ? <p class="grh-kir-card__desc">{k.description}</p>
+                : !k.street && !k.phone && !k.email && <p class="grh-kir-card__desc grh-kir-card__desc--leer">Für diese Kirche sind noch keine Angaben hinterlegt.</p>}
 
-              {(k.street || k.phone || k.email) && (
+              {(k.street || k.phone || k.mobil || k.email) && (
                 <div class="grh-kir-card__contact">
                   {k.street && (
                     <p class="grh-kir-card__addr">
@@ -109,19 +117,23 @@ const kirchen: Kirche[] = [
                     </p>
                   )}
                   <ul>
-                    {k.pastor && <li><span>Pfarrer</span>{k.pastor}</li>}
+                    {k.person && <li><span>Kontakt</span>{k.person}</li>}
                     {k.phone && <li><span>Telefon</span><a href={`tel:${k.phone.replace(/[^+\d]/g,'')}`}>{k.phone}</a></li>}
+                    {k.mobil && <li><span>Mobil</span><a href={`tel:${k.mobil.replace(/[^+\d]/g,'')}`}>{k.mobil}</a></li>}
                     {k.fax && <li><span>Fax</span>{k.fax}</li>}
                     {k.email && <li><span>E-Mail</span><a href={`mailto:${k.email}`}>{k.email}</a></li>}
                   </ul>
                 </div>
               )}
 
-              {k.website && (
-                <a class="grh-kir-card__link" href={k.website} target="_blank" rel="noopener">
-                  {k.website.replace(/^https?:\/\//,'').replace(/\/$/,'')} ↗
-                </a>
-              )}
+              <div class="grh-kir-card__links">
+                {k.detail && <a class="grh-kir-card__link" href={k.detail}>Mehr erfahren →</a>}
+                {k.website && (
+                  <a class="grh-kir-card__link" href={k.website} target="_blank" rel="noopener">
+                    {k.website.replace(/^https?:\/\//,'').replace(/\/$/,'')} ↗
+                  </a>
+                )}
+              </div>
             </div>
           </article>
         ))}
@@ -132,10 +144,8 @@ const kirchen: Kirche[] = [
   <section class="grh-kir-foot">
     <div class="grh-container">
       <p>
-        Aktuelle Gottesdienste, Termine und Mitarbeitende der Kirchgemeinden
-        veröffentlichen die Pfarrämter auf den jeweiligen Webseiten. Pfarrer
-        <strong>Jens Meyer</strong> betreut von Waldkirchen aus die Gemeinden
-        Grünhainichen, Borstendorf und Börnichen.
+        Aktuelle Gottesdienste, Termine und Ansprechpartner veröffentlichen die
+        Kirchgemeinden auf ihren eigenen Webseiten.
       </p>
     </div>
   </section>
@@ -352,4 +362,6 @@ const kirchen: Kirche[] = [
     color: var(--grh-forest-900);
     font-weight: 500;
   }
+  .grh-kir-card__links { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: auto; }
+  .grh-kir-card__desc--leer { color: var(--grh-stone-400); font-size: 13px; }
 </style>
