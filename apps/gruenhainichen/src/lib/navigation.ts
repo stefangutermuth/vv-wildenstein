@@ -96,7 +96,6 @@ export const navigation: NavItem[] = [
     href: '/veranstaltungen',
     children: [
       { label: 'Alle Veranstaltungen', href: '/veranstaltungen' },
-      { label: 'EURORANDO 2026', href: '/veranstaltungen/eurorando-2026' },
       { label: 'Lebendiger Adventskalender', href: '/leben/lebendiger-adventskalender' },
       // Bewusst als Letztes und mit Jahreszahl: Das Fest ist vorbei, die
       // Seiten bleiben als Rückblick erreichbar.

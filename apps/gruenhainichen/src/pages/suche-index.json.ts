@@ -35,7 +35,7 @@ const fmtDatum = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-di
 /* Stichworte, unter denen man eine Seite sucht, ohne ihren Menünamen zu
    kennen. Nur für die Suche, nicht sichtbar. */
 const stichworte: Record<string, string> = {
-  '/tourismus/wandern':        'Schachwanderweg Zschopautalweg Touren Wanderwege Eurorando',
+  '/tourismus/wandern':        'Schachwanderweg Zschopautalweg Touren Wanderwege Themenwege',
   '/tourismus/baden':          'Freibad Schwimmbad Sommer Badesee',
   '/tourismus/museum':         'Volkskunst Holzkunst Wendt Kühn Engel Museum',
   '/tourismus/gastronomie':    'Essen Gasthof Restaurant Café Einkehr',

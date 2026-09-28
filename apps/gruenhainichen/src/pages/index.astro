@@ -69,16 +69,7 @@ const featured = showAdventSection
       subtitle: 'Jeden Abend ein neues Türchen: ein Lichtermeer aus Schwibbögen, Engeln und Bergmann.',
       ctas: [{ label: 'Programm 2026', href: '/leben/lebendiger-adventskalender', variant: 'primary' as const }],
     }
-  : {
-      eyebrow: 'EURORANDO 2026',
-      title: 'Zwei Touren auf dem Zschopautalweg',
-      subtitle: '23. & 27. September · Anmeldung offen',
-      logo: '/images/logos/eurorando-2026-white.webp',
-      logoAlt: 'EURORANDO 2026',
-      ctas: [
-        { label: 'Anmelden', href: '/veranstaltungen/eurorando-2026', variant: 'primary' as const },
-      ],
-    };
+  : undefined; /* EURORANDO 2026 ist vorbei (23. und 27.09.); außerhalb des Advents keine feste Empfehlung */
 
 const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 ---
