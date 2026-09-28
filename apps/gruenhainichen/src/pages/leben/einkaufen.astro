@@ -1,14 +1,25 @@
 ---
+/**
+ * Einkaufen: liest die Profile der Kategorie „Einkaufen“ aus WordPress.
+ * Die Gruppen (Essen & Trinken, Erzgebirgisches Handwerk …) sind
+ * Unterkategorien von „Einkaufen“, ihre Beschreibung ist die Unterzeile.
+ * Name, Anschrift, Telefon, E-Mail, Website und Öffnungszeiten stehen im
+ * Profil. Im Code bleiben nur die Symbole je Geschäft (Gestaltung).
+ */
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getProfileNachKategorie, getProfilUnterkategorien } from '../../lib/cms-cpt';
 
 interface Shop {
   name: string;
   icon: string;          // Lucide-Icon-Slug, z.B. "croissant"
   street?: string;
-  city: string;
+  city?: string;
   phone?: string;
+  mobil?: string;
   email?: string;
   website?: string;
+  zeiten?: string;
+  detail?: string;
 }
 interface Group {
   slug: string;
@@ -17,100 +28,51 @@ interface Group {
   shops: Shop[];
 }
 
-const groups: Group[] = [
-  {
-    slug: 'essen-trinken',
-    title: 'Essen & Trinken',
-    eyebrow: 'Frisch vom Handwerk',
-    shops: [
-      { name: 'Bäckerei Vieweger', icon: 'croissant',
-        street: 'Chemnitzer Straße 37', city: '09579 Grünhainichen',
-        phone: '037294 / 1462', email: 'info@viewegerback.de', website: 'https://viewegerback.de' },
-      { name: 'Fleischerei Borstendorf', icon: 'beef',
-        street: 'August-Bebel-Straße 80', city: 'Borstendorf · 09579 Grünhainichen',
-        phone: '037294 / 1461', email: 'fleischerei-borstendorf@t-online.de', website: 'http://fleischerei-borstendorf.de' },
-      { name: 'Fachhandel für Getränke & Spirituosen Fethke', icon: 'wine',
-        street: 'Am Waldrand 3', city: '09579 Grünhainichen',
-        phone: '037294 / 1660', email: 'info@getraenke-fethke.de', website: 'http://www.getraenke-fethke.de' },
-    ],
-  },
-  {
-    slug: 'erzgebirgisches-handwerk',
-    title: 'Erzgebirgisches Handwerk',
-    eyebrow: 'Holzkunst & Tradition',
-    shops: [
-      { name: 'Wendt & Kühn KG', icon: 'sparkles',
-        street: 'Chemnitzer Straße 40', city: '09579 Grünhainichen',
-        phone: '037294 / 86128', email: 'erlebnis@wendt-kuehn.de', website: 'https://wendt-kuehn.de' },
-      { name: 'Hobler · Figuren mit Herz', icon: 'heart-handshake',
-        street: 'Lengefelder Straße 6', city: '09579 Grünhainichen',
-        phone: '037294 / 87677', email: 'info@hobler-figuren.de', website: 'http://www.hobler-figuren.de' },
-      { name: 'Blank Kunsthandwerk', icon: 'palette',
-        street: 'Chemnitzer Straße 59 B', city: '09579 Grünhainichen',
-        website: 'http://www.blank-engel.de' },
-      { name: 'Baumann’s Holzschnitzerei', icon: 'axe',
-        street: 'Rathausstraße 29', city: '09437 Börnichen/Erzgeb.',
-        phone: '037294 / 87751', email: 'info@baumanns-holzschnitzerei.de', website: 'http://www.baumanns-holzschnitzerei.de' },
-      { name: 'Drechslerei Kluge', icon: 'cylinder',
-        street: 'Dorfstraße 45', city: 'Waldkirchen · 09579 Grünhainichen',
-        website: 'http://www.drechslerei-kluge.de' },
-    ],
-  },
-  {
-    slug: 'haus-garten',
-    title: 'Haus, Hof & Garten',
-    eyebrow: 'Bauen & Pflegen',
-    shops: [
-      { name: 'Holzhandel Köhler', icon: 'tree-pine',
-        street: 'Am Berg 1 b', city: 'Borstendorf · 09579 Grünhainichen' },
-      { name: 'Gartenbau Schneller', icon: 'sprout',
-        street: 'Mühlenstraße 50', city: '09579 Grünhainichen',
-        phone: '037294 / 1478' },
-      { name: 'Kommunalmaschinen & Friedhofstechnik Fethke', icon: 'wrench',
-        street: 'Chemnitzer Straße 4', city: '09579 Grünhainichen',
-        phone: '037294 / 1612', email: 'info@fethke-friedhofstechnik.de', website: 'http://www.fethke-friedhofstechnik.de' },
-      { name: 'Auto-Sachße', icon: 'car',
-        street: 'Försterbauerweg 4', city: 'Borstendorf · 09579 Grünhainichen',
-        phone: '037294 / 90220', email: 'auto-sachsse@web.de' },
-    ],
-  },
-  {
-    slug: 'antik-geschenke',
-    title: 'Antik, Trödel & Geschenke',
-    eyebrow: 'Stöbern & Finden',
-    shops: [
-      { name: 'Antik & Dekoration Jana Franke', icon: 'armchair',
-        street: 'Chemnitzer Straße 39', city: '09579 Grünhainichen',
-        email: 'jana.franke@t-online.de', website: 'http://www.antik-erzgebirge.de' },
-      { name: 'Troedelschmiede', icon: 'hammer',
-        street: 'Chemnitzer Straße 21 B', city: '09579 Grünhainichen',
-        phone: '037294 / 7271', email: 'ts-erzgebirge@web.de', website: 'http://troedelschmiede-erzgebirge.de' },
-      { name: 'Rochhausmühle', icon: 'clock',
-        street: 'Rochhausmühle', city: '09579 Grünhainichen',
-        email: 'rochhausmuehle@web.de', website: 'http://www.antiquitaeten-erzgebirge.de' },
-      { name: 'Feuerwerkland', icon: 'rocket',
-        street: 'Chemnitzer Straße 12', city: '09579 Grünhainichen',
-        phone: '0178 / 1340837', email: 'info@feuerwerkland-shop.de', website: 'http://feuerwerkland-shop.de' },
-    ],
-  },
-  {
-    slug: 'service',
-    title: 'Service & Genossenschaft',
-    eyebrow: 'Dienstleistung vor Ort',
-    shops: [
-      { name: 'Hörgeräte-Akustik Rochhausen GmbH', icon: 'ear',
-        street: 'Hauptstraße 42', city: 'Waldkirchen · 09579 Grünhainichen' },
-      { name: 'Raiffeisen BHG Waldkirchen e.G.', icon: 'tractor',
-        street: 'Am Bahnhof 1', city: 'Waldkirchen · 09579 Grünhainichen',
-        phone: '03725 / 2901-0', email: 'info@raiffeisen-waldkirchen.de', website: 'http://bhg-waldkirchen.de' },
-      { name: 'Freitag GmbH', icon: 'store',
-        street: 'Am Feldrain 10', city: 'Waldkirchen · 09579 Grünhainichen',
-        phone: '037294 / 90602', email: 'Freitag-waldkirchen@t-online.de' },
-      { name: 'Rolle Mühle', icon: 'wheat',
-        city: '09579 Grünhainichen' },
-    ],
-  },
-];
+/* Symbole: je Geschäft (Profil-Slug), sonst je Gruppe, sonst ein Laden */
+const ICON_GESCHAEFT: Record<string, string> = {
+  'baeckerei-vieweger': 'croissant', 'fleischerei-borstendorf': 'beef', 'fachhandel-fuer-getraenke-spirituosen-fethke': 'wine',
+  'wendt-kuehn-kg': 'sparkles', 'hobler-figuren-mit-herz-aus-gruenhainichen': 'heart-handshake', 'blank-kunsthandwerk': 'palette',
+  'baumanns-holzschnitzerei': 'axe', 'drechslerei-kluge': 'cylinder', 'holzhandel-koehler-inh-grit-haehnel': 'tree-pine',
+  'gartenbau-schneller': 'sprout', 'kommunalmaschinen-friedhofstechnik-fethke': 'wrench', 'auto-sachsse': 'car',
+  'antik-dekoration-jana-franke': 'armchair', 'troedelschmiede': 'hammer', 'rochhausmuehle': 'clock', 'feuerwerkland': 'rocket',
+  'hoergeraete-akustik-rochhausen-gmbh': 'ear', 'raiffeisen-bezugs-und-handelsgenossenschaft-waldkirchen-erzgeb-e-g': 'tractor',
+  'freitag-gmbh': 'store', 'rolle-muehle': 'wheat',
+};
+const ICON_GRUPPE: Record<string, string> = {
+  'einkaufen-essen-trinken': 'utensils', 'einkaufen-erzgebirgisches-handwerk': 'sparkles', 'einkaufen-haus-garten': 'house',
+  'einkaufen-antik-geschenke': 'gift', 'einkaufen-service': 'store',
+};
+const leer = (v?: string) => (v && v.trim() ? v.trim() : undefined);
+const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+const [profile, gruppen] = await Promise.all([getProfileNachKategorie('einkaufen'), getProfilUnterkategorien('einkaufen')]);
+const alsShop = (p: (typeof profile)[number], gruppe?: string): Shop => {
+  const k = p.kontakt ?? {};
+  return {
+    name: p.title,
+    icon: ICON_GESCHAEFT[p.slug] ?? (gruppe && ICON_GRUPPE[gruppe]) ?? 'store',
+    street: leer(k.strasse_hausnummer),
+    city: leer(k.plz_ort),
+    phone: leer(k.telefon),
+    mobil: leer(k.mobil),
+    email: leer(k.email),
+    website: leer(k.website),
+    zeiten: leer(k.oeffnungszeiten),
+    detail: p.hatDetailseite && text(p.contentHtml).length > 0 ? `/gewerbe/${p.slug}/` : undefined,
+  };
+};
+const nachName = (x: Shop, y: Shop) => x.name.localeCompare(y.name, 'de');
+const groups: Group[] = gruppen
+  .map((g) => ({
+    slug: g.slug.replace(/^einkaufen-/, ''),
+    title: g.name,
+    eyebrow: g.beschreibung,
+    shops: profile.filter((p) => p.kategorien.includes(g.slug)).map((p) => alsShop(p, g.slug)).sort(nachName),
+  }))
+  .filter((g) => g.shops.length > 0);
+/* Neue Geschäfte ohne Gruppe gehen nicht verloren */
+const ohneGruppe = profile.filter((p) => !gruppen.some((g) => p.kategorien.includes(g.slug)));
+if (ohneGruppe.length) groups.push({ slug: 'weitere', title: 'Weitere Geschäfte', eyebrow: 'In unserer Gemeinde', shops: ohneGruppe.map((p) => alsShop(p)).sort(nachName) });
 
 const totalShops = groups.reduce((n, g) => n + g.shops.length, 0);
 
@@ -151,9 +113,8 @@ await Promise.all(uniqueSlugs.map(async (slug) => {
       <span class="grh-eink-eyebrow">Vor Ort gut versorgt</span>
       <h1>Einkaufen in unserer Gemeinde</h1>
       <p class="grh-eink-lead">
-        Von der Bäckerei am Morgen über die Fleischerei in Borstendorf bis
-        zur weltweit bekannten Manufaktur Wendt &amp; Kühn: {totalShops}
-        Geschäfte, Handwerker und Manufakturen mit Adresse und Telefon.
+        {totalShops} Geschäfte, Handwerker und Manufakturen in unserer
+        Gemeinde mit Adresse, Telefon und Öffnungszeiten.
       </p>
       <nav class="grh-eink-anchors" aria-label="Sprung zu Kategorien">
         {groups.map((g) => <a href={`#${g.slug}`}>{g.title}</a>)}
@@ -173,11 +134,14 @@ await Promise.all(uniqueSlugs.map(async (slug) => {
             <li class="grh-eink-card">
               <div class="grh-eink-card__icon" aria-hidden="true" set:html={iconMap[s.icon] ?? ''} />
               <h3>{s.name}</h3>
-              <p class="grh-eink-card__addr">
-                {s.street && <>{s.street}<br /></>}{s.city}
-              </p>
+              {(s.street || s.city) && (
+                <p class="grh-eink-card__addr">
+                  {s.street && <>{s.street}<br /></>}{s.city}
+                </p>
+              )}
               <ul class="grh-eink-card__ways">
                 {s.phone && <li><span>Telefon</span><a href={telHref(s.phone)}>{s.phone}</a></li>}
+                {s.mobil && <li><span>Mobil</span><a href={telHref(s.mobil)}>{s.mobil}</a></li>}
                 {s.email && <li><span>E-Mail</span><a href={`mailto:${s.email}`}>{s.email}</a></li>}
                 {s.website && (
                   <li>
@@ -188,6 +152,13 @@ await Promise.all(uniqueSlugs.map(async (slug) => {
                   </li>
                 )}
               </ul>
+              {s.zeiten && (
+                <details class="grh-eink-card__zeiten">
+                  <summary>Öffnungszeiten</summary>
+                  <p>{s.zeiten}</p>
+                </details>
+              )}
+              {s.detail && <a class="grh-eink-card__mehr" href={s.detail}>Mehr erfahren →</a>}
             </li>
           ))}
         </ul>
@@ -386,4 +357,8 @@ await Promise.all(uniqueSlugs.map(async (slug) => {
     word-break: break-word;
   }
   .grh-eink-card__ways a:hover { color: var(--grh-moss-600); }
+  .grh-eink-card__zeiten { margin-top: var(--grh-space-3); font-size: 13px; color: var(--grh-stone-700); }
+  .grh-eink-card__zeiten summary { cursor: pointer; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; color: var(--grh-moss-600); }
+  .grh-eink-card__zeiten p { margin: 6px 0 0; white-space: pre-line; line-height: 1.55; }
+  .grh-eink-card__mehr { display: inline-block; margin-top: var(--grh-space-3); font-size: 12px; font-weight: 600; color: var(--grh-moss-600); }
 </style>

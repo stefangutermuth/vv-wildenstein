@@ -347,6 +347,18 @@ export async function getProfileNachKategorie(kategorie: string): Promise<Array<
     }));
 }
 
+/**
+ * Unterkategorien einer Profilkategorie (z. B. die Gruppen unter „Einkaufen“),
+ * in der Reihenfolge ihres Anlegens. Name und Beschreibung pflegt der Verband
+ * in WordPress unter Profile › Profilkategorien.
+ */
+export async function getProfilUnterkategorien(elternSlug: string): Promise<Array<{ slug: string; name: string; beschreibung: string }>> {
+  const eltern = await fetchJson<{ id: number }>('profilkategorie', { slug: elternSlug });
+  if (!eltern[0]) return [];
+  const kinder = await fetchJson<{ id: number; slug: string; name: string; description?: string }>('profilkategorie', { parent: String(eltern[0].id), orderby: 'id', order: 'asc' });
+  return kinder.map((t) => ({ slug: t.slug, name: decodeEntities(t.name), beschreibung: decodeEntities(t.description ?? '') }));
+}
+
 /* ============================================================
  * Personen (Gemeinderats-Mitglieder etc.)
  * ============================================================ */
