@@ -18,7 +18,7 @@ export interface Eintrag {
 
 const ART: Record<string, string> = {
   seite: 'Seite', neuigkeit: 'Neuigkeit', termin: 'Termin', ausflug: 'Ausflugsziel',
-  verein: 'Verein', gewerbe: 'Gewerbe', kita: 'Kita',
+  verein: 'Verein', gewerbe: 'Gewerbe', kita: 'Kita', leben: 'Leben',
 };
 
 const norm = (t: string) => t.toLowerCase()

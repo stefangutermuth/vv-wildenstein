@@ -2,11 +2,12 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import GrhPageHeader from '../../components/global/GrhPageHeader.astro';
 import GrhCardGrid from '../../components/global/GrhCardGrid.astro';
-import { getProfile } from '../../lib/cms-cpt';
+import { getProfile, istGewerbe } from '../../lib/cms-cpt';
 
 const profile = await getProfile();
 
 const items = profile
+  .filter(istGewerbe)
   .sort((a, b) => a.title.localeCompare(b.title, 'de'))
   .map((p) => ({
     href: `/gewerbe/${p.slug}`,
@@ -20,9 +21,9 @@ const items = profile
   <GrhPageHeader
     title="Gewerbe & Firmen"
     breadcrumb="Startseite · Gewerbe"
-    lead="Vom Holzhandwerk bis zur Pension: Unternehmen aus Grünhainichen, Borstendorf und Waldkirchen."
+    lead="Handwerk, Handel, Dienstleistungen und Praxen: Unternehmen aus Grünhainichen, Borstendorf und Waldkirchen."
     count={items.length}
-    countLabel="Profile"
+    countLabel="Unternehmen"
   />
   <section>
     <div class="grh-container">

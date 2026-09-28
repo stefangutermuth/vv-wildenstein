@@ -305,6 +305,19 @@ export interface ProfilItem {
   link: string;
 }
 
+/**
+ * Profilkategorien, die als Gewerbe gelten (Firmen, Läden, Handwerk, Praxen).
+ * Dieselbe Abgrenzung nutzt der Verband auf seiner Seite „Wirtschaft“.
+ * Seniorentreffs, Kitas, Hort, Schulen, Kirchen und Vereine sind kein Gewerbe;
+ * sie behalten ihre Detailseite, erscheinen aber nicht in der Gewerbeliste.
+ */
+export const GEWERBE_KATEGORIEN = new Set([
+  'dienstleistungen', 'einkaufen', 'handwerk',
+  'allgemeine-medizin', 'zahnarzt', 'physiotherapie', 'apotheke', 'gesundheit', 'tierarzt',
+]);
+export const istGewerbe = (p: { kategorien: string[] }) =>
+  p.kategorien.some((k) => GEWERBE_KATEGORIEN.has(k) || k.startsWith('einkaufen-'));
+
 export async function getProfile(): Promise<ProfilItem[]> {
   const data = await fetchJson<WPCPTBase>('profile');
   return data.filter(hasGrhOrtsteil).map((p) => ({

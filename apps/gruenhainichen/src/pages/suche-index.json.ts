@@ -9,7 +9,7 @@
 import type { APIRoute } from 'astro';
 import { navigation, type NavItem } from '../lib/navigation';
 import { getEvents, getNews } from '../lib/cms';
-import { getKitaProfile, getProfile, getTourism, getVereine } from '../lib/cms-cpt';
+import { getKitaProfile, getProfile, getTourism, getVereine, istGewerbe } from '../lib/cms-cpt';
 
 export interface SuchEintrag {
   /** Titel */
@@ -113,7 +113,7 @@ export const GET: APIRoute = async () => {
     ...vereine.map((v) => ({ t: v.title, u: `/vereine/${v.slug}`, k: 'verein', s: v.ortsteil ? ortsteilName[v.ortsteil] : undefined })),
     ...profile
       .filter((p) => !kitaSlugs.has(p.slug))
-      .map((p) => ({ t: p.title, u: `/gewerbe/${p.slug}`, k: 'gewerbe', s: [p.kategorien[0]?.replace(/-/g, ' '), p.ortsteil ? ortsteilName[p.ortsteil] : ''].filter(Boolean).join(' · ') || undefined })),
+      .map((p) => ({ t: p.title, u: `/gewerbe/${p.slug}`, k: istGewerbe(p) ? 'gewerbe' : 'leben', s: [p.kategorien.find((k) => !k.startsWith('einkaufen-'))?.replace(/-/g, ' '), p.ortsteil ? ortsteilName[p.ortsteil] : ''].filter(Boolean).join(' · ') || undefined })),
     ...kitas.map((k) => ({ t: k.title, u: `/leben/kita/${k.slug}`, k: 'kita', s: k.ortsteil ? ortsteilName[k.ortsteil] : undefined })),
   ];
 
