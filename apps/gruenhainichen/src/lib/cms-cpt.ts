@@ -162,6 +162,14 @@ function hasGrhOrtsteil(p: WPCPTBase): boolean {
   return slugs.some((s) => GRH_ORTSTEILE.has(s) || s.startsWith('waldkirchen'));
 }
 
+/** Bildnachweis aus der Bildunterschrift der Mediathek (z. B. für Fotos von
+ *  Wikimedia Commons: „Foto: Name, CC BY-SA 3.0“). Ohne HTML. */
+function pickImageCredit(p: WPCPTBase): string | undefined {
+  const media = p._embedded?.['wp:featuredmedia']?.[0] as { caption?: { rendered?: string } } | undefined;
+  const t = decodeEntities((media?.caption?.rendered ?? '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+  return t || undefined;
+}
+
 function pickImage(p: WPCPTBase): string | undefined {
   const media = p._embedded?.['wp:featuredmedia']?.[0];
   if (!media || (media.mime_type && !media.mime_type.startsWith('image/'))) return undefined;
@@ -316,7 +324,7 @@ export async function getProfile(): Promise<ProfilItem[]> {
  * `hatDetailseite` sagt, ob unter /gewerbe/<slug> eine Seite gebaut wird
  * (nur Einträge ohne oder mit Grünhainichener Ortsteil).
  */
-export async function getProfileNachKategorie(kategorie: string): Promise<Array<ProfilItem & { hatDetailseite: boolean; gemeindeteile: string[] }>> {
+export async function getProfileNachKategorie(kategorie: string): Promise<Array<ProfilItem & { hatDetailseite: boolean; gemeindeteile: string[]; bildnachweis?: string }>> {
   const data = await fetchJson<WPCPTBase>('profile');
   return data
     .filter((p) => termSlugs(p, 'profilkategorie').includes(kategorie))
@@ -331,6 +339,7 @@ export async function getProfileNachKategorie(kategorie: string): Promise<Array<
       link: p.link,
       hatDetailseite: hasGrhOrtsteil(p),
       gemeindeteile: termSlugs(p, 'gemeindeteil'),
+      bildnachweis: pickImageCredit(p),
     }));
 }
 
