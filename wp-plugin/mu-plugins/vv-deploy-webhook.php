@@ -151,8 +151,8 @@ function vv_deploy_trigger( $reason ) {
 	}
 	/* Sammelmodus (seit 1.2.0): Bei einer großen einmaligen Pflegerunde viele
 	   Änderungen am Stück machen, ohne dass jede einen Neubau anstößt.
-	   Einschalten:  wp site option update vv_deploy_pause 1
-	   Ausschalten:  wp site option delete vv_deploy_pause
+	   Einschalten:  wp option update vv_deploy_pause 1
+	   Ausschalten:  wp option delete vv_deploy_pause
 	   Danach einmal irgendeinen Eintrag speichern (oder den Workflow von Hand
 	   starten), dann baut alles einmal frisch. Vergessenes Ausschalten fängt der
 	   Morgenlauf ab, der unabhängig davon jeden Tag baut. */
