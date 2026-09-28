@@ -1,18 +1,24 @@
 ---
-import { getCollection } from 'astro:content';
 import GrhIcon from '../primitives/GrhIcon.astro';
 import GrhWappen from './GrhWappen.astro';
 import { navigation as nav } from '../../lib/navigation';
-import { getNews } from '../../lib/cms';
+import { getNews, getEvents } from '../../lib/cms';
 
 // Inhalte für die linke dunkle Spalte
 const newsAll = await getNews();
 const latestNews  = newsAll.filter((n) => n.category !== 'sperrung').slice(0, 3);
 const sperrungen  = newsAll.filter((n) => n.category === 'sperrung').slice(0, 2);
 
-const upcomingEvents = (await getCollection('events'))
-  .filter((e) => e.data.startDate.valueOf() >= Date.now() - 86400000)
-  .sort((a, b) => a.data.startDate.valueOf() - b.data.startDate.valueOf())
+/* Nächste Termine aus dem Veranstaltungskalender in WordPress (derselbe wie
+   auf /veranstaltungen). Bis 28.09.2026 kamen sie aus der lokalen Sammlung
+   src/content/events, einem alten Import: Termine fehlten, und einer führte
+   auf eine nicht mehr vorhandene Seite. Nur Termine, die heute oder später
+   beginnen; laufende mehrwöchige Ausstellungen stünden sonst mit einem
+   vergangenen Datum ganz oben. */
+const heute = new Date();
+heute.setHours(0, 0, 0, 0);
+const upcomingEvents = (await getEvents())
+  .filter((e) => e.startDate.valueOf() >= heute.valueOf())
   .slice(0, 3);
 
 /* Feste Spaltenaufteilung der Navigation. Der frühere automatische
@@ -95,12 +101,12 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
             <ul class="grh-mega__brief-events">
               {upcomingEvents.map((e) => (
                 <li>
-                  <a href={`/veranstaltungen/${e.slug}`}>
+                  <a href={`/veranstaltungen/${e.slug}/`}>
                     <span class="grh-mega__brief-date">
-                      <strong>{fmtDay.format(e.data.startDate)}</strong>
-                      <em>{fmtMonth.format(e.data.startDate).replace('.', '')}</em>
+                      <strong>{fmtDay.format(e.startDate)}</strong>
+                      <em>{fmtMonth.format(e.startDate).replace('.', '')}</em>
                     </span>
-                    <span class="grh-mega__brief-event-title">{e.data.title}</span>
+                    <span class="grh-mega__brief-event-title">{e.title}</span>
                   </a>
                 </li>
               ))}
@@ -214,9 +220,9 @@ const fmtMonth = new Intl.DateTimeFormat('de-DE', { month: 'short' });
           <ul>
             {upcomingEvents.slice(0, 3).map((e) => (
               <li>
-                <a href={`/veranstaltungen/${e.slug}`}>
-                  <time>{fmtShortDate.format(e.data.startDate)}</time>
-                  <span>{e.data.title}</span>
+                <a href={`/veranstaltungen/${e.slug}/`}>
+                  <time>{fmtShortDate.format(e.startDate)}</time>
+                  <span>{e.title}</span>
                 </a>
               </li>
             ))}
