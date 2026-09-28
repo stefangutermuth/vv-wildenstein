@@ -58,13 +58,15 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 - Physiotherapie Holler zusammengeführt: #41758 bleibt (Kategorie Physiotherapie), „Ines Holler“ #41786 im Papierkorb.
 - Neues Profil „Ev.-Luth. Kirchgemeinde Waldkirchen“ (#48603, Foto St. Georg). Kirchenchor #41411 nicht mehr unter „Kirchen“, PLZ korrigiert.
 - Eismühle im Flöhatal: Einkaufen › Essen & Trinken.
+- Adressen ergänzt: Kirche Borstendorf „An der Kirche, Borstendorf“; Rolle Mühle „Zschopenthal 15, OT Waldkirchen“.
 - Dr.-Ing. Jörg Walther (#41727): Titel korrigiert, Beschreibung „Ingenieur für Bauplanung und Sachverständiger“ (Auskunft Stefan).
+- **Falle:** `wp post update <id>` ohne Feld schlägt fehl und löst keinen Neubau aus; immer mit `--post_modified=…` aufrufen.
 - **Falle:** Bei neu per WP-CLI angelegten Profilen auch die ACF-Verweise `_feldname` = `field_…` setzen (von einem bestehenden Profil übernehmen), sonst zeigt der Editor die Felder leer.
 - Namen: Zahnarztpraxis Anke Nüßler, Ev.-Luth. Kirche Borstendorf, Ev.-Luth. Kirchgemeinde Börnichen, Frühere Grundschule Waldkirchen, Metallbau Fuhrmann Borstendorf.
 
 **Offen, Stefan klärt mit dem Verband:**
 - Ohne Kontaktdaten: Heizung Sanitär Hänel, Gebäudereinigung Knoch, Zimmerei Grämer, Hörgeräte-Akustik Rochhausen. Gibt es sie noch?
-- Kirche Borstendorf: Adresse und Text fehlen. Rolle Mühle: Adresse fehlt.
+- Kirche Borstendorf: Text fehlt (Adresse „An der Kirche“ seit 28.09. eingetragen, keine Hausnummer).
 - Kirchenchor und Feuerwehr Börnichen haben keine Profilkategorie (eigentlich Vereine).
 - Hort „Waldis Kids“ steht doppelt: eigenes Profil und Zusatzfeld im Schulprofil.
 - „Museum Erzgebirgische Volkskunst“ doppelt im Tourismus.
