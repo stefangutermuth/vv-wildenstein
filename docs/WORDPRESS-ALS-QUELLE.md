@@ -27,6 +27,8 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 | 28.09. | Bildunterschrift der Mediathek erscheint als Bildnachweis (Pflicht bei Commons-Fotos) |
 | 28.09. | Profilbilder in mindestens 600 px Breite (vorher 225 px bei Hochformaten) |
 | 28.09. | In WordPress: Fotos für Kirche Borstendorf (Commons, Miebner, CC BY-SA 3.0) und Waldkirchen (eigenes Foto St. Georg); Schulprofil umbenannt; Förderverein-Text ergänzt |
+| 28.09. | **Menü › Nächste Termine** (Desktop und Handy) aus dem WordPress-Kalender statt altem Import; toter Feuertheater-Link weg |
+| 28.09. | Detailseiten der Profile: Brotkrume und Zurück-Link nach Kategorie (Kirche › „Leben · Kirche“) statt immer „Gewerbe“ |
 | 28.09. | Hilfsfunktion `getProfileNachKategorie(slug)` in `apps/gruenhainichen/src/lib/cms-cpt.ts` |
 
 ## Offen · Grünhainichen (fester Text, obwohl es die Einträge in WordPress gibt)
@@ -38,7 +40,6 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 | Leben › Kirche | Einleitung (Jahreszahlen 1539/1900) und Schlusssatz noch fest |
 | Gemeinde › Verwaltung | Ämter (14) + Personen |
 | Gemeinde › Bürgermeister | Personen, Gremium „Bürgermeister“ (Robert Arnold) |
-| Menü › Nächste Termine | Veranstaltungen (vw_event); kommt heute aus altem lokalem Import, enthält einen toten Link (Feuertheater 10.10.) |
 | Ortsteil Borstendorf | Ortsvorsteherin aus Personen |
 | Gewerbe | zeigt alle Profile, auch Kitas, Kirchen, Seniorentreffs; auf echte Gewerbe-Kategorien beschränken. Kirchen-Detailseiten liegen dadurch unter /gewerbe/ |
 | Feuerwehren, Heiraten | in WordPress nur als normale Seiten, kein Inhaltstyp |
@@ -66,4 +67,4 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 ## Reihenfolge, wie mit Stefan besprochen
 
 Klein anfangen, Seite für Seite: Kirchen und Grundschule sind erledigt. Nächste Kandidaten:
-Einkaufen und Gesundheit, Termine im Menü, danach Datenpflege Ortsteile, dann Börnichen.
+Einkaufen und Gesundheit, Gewerbe auf echte Firmen beschränken, Zuverlässigkeit der Auslieferung, danach Datenpflege Ortsteile, dann Börnichen.
