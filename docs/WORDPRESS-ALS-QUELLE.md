@@ -51,15 +51,23 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 - **Tourismus** zeigt vier feste Kacheln; dieselben vier Einträge gibt es in WordPress.
 - **Verwaltung** fest im Code (Martin Trinks und Ämter gibt es in WordPress).
 
-## Offen · Datenpflege in WordPress (Verband oder Claude per WP-CLI, vorher Liste zur Freigabe)
+## Datenpflege in WordPress
 
-- **54 von 60 Profilen ohne Ortsteil** (`gemeindeteil`). Ohne Zuordnung behandelt Grünhainichen sie als „gilt überall“, Börnichen kann nicht filtern.
-- Kirchgemeinde Waldkirchen hat kein eigenes Profil, nur „Kirchenchor …“ (PLZ dort falsch: 09437 statt 09579).
-- Kirchgemeinde Grünhainichen: Fax nur im Fließtext; Titel „Evangelisch-Lutherischen Kirchgemeinde“ grammatisch schief.
-- „Museum Erzgebirgische Volkskunst“ doppelt im Tourismus; Seniorentreffs mit kopierten Adressen (…-borstendorf-2-2).
-- Physiotherapie Holler doppelt: „Ines Holler“ (Physiotherapie) und „Physiotherapie Holler“ (Dienstleistungen).
-- **Falle:** Kategorie-Zuordnungen per WP-CLI ändern das Änderungsdatum nicht; danach `post_modified` der betroffenen Profile setzen, sonst baut der Build aus dem Zwischenspeicher.
-- Hort „Waldis Kids“ steht doppelt: als eigenes Profil und im Zusatzfeld des Schulprofils.
+**Erledigt 28.09.2026 (von Stefan freigegeben, per WP-CLI):**
+- Alle 60 aktiven Profile haben einen Ortsteil (vorher fehlte er bei 54). Floßmühle zählt zu Borstendorf. Grundschule: Grünhainichen (Sitz) und Börnichen (Schüler).
+- Physiotherapie Holler zusammengeführt: #41758 bleibt (Kategorie Physiotherapie), „Ines Holler“ #41786 im Papierkorb.
+- Neues Profil „Ev.-Luth. Kirchgemeinde Waldkirchen“ (#48603, Foto St. Georg). Kirchenchor #41411 nicht mehr unter „Kirchen“, PLZ korrigiert.
+- Eismühle im Flöhatal: Einkaufen › Essen & Trinken.
+- Namen: Zahnarztpraxis Anke Nüßler, Ev.-Luth. Kirche Borstendorf, Ev.-Luth. Kirchgemeinde Börnichen, Frühere Grundschule Waldkirchen, Metallbau Fuhrmann Borstendorf.
+
+**Offen, Stefan klärt mit dem Verband:**
+- Dr. Jörg Walther (Dienstleistungen, ohne Beschreibung): was für ein Betrieb, gibt es ihn noch?
+- Ohne Kontaktdaten: Heizung Sanitär Hänel, Gebäudereinigung Knoch, Zimmerei Grämer, Hörgeräte-Akustik Rochhausen. Gibt es sie noch?
+- Kirche Borstendorf: Adresse und Text fehlen. Rolle Mühle: Adresse fehlt.
+- Kirchenchor und Feuerwehr Börnichen haben keine Profilkategorie (eigentlich Vereine).
+- Hort „Waldis Kids“ steht doppelt: eigenes Profil und Zusatzfeld im Schulprofil.
+- „Museum Erzgebirgische Volkskunst“ doppelt im Tourismus.
+- **Falle:** Kategorie- und Ortsteil-Zuordnungen per WP-CLI ändern das Änderungsdatum nicht; danach `post_modified` setzen, sonst baut der Build aus dem Zwischenspeicher.
 
 ## Offen · Zuverlässigkeit der Auslieferung
 
