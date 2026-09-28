@@ -7,7 +7,7 @@
  * derselben Kategorie und erscheint unten als Rückblick.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getProfileNachKategorie } from '../../lib/cms-cpt';
+import { getProfileNachKategorie, getVereine } from '../../lib/cms-cpt';
 
 const schulen = await getProfileNachKategorie('schule');
 const schule = schulen.find((p) => /im gr(ü|ue)nen/i.test(p.title)) ?? schulen[0];
@@ -20,10 +20,15 @@ const tel = (v: string) => `tel:${v.replace(/[^+\d]/g, '').replace(/^0/, '+49')}
 const webLabel = (u: string) => u.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&#8222;|&#8220;/g, '"').replace(/&#8211;/g, '-').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/&[#\w]+;/g, ' ').replace(/\s+/g, ' ').trim();
 
+const titel = schule?.title ?? 'Grundschule';
+const einleitung = schule?.auszug;
 const photo = schule?.image;
+/* Förderverein: eigenes Vereinsprofil in WordPress (Vereine), Text und Link von dort */
+const foerderverein = (await getVereine()).find((v) => /f(ö|oe)rderverein.*grundschule/i.test(v.title));
+const foerdervereinText = foerderverein ? text(foerderverein.contentHtml) : undefined;
 const website = leer(k.website);
 const kontakt = {
-  name: leer(k.fuehrende_person) ?? 'Grundschule „Im Grünen“',
+  name: leer(k.fuehrende_person) ?? titel,
   strasse: leer(k.strasse_hausnummer),
   ort: leer(k.plz_ort),
   telefon: leer(k.telefon),
@@ -35,20 +40,15 @@ const kontakt = {
 const weitere = leer(k.oeffnungszeiten);
 const hinweis = leer(k.informationen);
 ---
-<BaseLayout title={`Grundschule „Im Grünen" · Gemeinde Grünhainichen`} header="compact">
+<BaseLayout title={`${titel} · Gemeinde Grünhainichen`} header="compact">
 
   {/* === Hero mit Schul-Foto ============================================ */}
   <header class="grh-gs-head">
     <div class="grh-container grh-gs-head__grid">
       <div class="grh-gs-head__text">
         <p class="grh-gs-crumb">Leben · Grundschule</p>
-        <span class="grh-gs-eyebrow">Lernen mit Wald, Garten &amp; Hühnerstall</span>
-        <h1>Grundschule „Im Grünen"</h1>
-        <p class="grh-gs-lead">
-          Seit dem 1. November 2022 lernen die Grundschulkinder aus
-          Borstendorf, Grünhainichen, Waldkirchen und Börnichen in einem
-          frischen Neubau am Ortsrand, buchstäblich „im Grünen".
-        </p>
+        <h1>{titel}</h1>
+        {einleitung && <p class="grh-gs-lead">{einleitung}</p>}
         {website && (
           <a class="grh-gs-cta" href={website} target="_blank" rel="noopener">
             {webLabel(website)} ↗
@@ -57,7 +57,7 @@ const hinweis = leer(k.informationen);
       </div>
       {photo && (
         <figure class="grh-gs-photo">
-          <img src={photo} alt={`Grundschule „Im Grünen"`} loading="eager" />
+          <img src={photo} alt={titel} loading="eager" />
         </figure>
       )}
     </div>
@@ -68,8 +68,7 @@ const hinweis = leer(k.informationen);
     <section class="grh-gs-block">
       <div class="grh-container grh-gs-ueber">
         <header class="grh-gs-section-head">
-          <span class="grh-gs-section-eyebrow">Was unsere Schule auszeichnet</span>
-          <h2>Lernen in besonderer Umgebung</h2>
+          <span class="grh-gs-section-eyebrow">Über die Schule</span>
         </header>
         <div class="grh-prose grh-gs-prose" set:html={schule.contentHtml} />
       </div>
@@ -80,13 +79,8 @@ const hinweis = leer(k.informationen);
   <section class="grh-gs-block grh-gs-block--alt">
     <div class="grh-container grh-gs-grid">
       <article class="grh-gs-card">
-        <span class="grh-gs-card__label">Sekretariat</span>
-        <h2>Kontakt &amp; Anmeldung</h2>
-        <p>
-          Anmeldungen für Schulanfänger und alle organisatorischen Fragen
-          laufen über das Sekretariat. Sprechzeiten und genaue Termine
-          finden Sie auf der Schul-Website.
-        </p>
+        <span class="grh-gs-card__label">Schule</span>
+        <h2>Kontakt</h2>
         <div class="grh-gs-contact">
           <strong>{kontakt.name}</strong>
           {(kontakt.strasse || kontakt.ort) && <span>{kontakt.strasse}<br />{kontakt.ort}</span>}
@@ -103,16 +97,14 @@ const hinweis = leer(k.informationen);
       <article class="grh-gs-card grh-gs-card--accent">
         <span class="grh-gs-card__label">Hort &amp; Förderverein</span>
         <h2>Rund um die Schule</h2>
-        <p>
-          Der <strong>Förderverein Grundschule im Grünen</strong> unterstützt
-          die Arbeit der Schule mit zusätzlichen Mitteln für Projekte,
-          Ausstattung und besondere Aktionen.
-        </p>
         {hinweis && <p>{hinweis}</p>}
         {weitere && <p class="grh-gs-weitere">{weitere}</p>}
-        <a class="grh-gs-foev" href="/vereine/foerderverein-grundschule-im-gruenen/">
-          Zum Vereinsprofil →
-        </a>
+        {foerdervereinText && <p>{foerdervereinText}</p>}
+        {foerderverein && (
+          <a class="grh-gs-foev" href={`/vereine/${foerderverein.slug}/`}>
+            {foerderverein.title} →
+          </a>
+        )}
       </article>
     </div>
   </section>

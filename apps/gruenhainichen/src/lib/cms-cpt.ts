@@ -326,7 +326,7 @@ export async function getProfile(): Promise<ProfilItem[]> {
  * `hatDetailseite` sagt, ob unter /gewerbe/<slug> eine Seite gebaut wird
  * (nur Einträge ohne oder mit Grünhainichener Ortsteil).
  */
-export async function getProfileNachKategorie(kategorie: string): Promise<Array<ProfilItem & { hatDetailseite: boolean; gemeindeteile: string[]; bildnachweis?: string }>> {
+export async function getProfileNachKategorie(kategorie: string): Promise<Array<ProfilItem & { hatDetailseite: boolean; gemeindeteile: string[]; bildnachweis?: string; auszug?: string }>> {
   const data = await fetchJson<WPCPTBase>('profile');
   return data
     .filter((p) => termSlugs(p, 'profilkategorie').includes(kategorie))
@@ -342,6 +342,8 @@ export async function getProfileNachKategorie(kategorie: string): Promise<Array<
       hatDetailseite: hasGrhOrtsteil(p),
       gemeindeteile: termSlugs(p, 'gemeindeteil'),
       bildnachweis: pickImageCredit(p),
+      /** Textauszug (seit vv-profil-auszug.php für Profile freigeschaltet) */
+      auszug: decodeEntities(stripHtml(p.excerpt?.rendered ?? '')).trim() || undefined,
     }));
 }
 
