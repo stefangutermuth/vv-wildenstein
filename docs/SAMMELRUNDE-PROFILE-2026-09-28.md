@@ -35,3 +35,13 @@ Abgleich der Gewerbeformulare von 2023/2024 mit den WordPress-Profilen (vv-wilde
 | 29 | Kunstgewerbe Uwe Kluge | #48609 ergänzt | Formular 06.10.2023 liegt jetzt vor (Einwilligung), Produkte, Tradition 1922 | – |
 | 30 | Gebr. Kluge Drechslerei | #41748 abgeglichen | Name, Telefon/Fax 1326, Produkte, Logo #48632 | Formular: „kein Computer“, Website drechslerei-kluge.de läuft aber – lassen? |
 | – | Zimmerei Immanuel Otto | #46690 unverändert | WP 2026 gepflegt, stimmt mit Formular überein | Sitz Leubsdorf (außerhalb), Lager Floßmühle: so lassen? |
+
+## Abschluss 28.09.2026, 19:40
+
+- Gottwald (#48606) auf Entwurf gesetzt: GmbH laut Handelsregister 12/2023 gelöscht, Domain geparkt. Wieder veröffentlichen, falls der Verband bestätigt, dass das Einzelunternehmen weiterläuft.
+- Neubert (#48626) hat sein Logo (Bildschirmfoto aus der PowerPoint-Datei, Stefan).
+- Elektro-Bräuer: Domain aktiv, Mailserver läuft, nur Website abgeschaltet: bleibt ohne Website.
+- Knöbel: Domain abgelaufen, Laden laut Bewertungen (Stand 11/2025) aktiv: bleibt mit Telefon, ohne E-Mail/Website.
+- Betriebe ohne Logo bleiben ohne (Stefan: bessere Daten müssen von den Betrieben kommen).
+- Sammelmodus aus, ein gemeinsamer Neubau (Grünhainichen, Börnichen, Verband) erfolgreich; Stichproben live geprüft: /gewerbe 56 Unternehmen, Einkaufen, Gesundheit, Detailseiten, Verband /wirtschaft.
+- Offen bleiben die Rückfragen in der Tabelle oben (Widersprüche, Handschrift, Gutschein).
