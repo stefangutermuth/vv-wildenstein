@@ -73,11 +73,24 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 - „Museum Erzgebirgische Volkskunst“ doppelt im Tourismus.
 - **Falle:** Kategorie- und Ortsteil-Zuordnungen per WP-CLI ändern das Änderungsdatum nicht; danach `post_modified` setzen, sonst baut der Build aus dem Zwischenspeicher.
 
-## Offen · Zuverlässigkeit der Auslieferung
+## Zuverlässigkeit der Auslieferung (erledigt 28.09.2026)
 
-1. Neubau aus WordPress immer **ohne Zwischenspeicher** (heute können gelöschte oder auf Entwurf gesetzte Einträge bis zu 6 h sichtbar bleiben).
-2. Drossel im Webhook umdrehen: **nach 90 s Ruhe bauen** statt beim ersten Speichern (heute können Korrekturen innerhalb von 90 s bis zum nächsten Morgen hängen).
-3. Auch **Änderungen in der Mediathek** (Bild tauschen, Bildunterschrift) lösen einen Neubau aus.
+1. **Frischer Bau:** Läufe, die WordPress (`repository_dispatch`), der Morgenlauf
+   (`schedule`) oder Hand (`workflow_dispatch`) anstößt, setzen `WP_CACHE=fresh`: der
+   Zwischenspeicher wird zu Beginn einmal geleert, danach normal benutzt (eine
+   Anfrage je Adresse). Gelöschte/Entwurf-Einträge, Bild- und Kategorieänderungen
+   sind sofort weg bzw. da. Code-Pushes bauen weiter mit Zwischenspeicher.
+   Dauer eines frischen Baus: rund 5 bis 6 Minuten.
+2. **Webhook 1.1.0:** Sperre 15 statt 90 s. GitHub hält pro Workflow höchstens
+   einen wartenden Lauf, ein neuer Auftrag ersetzt ihn; der wartende Lauf baut
+   mit dem neuesten Stand. Getestet: zwei Speichervorgänge im Abstand von 20 s
+   ergeben einen laufenden und einen wartenden Bau.
+3. **Webhook 1.1.0 löst auch aus bei:** Mediathek (Titel, Bildunterschrift,
+   Zuschnitt; nicht beim bloßen Hochladen) und Kategorien/Ortsteilen (anlegen,
+   umbenennen, löschen). Getestet mit Speichern eines Bildes.
+
+Nicht abgedeckt: Alternativtext eines Bildes allein (reines Metafeld ohne Hook);
+fällt beim nächsten Speichern oder spätestens morgens mit.
 
 ## Bilder: zu kleine Uploads
 
@@ -98,4 +111,4 @@ Wendt-&-Kühn-Termine mit 350 px, Plakate als Bildschirmfoto, Logos.
 ## Reihenfolge, wie mit Stefan besprochen
 
 Klein anfangen, Seite für Seite: Kirchen und Grundschule sind erledigt. Nächste Kandidaten:
-Zuverlässigkeit der Auslieferung, danach Datenpflege Ortsteile, dann Börnichen.
+ Datenpflege Ortsteile, dann Börnichen.
