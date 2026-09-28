@@ -26,6 +26,15 @@ const META_FILE = path.join(CACHE_DIR, '_meta.json');
 
 const CACHE_DISABLED =
   (typeof process !== 'undefined' ? process.env.WP_CACHE : undefined) === 'off';
+/* WP_CACHE=fresh: Zwischenspeicher zu Beginn des Baus einmal leeren und dann
+   normal benutzen. Für Bauten, die WordPress anstößt, und den Morgenlauf.
+   Die Aktualitätsprüfung erkennt nur Änderungen, die ein Änderungsdatum
+   bewegen; gelöschte oder auf Entwurf gesetzte Einträge, geänderte Bilder und
+   Kategorien fielen durch und blieben bis zu 6 Stunden sichtbar. Ganz ohne
+   Zwischenspeicher (WP_CACHE=off) lädt dagegen jede Seite alles neu. */
+const CACHE_FRESH =
+  (typeof process !== 'undefined' ? process.env.WP_CACHE : undefined) === 'fresh';
+let freshGeleert = false;
 
 interface CacheMeta {
   /** ISO-Timestamp: höchstes modified_gmt aus allen relevanten CPTs beim letzten fresh-check */
@@ -204,6 +213,14 @@ async function invalidateAll(): Promise<void> {
  */
 export async function cachedFetch(url: string, init: RequestInit = {}, wpBase = ''): Promise<Response> {
   if (CACHE_DISABLED) return fetch(url, init);
+
+  if (CACHE_FRESH && !freshGeleert) {
+    freshGeleert = true;
+    freshChecked = true; // Frische ist durch das Leeren gegeben
+    console.log('[wp-cache] WP_CACHE=fresh: Zwischenspeicher geleert, alle Inhalte frisch aus WordPress');
+    await invalidateAll();
+    await writeMeta({ lastCheckAt: new Date().toISOString(), cachedAt: new Date().toISOString() });
+  }
 
   // Falls's ein WP-Base gibt, prüfen wir gemeinsam einmal die Frische
   if (wpBase) await ensureFreshness(wpBase);

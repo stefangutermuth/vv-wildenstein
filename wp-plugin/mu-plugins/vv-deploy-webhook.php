@@ -5,7 +5,7 @@
  *              Börnichen …) an, sobald auf vv-wildenstein.com ein Beitrag oder
  *              Termin angelegt, geändert oder gelöscht wird.
  * Author:      GUMU
- * Version:     1.0.0
+ * Version:     1.1.0
  *
  * INSTALLATION (auf vv-wildenstein.com):
  *   1. Diese Datei nach  wp-content/mu-plugins/vv-deploy-webhook.php  kopieren.
@@ -30,7 +30,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const VV_DEPLOY_REPO       = 'stefangutermuth/vv-wildenstein';
 const VV_DEPLOY_EVENT_TYPE = 'vv-content-updated';
-const VV_DEPLOY_THROTTLE   = 90; // Sekunden: Bursts (mehrere Speichervorgänge) zu 1 Build bündeln
+/* 15 statt 90 Sekunden (28.09.2026). Die Sperre verwarf jeden Speichervorgang
+   im Fenster nach dem ersten. Mit 90 s konnte eine schnelle Korrektur nach dem
+   Datenabruf des Baus landen und erst am nächsten Morgen erscheinen. 15 s
+   fangen nur das doppelte save_post eines einzelnen Speicherns ab; der Bau
+   holt seine Daten frühestens nach Checkout und npm ci, also deutlich später.
+   Bündeln übernimmt GitHub: pro Workflow wartet höchstens ein Lauf, ein
+   neuer Auftrag ersetzt den wartenden. */
+const VV_DEPLOY_THROTTLE   = 15;
 
 /**
  * Post-Typen, die einen Rebuild auslösen. Beiträge (News) + alle Event-artigen
@@ -104,6 +111,34 @@ foreach ( array( 'trashed_post', 'untrashed_post', 'deleted_post' ) as $hook ) {
 		}
 		vv_deploy_trigger( "{$hook}#{$post_id}" );
 	} );
+}
+
+/**
+ * Mediathek: Titel, Bildunterschrift, Alternativtext oder Zuschnitt eines
+ * Bildes ändern die Website (Bildnachweis, Alt-Text, Bild selbst), speichern
+ * aber keinen Beitrag. Bis 1.1.0 löste das keinen Neubau aus.
+ */
+add_action( 'edit_attachment', function ( $post_id ) {
+	if ( wp_attachment_is_image( $post_id ) ) {
+		vv_deploy_trigger( "media:edit#{$post_id}" );
+	}
+} );
+add_filter( 'wp_save_image_editor_file', function ( $override, $filename, $image, $mime_type, $post_id ) {
+	vv_deploy_trigger( "media:bearbeitet#{$post_id}" );
+	return $override;
+}, 10, 5 );
+
+/**
+ * Kategorien und Ortsteile: Umbenennen, neue Beschreibung (etwa die Gruppen
+ * unter „Einkaufen“), Anlegen und Löschen ändern Überschriften und Listen.
+ */
+foreach ( array( 'created_term', 'edited_term', 'delete_term' ) as $vv_hook ) {
+	add_action( $vv_hook, function ( $term_id, $tt_id, $taxonomy ) use ( $vv_hook ) {
+		$relevant = array( 'profilkategorie', 'gemeindeteil', 'tourismus_kat', 'category', 'gremien', 'downloadkategorie', 'vw_event_category', 'vw_standort', 'vvw_stelle_ort', 'vvw_stelle_art' );
+		if ( in_array( $taxonomy, $relevant, true ) ) {
+			vv_deploy_trigger( "term:{$vv_hook}:{$taxonomy}#{$term_id}" );
+		}
+	}, 10, 3 );
 }
 
 /**
