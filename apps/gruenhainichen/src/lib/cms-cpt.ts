@@ -173,13 +173,15 @@ function pickImageCredit(p: WPCPTBase): string | undefined {
 function pickImage(p: WPCPTBase): string | undefined {
   const media = p._embedded?.['wp:featuredmedia']?.[0];
   if (!media || (media.mime_type && !media.mime_type.startsWith('image/'))) return undefined;
-  const sizes = media.media_details?.sizes ?? {};
-  return (
-    sizes['medium_large']?.source_url ??
-    sizes['large']?.source_url ??
-    sizes['medium']?.source_url ??
-    media.source_url
-  );
+  /* Kleinste Fassung, die mindestens 600 px breit ist. Früher galt die
+     Reihenfolge medium_large › large › medium; bei Hochformaten legt diese
+     Installation aber weder medium_large noch large an, und die Seite zog
+     die 225 px breite „medium“-Fassung, die in jeder Karte unscharf war. */
+  const sizes = (media.media_details?.sizes ?? {}) as Record<string, { source_url?: string; width?: number }>;
+  const passend = Object.values(sizes)
+    .filter((g) => g.source_url && (g.width ?? 0) >= 600)
+    .sort((a, b) => (a.width ?? 0) - (b.width ?? 0))[0];
+  return passend?.source_url ?? media.source_url;
 }
 
 const NAMED_ENTITIES: Record<string, string> = {
