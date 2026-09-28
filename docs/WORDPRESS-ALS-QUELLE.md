@@ -110,5 +110,8 @@ Wendt-&-Kühn-Termine mit 350 px, Plakate als Bildschirmfoto, Logos.
 
 ## Reihenfolge, wie mit Stefan besprochen
 
-Klein anfangen, Seite für Seite: Kirchen und Grundschule sind erledigt. Nächste Kandidaten:
- Datenpflege Ortsteile, dann Börnichen.
+Klein anfangen, Seite für Seite. Erledigt: Kirchen, Grundschule, Menü-Termine,
+Gesundheit, Einkaufen, Profilpflege, Gewerbe-Filter, Auslieferung.
+Nächste Kandidaten: restliche feste Seiten auf Grünhainichen (Verwaltung,
+Bürgermeister, Feuerwehren, Heiraten), Darstellungsschutz für kleine Bilder,
+dann Börnichen (Gewerbe, Vereine, Tourismus, Verwaltung).
