@@ -13,7 +13,7 @@
         const list = next;
         const status = bar.querySelector('.vw-events-filter-status');
 
-        const state = { quick: 'all', month: '', search: '' };
+        const state = { quick: 'all', month: '', duration: '', search: '' };
 
         // Pre-cache durchsuchbaren Text pro Card (Title + Where + Tags), kleingeschrieben
         const cards = Array.from(list.querySelectorAll('.vw-event-card, .vw-event-up'));
@@ -23,6 +23,59 @@
                 if (el.textContent) parts.push(el.textContent);
             });
             card.dataset.searchText = parts.join(' ').toLowerCase();
+            // Markiere Karten ohne Bild — wird in der Listenansicht ausgeblendet/ohne Spalte gerendert
+            if (!card.querySelector('.vw-event-card-image-fg, .vw-event-up-image img')) {
+                card.classList.add('has-no-image');
+            }
+        });
+
+        // View-Toggle (Kacheln / Liste)
+        bar.querySelectorAll('.vw-events-viewtoggle button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                bar.querySelectorAll('.vw-events-viewtoggle button').forEach((b) => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                list.classList.toggle('is-list-view', btn.dataset.view === 'list');
+                layoutMasonry();
+            });
+        });
+
+        // Masonry: verteile sichtbare Karten reihen-weise (links→rechts) in N Spalten.
+        // Spaltenanzahl bestimmt sich aus Container-Breite, Min-Spaltenbreite 240 px.
+        function layoutMasonry() {
+            // Bestehende Spalten auflösen und Karten in ORIGINAL-Reihenfolge zurückhängen,
+            // damit Listenansicht / DOM die chronologische Sortierung behält.
+            list.querySelectorAll('.vw-events-col').forEach((col) => col.remove());
+            cards.forEach((card) => list.appendChild(card));
+            if (list.classList.contains('is-list-view')) return;
+
+            const visible = cards.filter((c) => !c.classList.contains('is-hidden') && c.classList.contains('vw-event-card'));
+            if (visible.length === 0) return;
+
+            const minCol = 240;
+            const gap = 24; // 1.5rem
+            const w = list.clientWidth || list.parentElement.clientWidth || 960;
+            const N = Math.max(1, Math.min(visible.length, Math.floor((w + gap) / (minCol + gap))));
+
+            const columns = [];
+            for (let i = 0; i < N; i++) {
+                const col = document.createElement('div');
+                col.className = 'vw-events-col';
+                columns.push(col);
+                list.appendChild(col);
+            }
+            visible.forEach((card, i) => columns[i % N].appendChild(card));
+        }
+
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            if (resizeTimer) clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(layoutMasonry, 120);
+        });
+
+        // Initiale Verteilung + Re-Layout sobald Bilder ihre Höhe kennen
+        layoutMasonry();
+        list.querySelectorAll('img').forEach((img) => {
+            if (!img.complete) img.addEventListener('load', layoutMasonry, { once: true });
         });
 
         // Quick-Tabs
@@ -51,6 +104,15 @@
                     if (allBtn) allBtn.classList.add('is-active');
                     state.quick = 'all';
                 }
+                apply();
+            });
+        }
+
+        // Dauer-Dropdown (Eintägig / Mehrtägig)
+        const durationSel = bar.querySelector('select[data-filter="duration"]');
+        if (durationSel) {
+            durationSel.addEventListener('change', () => {
+                state.duration = durationSel.value;
                 apply();
             });
         }
@@ -111,6 +173,13 @@
 
                 if (state.quick !== 'all' && !inRange(card, state.quick)) show = false;
                 if (show && state.month && card.dataset.month !== state.month) show = false;
+                if (show && state.duration) {
+                    const s = card.dataset.start;
+                    const e = card.dataset.end || s;
+                    const isMulti = !!s && !!e && s !== e;
+                    if (state.duration === 'single' && isMulti) show = false;
+                    if (state.duration === 'multi' && !isMulti) show = false;
+                }
                 if (show && state.search) {
                     const text = card.dataset.searchText || '';
                     if (!text.includes(state.search)) show = false;
@@ -120,8 +189,10 @@
                 if (show) visible++;
             });
 
+            layoutMasonry();
+
             if (status) {
-                if (visible === cards.length && state.quick === 'all' && !state.month && !state.search) {
+                if (visible === cards.length && state.quick === 'all' && !state.month && !state.duration && !state.search) {
                     status.hidden = true;
                     status.textContent = '';
                 } else if (visible === 0) {

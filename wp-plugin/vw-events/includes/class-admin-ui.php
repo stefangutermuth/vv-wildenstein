@@ -32,6 +32,7 @@ final class VW_Events_Admin_UI {
             'archive_url'      => '',
             'submit_url'       => '',
             'master_blog_id'   => 0,
+            'master_url'       => '',
             'webhook_map'      => [],
         ];
         $opt = get_option( self::SETTINGS_OPTION, [] );
@@ -241,6 +242,7 @@ final class VW_Events_Admin_UI {
             'archive_url'      => esc_url_raw( $input['archive_url'] ?? '' ),
             'submit_url'       => esc_url_raw( $input['submit_url'] ?? '' ),
             'master_blog_id'   => max( 0, (int) ( $input['master_blog_id'] ?? 0 ) ),
+            'master_url'       => rtrim( esc_url_raw( $input['master_url'] ?? '' ), '/' ),
             'webhook_map'      => [],
         ];
         if ( ! empty( $input['webhook_map'] ) && is_array( $input['webhook_map'] ) ) {
@@ -258,42 +260,84 @@ final class VW_Events_Admin_UI {
     public static function render_settings_page(): void {
         $s = self::get_settings();
         $standorte = get_terms( [ 'taxonomy' => 'vw_standort', 'hide_empty' => false ] );
+        $opt       = esc_attr( self::SETTINGS_OPTION );
+        $tabs = [
+            'general'   => __( 'Allgemein',       'vw-events' ),
+            'sites'     => __( 'Multisite & Remote', 'vw-events' ),
+            'turnstile' => __( 'Turnstile',       'vw-events' ),
+            'webhooks'  => __( 'Deploy-Hooks',    'vw-events' ),
+        ];
+        $active = isset( $_GET['tab'] ) && isset( $tabs[ $_GET['tab'] ] ) ? sanitize_key( $_GET['tab'] ) : 'general';
+        $base   = admin_url( 'edit.php?post_type=vw_event&page=vw_events_settings' );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'VW Events — Einstellungen', 'vw-events' ); ?></h1>
+            <h2 class="nav-tab-wrapper">
+                <?php foreach ( $tabs as $key => $label ) : ?>
+                    <a href="<?php echo esc_url( add_query_arg( 'tab', $key, $base ) ); ?>"
+                       class="nav-tab<?php echo $active === $key ? ' nav-tab-active' : ''; ?>">
+                        <?php echo esc_html( $label ); ?>
+                    </a>
+                <?php endforeach; ?>
+            </h2>
             <form method="post" action="options.php">
                 <?php settings_fields( 'vw_events_settings_group' ); ?>
-                <table class="form-table">
-                    <tr><th><label><?php esc_html_e( 'Admin-Benachrichtigungs-E-Mail', 'vw-events' ); ?></label></th>
-                        <td><textarea class="large-text" rows="3" name="<?php echo esc_attr( self::SETTINGS_OPTION ); ?>[admin_email]" placeholder="info@example.com, redaktion@example.com"><?php echo esc_textarea( $s['admin_email'] ); ?></textarea>
-                        <p class="description"><?php esc_html_e( 'Mehrere E-Mail-Adressen mit Komma, Semikolon oder Zeilenumbruch trennen. Alle erhalten die Benachrichtigung bei neuen Frontend-Einreichungen.', 'vw-events' ); ?></p></td></tr>
-                    <tr><th><label><?php esc_html_e( 'Turnstile Site-Key', 'vw-events' ); ?></label></th>
-                        <td><input type="text" class="regular-text" name="<?php echo esc_attr( self::SETTINGS_OPTION ); ?>[turnstile_site]" value="<?php echo esc_attr( $s['turnstile_site'] ); ?>"></td></tr>
-                    <tr><th><label><?php esc_html_e( 'Turnstile Secret-Key', 'vw-events' ); ?></label></th>
-                        <td><input type="password" class="regular-text" name="<?php echo esc_attr( self::SETTINGS_OPTION ); ?>[turnstile_secret]" value="<?php echo esc_attr( $s['turnstile_secret'] ); ?>"></td></tr>
-                    <?php if ( is_multisite() ) : ?>
-                    <tr><th><label><?php esc_html_e( 'Master-Blog-ID (Multisite)', 'vw-events' ); ?></label></th>
-                        <td><input type="number" min="0" class="small-text" name="<?php echo esc_attr( self::SETTINGS_OPTION ); ?>[master_blog_id]" value="<?php echo esc_attr( (string) $s['master_blog_id'] ); ?>">
-                        <p class="description"><?php printf(
-                            esc_html__( 'Aktuelle Blog-ID: %d. Auf Subsites die ID des Master-Blogs eintragen, dann werden Events von dort gelesen. Auf dem Master-Blog leer lassen oder die eigene ID eintragen.', 'vw-events' ),
-                            (int) get_current_blog_id()
-                        ); ?></p></td></tr>
-                    <?php endif; ?>
-                    <tr><th><label><?php esc_html_e( 'Übersichtsseite (URL)', 'vw-events' ); ?></label></th>
-                        <td><input type="text" class="regular-text" name="<?php echo esc_attr( self::SETTINGS_OPTION ); ?>[archive_url]" value="<?php echo esc_attr( $s['archive_url'] ); ?>" placeholder="/leben-freizeit/veranstaltungen/">
-                        <p class="description"><?php esc_html_e( 'WP-Seite mit dem Shortcode [vw_events_list]. Wenn gesetzt, wird /veranstaltungen/ dorthin weitergeleitet und der „Zurück"-Link auf Detailseiten zeigt dorthin.', 'vw-events' ); ?></p></td></tr>
-                    <tr><th><label><?php esc_html_e( 'Einreichungs-Seite (URL)', 'vw-events' ); ?></label></th>
-                        <td><input type="text" class="regular-text" name="<?php echo esc_attr( self::SETTINGS_OPTION ); ?>[submit_url]" value="<?php echo esc_attr( $s['submit_url'] ); ?>" placeholder="https://vv-wildenstein.com/event-einreichen/">
-                        <p class="description"><?php esc_html_e( 'Volle URL der Seite mit dem [vw_event_submit]-Form (sollte nur auf der Master-Site liegen). Auf Subsites zeigt der Shortcode dann nur einen Hinweis + Button zu dieser URL — der Upload läuft ausschließlich auf dem Master.', 'vw-events' ); ?></p></td></tr>
-                </table>
-                <h2><?php esc_html_e( 'Cloudflare Deploy-Hooks pro Standort', 'vw-events' ); ?></h2>
-                <p class="description"><?php esc_html_e( 'Eine Webhook-URL pro Standort. Bei Veröffentlichung wird der jeweilige Hook ausgelöst. „verband-weit" triggert alle Hooks.', 'vw-events' ); ?></p>
-                <table class="form-table">
-                    <?php if ( is_array( $standorte ) ) : foreach ( $standorte as $term ) : ?>
-                    <tr><th><label><?php echo esc_html( $term->name ); ?> <code><?php echo esc_html( $term->slug ); ?></code></label></th>
-                        <td><input type="url" class="regular-text" name="<?php echo esc_attr( self::SETTINGS_OPTION ); ?>[webhook_map][<?php echo esc_attr( $term->slug ); ?>]" value="<?php echo esc_attr( $s['webhook_map'][ $term->slug ] ?? '' ); ?>" placeholder="https://api.cloudflare.com/..."></td></tr>
-                    <?php endforeach; endif; ?>
-                </table>
+                <input type="hidden" name="_vw_active_tab" value="<?php echo esc_attr( $active ); ?>">
+
+                <!-- Tab: Allgemein -->
+                <div class="vw-tab-panel" data-tab="general" style="<?php echo $active === 'general' ? '' : 'display:none;'; ?>">
+                    <table class="form-table">
+                        <tr><th><label><?php esc_html_e( 'Admin-Benachrichtigungs-E-Mail', 'vw-events' ); ?></label></th>
+                            <td><textarea class="large-text" rows="3" name="<?php echo $opt; ?>[admin_email]" placeholder="info@example.com, redaktion@example.com"><?php echo esc_textarea( $s['admin_email'] ); ?></textarea>
+                            <p class="description"><?php esc_html_e( 'Mehrere E-Mail-Adressen mit Komma, Semikolon oder Zeilenumbruch trennen. Alle erhalten die Benachrichtigung bei neuen Frontend-Einreichungen.', 'vw-events' ); ?></p></td></tr>
+                        <tr><th><label><?php esc_html_e( 'Übersichtsseite (URL)', 'vw-events' ); ?></label></th>
+                            <td><input type="text" class="regular-text" name="<?php echo $opt; ?>[archive_url]" value="<?php echo esc_attr( $s['archive_url'] ); ?>" placeholder="/leben-freizeit/veranstaltungen/">
+                            <p class="description"><?php esc_html_e( 'WP-Seite mit dem Shortcode [vw_events_list]. Wenn gesetzt, wird /veranstaltungen/ dorthin weitergeleitet und der „Zurück"-Link auf Detailseiten zeigt dorthin.', 'vw-events' ); ?></p></td></tr>
+                        <tr><th><label><?php esc_html_e( 'Einreichungs-Seite (URL)', 'vw-events' ); ?></label></th>
+                            <td><input type="text" class="regular-text" name="<?php echo $opt; ?>[submit_url]" value="<?php echo esc_attr( $s['submit_url'] ); ?>" placeholder="https://vv-wildenstein.com/event-einreichen/">
+                            <p class="description"><?php esc_html_e( 'Volle URL der Seite mit dem [vw_event_submit]-Form (sollte nur auf der Master-Site liegen). Auf Subsites zeigt der Shortcode dann nur einen Hinweis + Button zu dieser URL.', 'vw-events' ); ?></p></td></tr>
+                    </table>
+                </div>
+
+                <!-- Tab: Multisite & Remote -->
+                <div class="vw-tab-panel" data-tab="sites" style="<?php echo $active === 'sites' ? '' : 'display:none;'; ?>">
+                    <table class="form-table">
+                        <?php if ( is_multisite() ) : ?>
+                        <tr><th><label><?php esc_html_e( 'Master-Blog-ID (Multisite)', 'vw-events' ); ?></label></th>
+                            <td><input type="number" min="0" class="small-text" name="<?php echo $opt; ?>[master_blog_id]" value="<?php echo esc_attr( (string) $s['master_blog_id'] ); ?>">
+                            <p class="description"><?php printf(
+                                esc_html__( 'Aktuelle Blog-ID: %d. Auf Subsites die ID des Master-Blogs eintragen, dann werden Events von dort gelesen. Auf dem Master-Blog leer lassen oder die eigene ID eintragen.', 'vw-events' ),
+                                (int) get_current_blog_id()
+                            ); ?></p></td></tr>
+                        <?php endif; ?>
+                        <tr><th><label><?php esc_html_e( 'Master-URL (externe WP)', 'vw-events' ); ?></label></th>
+                            <td><input type="url" class="regular-text" name="<?php echo $opt; ?>[master_url]" value="<?php echo esc_attr( $s['master_url'] ); ?>" placeholder="https://vv-wildenstein.com">
+                            <p class="description"><?php esc_html_e( 'Wenn gesetzt, liest dieses WP die Events live per REST von der Master-WP statt aus der lokalen Datenbank. Nutze das, wenn die Sites separate WordPress-Installationen sind (kein Multisite-Verbund). Leer lassen auf der Master-Site selbst.', 'vw-events' ); ?></p></td></tr>
+                    </table>
+                </div>
+
+                <!-- Tab: Turnstile -->
+                <div class="vw-tab-panel" data-tab="turnstile" style="<?php echo $active === 'turnstile' ? '' : 'display:none;'; ?>">
+                    <p class="description"><?php esc_html_e( 'Cloudflare-Turnstile-Schlüssel zum Schutz des Frontend-Einreichungs-Formulars.', 'vw-events' ); ?></p>
+                    <table class="form-table">
+                        <tr><th><label><?php esc_html_e( 'Turnstile Site-Key', 'vw-events' ); ?></label></th>
+                            <td><input type="text" class="regular-text" name="<?php echo $opt; ?>[turnstile_site]" value="<?php echo esc_attr( $s['turnstile_site'] ); ?>"></td></tr>
+                        <tr><th><label><?php esc_html_e( 'Turnstile Secret-Key', 'vw-events' ); ?></label></th>
+                            <td><input type="password" class="regular-text" name="<?php echo $opt; ?>[turnstile_secret]" value="<?php echo esc_attr( $s['turnstile_secret'] ); ?>"></td></tr>
+                    </table>
+                </div>
+
+                <!-- Tab: Deploy-Hooks -->
+                <div class="vw-tab-panel" data-tab="webhooks" style="<?php echo $active === 'webhooks' ? '' : 'display:none;'; ?>">
+                    <p class="description"><?php esc_html_e( 'Eine Webhook-URL pro Standort. Bei Veröffentlichung wird der jeweilige Hook ausgelöst. „verband-weit" triggert alle Hooks.', 'vw-events' ); ?></p>
+                    <table class="form-table">
+                        <?php if ( is_array( $standorte ) ) : foreach ( $standorte as $term ) : ?>
+                        <tr><th><label><?php echo esc_html( $term->name ); ?> <code><?php echo esc_html( $term->slug ); ?></code></label></th>
+                            <td><input type="url" class="regular-text" name="<?php echo $opt; ?>[webhook_map][<?php echo esc_attr( $term->slug ); ?>]" value="<?php echo esc_attr( $s['webhook_map'][ $term->slug ] ?? '' ); ?>" placeholder="https://api.cloudflare.com/..."></td></tr>
+                        <?php endforeach; endif; ?>
+                    </table>
+                </div>
+
                 <?php submit_button(); ?>
             </form>
         </div>

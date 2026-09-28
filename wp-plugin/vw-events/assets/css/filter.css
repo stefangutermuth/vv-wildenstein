@@ -41,19 +41,22 @@
     border-color: #2a6f3f;
 }
 
-.vw-events-month {
+.vw-events-month,
+.vw-events-duration {
     display: inline-flex;
     align-items: center;
     gap: .5rem;
 }
-.vw-events-month-label {
+.vw-events-month-label,
+.vw-events-duration-label {
     font-size: .8rem;
     text-transform: uppercase;
     letter-spacing: .05em;
     color: #555;
     font-weight: 600;
 }
-.vw-events-month select {
+.vw-events-month select,
+.vw-events-duration select {
     padding: .35rem .75rem;
     border: 1px solid #d1d9df;
     border-radius: 6px;
@@ -62,6 +65,28 @@
     font-size: .9rem;
     cursor: pointer;
 }
+
+/* View-Toggle (Kacheln / Liste) */
+.vw-events-viewtoggle {
+    display: inline-flex;
+    border: 1px solid #d1d9df;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+}
+.vw-events-viewtoggle button {
+    border: 0;
+    background: #fff;
+    padding: .35rem .65rem;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #555;
+    transition: background .15s ease, color .15s ease;
+}
+.vw-events-viewtoggle button + button { border-left: 1px solid #d1d9df; }
+.vw-events-viewtoggle button:hover { background: #f4f7fa; }
+.vw-events-viewtoggle button.is-active { background: #2a6f3f; color: #fff; }
 
 /* ---- Live-Suche ---- */
 .vw-events-search {

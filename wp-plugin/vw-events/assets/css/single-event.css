@@ -51,17 +51,66 @@
 }
 
 /* ---- Archive ---- */
-.vw-events-archive-main { padding: 2rem 1rem; }
+.vw-events-archive-main { padding: clamp(9rem, 22vh, 17rem) 1rem 3rem; }
 .vw-events-archive { max-width: 960px; margin: 0 auto; }
 .vw-events-archive-header h1 { margin: 0 0 1.5rem; }
 .vw-events-list {
-    list-style: none;
     margin: 0;
     padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+/* Mauerwerk (Default): JS verteilt Karten reihen-weise links→rechts in Spalten. */
+.vw-events-list:not(.is-list-view) {
+    display: flex;
+    align-items: flex-start;
     gap: 1.5rem;
 }
+.vw-events-list:not(.is-list-view) .vw-events-col {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+/* Listenansicht: eine Spalte, größeres Bild links, Text + Vorschau rechts. */
+.vw-events-list.is-list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.vw-events-list.is-list-view .vw-event-card-link {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    gap: 1.25rem;
+    align-items: stretch;
+}
+.vw-events-list.is-list-view .vw-event-card-image {
+    aspect-ratio: 210 / 297;
+    height: 100%;
+}
+.vw-events-list.is-list-view .vw-event-card-image-fg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.vw-events-list.is-list-view .vw-event-card-body { padding: 1rem 1rem 1rem 0; }
+.vw-events-list.is-list-view .vw-event-card.has-no-image .vw-event-card-link { grid-template-columns: 1fr; }
+/* Excerpt nur in der Listenansicht */
+.vw-event-card-excerpt { display: none; }
+.vw-events-list.is-list-view .vw-event-card-excerpt {
+    display: block;
+    margin: .5rem 0 0;
+    font-size: .9rem;
+    line-height: 1.5;
+    color: #555;
+}
+@media (max-width: 600px) {
+    .vw-events-list.is-list-view .vw-event-card-link {
+        grid-template-columns: 9rem 1fr;
+        gap: 1rem;
+    }
+}
+.vw-event-card.is-hidden { display: none; }
+
 .vw-event-card {
     background: #fff;
     border: 1px solid #e3e7eb;
@@ -78,89 +127,23 @@
     text-decoration: none;
     color: inherit;
 }
+/* Box folgt automatisch dem Bildformat (Hochformat, A4, Querformat …). */
 .vw-event-card-image {
     position: relative;
-    aspect-ratio: 3 / 4;
     overflow: hidden;
     background: #f4f7fa;
     isolation: isolate;
 }
-/* Hintergrund: dasselbe Bild aufgeblasen + geblurrt füllt die Lücken
-   atmosphärisch — kein Crop von Hoch-/Quer-/Quadrat-Mix. */
 .vw-event-card-image-bg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: blur(28px) saturate(1.15) brightness(0.92);
-    transform: scale(1.18);
-    z-index: 0;
+    display: none;
 }
-/* Vordergrund: Bild komplett sichtbar (contain). */
 .vw-event-card-image-fg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    z-index: 1;
-    transition: transform .4s ease;
     display: block;
+    width: 100%;
+    height: auto;
+    transition: transform .4s ease;
 }
 .vw-event-card:hover .vw-event-card-image-fg { transform: scale(1.04); }
-.vw-event-card-image-empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.vw-event-card-image-placeholder {
-    font-size: 3rem;
-    opacity: .35;
-    z-index: 1;
-}
-
-/* Kalenderblatt-Badge oben links — Abreißkalender-Look */
-.vw-event-leaf {
-    position: absolute;
-    top: .75rem;
-    left: .75rem;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    width: 3.25rem;
-    background: #fff;
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-    font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif;
-    line-height: 1;
-    transform: rotate(-2deg);
-    transition: transform .25s ease;
-}
-.vw-event-card:hover .vw-event-leaf {
-    transform: rotate(0deg) scale(1.05);
-}
-.vw-event-leaf-month {
-    background: #b32b1f;
-    color: #fff;
-    font-size: .7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    text-align: center;
-    padding: .25rem 0 .2rem;
-    /* Perforation am unteren Rand des Monats-Streifens */
-    border-bottom: 1px dashed rgba(255, 255, 255, .4);
-}
-.vw-event-leaf-day {
-    color: #2a3540;
-    font-size: 1.55rem;
-    font-weight: 700;
-    text-align: center;
-    padding: .35rem 0 .45rem;
-}
 .vw-event-card-body { padding: 1rem 1.25rem; }
 .vw-event-card-title {
     font-size: 1.1rem;
@@ -238,17 +221,16 @@
     color: inherit;
 }
 .vw-event-up-image {
-    aspect-ratio: 9 / 16;
     overflow: hidden;
     background: #f4f7fa;
 }
 .vw-event-up-image img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
     display: block;
 }
 .vw-event-up-image-empty {
+    aspect-ratio: 210 / 297;
     display: flex;
     align-items: center;
     justify-content: center;
