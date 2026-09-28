@@ -45,3 +45,4 @@ Abgleich der Gewerbeformulare von 2023/2024 mit den WordPress-Profilen (vv-wilde
 - Betriebe ohne Logo bleiben ohne (Stefan: bessere Daten müssen von den Betrieben kommen).
 - Sammelmodus aus, ein gemeinsamer Neubau (Grünhainichen, Börnichen, Verband) erfolgreich; Stichproben live geprüft: /gewerbe 56 Unternehmen, Einkaufen, Gesundheit, Detailseiten, Verband /wirtschaft.
 - Offen bleiben die Rückfragen in der Tabelle oben (Widersprüche, Handschrift, Gutschein).
+- Widersprüche WordPress gegen Formular 2023 (Trödelschmiede Adresse/E-Mail, Raiffeisen Fax/E-Mail, AHS Mobil, Vieweger Angestelltenzahl, Gebr. Kluge Name/Website): **Stefan am 28.09.2026: WordPress-Stand bleibt.** Erledigt.
