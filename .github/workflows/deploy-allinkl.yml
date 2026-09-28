@@ -17,6 +17,17 @@ name: Deploy zu All-Inkl
 on:
   push:
     branches: [main]
+    # Nur bauen, wenn sich etwas an Grünhainichen, Börnichen oder dem Bau selbst
+    # ändert. Pushes nur an Dokumentation, mu-Plugins, Verband oder Mängelmelder
+    # stellten sich sonst in dieselbe Warteschlange und verzögerten Neubauten,
+    # die WordPress anstößt (seit 28.09.2026).
+    paths:
+      - 'apps/gruenhainichen/**'
+      - 'apps/boernichen/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/deploy-allinkl.yml'
   workflow_dispatch:
   repository_dispatch:
     types: [vv-content-updated]
