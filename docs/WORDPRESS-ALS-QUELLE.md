@@ -32,6 +32,7 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 | 28.09. | **Gesundheit** (`/leben/gesundheit/`) aus Profilen (Allgemeine Medizin, Zahnarzt, Physiotherapie, Apotheke), neu mit Sprechzeiten. Tierarzt Dr. Bauer (verstorben) entfernt; seine beiden Profile lagen schon im Papierkorb |
 | 28.09. | **Einkaufen** (`/leben/einkaufen/`) aus Profilen. In WordPress 5 Unterkategorien von „Einkaufen“ angelegt (IDs 339 bis 343, Beschreibung = Unterzeile), alle 20 Geschäfte zugeordnet. Neue Geschäfte ohne Gruppe erscheinen unter „Weitere Geschäfte“. Symbole je Geschäft stehen im Code |
 | 28.09. | **Gewerbe** (`/gewerbe/`) zeigt nur Unternehmen: Kategorien Dienstleistungen, Einkaufen, Handwerk, Praxen, Apotheke (`GEWERBE_KATEGORIEN` in cms-cpt.ts, wie die Verbandsseite „Wirtschaft“). Stefan: Dienstleistung/Handwerk-Zuordnung bleibt wie sie ist. Suche beschriftet übrige Profile als „Leben“ |
+| 28.09. | **Gewerbe-Sammelrunde:** rund 30 Betriebe aus Formularen 2023/24 angelegt oder abgeglichen, siehe `SAMMELRUNDE-PROFILE-2026-09-28.md` |
 | 28.09. | Hilfsfunktion `getProfilUnterkategorien(slug)` |
 | 28.09. | Hilfsfunktion `getProfileNachKategorie(slug)` in `apps/gruenhainichen/src/lib/cms-cpt.ts` |
 
@@ -111,7 +112,8 @@ Wendt-&-Kühn-Termine mit 350 px, Plakate als Bildschirmfoto, Logos.
 ## Reihenfolge, wie mit Stefan besprochen
 
 Klein anfangen, Seite für Seite. Erledigt: Kirchen, Grundschule, Menü-Termine,
-Gesundheit, Einkaufen, Profilpflege, Gewerbe-Filter, Auslieferung.
+Gesundheit, Einkaufen, Profilpflege, Gewerbe-Filter, Auslieferung, Gewerbe-Sammelrunde.
 Nächste Kandidaten: restliche feste Seiten auf Grünhainichen (Verwaltung,
 Bürgermeister, Feuerwehren, Heiraten), Darstellungsschutz für kleine Bilder,
 dann Börnichen (Gewerbe, Vereine, Tourismus, Verwaltung).
+Gesamtstand aller Bereiche: `STAND-2026-09-28.md`.

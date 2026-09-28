@@ -8,7 +8,8 @@
 > Deploy nicht mehr gesetzt.
 >
 > **Aktuelle Quellen:**
-> [docs/STAND-2026-09-11.md](docs/STAND-2026-09-11.md) — **jüngster Stand**: Auslieferungskette,
+> [docs/STAND-2026-09-28.md](docs/STAND-2026-09-28.md) · **jüngster Stand** ·
+> [docs/STAND-2026-09-11.md](docs/STAND-2026-09-11.md) · Stand vom 11.09.: Auslieferungskette,
 > mu-Plugin-Ablagen, offene Punkte, wiederkehrende Fallstricke ·
 > [docs/PROJECT-BRIEF.md](docs/PROJECT-BRIEF.md) für den Aufbau ·
 > [docs/GO-LIVE-2026-08-16.md](docs/GO-LIVE-2026-08-16.md) für Domains, Server und offene Punkte
