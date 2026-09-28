@@ -58,10 +58,11 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 - Physiotherapie Holler zusammengeführt: #41758 bleibt (Kategorie Physiotherapie), „Ines Holler“ #41786 im Papierkorb.
 - Neues Profil „Ev.-Luth. Kirchgemeinde Waldkirchen“ (#48603, Foto St. Georg). Kirchenchor #41411 nicht mehr unter „Kirchen“, PLZ korrigiert.
 - Eismühle im Flöhatal: Einkaufen › Essen & Trinken.
+- Dr.-Ing. Jörg Walther (#41727): Titel korrigiert, Beschreibung „Ingenieur für Bauplanung und Sachverständiger“ (Auskunft Stefan).
+- **Falle:** Bei neu per WP-CLI angelegten Profilen auch die ACF-Verweise `_feldname` = `field_…` setzen (von einem bestehenden Profil übernehmen), sonst zeigt der Editor die Felder leer.
 - Namen: Zahnarztpraxis Anke Nüßler, Ev.-Luth. Kirche Borstendorf, Ev.-Luth. Kirchgemeinde Börnichen, Frühere Grundschule Waldkirchen, Metallbau Fuhrmann Borstendorf.
 
 **Offen, Stefan klärt mit dem Verband:**
-- Dr. Jörg Walther (Dienstleistungen, ohne Beschreibung): was für ein Betrieb, gibt es ihn noch?
 - Ohne Kontaktdaten: Heizung Sanitär Hänel, Gebäudereinigung Knoch, Zimmerei Grämer, Hörgeräte-Akustik Rochhausen. Gibt es sie noch?
 - Kirche Borstendorf: Adresse und Text fehlen. Rolle Mühle: Adresse fehlt.
 - Kirchenchor und Feuerwehr Börnichen haben keine Profilkategorie (eigentlich Vereine).
