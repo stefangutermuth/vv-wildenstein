@@ -29,14 +29,15 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 | 28.09. | In WordPress: Fotos für Kirche Borstendorf (Commons, Miebner, CC BY-SA 3.0) und Waldkirchen (eigenes Foto St. Georg); Schulprofil umbenannt; Förderverein-Text ergänzt |
 | 28.09. | **Menü › Nächste Termine** (Desktop und Handy) aus dem WordPress-Kalender statt altem Import; toter Feuertheater-Link weg |
 | 28.09. | Detailseiten der Profile: Brotkrume und Zurück-Link nach Kategorie (Kirche › „Leben · Kirche“) statt immer „Gewerbe“ |
+| 28.09. | **Gesundheit** (`/leben/gesundheit/`) aus Profilen (Allgemeine Medizin, Zahnarzt, Physiotherapie, Apotheke), neu mit Sprechzeiten. Tierarzt Dr. Bauer (verstorben) entfernt; seine beiden Profile lagen schon im Papierkorb |
+| 28.09. | **Einkaufen** (`/leben/einkaufen/`) aus Profilen. In WordPress 5 Unterkategorien von „Einkaufen“ angelegt (IDs 339 bis 343, Beschreibung = Unterzeile), alle 20 Geschäfte zugeordnet. Neue Geschäfte ohne Gruppe erscheinen unter „Weitere Geschäfte“. Symbole je Geschäft stehen im Code |
+| 28.09. | Hilfsfunktion `getProfilUnterkategorien(slug)` |
 | 28.09. | Hilfsfunktion `getProfileNachKategorie(slug)` in `apps/gruenhainichen/src/lib/cms-cpt.ts` |
 
 ## Offen · Grünhainichen (fester Text, obwohl es die Einträge in WordPress gibt)
 
 | Seite | Umstellen auf |
 |---|---|
-| Leben › Einkaufen | Profile „Einkaufen“ (20) |
-| Leben › Gesundheit | Profile „Allgemeine Medizin“, „Zahnarzt“, „Physiotherapie“, „Apotheke“ (6); Tierarzt Dr. Bauer und „in Balance“ fehlen als Profil |
 | Leben › Kirche | Einleitung (Jahreszahlen 1539/1900) und Schlusssatz noch fest |
 | Gemeinde › Verwaltung | Ämter (14) + Personen |
 | Gemeinde › Bürgermeister | Personen, Gremium „Bürgermeister“ (Robert Arnold) |
@@ -56,6 +57,8 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 - Kirchgemeinde Waldkirchen hat kein eigenes Profil, nur „Kirchenchor …“ (PLZ dort falsch: 09437 statt 09579).
 - Kirchgemeinde Grünhainichen: Fax nur im Fließtext; Titel „Evangelisch-Lutherischen Kirchgemeinde“ grammatisch schief.
 - „Museum Erzgebirgische Volkskunst“ doppelt im Tourismus; Seniorentreffs mit kopierten Adressen (…-borstendorf-2-2).
+- Physiotherapie Holler doppelt: „Ines Holler“ (Physiotherapie) und „Physiotherapie Holler“ (Dienstleistungen).
+- **Falle:** Kategorie-Zuordnungen per WP-CLI ändern das Änderungsdatum nicht; danach `post_modified` der betroffenen Profile setzen, sonst baut der Build aus dem Zwischenspeicher.
 - Hort „Waldis Kids“ steht doppelt: als eigenes Profil und im Zusatzfeld des Schulprofils.
 
 ## Offen · Zuverlässigkeit der Auslieferung
@@ -83,4 +86,4 @@ Wendt-&-Kühn-Termine mit 350 px, Plakate als Bildschirmfoto, Logos.
 ## Reihenfolge, wie mit Stefan besprochen
 
 Klein anfangen, Seite für Seite: Kirchen und Grundschule sind erledigt. Nächste Kandidaten:
-Einkaufen und Gesundheit, Gewerbe auf echte Firmen beschränken, Zuverlässigkeit der Auslieferung, danach Datenpflege Ortsteile, dann Börnichen.
+Gewerbe auf echte Firmen beschränken, Zuverlässigkeit der Auslieferung, danach Datenpflege Ortsteile, dann Börnichen.
