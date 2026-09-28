@@ -9,7 +9,7 @@
  *              dynamisch auslesen. Robust über den `rest_prepare`-Filter — unabhängig
  *              vom REST-Controller des CPT und vom REST-Optimizer.
  * Author:      GUMU
- * Version:     2.4.0
+ * Version:     2.4.1
  *
  * Installation: nach  wp-content/mu-plugins/vv-rest-profilfelder.php  kopieren.
  */
@@ -117,7 +117,15 @@ add_action( 'rest_api_init', function () {
 			$kontakt = array();
 			foreach ( $keys as $meta_key => $out_key ) {
 				$val = get_post_meta( $post->ID, $meta_key, true );
-				$kontakt[ $out_key ] = is_string( $val ) ? trim( $val ) : $val;
+				$val = is_string( $val ) ? trim( $val ) : $val;
+				// Mehrere Metafelder können auf denselben Ausgabenamen zeigen
+				// („Fax“ und „fax“). Ein leerer späterer Treffer darf einen
+				// gefüllten früheren nicht überschreiben: Bis 2.4.0 ging so bei
+				// jedem Profil die Faxnummer verloren.
+				if ( isset( $kontakt[ $out_key ] ) && '' !== $kontakt[ $out_key ] && ( '' === $val || null === $val ) ) {
+					continue;
+				}
+				$kontakt[ $out_key ] = $val;
 			}
 			$data['vv_kontakt'] = $kontakt;
 			$data['vv_gallery'] = vv_build_tile_gallery( $post->ID );
