@@ -31,6 +31,7 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 | 28.09. | Detailseiten der Profile: Brotkrume und Zurück-Link nach Kategorie (Kirche › „Leben · Kirche“) statt immer „Gewerbe“ |
 | 28.09. | **Gesundheit** (`/leben/gesundheit/`) aus Profilen (Allgemeine Medizin, Zahnarzt, Physiotherapie, Apotheke), neu mit Sprechzeiten. Tierarzt Dr. Bauer (verstorben) entfernt; seine beiden Profile lagen schon im Papierkorb |
 | 28.09. | **Einkaufen** (`/leben/einkaufen/`) aus Profilen. In WordPress 5 Unterkategorien von „Einkaufen“ angelegt (IDs 339 bis 343, Beschreibung = Unterzeile), alle 20 Geschäfte zugeordnet. Neue Geschäfte ohne Gruppe erscheinen unter „Weitere Geschäfte“. Symbole je Geschäft stehen im Code |
+| 28.09. | **Gewerbe** (`/gewerbe/`) zeigt nur Unternehmen: Kategorien Dienstleistungen, Einkaufen, Handwerk, Praxen, Apotheke (`GEWERBE_KATEGORIEN` in cms-cpt.ts, wie die Verbandsseite „Wirtschaft“). Stefan: Dienstleistung/Handwerk-Zuordnung bleibt wie sie ist. Suche beschriftet übrige Profile als „Leben“ |
 | 28.09. | Hilfsfunktion `getProfilUnterkategorien(slug)` |
 | 28.09. | Hilfsfunktion `getProfileNachKategorie(slug)` in `apps/gruenhainichen/src/lib/cms-cpt.ts` |
 
@@ -42,7 +43,7 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 | Gemeinde › Verwaltung | Ämter (14) + Personen |
 | Gemeinde › Bürgermeister | Personen, Gremium „Bürgermeister“ (Robert Arnold) |
 | Ortsteil Borstendorf | Ortsvorsteherin aus Personen |
-| Gewerbe | zeigt alle Profile, auch Kitas, Kirchen, Seniorentreffs; auf echte Gewerbe-Kategorien beschränken. Kirchen-Detailseiten liegen dadurch unter /gewerbe/ |
+| Gewerbe | erledigt 28.09. (siehe oben); offen nur: Detailseiten von Kirchen, Seniorentreffs usw. liegen weiter unter /gewerbe/… (Brotkrume stimmt) |
 | Feuerwehren, Heiraten | in WordPress nur als normale Seiten, kein Inhaltstyp |
 
 ## Offen · Börnichen
@@ -97,4 +98,4 @@ Wendt-&-Kühn-Termine mit 350 px, Plakate als Bildschirmfoto, Logos.
 ## Reihenfolge, wie mit Stefan besprochen
 
 Klein anfangen, Seite für Seite: Kirchen und Grundschule sind erledigt. Nächste Kandidaten:
-Gewerbe auf echte Firmen beschränken, Zuverlässigkeit der Auslieferung, danach Datenpflege Ortsteile, dann Börnichen.
+Zuverlässigkeit der Auslieferung, danach Datenpflege Ortsteile, dann Börnichen.
