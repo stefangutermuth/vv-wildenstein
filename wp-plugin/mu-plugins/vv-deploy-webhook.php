@@ -5,7 +5,7 @@
  *              Börnichen …) an, sobald auf vv-wildenstein.com ein Beitrag oder
  *              Termin angelegt, geändert oder gelöscht wird.
  * Author:      GUMU
- * Version:     1.1.0
+ * Version:     1.2.0
  *
  * INSTALLATION (auf vv-wildenstein.com):
  *   1. Diese Datei nach  wp-content/mu-plugins/vv-deploy-webhook.php  kopieren.
@@ -148,6 +148,17 @@ foreach ( array( 'created_term', 'edited_term', 'delete_term' ) as $vv_hook ) {
 function vv_deploy_trigger( $reason ) {
 	if ( ! defined( 'VV_DEPLOY_GH_TOKEN' ) || ! VV_DEPLOY_GH_TOKEN ) {
 		return; // Token fehlt → still nichts tun (Seite funktioniert normal weiter).
+	}
+	/* Sammelmodus (seit 1.2.0): Bei einer großen einmaligen Pflegerunde viele
+	   Änderungen am Stück machen, ohne dass jede einen Neubau anstößt.
+	   Einschalten:  wp site option update vv_deploy_pause 1
+	   Ausschalten:  wp site option delete vv_deploy_pause
+	   Danach einmal irgendeinen Eintrag speichern (oder den Workflow von Hand
+	   starten), dann baut alles einmal frisch. Vergessenes Ausschalten fängt der
+	   Morgenlauf ab, der unabhängig davon jeden Tag baut. */
+	if ( get_site_option( 'vv_deploy_pause' ) ) {
+		update_site_option( 'vv_deploy_pause_verpasst', (string) $reason );
+		return;
 	}
 	// Netzwerkweite Drossel (Multisite): Änderungen auf verschiedenen Subsites
 	// innerhalb des Fensters bündeln sich zu einem Build.
