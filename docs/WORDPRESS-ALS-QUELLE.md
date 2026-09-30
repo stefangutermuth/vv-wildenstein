@@ -35,6 +35,7 @@ und der Build-Zwischenspeicher bleibt alt. Das REST-Anwendungspasswort in
 | 28.09. | **Gewerbe-Sammelrunde:** rund 30 Betriebe aus Formularen 2023/24 angelegt oder abgeglichen, siehe `SAMMELRUNDE-PROFILE-2026-09-28.md` |
 | 28.09. | Hilfsfunktion `getProfilUnterkategorien(slug)` |
 | 28.09. | Hilfsfunktion `getProfileNachKategorie(slug)` in `apps/gruenhainichen/src/lib/cms-cpt.ts` |
+| 30.09. | **Blickfang der Startseite** aus WordPress: Terminkategorie „Highlight“ (Grünhainichen mit Fenster und Teilnehmerkarte, neue Verbandsseite als Kachel). Terminseiten zeigen die ganze Beschreibung statt 180 Zeichen. Kurzcode `[vv_termin id="…"]` bettet einen Termin in vv-wildenstein.com-Seiten ein |
 
 ## Offen · Grünhainichen (fester Text, obwohl es die Einträge in WordPress gibt)
 
