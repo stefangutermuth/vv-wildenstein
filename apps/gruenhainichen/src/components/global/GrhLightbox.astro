@@ -3,46 +3,47 @@
  * Lightbox für die ganze Website (im BaseLayout eingebunden).
  *
  * Öffnet in der Großansicht:
- *  - Links auf Bilddateien (z. B. ein Plakat im Beitrag), statt die
+ *  - Links auf Bilddateien (z. B. das Plakat auf einer Terminseite), statt die
  *    Datei in einem neuen Tab zu zeigen,
- *  - Inhaltsbilder ohne Link in WordPress-Texten (.vv-prose),
- *    in <figure> (z. B. Seitengalerien) und in allem mit data-vv-lb.
+ *  - Inhaltsbilder ohne Link in WordPress-Texten (.grh-prose, .grh-programm),
+ *    in <figure> und in allem mit data-grh-lb.
  * Nicht: Bilder in Links, Knöpfen, Karten, Titelbild-Slider, außerhalb von <main>, SVG-Logos,
- * Download-Symbole, Bilder unter 120 × 90 px und alles in [data-vv-lb-aus].
+ * Bilder unter 120 × 90 px und alles in [data-grh-lb-aus]. Galerien mit eigener
+ * Lightbox (Heimatfest-Rückblick) bleiben unberührt.
  *
  * ←/→ und Wischen blättern, ESC oder Klick daneben schließt.
  */
 ---
-<div class="vv-lbx" data-vv-lbx hidden role="dialog" aria-modal="true" aria-label="Bild in Großansicht">
-  <button type="button" class="vv-lbx__zu" data-vv-lbx-zu aria-label="Großansicht schließen">×</button>
-  <button type="button" class="vv-lbx__nav vv-lbx__nav--zurueck" data-vv-lbx-zurueck aria-label="Voriges Bild">‹</button>
-  <figure class="vv-lbx__buehne">
-    <img data-vv-lbx-bild src="" alt="" />
-    <figcaption class="vv-lbx__text" data-vv-lbx-text></figcaption>
+<div class="grh-lbx" data-grh-lbx hidden role="dialog" aria-modal="true" aria-label="Bild in Großansicht">
+  <button type="button" class="grh-lbx__zu" data-grh-lbx-zu aria-label="Großansicht schließen">×</button>
+  <button type="button" class="grh-lbx__nav grh-lbx__nav--zurueck" data-grh-lbx-zurueck aria-label="Voriges Bild">‹</button>
+  <figure class="grh-lbx__buehne">
+    <img data-grh-lbx-bild src="" alt="" />
+    <figcaption class="grh-lbx__text" data-grh-lbx-text></figcaption>
   </figure>
-  <button type="button" class="vv-lbx__nav vv-lbx__nav--weiter" data-vv-lbx-weiter aria-label="Nächstes Bild">›</button>
-  <span class="vv-lbx__zahl" data-vv-lbx-zahl></span>
+  <button type="button" class="grh-lbx__nav grh-lbx__nav--weiter" data-grh-lbx-weiter aria-label="Nächstes Bild">›</button>
+  <span class="grh-lbx__zahl" data-grh-lbx-zahl></span>
 </div>
 
 <style>
-  .vv-lbx {
+  .grh-lbx {
     position: fixed;
     inset: 0;
-    z-index: 9000; /* über allem außer dem Cookie-Hinweis */
+    z-index: 9000; /* über dem schwebenden Kontaktknopf (8500), unter dem Cookie-Hinweis */
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 56px 72px;
-    background: rgba(5, 10, 38, 0.92);
+    background: rgba(20, 43, 31, 0.94);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
-    animation: vv-lbx-auf 180ms ease-out;
+    animation: grh-lbx-auf 180ms ease-out;
   }
-  .vv-lbx[hidden] { display: none; }
-  @keyframes vv-lbx-auf { from { opacity: 0; } to { opacity: 1; } }
-  @media (prefers-reduced-motion: reduce) { .vv-lbx { animation: none; } }
+  .grh-lbx[hidden] { display: none; }
+  @keyframes grh-lbx-auf { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .grh-lbx { animation: none; } }
 
-  .vv-lbx__buehne {
+  .grh-lbx__buehne {
     margin: 0;
     display: flex;
     flex-direction: column;
@@ -51,7 +52,7 @@
     max-width: 100%;
     max-height: 100%;
   }
-  .vv-lbx__buehne img {
+  .grh-lbx__buehne img {
     display: block;
     max-width: min(92vw, 1600px);
     max-height: calc(100vh - 150px);
@@ -59,41 +60,41 @@
     height: auto;
     border-radius: 3px;
     box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.7);
-    background: var(--vv-white);
+    background: var(--grh-cream-50);
   }
-  .vv-lbx__text {
+  .grh-lbx__text {
     max-width: 70ch;
     color: rgba(250, 247, 241, 0.88);
-    font-size: var(--vv-fs-sm);
+    font-size: var(--grh-fs-sm);
     line-height: 1.5;
     text-align: center;
   }
-  .vv-lbx__text:empty { display: none; }
+  .grh-lbx__text:empty { display: none; }
 
-  .vv-lbx__zu,
-  .vv-lbx__nav {
+  .grh-lbx__zu,
+  .grh-lbx__nav {
     position: absolute;
     display: grid;
     place-items: center;
-    color: var(--vv-white);
+    color: var(--grh-cream-50);
     background: rgba(250, 247, 241, 0.1);
     border: 1px solid rgba(250, 247, 241, 0.25);
     border-radius: 50%;
     cursor: pointer;
-    font-family: var(--vv-font);
+    font-family: var(--grh-font-body);
     line-height: 1;
-    transition: background var(--vv-dur-fast), transform var(--vv-dur-fast);
+    transition: background var(--grh-dur-fast), transform var(--grh-dur-fast);
   }
-  .vv-lbx__zu:hover,
-  .vv-lbx__nav:hover,
-  .vv-lbx__zu:focus-visible,
-  .vv-lbx__nav:focus-visible { background: rgba(250, 247, 241, 0.24); }
-  .vv-lbx__zu { top: 16px; right: 16px; width: 44px; height: 44px; font-size: 28px; }
-  .vv-lbx__nav { top: 50%; translate: 0 -50%; width: 52px; height: 52px; font-size: 34px; padding-bottom: 4px; }
-  .vv-lbx__nav--zurueck { left: 14px; }
-  .vv-lbx__nav--weiter { right: 14px; }
-  .vv-lbx__nav[hidden] { display: none; }
-  .vv-lbx__zahl {
+  .grh-lbx__zu:hover,
+  .grh-lbx__nav:hover,
+  .grh-lbx__zu:focus-visible,
+  .grh-lbx__nav:focus-visible { background: rgba(250, 247, 241, 0.24); }
+  .grh-lbx__zu { top: 16px; right: 16px; width: 44px; height: 44px; font-size: 28px; }
+  .grh-lbx__nav { top: 50%; translate: 0 -50%; width: 52px; height: 52px; font-size: 34px; padding-bottom: 4px; }
+  .grh-lbx__nav--zurueck { left: 14px; }
+  .grh-lbx__nav--weiter { right: 14px; }
+  .grh-lbx__nav[hidden] { display: none; }
+  .grh-lbx__zahl {
     position: absolute;
     top: 26px;
     left: 50%;
@@ -105,44 +106,44 @@
   }
 
   @media (max-width: 640px) {
-    .vv-lbx { padding: 64px 12px 24px; }
-    .vv-lbx__nav { top: auto; bottom: 16px; translate: none; width: 46px; height: 46px; }
-    .vv-lbx__buehne img { max-height: calc(100vh - 190px); }
+    .grh-lbx { padding: 64px 12px 24px; }
+    .grh-lbx__nav { top: auto; bottom: 16px; translate: none; width: 46px; height: 46px; }
+    .grh-lbx__buehne img { max-height: calc(100vh - 190px); }
   }
 
   /* Hinweis am Bild selbst */
-  :global([data-vv-lb-bild]) { cursor: zoom-in; }
+  :global([data-grh-lb-bild]) { cursor: zoom-in; }
 </style>
 
 <script>
-  const lb = document.querySelector<HTMLElement>('[data-vv-lbx]');
+  const lb = document.querySelector<HTMLElement>('[data-grh-lbx]');
   if (lb) {
-    const bild = lb.querySelector<HTMLImageElement>('[data-vv-lbx-bild]')!;
-    const text = lb.querySelector<HTMLElement>('[data-vv-lbx-text]')!;
-    const zahl = lb.querySelector<HTMLElement>('[data-vv-lbx-zahl]')!;
-    const zu = lb.querySelector<HTMLButtonElement>('[data-vv-lbx-zu]')!;
-    const zurueck = lb.querySelector<HTMLButtonElement>('[data-vv-lbx-zurueck]')!;
-    const weiter = lb.querySelector<HTMLButtonElement>('[data-vv-lbx-weiter]')!;
+    const bild = lb.querySelector<HTMLImageElement>('[data-grh-lbx-bild]')!;
+    const text = lb.querySelector<HTMLElement>('[data-grh-lbx-text]')!;
+    const zahl = lb.querySelector<HTMLElement>('[data-grh-lbx-zahl]')!;
+    const zu = lb.querySelector<HTMLButtonElement>('[data-grh-lbx-zu]')!;
+    const zurueck = lb.querySelector<HTMLButtonElement>('[data-grh-lbx-zurueck]')!;
+    const weiter = lb.querySelector<HTMLButtonElement>('[data-grh-lbx-weiter]')!;
 
     const BILDDATEI = /\.(jpe?g|png|webp|gif|avif)(\?.*)?$/i;
     // Nur Bilder in <main>; Kopf, Fuß und Menü der Website liegen außerhalb.
-    const AUSSER = 'a, button, .leaflet-container, .vv-hero, .wpdm_icon, [aria-hidden="true"], [data-vv-lb-aus], [data-vv-lbx]';
-    const BEREICH = '.vv-prose, figure, [data-vv-lb]';
+    const AUSSER = 'a, button, .leaflet-container, .grh-hero, [aria-hidden="true"], [data-grh-lb-aus], [data-grh-lightbox-gallery], .grh-gallery, [data-grh-lbx]';
+    const BEREICH = '.grh-prose, .grh-programm, figure, [data-grh-lb]';
 
     // Bildlinks und Inhaltsbilder markieren
-    const EIGENE_GALERIE = '[data-vv-lb-aus]';
+    const EIGENE_GALERIE = '[data-grh-lb-aus], [data-grh-lightbox-gallery], .grh-gallery';
     document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
       if (a.closest(EIGENE_GALERIE)) return;
       try {
-        if (BILDDATEI.test(new URL(a.href).pathname)) a.dataset.vvLbLink = '';
+        if (BILDDATEI.test(new URL(a.href).pathname)) a.dataset.grhLbLink = '';
       } catch { /* ungültige Adresse */ }
     });
     const markiere = (img: HTMLImageElement) => {
-      if (img.dataset.vvLbBild !== undefined) return;
+      if (img.dataset.grhLbBild !== undefined) return;
       if (!img.closest(BEREICH) || img.closest(AUSSER)) return;
       if (/\.svg(\?.*)?$/i.test(img.currentSrc || img.src)) return;
       if (img.clientWidth < 120 || img.clientHeight < 90) return;
-      img.dataset.vvLbBild = '';
+      img.dataset.grhLbBild = '';
       img.tabIndex = 0;
       img.setAttribute('role', 'button');
       img.setAttribute('aria-label', `Bild vergrößern${img.alt ? `: ${img.alt}` : ''}`);
@@ -168,7 +169,7 @@
 
     interface Eintrag { el: HTMLElement; src: string; ersatz: string; text: string }
     const sammeln = (): Eintrag[] =>
-      [...document.querySelectorAll<HTMLElement>('[data-vv-lb-bild], a[data-vv-lb-link]')].map((el) => {
+      [...document.querySelectorAll<HTMLElement>('[data-grh-lb-bild], a[data-grh-lb-link]')].map((el) => {
         if (el instanceof HTMLAnchorElement) {
           const img = el.querySelector('img');
           return { el, src: el.href, ersatz: img?.currentSrc || el.href, text: img?.alt || el.title || '' };
@@ -213,14 +214,14 @@
 
     document.addEventListener('click', (ev) => {
       if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
-      const el = (ev.target as HTMLElement).closest<HTMLElement>('[data-vv-lb-bild], a[data-vv-lb-link]');
+      const el = (ev.target as HTMLElement).closest<HTMLElement>('[data-grh-lb-bild], a[data-grh-lb-link]');
       if (!el) return;
       ev.preventDefault();
       oeffne(el);
     });
     document.addEventListener('keydown', (ev) => {
       const el = ev.target as HTMLElement;
-      if (lb.hidden && el?.dataset?.vvLbBild !== undefined && (ev.key === 'Enter' || ev.key === ' ')) {
+      if (lb.hidden && el?.dataset?.grhLbBild !== undefined && (ev.key === 'Enter' || ev.key === ' ')) {
         ev.preventDefault();
         oeffne(el);
         return;
@@ -242,7 +243,7 @@
     zurueck.addEventListener('click', () => zeige(pos - 1));
     weiter.addEventListener('click', () => zeige(pos + 1));
     lb.addEventListener('click', (ev) => {
-      if (ev.target === lb || ev.target === lb.querySelector('.vv-lbx__buehne')) schliesse();
+      if (ev.target === lb || ev.target === lb.querySelector('.grh-lbx__buehne')) schliesse();
     });
     // Wischen auf dem Handy
     let startX = 0;

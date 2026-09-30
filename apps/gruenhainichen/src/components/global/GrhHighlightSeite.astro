@@ -35,7 +35,7 @@ const hatKarte = (await buildTeilnehmerProgramm(event.descriptionHtml ?? '')).ma
         )}
       </div>
       {plakat && (
-        <a class="grh-hs__plakat" href={event.image} target="_blank" rel="noopener" aria-label={`Plakat „${titel}“ in voller Größe öffnen`}>
+        <a class="grh-hs__plakat" href={event.image} aria-label={`Plakat „${titel}“ vergrößern`}>
           <img src={plakat} alt={`Plakat: ${titel}`} width="707" height="1000" loading="eager" decoding="async" />
         </a>
       )}
@@ -125,6 +125,7 @@ const hatKarte = (await buildTeilnehmerProgramm(event.descriptionHtml ?? '')).ma
     overflow: hidden;
     box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
     transition: transform var(--grh-dur-base);
+    cursor: zoom-in;
   }
   @media (min-width: 820px) {
     .grh-hs__plakat { width: 100%; justify-self: end; }

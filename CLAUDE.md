@@ -13,5 +13,7 @@ Weitere Dokumente: `docs/WORDPRESS-ALS-QUELLE.md` (Plan: alles in WordPress pfle
   Profilen, Terminen usw. direkt in WordPress per `ssh vv-wildenstein` und WP-CLI.
 - Keine Gedankenstriche („—“, „ – “) in Website-Texten; Komma, Punkt oder „ · “ benutzen.
 - Kein kursiver Schnitt auf gruenhainichen.com.
+- Externe Links öffnen immer in neuem Tab, Bilder als Lightbox (global im BaseLayout
+  jeder Website, auf vv-wildenstein.com per mu-Plugin). Keine Pop-ups, lieber eigene Seiten.
 - Vor jedem Push `git fetch && git rebase origin/main` (parallele Sitzungen).
 - Deploy läuft über GitHub Actions; WordPress stößt Neubauten selbst an.

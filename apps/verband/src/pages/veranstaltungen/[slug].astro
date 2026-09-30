@@ -6,7 +6,6 @@
 import '../../styles/prose.css';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import VvPageHeader from '../../components/global/VvPageHeader.astro';
-import VvLightbox from '../../components/global/VvLightbox.astro';
 import VvIcon from '../../components/primitives/VvIcon.astro';
 import { getEvents } from '../../lib/cms';
 import type { EventItem } from '../../lib/cms';
@@ -74,7 +73,6 @@ const sameDay = item.endDate ? dayKey(item.endDate) === dayKey(item.startDate) :
       </a>
     </div>
   </div>
-  <VvLightbox />
 </BaseLayout>
 
 <style>

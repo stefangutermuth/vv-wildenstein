@@ -1,0 +1,57 @@
+---
+/**
+ * Externe Links öffnen immer in einem neuen Tab (Wunsch Stefan, 30.09.2026).
+ *
+ * Extern = http(s)-Adresse auf einem anderen Rechner als dieser Website
+ * (www. zählt nicht als Unterschied). Links mit eigenem target bleiben, wie sie
+ * sind; Links auf Bilddateien übernimmt die Lightbox. Screenreader hören
+ * „öffnet in neuem Tab“. Auch nachträglich eingefügte Links (Suche, Karten)
+ * greift der Klick-Abfang.
+ */
+---
+<script>
+  const hier = location.hostname.replace(/^www\./, '');
+  const HINWEIS = 'öffnet in neuem Tab';
+
+  const istExtern = (a: HTMLAnchorElement): boolean => {
+    if (a.hasAttribute('target') || a.dataset.grhLbLink !== undefined) return false;
+    try {
+      const url = new URL(a.href, location.href);
+      return /^https?:$/.test(url.protocol) && url.hostname.replace(/^www\./, '') !== hier;
+    } catch {
+      return false;
+    }
+  };
+
+  const oeffneNeu = (a: HTMLAnchorElement) => {
+    a.target = '_blank';
+    const rel = new Set((a.getAttribute('rel') || '').split(/\s+/).filter(Boolean));
+    rel.add('noopener');
+    a.setAttribute('rel', [...rel].join(' '));
+  };
+
+  // Lightbox markiert Bildlinks erst beim Laden; deshalb nach ihr laufen.
+  const markiereAlle = () => {
+    document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
+      if (!istExtern(a)) return;
+      oeffneNeu(a);
+      const label = a.getAttribute('aria-label');
+      if (label) {
+        if (!label.includes(HINWEIS)) a.setAttribute('aria-label', `${label} (${HINWEIS})`);
+      } else if (!a.querySelector('.grh-visually-hidden[data-grh-extern]')) {
+        const s = document.createElement('span');
+        s.className = 'grh-visually-hidden';
+        s.dataset.grhExtern = '';
+        s.textContent = ` (${HINWEIS})`;
+        a.append(s);
+      }
+    });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', markiereAlle);
+  else markiereAlle();
+
+  document.addEventListener('click', (ev) => {
+    const a = (ev.target as HTMLElement).closest?.('a[href]') as HTMLAnchorElement | null;
+    if (a && istExtern(a)) oeffneNeu(a);
+  }, true);
+</script>

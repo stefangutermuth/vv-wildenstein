@@ -21,6 +21,8 @@ import GrhFooter from '../components/global/GrhFooter.astro';
 import GrhLoader from '../components/global/GrhLoader.astro';
 import GrhFloatingContact from '../components/global/GrhFloatingContact.astro';
 import GrhConsent from '../components/global/GrhConsent.astro';
+import GrhLightbox from '../components/global/GrhLightbox.astro';
+import GrhLinksExtern from '../components/global/GrhLinksExtern.astro';
 
 interface Props {
   title?: string;
@@ -98,6 +100,9 @@ const orgJsonLd = {
     {header === 'compact' && <GrhMegaMenu />}
     <GrhFloatingContact />
     <GrhConsent />
+    {/* Reihenfolge wichtig: Die Lightbox markiert Bildlinks, bevor externe Links neue Tabs bekommen. */}
+    <GrhLightbox />
+    <GrhLinksExtern />
 
     <script>
       // Reveal-Beobachter für .grh-reveal Elemente.

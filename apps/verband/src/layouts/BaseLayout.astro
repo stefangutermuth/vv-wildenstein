@@ -7,6 +7,8 @@ import '../styles/utilities.css';
 
 import VvHeader from '../components/global/VvHeader.astro';
 import VvFooter from '../components/global/VvFooter.astro';
+import VvLightbox from '../components/global/VvLightbox.astro';
+import VvLinksExtern from '../components/global/VvLinksExtern.astro';
 
 interface Props {
   title?: string;
@@ -74,6 +76,9 @@ const year = new Date().getFullYear();
       <slot />
     </main>
     <VvFooter />
+    {/* Reihenfolge wichtig: Die Lightbox markiert Bildlinks, bevor externe Links neue Tabs bekommen. */}
+    <VvLightbox />
+    <VvLinksExtern />
 
     {/* Partner-/Auszeichnungs-Logoreihe — weißes Band unter dem Footer */}
     <aside class="vv-partners" aria-label="Partner und Auszeichnungen">
