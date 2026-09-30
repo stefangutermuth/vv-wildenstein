@@ -32,15 +32,21 @@ const heroBoxes = [
   { icon: 'megaphone',      label: 'Neuigkeiten',    sub: 'Bekanntmachungen',       href: '/neuigkeiten' },
   { icon: 'alert-triangle', label: 'Sperrungen',     sub: 'Verkehr aktuell',        href: '/sperrungen' },
   { icon: 'vote',           label: 'Wahlen',         sub: 'Termine & Informationen', href: '/wahlen' },
-  { icon: 'waves',          label: 'Freibad',        sub: 'Saison & Öffnungszeiten', href: '/leben-freizeit/freibad', live: true },
-  highlightBox(),
+  highlightBox(0),
+  highlightBox(1),
 ];
 
-// Fünfte Box: der nächste Termin mit der WordPress-Kategorie „Highlight“
-// (verschwindet nach dem Termin von selbst), sonst der Veranstaltungskalender.
-function highlightBox() {
-  const h = termine.find((e) => e.categories?.includes('highlight'));
-  if (!h) return { icon: 'calendar', label: 'Veranstaltungen', sub: 'Termine der Region', href: '/veranstaltungen' };
+// Vierte und fünfte Box: die nächsten beiden Termine mit der WordPress-Kategorie
+// „Highlight“ (verschwinden nach dem Termin von selbst). Die Freibad-Kachel ist auf
+// Wunsch des Verbands weg (30.09.2026). Fehlt ein Highlight, zeigen die Boxen
+// Tourismus bzw. Amtsblatt (Veranstaltungen und Gutschein stehen schon in den Chips).
+function highlightBox(nr: number) {
+  const h = termine.filter((e) => e.categories?.includes('highlight'))[nr];
+  if (!h) {
+    return nr === 0
+      ? { icon: 'mountain', label: 'Tourismus', sub: 'Ausflugsziele & Wandern', href: '/tourismus' }
+      : { icon: 'file-text', label: 'Amtsblatt', sub: 'Aktuelle Ausgaben', href: '/amtsblatt' };
+  }
   const monat = new Intl.DateTimeFormat('de-DE', { month: 'long' });
   const a = h.startDate;
   const b = h.endDate;

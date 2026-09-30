@@ -32,13 +32,14 @@ function tageDazwischen(a: Date, b: Date): number {
   return Math.round((new Date(b).setHours(0, 0, 0, 0) - new Date(a).setHours(0, 0, 0, 0)) / 864e5);
 }
 
-/** „Samstag und Sonntag · 10 bis 17 Uhr“ */
+/** „Samstag und Sonntag · 10 bis 17 Uhr“; bei mehr als einer Woche ohne Wochentage (leer bei ganztägig) */
 export function zeitraumLang(e: EventItem): string {
   const a = e.startDate;
   const b = e.endDate;
   const teile: string[] = [];
   if (b) {
-    teile.push(`${wochentag.format(a)} ${tageDazwischen(a, b) === 1 ? 'und' : 'bis'} ${wochentag.format(b)}`);
+    const tage = tageDazwischen(a, b);
+    if (tage <= 6) teile.push(`${wochentag.format(a)} ${tage === 1 ? 'und' : 'bis'} ${wochentag.format(b)}`);
   } else {
     teile.push(wochentag.format(a));
   }

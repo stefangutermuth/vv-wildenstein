@@ -320,7 +320,10 @@ export async function fetchWordPressEvents(): Promise<EventItem[]> {
     .map(mapVWEvent)
     .filter((e): e is EventItem => e !== null)
     .filter((e) => {
-      const endRef = e.endDate ?? e.startDate;
+      // Ganztägige Termine gelten bis zum Ende ihres letzten Tages (WordPress liefert
+      // dann nur das Datum, das sonst als Mitternacht gelesen würde).
+      const endRef = new Date(e.endDate ?? e.startDate);
+      if (e.allDay) endRef.setHours(23, 59, 59, 999);
       return endRef.valueOf() >= now.valueOf();
     })
     .sort((a, b) => a.startDate.valueOf() - b.startDate.valueOf());

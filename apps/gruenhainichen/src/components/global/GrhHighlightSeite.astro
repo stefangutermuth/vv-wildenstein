@@ -16,6 +16,7 @@ interface Props {
 const { event } = Astro.props;
 const titel = kurzTitel(event.title);
 const plakat = await bildInGroesse(event.image, [1000, 1024]);
+const zeitZeile = [zeitraumLang(event), event.location].filter(Boolean).join(' · ');
 const hatKarte = (await buildTeilnehmerProgramm(event.descriptionHtml ?? '')).markers.length > 0;
 ---
 <article class="grh-hs">
@@ -25,9 +26,7 @@ const hatKarte = (await buildTeilnehmerProgramm(event.descriptionHtml ?? '')).ma
         <p class="grh-hs__crumb"><a href="/veranstaltungen">Veranstaltungen</a> · Highlight</p>
         <p class="grh-hs__eyebrow">{zeitraum(event)} {event.startDate.getFullYear()}</p>
         <h1 class="grh-hs__titel">{titel}</h1>
-        <p class="grh-hs__zeit">
-          {zeitraumLang(event)}{event.location && <> · {event.location}</>}
-        </p>
+        {zeitZeile && <p class="grh-hs__zeit">{zeitZeile}</p>}
         {hatKarte && (
           <a class="grh-hs__zur-karte" href="#karte">
             Zur Karte der Teilnehmer <GrhIcon name="arrow-down" size={16} />

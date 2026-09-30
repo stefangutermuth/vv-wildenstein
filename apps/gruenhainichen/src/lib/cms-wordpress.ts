@@ -326,9 +326,18 @@ export async function fetchWordPressEvents(opts: { includePast?: boolean } = {})
   const now = new Date();
   const filtered = opts.includePast
     ? mapped
-    : mapped.filter((e) => (e.endDate ?? e.startDate).valueOf() >= now.valueOf());
+    : mapped.filter((e) => terminEnde(e) >= now.valueOf());
 
   return filtered.sort((a, b) => a.startDate.valueOf() - b.startDate.valueOf());
+}
+
+/** Ganztägige Termine gelten bis zum Ende ihres letzten Tages (WordPress liefert
+ *  dann nur das Datum, das als Mitternacht gelesen würde: Der Adventskalender
+ *  wäre am 24.12. ab 1 Uhr verschwunden). */
+function terminEnde(e: { startDate: Date; endDate?: Date; allDay?: boolean }): number {
+  const ende = new Date(e.endDate ?? e.startDate);
+  if (e.allDay) ende.setHours(23, 59, 59, 999);
+  return ende.valueOf();
 }
 
 function mapVWEvent(ev: VWEvent): EventItem | null {
