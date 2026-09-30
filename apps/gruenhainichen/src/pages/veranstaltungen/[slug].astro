@@ -2,7 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import GrhCPTDetail from '../../components/global/GrhCPTDetail.astro';
 import GrhTerminProgramm from '../../components/global/GrhTerminProgramm.astro';
+import GrhHighlightSeite from '../../components/global/GrhHighlightSeite.astro';
 import { getEvents } from '../../lib/cms';
+import { HIGHLIGHT_KATEGORIE, kurzTitel } from '../../lib/highlight';
 
 export async function getStaticPaths() {
   // Auch vergangene Termine: Der Kalender verlinkt sein Archiv, und ohne
@@ -32,12 +34,22 @@ const detail = {
   backLabel: 'Alle Termine',
 };
 ---
-<BaseLayout title={`${event.title} · Veranstaltungen · Grünhainichen`} header="compact">
-  {event.descriptionHtml ? (
-    <GrhCPTDetail {...detail}>
-      <GrhTerminProgramm html={event.descriptionHtml} />
-    </GrhCPTDetail>
-  ) : (
-    <GrhCPTDetail {...detail} contentHtml={`<p>${event.teaser}</p>`} />
-  )}
-</BaseLayout>
+{event.categories?.includes(HIGHLIGHT_KATEGORIE) && event.descriptionHtml ? (
+  <BaseLayout
+    title={`${kurzTitel(event.title)} ${event.startDate.getFullYear()} · Grünhainichen`}
+    description={event.teaser}
+    header="compact"
+  >
+    <GrhHighlightSeite event={event} />
+  </BaseLayout>
+) : (
+  <BaseLayout title={`${event.title} · Veranstaltungen · Grünhainichen`} header="compact">
+    {event.descriptionHtml ? (
+      <GrhCPTDetail {...detail}>
+        <GrhTerminProgramm html={event.descriptionHtml} />
+      </GrhCPTDetail>
+    ) : (
+      <GrhCPTDetail {...detail} contentHtml={`<p>${event.teaser}</p>`} />
+    )}
+  </BaseLayout>
+)}

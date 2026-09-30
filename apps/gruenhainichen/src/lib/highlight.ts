@@ -49,22 +49,28 @@ export function zeitraumLang(e: EventItem): string {
 }
 
 /**
- * Kleines Vorschaubild statt des Originals (das Plakat hat 1343 × 1900 px).
- * Erst die mittlere Größe von WordPress (längste Seite 300 px, Seitenverhältnis
- * bleibt, damit der Ausschnitt per CSS wählbar ist), dann das 150er-Quadrat.
- * Fehlen beide, bleibt die Adresse.
+ * Kleinere Fassung eines WordPress-Bildes statt des Originals (das Plakat hat
+ * 1343 × 1900 px). Probiert die Größen mit den angegebenen längsten Seiten, bei
+ * gleichem Seitenverhältnis; mit `quadrat` zuletzt das 150er-Quadrat.
+ * Fehlt alles, bleibt die Adresse.
  */
-export async function vorschaubild(url?: string): Promise<string | undefined> {
+export async function bildInGroesse(
+  url: string | undefined,
+  laengsteSeiten: number[],
+  quadrat = false,
+): Promise<string | undefined> {
   if (!url) return undefined;
   const m = url.match(/^(.*?)(?:-(\d+)x(\d+))?(\.(?:jpe?g|png|webp))$/i);
   if (!m) return url;
   const [, basis, w, h, endung] = m;
   const kandidaten: string[] = [];
   if (w && h) {
-    const f = 300 / Math.max(+w, +h);
-    if (f < 1) kandidaten.push(`${basis}-${Math.round(+w * f)}x${Math.round(+h * f)}${endung}`);
+    for (const seite of laengsteSeiten) {
+      const f = seite / Math.max(+w, +h);
+      if (f < 1) kandidaten.push(`${basis}-${Math.round(+w * f)}x${Math.round(+h * f)}${endung}`);
+    }
   }
-  kandidaten.push(`${basis}-150x150${endung}`);
+  if (quadrat) kandidaten.push(`${basis}-150x150${endung}`);
   for (const k of kandidaten) {
     try {
       const res = await fetch(k, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
@@ -73,3 +79,6 @@ export async function vorschaubild(url?: string): Promise<string | undefined> {
   }
   return url;
 }
+
+/** Vorschaubild für den Blickfang: mittlere Größe (300 px), sonst das Quadrat. */
+export const vorschaubild = (url?: string) => bildInGroesse(url, [300], true);

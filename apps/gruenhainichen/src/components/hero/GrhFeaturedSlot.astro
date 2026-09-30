@@ -11,21 +11,13 @@ interface Props {
   logoAlt?: string;
   /** Vorschaubild statt Logo (eckig, randlos beschnitten) */
   bild?: string;
-  /** id eines <dialog> auf der Seite: Klick öffnet das Fenster, ohne JavaScript bleibt der Link */
-  dialog?: string;
 }
-const { eyebrow, title, subtitle, ctas = [], logo, logoAlt = '', bild, dialog } = Astro.props;
+const { eyebrow, title, subtitle, ctas = [], logo, logoAlt = '', bild } = Astro.props;
 
 // Reduce auf einen Primary-CTA — der Slot soll kein Buffet sein
 const primary = ctas[0];
 ---
-<a
-  class="grh-pin grh-reveal"
-  href={primary?.href ?? '#'}
-  aria-label={`${eyebrow ?? ''} · ${title}`}
-  aria-haspopup={dialog ? 'dialog' : undefined}
-  data-grh-open-dialog={dialog}
->
+<a class="grh-pin grh-reveal" href={primary?.href ?? '#'} aria-label={`${eyebrow ?? ''} · ${title}`}>
   {bild ? (
     <span class="grh-pin__bild" aria-hidden="true">
       <img src={bild} alt="" width="64" height="64" loading="eager" decoding="async" />
@@ -138,15 +130,3 @@ const primary = ctas[0];
   }
 </style>
 
-<script>
-  // Blickfang mit Fenster: Klick öffnet den <dialog>, ohne JavaScript führt der Link zur Terminseite.
-  document.querySelectorAll<HTMLAnchorElement>('[data-grh-open-dialog]').forEach((a) => {
-    const dlg = document.getElementById(a.dataset.grhOpenDialog!) as HTMLDialogElement | null;
-    if (!dlg || typeof dlg.showModal !== 'function') return;
-    a.addEventListener('click', (ev) => {
-      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button !== 0) return; // neuer Tab bleibt möglich
-      ev.preventDefault();
-      dlg.showModal();
-    });
-  });
-</script>

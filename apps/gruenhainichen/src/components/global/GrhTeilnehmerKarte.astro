@@ -17,7 +17,7 @@ interface Props {
 const { markers, titel = 'Karte der Teilnehmer' } = Astro.props;
 ---
 {markers.length > 0 && (
-  <figure class="grh-tk" data-grh-teilnehmerkarte data-markers={JSON.stringify(markers)}>
+  <figure id="karte" class="grh-tk" data-grh-teilnehmerkarte data-markers={JSON.stringify(markers)}>
     <div class="grh-tk__map" data-grh-tk-map>
       <div class="grh-tk__gate" data-grh-tk-gate>
         <p class="grh-tk__gate-title">{titel}</p>
@@ -38,6 +38,7 @@ const { markers, titel = 'Karte der Teilnehmer' } = Astro.props;
 <style>
   .grh-tk {
     margin: var(--grh-space-5) 0;
+    scroll-margin-top: 110px; /* feste Kopfzeile */
   }
   .grh-tk__map {
     position: relative;

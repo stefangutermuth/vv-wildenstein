@@ -12,7 +12,6 @@ import GrhOrtsteilSpread from '../components/sections/GrhOrtsteilSpread.astro';
 import GrhEventsList from '../components/sections/GrhEventsList.astro';
 
 import GrhNewsCard from '../components/cards/GrhNewsCard.astro';
-import GrhHighlightFenster from '../components/global/GrhHighlightFenster.astro';
 
 import GrhButton from '../components/primitives/GrhButton.astro';
 import GrhIcon from '../components/primitives/GrhIcon.astro';
@@ -66,10 +65,9 @@ const ortsteilSpread = ortsteile.map((o, i) => ({
 const season = getCurrentSeason();
 const showAdventSection = season === 'advent';
 
-// Blickfang: der nächste Termin mit der WordPress-Kategorie „Highlight“ (öffnet ein
-// Fenster mit Programm und Karte), sonst im Advent der Adventskalender.
+// Blickfang: der nächste Termin mit der WordPress-Kategorie „Highlight“ (führt auf
+// seine eigene Seite mit Programm und Karte), sonst im Advent der Adventskalender.
 const highlight = findeHighlight(alleTermine);
-const HIGHLIGHT_FENSTER = 'grh-highlight';
 const highlightTeilnehmer = highlight
   ? (await buildTeilnehmerProgramm(highlight.descriptionHtml ?? '')).markers.reduce((n, m) => n + m.nummern.length, 0)
   : 0;
@@ -82,7 +80,6 @@ const featured = highlight
         ? `Programm und Karte mit ${highlightTeilnehmer} Teilnehmern`
         : 'Programm ansehen',
       bild: await vorschaubild(highlight.image),
-      dialog: highlight.descriptionHtml ? HIGHLIGHT_FENSTER : undefined,
       ctas: [{ label: 'Programm', href: `/veranstaltungen/${highlight.slug}`, variant: 'primary' as const }],
     }
   : showAdventSection
@@ -465,7 +462,6 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
     </div>
   </GrhSection>
 
-  {highlight?.descriptionHtml && <GrhHighlightFenster id={HIGHLIGHT_FENSTER} event={highlight} />}
 </BaseLayout>
 
 <style>

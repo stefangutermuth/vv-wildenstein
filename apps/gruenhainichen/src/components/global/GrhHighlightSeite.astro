@@ -1,0 +1,146 @@
+---
+/**
+ * Eigene Seite für einen Highlight-Termin (WordPress-Terminkategorie „Highlight“),
+ * z. B. den Tag des traditionellen Handwerks: Kopf mit Datum, Zeiten und Plakat,
+ * darunter Programm und Teilnehmerkarte. Inhalt kommt vollständig aus WordPress.
+ */
+import GrhIcon from '../primitives/GrhIcon.astro';
+import GrhTerminProgramm from './GrhTerminProgramm.astro';
+import type { EventItem } from '../../lib/cms';
+import { bildInGroesse, kurzTitel, zeitraum, zeitraumLang } from '../../lib/highlight';
+import { buildTeilnehmerProgramm } from '../../lib/teilnehmer';
+
+interface Props {
+  event: EventItem;
+}
+const { event } = Astro.props;
+const titel = kurzTitel(event.title);
+const plakat = await bildInGroesse(event.image, [1000, 1024]);
+const hatKarte = (await buildTeilnehmerProgramm(event.descriptionHtml ?? '')).markers.length > 0;
+---
+<article class="grh-hs">
+  <header class="grh-hs__kopf">
+    <div class="grh-container grh-hs__kopf-innen">
+      <div class="grh-hs__kopftext">
+        <p class="grh-hs__crumb"><a href="/veranstaltungen">Veranstaltungen</a> · Highlight</p>
+        <p class="grh-hs__eyebrow">{zeitraum(event)} {event.startDate.getFullYear()}</p>
+        <h1 class="grh-hs__titel">{titel}</h1>
+        <p class="grh-hs__zeit">
+          {zeitraumLang(event)}{event.location && <> · {event.location}</>}
+        </p>
+        {hatKarte && (
+          <a class="grh-hs__zur-karte" href="#karte">
+            Zur Karte der Teilnehmer <GrhIcon name="arrow-down" size={16} />
+          </a>
+        )}
+      </div>
+      {plakat && (
+        <a class="grh-hs__plakat" href={event.image} target="_blank" rel="noopener" aria-label={`Plakat „${titel}“ in voller Größe öffnen`}>
+          <img src={plakat} alt={`Plakat: ${titel}`} width="707" height="1000" loading="eager" decoding="async" />
+        </a>
+      )}
+    </div>
+  </header>
+
+  <div class="grh-container grh-hs__inhalt">
+    <div class="grh-hs__spalte">
+      <GrhTerminProgramm html={event.descriptionHtml ?? ''} />
+      <p class="grh-hs__zurueck">
+        <a href="/veranstaltungen"><GrhIcon name="arrow-left" size={14} /> Alle Termine</a>
+      </p>
+    </div>
+  </div>
+</article>
+
+<style>
+  .grh-hs { background: var(--grh-cream-50); padding-bottom: var(--grh-space-9); }
+
+  .grh-hs__kopf {
+    background: var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    border-bottom: 3px solid var(--grh-candle-500);
+  }
+  .grh-hs__kopf-innen {
+    display: grid;
+    gap: var(--grh-space-6);
+    align-items: center;
+    padding-top: clamp(var(--grh-space-6), 7vw, var(--grh-space-8));
+    padding-bottom: clamp(var(--grh-space-6), 7vw, var(--grh-space-8));
+  }
+  @media (min-width: 820px) {
+    .grh-hs__kopf-innen { grid-template-columns: minmax(0, 1fr) 280px; gap: var(--grh-space-8); }
+  }
+
+  .grh-hs__crumb {
+    margin: 0 0 var(--grh-space-4);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(250, 247, 241, 0.6);
+  }
+  .grh-hs__crumb a { color: inherit; text-decoration: none; }
+  .grh-hs__crumb a:hover { color: var(--grh-cream-50); }
+  .grh-hs__eyebrow {
+    margin: 0 0 var(--grh-space-2);
+    font-size: var(--grh-fs-sm);
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--grh-candle-500);
+  }
+  .grh-hs__titel {
+    margin: 0;
+    font-family: var(--grh-font-display);
+    font-size: clamp(2.1rem, 5.4vw, 3.6rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--grh-cream-50);
+    max-width: 16ch;
+  }
+  .grh-hs__zeit {
+    margin: var(--grh-space-4) 0 0;
+    font-size: var(--grh-fs-md);
+    color: rgba(250, 247, 241, 0.82);
+  }
+  .grh-hs__zur-karte {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: var(--grh-space-5);
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-950);
+    font-weight: 700;
+    font-size: var(--grh-fs-sm);
+    text-decoration: none;
+    transition: transform var(--grh-dur-fast), background var(--grh-dur-fast);
+  }
+  .grh-hs__zur-karte:hover { transform: translateY(-2px); background: #f0c774; }
+
+  .grh-hs__plakat {
+    display: block;
+    justify-self: center;
+    width: min(240px, 60vw);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+    transition: transform var(--grh-dur-base);
+  }
+  @media (min-width: 820px) {
+    .grh-hs__plakat { width: 100%; justify-self: end; }
+  }
+  .grh-hs__plakat:hover { transform: translateY(-3px); }
+  .grh-hs__plakat img { display: block; width: 100%; height: auto; }
+
+  .grh-hs__inhalt { padding-top: var(--grh-space-7); }
+  .grh-hs__spalte { max-width: 820px; }
+  .grh-hs__zurueck { margin-top: var(--grh-space-7); }
+  .grh-hs__zurueck a {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-weight: 600;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-forest-900);
+    text-decoration: none;
+  }
+  .grh-hs__zurueck a:hover { color: var(--grh-moss-600); }
+</style>
