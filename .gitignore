@@ -32,6 +32,7 @@ pnpm-debug.log*
 
 # Runtime-Caches (regenerieren sich zur Build-Zeit)
 apps/gruenhainichen/src/lib/geocode-cache.json
+apps/gruenhainichen/.geocode-cache.json
 apps/gruenhainichen/.wp-cache/
 **/.wp-cache/
 

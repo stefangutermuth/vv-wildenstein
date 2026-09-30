@@ -29,6 +29,11 @@ concurrency:
   group: deploy-verband
   cancel-in-progress: false
 
+# Termine in deutscher Zeit ausgeben: Der Runner läuft in UTC, sonst stünde
+# „15:00 Uhr“ bei einer Lesung um 17 Uhr.
+env:
+  TZ: Europe/Berlin
+
 jobs:
   deploy-verband:
     name: Verband → 2026.vv-wildenstein.com

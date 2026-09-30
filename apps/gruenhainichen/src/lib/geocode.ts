@@ -13,11 +13,13 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 const USER_AGENT = 'Gruenhainichen-Astro/1.0 (contact: info@wildenstein.ws)';
 const RATE_LIMIT_MS = 1100;
-const CACHE_FILE = new URL('./geocode-cache.json', import.meta.url).pathname;
+// Fester Ort im App-Ordner (wie .wp-cache). Relativ zu import.meta.url landete die
+// Datei beim Bauen neben den gebündelten Dateien in dist/ und wurde nie wieder gelesen.
+const CACHE_FILE = resolve('.geocode-cache.json');
 
 const cache = new Map<string, GeoPoint | null>();
 let lastCall = 0;
@@ -84,7 +86,33 @@ export async function geocode(query: string): Promise<GeoPoint | null> {
   const key = query.trim().toLowerCase();
   if (!key) return null;
   if (cache.has(key)) return cache.get(key)!;
+  // Gleichzeitige Anfragen nach derselben Adresse (mehrere Seiten im Bau) teilen sich eine.
+  const laufend = inArbeit.get(key);
+  if (laufend) return laufend;
+  const p = geocodeMitWiederholung(query, key).finally(() => inArbeit.delete(key));
+  inArbeit.set(key, p);
+  return p;
+}
 
+const inArbeit = new Map<string, Promise<GeoPoint | null>>();
+let pauseBis = 0;
+
+async function geocodeMitWiederholung(query: string, key: string): Promise<GeoPoint | null> {
+  if (Date.now() < pauseBis) return null;
+  // Nominatim weist bei Last kurz ab (429) oder antwortet zu langsam: ein zweiter
+  // Versuch nach einer Pause, sonst fehlt der Punkt bis zum nächsten Bau.
+  const erster = await geocodeEinmal(query, key);
+  if (erster !== undefined) return erster;
+  await new Promise((r) => setTimeout(r, 2500));
+  const zweiter = await geocodeEinmal(query, key);
+  if (zweiter !== undefined) return zweiter;
+  // Weiter abgewiesen: eine Minute Ruhe, damit wir die Sperre nicht verlängern.
+  pauseBis = Date.now() + 60_000;
+  return null;
+}
+
+/** undefined = vorübergehender Fehler (nochmal versuchen), null = kein Treffer */
+async function geocodeEinmal(query: string, key: string): Promise<GeoPoint | null | undefined> {
   await throttle();
 
   try {
@@ -109,13 +137,13 @@ export async function geocode(query: string): Promise<GeoPoint | null> {
     }
     if (!res.ok) {
       // Bei 429/5xx NICHT als „null" cachen — der nächste Build soll es erneut versuchen.
-      if (res.status === 429 || res.status >= 500) return null;
+      if (res.status === 429 || res.status >= 500) return undefined;
       cache.set(key, null);
       persistCacheToDisk();
       return null;
     }
     let data: Array<{ lat: string; lon: string }> = [];
-    try { data = await res.json(); } catch { return null; }
+    try { data = await res.json(); } catch { return undefined; }
     if (data.length === 0) {
       cache.set(key, null);
       persistCacheToDisk();
@@ -127,7 +155,7 @@ export async function geocode(query: string): Promise<GeoPoint | null> {
     return result;
   } catch (err) {
     console.warn(`[geocode] failed for "${query}":`, err);
-    return null;
+    return undefined;
   }
 }
 

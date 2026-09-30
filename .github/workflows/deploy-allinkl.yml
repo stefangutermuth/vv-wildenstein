@@ -40,6 +40,11 @@ concurrency:
   group: deploy-allinkl
   cancel-in-progress: false
 
+# Termine in deutscher Zeit ausgeben: Der Runner läuft in UTC, sonst stünde
+# „15:00 Uhr“ bei einer Lesung um 17 Uhr.
+env:
+  TZ: Europe/Berlin
+
 jobs:
   # ───────────────────────────────────────────────────────────────────
   # Grünhainichen → www.gruenhainichen.com (live seit 16.08.2026)
@@ -67,7 +72,11 @@ jobs:
         id: wpcache
         uses: actions/cache@v4
         with:
-          path: apps/gruenhainichen/.wp-cache
+          # geocode-cache.json: einmal gefundene Adressen (Sperrungen, Teilnehmerkarten)
+          # nicht bei jedem Bau neu bei OpenStreetMap erfragen.
+          path: |
+            apps/gruenhainichen/.wp-cache
+            apps/gruenhainichen/.geocode-cache.json
           # v5 seit 19.09.2026: ein in WordPress auf Entwurf gesetztes Profil blieb
           # in der zwischengespeicherten Listenantwort hängen. Beim Entfernen eines
           # Beitrags ebenfalls hochzählen.
