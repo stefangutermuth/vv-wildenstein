@@ -29,7 +29,8 @@ const { markers, titel = 'Karte der Teilnehmer' } = Astro.props;
       </div>
     </div>
     <figcaption class="grh-tk__caption">
-      Die Nummern auf der Karte gehören zu den Nummern in der Liste.
+      Die Nummern auf der Karte gehören zu den Nummern in der Liste. Gelbe Sammelpunkte
+      fassen nahe Standorte zusammen: anklicken zum Vergrößern.
       Karte © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a>
     </figcaption>
   </figure>
@@ -104,6 +105,7 @@ const { markers, titel = 'Karte der Teilnehmer' } = Astro.props;
 
   :global(.grh-tk-pin) {
     display: flex; align-items: center; justify-content: center;
+    width: max-content; /* das Leaflet-Symbol selbst ist 0 px breit */
     min-width: 26px; height: 26px; padding: 0 7px;
     border-radius: 999px;
     background: var(--grh-forest-900);
@@ -113,6 +115,15 @@ const { markers, titel = 'Karte der Teilnehmer' } = Astro.props;
     font: 700 12px / 1 var(--grh-font-body);
     white-space: nowrap;
     transform: translate(-50%, -50%);
+  }
+  :global(.grh-tk-pin--gruppe) {
+    height: 30px;
+    padding: 0 11px;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-950);
+    border-color: var(--grh-forest-900);
+    font-size: 13px;
+    cursor: zoom-in;
   }
   :global(.grh-tk .leaflet-popup-content) {
     font-family: var(--grh-font-body);
@@ -133,6 +144,18 @@ const { markers, titel = 'Karte der Teilnehmer' } = Astro.props;
   const erlaubt = () => { try { return sessionStorage.getItem(KEY) === '1'; } catch { return false; } };
   const merken = () => { try { sessionStorage.setItem(KEY, '1'); } catch { /* privater Modus */ } };
 
+  /** [1,2,3,4,6,8,9,10] → „1 bis 4, 6, 8 bis 10“ */
+  function bereiche(n: number[]): string {
+    const teile: string[] = [];
+    for (let i = 0; i < n.length; ) {
+      let j = i;
+      while (j + 1 < n.length && n[j + 1] === n[j] + 1) j++;
+      teile.push(j - i >= 2 ? `${n[i]} bis ${n[j]}` : n.slice(i, j + 1).join(', '));
+      i = j + 1;
+    }
+    return teile.join(', ');
+  }
+
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   function zeichne(fig: HTMLElement) {
@@ -142,42 +165,90 @@ const { markers, titel = 'Karte der Teilnehmer' } = Astro.props;
     el.querySelector('[data-grh-tk-gate]')?.remove();
     const markers: Marker[] = JSON.parse(fig.dataset.markers || '[]');
 
-    // zoomSnap 0.25: Der Ortskern passt sonst knapp nicht in Stufe 16 und fiele auf 15 zurück.
     const map = L.map(el, { scrollWheelZoom: false, attributionControl: false, zoomSnap: 0.25 });
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    const bounds = L.latLngBounds(markers.map((m) => [m.lat, m.lon] as [number, number]));
+    // Beim Laden ohne Animation: Eine Zoom-Animation, die im Hintergrund-Tab anläuft,
+    // bleibt sonst auf der Startstufe hängen.
+    const alleZeigen = (animate = true) => map.fitBounds(bounds, { padding: [34, 34], maxZoom: 17, animate });
 
-    const bounds: [number, number][] = [];
-    for (const m of markers) {
-      const icon = L.divIcon({ className: '', html: `<span class="grh-tk-pin">${m.nummern.join(' · ')}</span>`, iconSize: [0, 0] });
-      const namen = m.namen.map((n, i) => `<strong>${m.nummern[i]}. ${esc(n)}</strong>`).join('');
-      L.marker([m.lat, m.lon], { icon, title: m.namen.join(', ') })
-        .bindPopup(`${namen}<span>${esc(m.adresse)}</span>`)
-        .addTo(map);
-      bounds.push([m.lat, m.lon]);
-    }
-    // Ausschnitt auf den Ortskern: Punkte weiter als 1,2 km vom Mittelpunkt (etwa ein
-    // Teilnehmer in Börnichen) würden die Karte so weit machen, dass die Nummern an
-    // der Chemnitzer Straße übereinanderliegen. Für sie gibt es „Alle Standorte zeigen“.
-    const mitte = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-    const kern = L.latLng(mitte(bounds.map((b) => b[0])), mitte(bounds.map((b) => b[1])));
-    const nah = bounds.filter((b) => kern.distanceTo(b) <= 1200);
-    const ausschnitt = nah.length >= 2 ? nah : bounds;
-    const einpassen = () => map.fitBounds(ausschnitt, { padding: [28, 28], maxZoom: 17 });
-    if (ausschnitt.length < bounds.length) {
-      const weit = markers.filter((m) => kern.distanceTo([m.lat, m.lon]) > 1200).flatMap((m) => m.nummern);
-      const knopf = document.createElement('button');
-      knopf.type = 'button';
-      knopf.className = 'grh-tk__alle';
-      knopf.textContent = `Alle Standorte zeigen (auch Nr. ${weit.join(', ')})`;
-      knopf.addEventListener('click', () => map.fitBounds(bounds, { padding: [36, 36] }));
-      fig.querySelector('.grh-tk__caption')?.prepend(knopf);
-    }
+    // Die Karte zeigt immer alle Standorte. Punkte, deren Beschriftungen sich bei der
+    // aktuellen Zoomstufe überdecken würden (die Chemnitzer Straße in der
+    // Gesamtansicht), werden zu einem Sammelpunkt „1 bis 10“; ein Klick zoomt hinein.
+    const ebene = L.layerGroup().addTo(map);
+    interface Gruppe { px: L.Point; ms: Marker[]; nummern: number[]; label: string }
+    const gruppe = (ms: Marker[]): Gruppe => {
+      const nummern = ms.flatMap((m) => m.nummern).sort((a, b) => a - b);
+      const pts = ms.map((m) => map.latLngToLayerPoint([m.lat, m.lon]));
+      const px = pts.reduce((sum, p) => sum.add(p), L.point(0, 0)).divideBy(pts.length);
+      return { px, ms, nummern, label: ms.length === 1 ? ms[0].nummern.join(' · ') : bereiche(nummern) };
+    };
+    const breite = (g: Gruppe) => 24 + g.label.length * 7.5;
+    const decken = (a: Gruppe, b: Gruppe) =>
+      Math.abs(a.px.x - b.px.x) < (breite(a) + breite(b)) / 2 + 4 && Math.abs(a.px.y - b.px.y) < 34;
+    const zeichnePunkte = () => {
+      ebene.clearLayers();
+      let gruppen = markers.map((m) => gruppe([m]));
+      for (let neu = true; neu; ) {
+        neu = false;
+        suche: for (let i = 0; i < gruppen.length; i++) {
+          for (let j = i + 1; j < gruppen.length; j++) {
+            if (decken(gruppen[i], gruppen[j])) {
+              const zusammen = gruppe([...gruppen[i].ms, ...gruppen[j].ms]);
+              gruppen = gruppen.filter((_, k) => k !== i && k !== j).concat(zusammen);
+              neu = true;
+              break suche;
+            }
+          }
+        }
+      }
+      for (const g of gruppen) {
+        const namen = g.ms.flatMap((m) => m.namen.map((n, i) => `<strong>${m.nummern[i]}. ${esc(n)}</strong>`));
+        if (g.ms.length === 1) {
+          const m = g.ms[0];
+          const icon = L.divIcon({ className: '', html: `<span class="grh-tk-pin">${g.label}</span>`, iconSize: [0, 0] });
+          L.marker([m.lat, m.lon], { icon, title: m.namen.join(', ') })
+            .bindPopup(`${namen.join('')}<span>${esc(m.adresse)}</span>`)
+            .addTo(ebene);
+          continue;
+        }
+        const icon = L.divIcon({
+          className: '',
+          html: `<span class="grh-tk-pin grh-tk-pin--gruppe">${g.label}</span>`,
+          iconSize: [0, 0],
+        });
+        const gb = L.latLngBounds(g.ms.map((m) => [m.lat, m.lon] as [number, number]));
+        const punkt = L.marker(map.layerPointToLatLng(g.px), { icon, title: `${g.nummern.length} Standorte, zum Vergrößern klicken` })
+          .addTo(ebene);
+        punkt.on('click', () => {
+          // Liegen die Punkte selbst in der größten Zoomstufe noch zu dicht, zeigt
+          // der Sammelpunkt die Namen statt weiter zu zoomen.
+          if (map.getBoundsZoom(gb, false, L.point(80, 80)) <= map.getZoom() + 0.25) {
+            punkt.bindPopup(namen.join('')).openPopup();
+          } else {
+            map.fitBounds(gb, { padding: [60, 60] });
+          }
+        });
+      }
+    };
+    map.on('zoomend', zeichnePunkte);
+
+    const knopf = document.createElement('button');
+    knopf.type = 'button';
+    knopf.className = 'grh-tk__alle';
+    knopf.textContent = 'Alle Standorte zeigen';
+    knopf.addEventListener('click', () => alleZeigen());
+    fig.querySelector('.grh-tk__caption')?.prepend(knopf);
+
+    // Eine versteckt geladene Karte hat noch keine Größe: dann erst einpassen,
+    // sobald sie sichtbar wird.
     let eingepasst = el.clientWidth > 0;
-    map.setView(bounds[0], 15);
-    if (eingepasst) einpassen();
+    map.setView(bounds.getCenter(), 14);
+    if (eingepasst) alleZeigen(false);
+    zeichnePunkte();
     new ResizeObserver(() => {
       map.invalidateSize();
-      if (!eingepasst && el.clientWidth > 0) { eingepasst = true; einpassen(); }
+      if (!eingepasst && el.clientWidth > 0) { eingepasst = true; alleZeigen(false); }
     }).observe(el);
     fig.dispatchEvent(new CustomEvent('grh-tk-geladen', { bubbles: true }));
   }
