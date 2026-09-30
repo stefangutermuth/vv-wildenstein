@@ -12,12 +12,15 @@ import GrhOrtsteilSpread from '../components/sections/GrhOrtsteilSpread.astro';
 import GrhEventsList from '../components/sections/GrhEventsList.astro';
 
 import GrhNewsCard from '../components/cards/GrhNewsCard.astro';
+import GrhHighlightFenster from '../components/global/GrhHighlightFenster.astro';
 
 import GrhButton from '../components/primitives/GrhButton.astro';
 import GrhIcon from '../components/primitives/GrhIcon.astro';
 
 import { getCurrentSeason } from '../lib/seasons';
 import { getNews } from '../lib/cms';
+import { findeHighlight, kurzTitel, zeitraum, vorschaubild } from '../lib/highlight';
+import { buildTeilnehmerProgramm } from '../lib/teilnehmer';
 
 const newsAll = await getNews();
 const newsCards = newsAll.filter((n) => n.category !== 'sperrung').slice(0, 10);
@@ -36,7 +39,8 @@ const severityLabel: Record<string, string> = {
 };
 const fmtUntil = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: 'long' });
 
-const events = (await getEvents()).map((e) => ({
+const alleTermine = await getEvents();
+const events = alleTermine.map((e) => ({
   title: e.title,
   startDate: e.startDate,
   endDate: e.endDate,
@@ -62,14 +66,33 @@ const ortsteilSpread = ortsteile.map((o, i) => ({
 const season = getCurrentSeason();
 const showAdventSection = season === 'advent';
 
-const featured = showAdventSection
+// Blickfang: der nächste Termin mit der WordPress-Kategorie „Highlight“ (öffnet ein
+// Fenster mit Programm und Karte), sonst im Advent der Adventskalender.
+const highlight = findeHighlight(alleTermine);
+const HIGHLIGHT_FENSTER = 'grh-highlight';
+const highlightTeilnehmer = highlight
+  ? (await buildTeilnehmerProgramm(highlight.descriptionHtml ?? '')).markers.reduce((n, m) => n + m.nummern.length, 0)
+  : 0;
+
+const featured = highlight
+  ? {
+      eyebrow: zeitraum(highlight),
+      title: kurzTitel(highlight.title),
+      subtitle: highlightTeilnehmer > 0
+        ? `Programm und Karte mit ${highlightTeilnehmer} Teilnehmern`
+        : 'Programm ansehen',
+      bild: await vorschaubild(highlight.image),
+      dialog: highlight.descriptionHtml ? HIGHLIGHT_FENSTER : undefined,
+      ctas: [{ label: 'Programm', href: `/veranstaltungen/${highlight.slug}`, variant: 'primary' as const }],
+    }
+  : showAdventSection
   ? {
       eyebrow: 'Advent',
       title: 'Lebendiger Adventskalender',
       subtitle: 'Jeden Abend ein neues Türchen: ein Lichtermeer aus Schwibbögen, Engeln und Bergmann.',
       ctas: [{ label: 'Programm 2026', href: '/leben/lebendiger-adventskalender', variant: 'primary' as const }],
     }
-  : undefined; /* EURORANDO 2026 ist vorbei (23. und 27.09.); außerhalb des Advents keine feste Empfehlung */
+  : undefined;
 
 const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 ---
@@ -442,6 +465,7 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
     </div>
   </GrhSection>
 
+  {highlight?.descriptionHtml && <GrhHighlightFenster id={HIGHLIGHT_FENSTER} event={highlight} />}
 </BaseLayout>
 
 <style>

@@ -91,6 +91,8 @@ export interface EventItem {
   contentHtml?: string;
   organizer?: string;
   allDay?: boolean;
+  /** Slugs der Terminkategorien, z. B. „highlight“ für den Blickfang der Startseite */
+  categories?: string[];
 }
 
 export async function getEvents(): Promise<EventItem[]> {

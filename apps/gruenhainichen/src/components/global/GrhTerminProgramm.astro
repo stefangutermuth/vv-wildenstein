@@ -1,0 +1,76 @@
+---
+/**
+ * Vollständige Terminbeschreibung aus WordPress. Enthält sie eine Teilnehmerliste
+ * mit Adressen, werden die Einträge nummeriert und direkt nach der letzten Liste
+ * folgt die Karte der Teilnehmer.
+ */
+import GrhTeilnehmerKarte from './GrhTeilnehmerKarte.astro';
+import { buildTeilnehmerProgramm } from '../../lib/teilnehmer';
+
+interface Props {
+  html: string;
+}
+const { html } = Astro.props;
+const programm = await buildTeilnehmerProgramm(html);
+const schnitt = programm.markers.length > 0 ? programm.html.lastIndexOf('</ul>') : -1;
+const vorher = schnitt >= 0 ? programm.html.slice(0, schnitt + '</ul>'.length) : programm.html;
+const nachher = schnitt >= 0 ? programm.html.slice(schnitt + '</ul>'.length) : '';
+---
+<div class="grh-programm">
+  <Fragment set:html={vorher} />
+  <GrhTeilnehmerKarte markers={programm.markers} />
+  {nachher && <Fragment set:html={nachher} />}
+</div>
+
+<style>
+  /* Eigene Textgestaltung: Das Programm steht auch im Fenster der Startseite,
+     außerhalb der Detailansicht und ihrer Stile. */
+  .grh-programm { font-size: var(--grh-fs-md); line-height: 1.65; color: var(--grh-stone-700); }
+  .grh-programm :global(p),
+  .grh-programm :global(ul),
+  .grh-programm :global(ol) { margin: 0 0 1em; }
+  .grh-programm :global(ul),
+  .grh-programm :global(ol) { padding-left: 1.2em; }
+  .grh-programm :global(h2),
+  .grh-programm :global(h3),
+  .grh-programm :global(h4),
+  .grh-programm :global(h5),
+  .grh-programm :global(h6) {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    font-weight: 500;
+    color: var(--grh-forest-900);
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin: 1.6em 0 0.7em;
+  }
+  .grh-programm :global(h5),
+  .grh-programm :global(h6) { font-size: var(--grh-fs-lg, 1.25rem); }
+  .grh-programm :global(p a),
+  .grh-programm :global(li a) {
+    color: var(--grh-moss-600);
+    border-bottom: 1px solid var(--grh-candle-500);
+    text-decoration: none;
+  }
+  .grh-programm :global(img:not([class*="leaflet"])) { max-width: 100%; height: auto; }
+  .grh-programm :global(li.grh-teilnehmer) {
+    list-style: none;
+    position: relative;
+    padding-left: 40px;
+    margin-left: -1.2em;
+  }
+  .grh-programm :global(li.grh-teilnehmer + li.grh-teilnehmer) { margin-top: 0.7em; }
+  .grh-programm :global(.grh-teilnehmer__nr) {
+    position: absolute;
+    left: 0; top: 0.15em;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--grh-forest-900);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .grh-programm :global(li.grh-teilnehmer strong) { color: var(--grh-forest-900); }
+</style>

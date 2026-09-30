@@ -19,6 +19,10 @@ interface Featured {
   ctas?: CTA[];
   logo?: string;
   logoAlt?: string;
+  /** Vorschaubild statt Logo (eckig, randlos beschnitten) */
+  bild?: string;
+  /** id eines <dialog> auf der Seite: Klick öffnet das Fenster statt zu navigieren */
+  dialog?: string;
 }
 interface Slide {
   src: string;
@@ -180,6 +184,8 @@ const {
         ctas={featured.ctas}
         logo={featured.logo}
         logoAlt={featured.logoAlt}
+        bild={featured.bild}
+        dialog={featured.dialog}
       />
     </div>
   )}

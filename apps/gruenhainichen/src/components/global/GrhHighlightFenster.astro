@@ -1,0 +1,182 @@
+---
+/**
+ * Fenster hinter dem Blickfang der Startseite: Programm des Highlight-Termins
+ * mit Teilnehmerkarte. Inhalt kommt vollständig aus WordPress.
+ */
+import GrhIcon from '../primitives/GrhIcon.astro';
+import GrhTerminProgramm from './GrhTerminProgramm.astro';
+import type { EventItem } from '../../lib/cms';
+import { kurzTitel, zeitraum, zeitraumLang } from '../../lib/highlight';
+
+interface Props {
+  id: string;
+  event: EventItem;
+}
+const { id, event } = Astro.props;
+const titel = kurzTitel(event.title);
+const jahr = event.startDate.getFullYear();
+---
+<dialog id={id} class="grh-hf" aria-labelledby={`${id}-titel`}>
+  <div class="grh-hf__rahmen">
+    <header class="grh-hf__kopf">
+      {event.image && (
+        <img class="grh-hf__plakat" src={event.image} alt={`Plakat: ${titel}`} width="1343" height="1900" loading="lazy" decoding="async" />
+      )}
+      <div class="grh-hf__kopftext">
+        <p class="grh-hf__eyebrow">{zeitraum(event)} {jahr}</p>
+        <h2 id={`${id}-titel`} class="grh-hf__titel">{titel}</h2>
+        <p class="grh-hf__zeit">{zeitraumLang(event)}</p>
+      </div>
+      <form method="dialog" class="grh-hf__zu-form">
+        <button class="grh-hf__zu" aria-label="Fenster schließen">
+          <GrhIcon name="close" size={20} />
+        </button>
+      </form>
+    </header>
+
+    <div class="grh-hf__inhalt">
+      <GrhTerminProgramm html={event.descriptionHtml ?? ''} />
+    </div>
+
+    <footer class="grh-hf__fuss">
+      <a class="grh-hf__link" href={`/veranstaltungen/${event.slug}`}>
+        Als eigene Seite öffnen <GrhIcon name="arrow-right" size={14} />
+      </a>
+    </footer>
+  </div>
+</dialog>
+
+<style>
+  .grh-hf {
+    margin: auto; /* reset.css setzt margin: 0, dann klebt das Fenster oben links */
+    width: min(820px, calc(100vw - 32px));
+    max-height: min(92vh, 1100px);
+    padding: 0;
+    border: 0;
+    border-radius: var(--grh-radius-md);
+    background: var(--grh-cream-50);
+    color: var(--grh-stone-700);
+    box-shadow: 0 30px 80px rgba(20, 43, 31, 0.45);
+    overflow: hidden;
+  }
+  .grh-hf[open] { display: flex; animation: grh-hf-auf 220ms ease-out; }
+  .grh-hf::backdrop {
+    background: rgba(20, 43, 31, 0.62);
+    backdrop-filter: blur(4px);
+  }
+  @keyframes grh-hf-auf {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-hf[open] { animation: none; }
+  }
+
+  .grh-hf__rahmen {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: inherit;
+  }
+
+  .grh-hf__kopf {
+    position: relative;
+    display: flex;
+    gap: var(--grh-space-4);
+    align-items: center;
+    padding: var(--grh-space-5) var(--grh-space-6) var(--grh-space-4);
+    padding-right: 64px;
+    background: var(--grh-forest-950);
+    color: var(--grh-cream-50);
+    border-bottom: 3px solid var(--grh-candle-500);
+  }
+  .grh-hf__plakat {
+    width: 72px;
+    height: auto;
+    aspect-ratio: 1343 / 1900;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  }
+  .grh-hf__eyebrow {
+    margin: 0 0 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--grh-candle-500);
+  }
+  .grh-hf__titel {
+    margin: 0;
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.4rem, 3.4vw, 2rem);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--grh-cream-50);
+  }
+  .grh-hf__zeit {
+    margin: 6px 0 0;
+    font-size: var(--grh-fs-sm);
+    color: rgba(250, 247, 241, 0.78);
+  }
+  .grh-hf__zu-form { position: absolute; top: 14px; right: 14px; margin: 0; }
+  .grh-hf__zu {
+    display: grid; place-items: center;
+    width: 40px; height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(250, 247, 241, 0.12);
+    color: var(--grh-cream-50);
+    cursor: pointer;
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-hf__zu:hover,
+  .grh-hf__zu:focus-visible { background: rgba(250, 247, 241, 0.24); }
+
+  .grh-hf__inhalt {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--grh-space-5) var(--grh-space-6);
+  }
+
+  .grh-hf__fuss {
+    padding: var(--grh-space-3) var(--grh-space-6);
+    border-top: 1px solid var(--grh-line);
+    background: var(--grh-paper-100);
+    text-align: right;
+  }
+  .grh-hf__link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: var(--grh-fs-sm);
+    font-weight: 600;
+    color: var(--grh-forest-900);
+    text-decoration: none;
+  }
+  .grh-hf__link:hover { color: var(--grh-moss-600); }
+
+  @media (max-width: 640px) {
+    .grh-hf {
+      width: 100vw;
+      max-width: 100vw;
+      max-height: 100dvh;
+      height: 100dvh;
+      border-radius: 0;
+    }
+    .grh-hf__kopf { padding: var(--grh-space-4) 60px var(--grh-space-4) var(--grh-space-4); }
+    .grh-hf__plakat { width: 52px; }
+    .grh-hf__inhalt { padding: var(--grh-space-4); }
+    .grh-hf__fuss { padding: var(--grh-space-3) var(--grh-space-4); }
+  }
+</style>
+
+<script>
+  // Klick auf den abgedunkelten Hintergrund schließt das Fenster.
+  document.querySelectorAll<HTMLDialogElement>('dialog.grh-hf').forEach((dlg) => {
+    dlg.addEventListener('click', (ev) => {
+      if (ev.target === dlg) dlg.close();
+    });
+  });
+</script>

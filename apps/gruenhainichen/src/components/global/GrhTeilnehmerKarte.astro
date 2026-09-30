@@ -1,0 +1,193 @@
+---
+/**
+ * Karte der Teilnehmer eines Termins (z. B. Tag des traditionellen Handwerks).
+ * Punkte und Nummern kommen aus buildTeilnehmerProgramm() (lib/teilnehmer.ts).
+ *
+ * Datenschutz: Die Kartenbilder liegen bei OpenStreetMap. Deshalb lädt die Karte
+ * erst nach einem Klick (Zwei-Klick-Lösung). Die Zustimmung gilt für diesen
+ * Besuch, danach öffnen sich weitere Karten sofort.
+ */
+import 'leaflet/dist/leaflet.css';
+import type { TeilnehmerMarker } from '../../lib/teilnehmer';
+
+interface Props {
+  markers: TeilnehmerMarker[];
+  titel?: string;
+}
+const { markers, titel = 'Karte der Teilnehmer' } = Astro.props;
+---
+{markers.length > 0 && (
+  <figure class="grh-tk" data-grh-teilnehmerkarte data-markers={JSON.stringify(markers)}>
+    <div class="grh-tk__map" data-grh-tk-map>
+      <div class="grh-tk__gate" data-grh-tk-gate>
+        <p class="grh-tk__gate-title">{titel}</p>
+        <p class="grh-tk__gate-text">
+          Die Kartenbilder kommen von OpenStreetMap. Beim Laden erhält die
+          OpenStreetMap Foundation Ihre IP-Adresse.
+        </p>
+        <button type="button" class="grh-tk__gate-btn" data-grh-tk-load>Karte laden</button>
+      </div>
+    </div>
+    <figcaption class="grh-tk__caption">
+      Die Nummern auf der Karte gehören zu den Nummern in der Liste.
+      Karte © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a>
+    </figcaption>
+  </figure>
+)}
+
+<style>
+  .grh-tk {
+    margin: var(--grh-space-5) 0;
+  }
+  .grh-tk__map {
+    position: relative;
+    height: clamp(320px, 58vh, 520px);
+    border-radius: var(--grh-radius-md, 6px);
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(26, 61, 39, 0.10), transparent 55%),
+      var(--grh-paper-100);
+    border: 1px solid rgba(26, 61, 39, 0.12);
+  }
+  .grh-tk__gate {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: var(--grh-space-3);
+    padding: var(--grh-space-5);
+    text-align: center;
+  }
+  .grh-tk__gate-title {
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-xl);
+    color: var(--grh-forest-900);
+    margin: 0;
+  }
+  .grh-tk__gate-text {
+    max-width: 38ch;
+    font-size: var(--grh-fs-sm);
+    color: var(--grh-stone-700);
+    margin: 0;
+  }
+  .grh-tk__gate-btn {
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 22px;
+    background: var(--grh-forest-900);
+    color: var(--grh-paper-50, #fff);
+    font: 600 var(--grh-fs-sm) / 1 var(--grh-font-body);
+    cursor: pointer;
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-tk__gate-btn:hover,
+  .grh-tk__gate-btn:focus-visible { background: var(--grh-forest-800); }
+  .grh-tk__caption {
+    margin-top: var(--grh-space-2);
+    font-size: 12px;
+    color: var(--grh-stone-400);
+  }
+  .grh-tk__caption a { color: inherit; }
+  .grh-tk__caption :global(.grh-tk__alle) {
+    display: block;
+    margin: 0 0 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--grh-forest-900);
+    font: 600 var(--grh-fs-sm) / 1.4 var(--grh-font-body);
+    text-decoration: underline;
+    text-decoration-color: var(--grh-candle-500);
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  :global(.grh-tk-pin) {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 26px; height: 26px; padding: 0 7px;
+    border-radius: 999px;
+    background: var(--grh-forest-900);
+    color: #fff;
+    border: 2px solid var(--grh-candle-500);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    font: 700 12px / 1 var(--grh-font-body);
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+  }
+  :global(.grh-tk .leaflet-popup-content) {
+    font-family: var(--grh-font-body);
+    font-size: 14px;
+    line-height: 1.45;
+    margin: 12px 14px;
+  }
+  :global(.grh-tk .leaflet-popup-content strong) { display: block; color: var(--grh-forest-900); }
+  :global(.grh-tk .leaflet-popup-content span) { color: var(--grh-stone-400); font-size: 13px; }
+</style>
+
+<script>
+  import L from 'leaflet';
+
+  interface Marker { lat: number; lon: number; nummern: number[]; namen: string[]; adresse: string }
+
+  const KEY = 'grh-osm-karte';
+  const erlaubt = () => { try { return sessionStorage.getItem(KEY) === '1'; } catch { return false; } };
+  const merken = () => { try { sessionStorage.setItem(KEY, '1'); } catch { /* privater Modus */ } };
+
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  function zeichne(fig: HTMLElement) {
+    if (fig.dataset.geladen) return;
+    fig.dataset.geladen = '1';
+    const el = fig.querySelector<HTMLElement>('[data-grh-tk-map]')!;
+    el.querySelector('[data-grh-tk-gate]')?.remove();
+    const markers: Marker[] = JSON.parse(fig.dataset.markers || '[]');
+
+    // zoomSnap 0.25: Der Ortskern passt sonst knapp nicht in Stufe 16 und fiele auf 15 zurück.
+    const map = L.map(el, { scrollWheelZoom: false, attributionControl: false, zoomSnap: 0.25 });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const bounds: [number, number][] = [];
+    for (const m of markers) {
+      const icon = L.divIcon({ className: '', html: `<span class="grh-tk-pin">${m.nummern.join(' · ')}</span>`, iconSize: [0, 0] });
+      const namen = m.namen.map((n, i) => `<strong>${m.nummern[i]}. ${esc(n)}</strong>`).join('');
+      L.marker([m.lat, m.lon], { icon, title: m.namen.join(', ') })
+        .bindPopup(`${namen}<span>${esc(m.adresse)}</span>`)
+        .addTo(map);
+      bounds.push([m.lat, m.lon]);
+    }
+    // Ausschnitt auf den Ortskern: Punkte weiter als 1,2 km vom Mittelpunkt (etwa ein
+    // Teilnehmer in Börnichen) würden die Karte so weit machen, dass die Nummern an
+    // der Chemnitzer Straße übereinanderliegen. Für sie gibt es „Alle Standorte zeigen“.
+    const mitte = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+    const kern = L.latLng(mitte(bounds.map((b) => b[0])), mitte(bounds.map((b) => b[1])));
+    const nah = bounds.filter((b) => kern.distanceTo(b) <= 1200);
+    const ausschnitt = nah.length >= 2 ? nah : bounds;
+    const einpassen = () => map.fitBounds(ausschnitt, { padding: [28, 28], maxZoom: 17 });
+    if (ausschnitt.length < bounds.length) {
+      const weit = markers.filter((m) => kern.distanceTo([m.lat, m.lon]) > 1200).flatMap((m) => m.nummern);
+      const knopf = document.createElement('button');
+      knopf.type = 'button';
+      knopf.className = 'grh-tk__alle';
+      knopf.textContent = `Alle Standorte zeigen (auch Nr. ${weit.join(', ')})`;
+      knopf.addEventListener('click', () => map.fitBounds(bounds, { padding: [36, 36] }));
+      fig.querySelector('.grh-tk__caption')?.prepend(knopf);
+    }
+    let eingepasst = el.clientWidth > 0;
+    map.setView(bounds[0], 15);
+    if (eingepasst) einpassen();
+    new ResizeObserver(() => {
+      map.invalidateSize();
+      if (!eingepasst && el.clientWidth > 0) { eingepasst = true; einpassen(); }
+    }).observe(el);
+    fig.dispatchEvent(new CustomEvent('grh-tk-geladen', { bubbles: true }));
+  }
+
+  function ladeAlle() {
+    merken();
+    document.querySelectorAll<HTMLElement>('[data-grh-teilnehmerkarte]').forEach(zeichne);
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-grh-teilnehmerkarte]').forEach((fig) => {
+    fig.querySelector('[data-grh-tk-load]')?.addEventListener('click', ladeAlle);
+  });
+  if (erlaubt()) ladeAlle();
+</script>

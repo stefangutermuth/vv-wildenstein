@@ -4,9 +4,10 @@ import VvHero from '../components/hero/VvHero.astro';
 import VvSection from '../components/sections/VvSection.astro';
 import VvButton from '../components/primitives/VvButton.astro';
 import VvIcon from '../components/primitives/VvIcon.astro';
-import { getNews } from '../lib/cms';
+import { getNews, getEvents } from '../lib/cms';
 
 const newsAll = await getNews();
+const termine = await getEvents();
 const sperrungen = newsAll.filter((n) => n.category === 'sperrung').slice(0, 3);
 const news = newsAll.filter((n) => n.category !== 'sperrung');
 const featured = news.find((n) => n.featured) ?? news[0];
@@ -32,8 +33,29 @@ const heroBoxes = [
   { icon: 'alert-triangle', label: 'Sperrungen',     sub: 'Verkehr aktuell',        href: '/sperrungen' },
   { icon: 'vote',           label: 'Wahlen',         sub: 'Termine & Informationen', href: '/wahlen' },
   { icon: 'waves',          label: 'Freibad',        sub: 'Saison & Öffnungszeiten', href: '/leben-freizeit/freibad', live: true },
-  { icon: 'mountain',       label: 'EURORANDO 2026', sub: 'Wanderfest im September', href: '/veranstaltungen' },
+  highlightBox(),
 ];
+
+// Fünfte Box: der nächste Termin mit der WordPress-Kategorie „Highlight“
+// (verschwindet nach dem Termin von selbst), sonst der Veranstaltungskalender.
+function highlightBox() {
+  const h = termine.find((e) => e.categories?.includes('highlight'));
+  if (!h) return { icon: 'calendar', label: 'Veranstaltungen', sub: 'Termine der Region', href: '/veranstaltungen' };
+  const monat = new Intl.DateTimeFormat('de-DE', { month: 'long' });
+  const a = h.startDate;
+  const b = h.endDate;
+  const sub = !b || a.toDateString() === b.toDateString()
+    ? `${a.getDate()}. ${monat.format(a)}`
+    : a.getMonth() === b.getMonth()
+      ? `${a.getDate()}. ${b.getDate() - a.getDate() === 1 ? 'und' : 'bis'} ${b.getDate()}. ${monat.format(b)}`
+      : `${a.getDate()}. ${monat.format(a)} bis ${b.getDate()}. ${monat.format(b)}`;
+  return {
+    icon: 'star',
+    label: h.title.replace(/\s+(?:am|vom|den)?\s*\d{1,2}\.[\d.+\-–\s]*$/i, '').trim() || h.title,
+    sub,
+    href: h.href,
+  };
+}
 
 // Hero: Glas-Chips (untere Reihe = die „Buttons", bleiben inhaltlich)
 const heroChips = [

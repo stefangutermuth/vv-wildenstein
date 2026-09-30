@@ -9,14 +9,28 @@ interface Props {
   ctas?: CTA[];
   logo?: string;
   logoAlt?: string;
+  /** Vorschaubild statt Logo (eckig, randlos beschnitten) */
+  bild?: string;
+  /** id eines <dialog> auf der Seite: Klick öffnet das Fenster, ohne JavaScript bleibt der Link */
+  dialog?: string;
 }
-const { eyebrow, title, subtitle, ctas = [], logo, logoAlt = '' } = Astro.props;
+const { eyebrow, title, subtitle, ctas = [], logo, logoAlt = '', bild, dialog } = Astro.props;
 
 // Reduce auf einen Primary-CTA — der Slot soll kein Buffet sein
 const primary = ctas[0];
 ---
-<a class="grh-pin grh-reveal" href={primary?.href ?? '#'} aria-label={`${eyebrow ?? ''} · ${title}`}>
-  {logo && (
+<a
+  class="grh-pin grh-reveal"
+  href={primary?.href ?? '#'}
+  aria-label={`${eyebrow ?? ''} · ${title}`}
+  aria-haspopup={dialog ? 'dialog' : undefined}
+  data-grh-open-dialog={dialog}
+>
+  {bild ? (
+    <span class="grh-pin__bild" aria-hidden="true">
+      <img src={bild} alt="" width="64" height="64" loading="eager" decoding="async" />
+    </span>
+  ) : logo && (
     <span class="grh-pin__logo" aria-hidden="true">
       <img src={logo} alt={logoAlt} loading="eager" decoding="async" />
     </span>
@@ -67,6 +81,22 @@ const primary = ctas[0];
     object-fit: contain;
   }
 
+  .grh-pin__bild {
+    width: 64px;
+    height: 64px;
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px rgba(26, 61, 39, 0.12);
+  }
+  .grh-pin__bild img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: 50% 72%; /* Plakate: eher das Foto als die Überschrift */
+    transition: transform var(--grh-dur-base);
+  }
+  .grh-pin:hover .grh-pin__bild img { transform: scale(1.06); }
+
   .grh-pin__body {
     display: flex;
     flex-direction: column;
@@ -107,3 +137,16 @@ const primary = ctas[0];
     transform: translateX(4px);
   }
 </style>
+
+<script>
+  // Blickfang mit Fenster: Klick öffnet den <dialog>, ohne JavaScript führt der Link zur Terminseite.
+  document.querySelectorAll<HTMLAnchorElement>('[data-grh-open-dialog]').forEach((a) => {
+    const dlg = document.getElementById(a.dataset.grhOpenDialog!) as HTMLDialogElement | null;
+    if (!dlg || typeof dlg.showModal !== 'function') return;
+    a.addEventListener('click', (ev) => {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button !== 0) return; // neuer Tab bleibt möglich
+      ev.preventDefault();
+      dlg.showModal();
+    });
+  });
+</script>

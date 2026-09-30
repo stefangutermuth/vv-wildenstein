@@ -87,6 +87,10 @@ export interface EventItem {
   href: string;
   /** Ganztägig — dann darf keine Uhrzeit angezeigt werden (sonst „00:00 Uhr"). */
   allDay?: boolean;
+  /** Slugs der Terminkategorien aus WordPress, z. B. „highlight“ für den Blickfang der Startseite. */
+  categories?: string[];
+  /** Vollständige Beschreibung als HTML aus WordPress. */
+  descriptionHtml?: string;
 }
 
 export async function getEvents(opts: { includePast?: boolean } = {}): Promise<EventItem[]> {

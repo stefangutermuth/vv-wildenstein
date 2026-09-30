@@ -42,7 +42,9 @@ const {
 
   <div class="grh-container grh-detail__body">
     <div class="grh-detail__content">
-      {contentHtml ? (
+      {Astro.slots.has('default') ? (
+        <slot />
+      ) : contentHtml ? (
         <div class="grh-prose" set:html={contentHtml} />
       ) : (
         <p class="grh-detail__empty">Zu diesem Eintrag liegt noch keine ausführliche Beschreibung vor.</p>

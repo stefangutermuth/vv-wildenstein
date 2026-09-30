@@ -1239,6 +1239,7 @@ function mapVWEvent(
     contentHtml: rewriteContentUrls(ev.description_html ?? '', postSlugs, downloadKarte),
     organizer: ev.organizer?.name || undefined,
     allDay: ev.all_day || undefined,
+    categories: ev.category ?? [],
   };
 }
 
