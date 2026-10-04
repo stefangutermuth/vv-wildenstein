@@ -1,7 +1,9 @@
 ---
 /**
  * Wappen-Komposit der drei Ortsteile (Grünhainichen · Waldkirchen · Borstendorf).
- * Quelle: bestehendes Bild der Gemeinde Grünhainichen (152.png).
+ * Quelle: „Zusammenstellung Wappen_Gruenhainichen_2021.svg“ der Gemeinde (Nextcloud,
+ * Kundendaten). Die SVG enthält nur drei eingebettete Pixelbilder und wiegt 426 KB;
+ * deshalb hier als 288-px-WebP (quadratisch, freigestellt) statt als SVG.
  *
  * variant="color"      → Farb-Original
  * variant="mono-light" → invertiert hellgefiltert für dunkle Hintergründe (Footer)
@@ -33,7 +35,7 @@ const alt = 'Wappen der Gemeinde Grünhainichen, zusammengesetzt aus den Wappen 
   ></span>
 ) : (
   <img
-    src="/images/logos/wappen-grh.png"
+    src="/images/logos/wappen-grh-2021.webp"
     alt={alt}
     width={size}
     height={size}
@@ -52,7 +54,7 @@ const alt = 'Wappen der Gemeinde Grünhainichen, zusammengesetzt aus den Wappen 
     object-fit: contain;
   }
   .grh-wappen--bg {
-    background: url('/images/logos/wappen-grh.png') center / contain no-repeat;
+    background: url('/images/logos/wappen-grh-2021.webp') center / contain no-repeat;
   }
   .grh-wappen--mono-light {
     filter: brightness(0) invert(1) opacity(0.92);
