@@ -69,7 +69,7 @@ const showAdventSection = season === 'advent';
 // seine eigene Seite mit Programm und Karte), sonst im Advent der Adventskalender.
 const highlight = findeHighlight(alleTermine);
 const highlightTeilnehmer = highlight
-  ? (await buildTeilnehmerProgramm(highlight.descriptionHtml ?? '')).markers.reduce((n, m) => n + m.nummern.length, 0)
+  ? (await buildTeilnehmerProgramm(highlight.descriptionHtml ?? '')).markers.reduce((n, m) => n + m.namen.length, 0)
   : 0;
 
 const featured = highlight
