@@ -42,8 +42,8 @@ const hatKarte = (await buildTeilnehmerProgramm(event.descriptionHtml ?? '')).ma
   </header>
 
   <div class="grh-container grh-hs__inhalt">
-    <div class="grh-hs__spalte">
-      <GrhTerminProgramm html={event.descriptionHtml ?? ''} />
+    <div class:list={['grh-hs__spalte', { 'grh-hs__spalte--breit': hatKarte }]}>
+      <GrhTerminProgramm html={event.descriptionHtml ?? ''} karteNeben={hatKarte} />
       <p class="grh-hs__zurueck">
         <a href="/veranstaltungen"><GrhIcon name="arrow-left" size={14} /> Alle Termine</a>
       </p>
@@ -134,6 +134,8 @@ const hatKarte = (await buildTeilnehmerProgramm(event.descriptionHtml ?? '')).ma
 
   .grh-hs__inhalt { padding-top: var(--grh-space-7); }
   .grh-hs__spalte { max-width: 820px; }
+  /* Mit Karte nutzt die Seite die ganze Breite: Text links, Karte rechts. */
+  .grh-hs__spalte--breit { max-width: none; }
   .grh-hs__zurueck { margin-top: var(--grh-space-7); }
   .grh-hs__zurueck a {
     display: inline-flex; align-items: center; gap: 6px;

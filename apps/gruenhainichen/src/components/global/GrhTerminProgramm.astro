@@ -10,24 +10,50 @@ import { buildTeilnehmerProgramm } from '../../lib/teilnehmer';
 
 interface Props {
   html: string;
+  /** Auf breiten Bildschirmen steht die Karte neben dem Text und bleibt beim Blättern sichtbar. */
+  karteNeben?: boolean;
 }
-const { html } = Astro.props;
+const { html, karteNeben = false } = Astro.props;
 const programm = await buildTeilnehmerProgramm(html);
 const letzter = programm.html.lastIndexOf('class="grh-teilnehmer"');
 const schnitt = programm.markers.length > 0 && letzter >= 0 ? programm.html.indexOf('</ul>', letzter) : -1;
 const vorher = schnitt >= 0 ? programm.html.slice(0, schnitt + '</ul>'.length) : programm.html;
 const nachher = schnitt >= 0 ? programm.html.slice(schnitt + '</ul>'.length) : '';
 ---
-<div class="grh-programm">
-  <Fragment set:html={vorher} />
-  <GrhTeilnehmerKarte markers={programm.markers} punkte={programm.punkte} />
-  {nachher && <Fragment set:html={nachher} />}
+<div class:list={['grh-programm', { 'grh-programm--karte-neben': karteNeben && programm.markers.length > 0 }]}>
+  <div class="grh-programm__vorher"><Fragment set:html={vorher} /></div>
+  <div class="grh-programm__karte"><GrhTeilnehmerKarte markers={programm.markers} punkte={programm.punkte} /></div>
+  {nachher && <div class="grh-programm__nachher"><Fragment set:html={nachher} /></div>}
 </div>
 
 <style>
   /* Eigene Textgestaltung: Das Programm steht auch auf der Highlight-Seite,
      außerhalb der Detailansicht und ihrer Stile. */
   .grh-programm { font-size: var(--grh-fs-md); line-height: 1.65; color: var(--grh-stone-700); }
+
+  /* Breite Bildschirme: Text links, Karte rechts daneben. Sie bleibt beim Blättern
+     stehen, damit Nummern in der Liste und auf der Karte zusammen zu sehen sind.
+     Darunter gilt die Reihenfolge im Text: Teilnehmer, Karte, weitere Listen. */
+  @media (min-width: 1024px) {
+    .grh-programm--karte-neben {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(400px, 46%);
+      grid-template-rows: auto 1fr;
+      column-gap: var(--grh-space-7);
+      align-items: start;
+    }
+    .grh-programm--karte-neben .grh-programm__vorher { grid-column: 1; grid-row: 1; }
+    .grh-programm--karte-neben .grh-programm__nachher { grid-column: 1; grid-row: 2; }
+    .grh-programm--karte-neben .grh-programm__karte { grid-column: 2; grid-row: 1 / span 2; align-self: stretch; }
+    .grh-programm--karte-neben .grh-programm__karte :global(.grh-tk) {
+      position: sticky;
+      top: 124px; /* unter der festen Kopfzeile samt ihrem Schatten */
+      margin-top: 0;
+    }
+    .grh-programm--karte-neben .grh-programm__karte :global(.grh-tk__map) {
+      height: clamp(400px, calc(100vh - 400px), 680px);
+    }
+  }
   .grh-programm :global(p),
   .grh-programm :global(ul),
   .grh-programm :global(ol) { margin: 0 0 1em; }
