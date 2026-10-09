@@ -21,6 +21,14 @@ export interface KartenPunkt {
 
 export const PUNKT_ARTEN: PunktArt[] = ['parken', 'haltestelle', 'wc', 'essen'];
 
+/** Beschriftung, wenn das Zeichen ohne eigenen Punkt steht (an einem Teilnehmer, in der Legende). */
+export const ZEICHEN_TEXT: Record<PunktArt, string> = { parken: 'P', haltestelle: 'H', wc: 'WC', essen: '' };
+
+/** Mehrere Zeichen hintereinander, z. B. Haltestelle, WC und Essen an einem Teilnehmer. */
+export function zeichenReihe(arten: PunktArt[]): string {
+  return arten.map((art) => zeichenHtml({ art, zeichen: ZEICHEN_TEXT[art], shuttle: false })).join('');
+}
+
 const BESTECK =
   '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>';

@@ -202,7 +202,17 @@ const zeichen = (art: KartenPunkt['art'], text = '', shuttle = false) => zeichen
     width: max-content; /* das Leaflet-Symbol selbst ist 0 px breit */
     transform: translate(-50%, -50%);
   }
-  :global(.grh-tk-sym .grh-kz) { box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(0, 0, 0, 0.3); }
+  :global(.grh-tk-sym .grh-kz),
+  :global(.grh-tk-dazu .grh-kz) { box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(0, 0, 0, 0.3); }
+  /* Zeichen an einem Teilnehmer: rechts neben der Nummer */
+  :global(.grh-tk-dazu) {
+    position: absolute; left: 100%; top: 50%;
+    display: flex; gap: 5px;
+    margin-left: 7px;
+    transform: translateY(-50%);
+  }
+  :global(.grh-tk-dazu .grh-kz) { min-width: 22px; height: 22px; font-size: 11px; }
+  :global(.grh-tk-dazu .grh-kz--haltestelle) { width: 22px; }
   :global(.grh-tk .leaflet-popup-content) {
     font-family: var(--grh-font-body);
     font-size: 14px;
@@ -215,9 +225,9 @@ const zeichen = (art: KartenPunkt['art'], text = '', shuttle = false) => zeichen
 
 <script>
   import L from 'leaflet';
-  import { PUNKT_ARTEN, zeichenHtml, type KartenPunkt } from '../../lib/kartenzeichen';
+  import { PUNKT_ARTEN, zeichenHtml, zeichenReihe, type KartenPunkt } from '../../lib/kartenzeichen';
 
-  interface Marker { lat: number; lon: number; zeichen: string[]; namen: string[]; adresse: string }
+  interface Marker { lat: number; lon: number; zeichen: string[]; namen: string[]; adresse: string; dazu?: KartenPunkt['art'][] }
 
   /** Zu welchem Schalter über der Karte eine Punktart gehört. */
   const EBENE: Record<KartenPunkt['art'], string> = { parken: 'parken', haltestelle: 'parken', essen: 'essen', wc: 'essen' };
@@ -298,16 +308,24 @@ const zeichen = (art: KartenPunkt['art'], text = '', shuttle = false) => zeichen
           }
         }
       }
+      // Platz, den Nummern und Zeichen schon einnehmen (in Bildpunkten der Karte).
+      const belegt: { x: number; y: number; b: number; h: number }[] = [];
       for (const g of gruppen) {
         const namen = g.ms.flatMap((m) => m.namen.map((n, i) => `<strong>${esc(m.zeichen[i])}. ${esc(n)}</strong>`));
         if (g.ms.length === 1) {
           const m = g.ms[0];
-          const icon = L.divIcon({ className: '', html: `<span class="grh-tk-pin">${esc(g.label)}</span>`, iconSize: [0, 0] });
+          // Was es beim Teilnehmer außerdem gibt (Haltestelle, WC, Essen), steht rechts neben der Nummer.
+          const dazu = (m.dazu ?? []).filter((art) => aktiv(EBENE[art]));
+          const zeichen = dazu.length ? `<span class="grh-tk-dazu">${zeichenReihe(dazu)}</span>` : '';
+          const icon = L.divIcon({ className: '', html: `<span class="grh-tk-pin">${esc(g.label)}${zeichen}</span>`, iconSize: [0, 0] });
           L.marker([m.lat, m.lon], { icon, title: m.namen.join(', ') })
-            .bindPopup(`${namen.join('')}<span>${esc(m.adresse)}</span>`)
+            .bindPopup(`${namen.join('')}<span>${esc([m.adresse, ...dazu.map((art) => ART_TEXT[art])].join(' · '))}</span>`)
             .addTo(ebene);
+          const rechts = dazu.length ? 7 + dazu.length * 28 : 0;
+          belegt.push({ x: g.px.x + rechts / 2, y: g.px.y, b: breite(g) + rechts, h: 30 });
           continue;
         }
+        belegt.push({ x: g.px.x, y: g.px.y, b: breite(g), h: 30 });
         const icon = L.divIcon({
           className: '',
           html: `<span class="grh-tk-pin grh-tk-pin--gruppe">${esc(g.label)}</span>`,
@@ -330,7 +348,6 @@ const zeichen = (art: KartenPunkt['art'], text = '', shuttle = false) => zeichen
       // Parkplätze, Haltestellen, Essen und WC: kleine Zeichen ohne Sammelpunkte. Ein
       // Zeichen entfällt, solange es einen Teilnehmer oder ein anderes Zeichen
       // überdecken würde. Beim Vergrößern rücken die Orte auseinander und es erscheint.
-      const belegt = gruppen.map((g) => ({ x: g.px.x, y: g.px.y, b: breite(g), h: 30 }));
       for (const p of sichtbarePunkte()) {
         const px = map.latLngToLayerPoint([p.lat, p.lon]);
         const b = 28 + Math.max(0, p.zeichen.length - 1) * 7 + (p.shuttle ? 19 : 0);

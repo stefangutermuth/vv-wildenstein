@@ -10,6 +10,9 @@
  * Besonderheiten stehen als Attribut am <li> (in WordPress in der HTML-Ansicht):
  *   data-nr="A"
  *       eigenes Zeichen statt der laufenden Nummer, zählt nicht mit
+ *   data-zeichen="haltestelle wc essen"
+ *       am Teilnehmer: Dort gibt es auch eine Shuttle-Haltestelle, ein WC, etwas zu
+ *       essen. Die Zeichen stehen in der Liste und auf der Karte neben der Nummer.
  *   data-karte="parken|haltestelle|essen|wc" data-lat="50.76492" data-lon="13.14472"
  *       weiterer Punkt für die Karte, ohne Adresssuche:
  *       <li data-karte="parken" data-lat="…" data-lon="…" data-shuttle="ja"><strong>P1 Grundschule</strong>, mit Shuttle</li>
@@ -19,7 +22,7 @@
  *       „Kaffee und Kuchen bei Teilnehmer 4“, der schon auf der Karte ist.
  */
 import { geocode } from './geocode';
-import { PUNKT_ARTEN, zeichenHtml, type KartenPunkt, type PunktArt } from './kartenzeichen';
+import { PUNKT_ARTEN, zeichenHtml, zeichenReihe, type KartenPunkt, type PunktArt } from './kartenzeichen';
 
 export interface TeilnehmerMarker {
   lat: number;
@@ -28,6 +31,8 @@ export interface TeilnehmerMarker {
   zeichen: string[];
   namen: string[];
   adresse: string;
+  /** Was es an dieser Stelle außerdem gibt (data-zeichen), in der Reihenfolge der Karte. */
+  dazu: PunktArt[];
 }
 
 export interface TeilnehmerProgramm {
@@ -89,13 +94,20 @@ export async function buildTeilnehmerProgramm(html: string): Promise<TeilnehmerP
       text: `<li class="grh-teilnehmer" data-nr="${esc(zeichen)}"><span class="grh-teilnehmer__nr" aria-hidden="true">${esc(zeichen)}</span>`,
     });
     const name = decode(m[2]);
+    const dazu = PUNKT_ARTEN.filter((art) => attribut(m[1], 'data-zeichen').split(/[\s,]+/).includes(art));
+    if (dazu.length > 0) {
+      // Die Zeichen stehen hinter der Adresse, vor dem Angebot.
+      const ende = m.index! + m[0].length;
+      ersetzen.push({ von: ende, bis: ende, text: ` <span class="grh-teilnehmer__zeichen">${zeichenReihe(dazu)}</span>` });
+    }
     // Gleiche Adresse (auf etwa 10 m): ein gemeinsamer Punkt statt zwei übereinander.
     const da = markers.find((k) => Math.abs(k.lat - punkt.lat) < 0.0001 && Math.abs(k.lon - punkt.lon) < 0.0001);
     if (da) {
       da.zeichen.push(zeichen);
       da.namen.push(name);
+      da.dazu = PUNKT_ARTEN.filter((art) => da.dazu.includes(art) || dazu.includes(art));
     } else {
-      markers.push({ lat: punkt.lat, lon: punkt.lon, zeichen: [zeichen], namen: [name], adresse });
+      markers.push({ lat: punkt.lat, lon: punkt.lon, zeichen: [zeichen], namen: [name], adresse, dazu });
     }
   }
 

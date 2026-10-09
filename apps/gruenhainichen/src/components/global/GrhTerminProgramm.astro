@@ -75,6 +75,13 @@ const nachher = schnitt >= 0 ? programm.html.slice(schnitt + '</ul>'.length) : '
     line-height: 1;
   }
   .grh-programm :global(li.grh-teilnehmer strong) { color: var(--grh-forest-900); }
+  .grh-programm :global(.grh-teilnehmer__zeichen) {
+    display: inline-flex; gap: 4px;
+    margin-left: 6px;
+    vertical-align: -0.35em;
+  }
+  .grh-programm :global(.grh-teilnehmer__zeichen .grh-kz) { min-width: 22px; height: 22px; font-size: 11px; }
+  .grh-programm :global(.grh-teilnehmer__zeichen .grh-kz--haltestelle) { width: 22px; }
 
   /* Parkplätze, Haltestellen, Essen, WC: Zeichen wie auf der Karte vor dem Eintrag */
   .grh-programm :global(li.grh-kartenpunkt) {
