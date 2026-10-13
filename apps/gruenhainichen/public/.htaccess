@@ -146,9 +146,17 @@ ErrorDocument 404 /404.html
 </IfModule>
 
 # === Sicherheits-Header =============================================
+# Ausnahme vom Einbettungsverbot: die Teilnehmerkarte unter
+# /veranstaltungen/<Termin>/karte/ (pages/veranstaltungen/[slug]/karte.astro) darf
+# als Rahmen auf vv-wildenstein.com stehen. Alle anderen Seiten bleiben gesperrt.
+<IfModule mod_setenvif.c>
+  SetEnvIf Request_URI "^/veranstaltungen/[^/]+/karte/" GRH_EINBETTEN
+</IfModule>
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "SAMEORIGIN"
+  Header always unset X-Frame-Options env=GRH_EINBETTEN
+  Header always set Content-Security-Policy "frame-ancestors 'self' https://vv-wildenstein.com https://www.vv-wildenstein.com" env=GRH_EINBETTEN
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
 </IfModule>
