@@ -1,0 +1,84 @@
+---
+/**
+ * Teilnehmerkarte eines Highlight-Termins ohne Kopf und Fuß der Website, zum
+ * Einbetten per <iframe>. Gebraucht auf vv-wildenstein.com: Dort zeigt der Kurzcode
+ * [vv_termin id="…" karte="…"] (mu-Plugin vv-termin-einbettung.php) den Text des
+ * Termins und holt die Karte von hier. So gibt es die Karte nur einmal, mit
+ * denselben Nummern, Zeichen und Schaltern wie auf der Termin-Seite.
+ *
+ * Die Seite meldet ihre Höhe an die einbettende Seite, damit der Rahmen genau
+ * passt und kein zweiter Rollbalken entsteht.
+ */
+import '@fontsource-variable/fraunces';
+import '@fontsource-variable/inter';
+import '../../../styles/tokens.css';
+import '../../../styles/reset.css';
+import GrhTeilnehmerKarte from '../../../components/global/GrhTeilnehmerKarte.astro';
+import { getEvents } from '../../../lib/cms';
+import { HIGHLIGHT_KATEGORIE, kurzTitel } from '../../../lib/highlight';
+import { buildTeilnehmerProgramm, type TeilnehmerProgramm } from '../../../lib/teilnehmer';
+
+export async function getStaticPaths() {
+  const list = await getEvents({ includePast: true });
+  const seiten = [];
+  for (const e of list) {
+    if (!e.categories?.includes(HIGHLIGHT_KATEGORIE) || !e.descriptionHtml) continue;
+    const programm = await buildTeilnehmerProgramm(e.descriptionHtml);
+    if (programm.markers.length === 0) continue;
+    seiten.push({ params: { slug: e.slug }, props: { titel: kurzTitel(e.title), programm } });
+  }
+  return seiten;
+}
+
+const { titel, programm } = Astro.props as { titel: string; programm: TeilnehmerProgramm };
+---
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>{`Karte der Teilnehmer · ${titel} · Grünhainichen`}</title>
+    {/* Verweise aus dem Rahmen heraus öffnen in einem neuen Tab */}
+    <base target="_blank" />
+  </head>
+  <body class="grh-einbetten">
+    <div data-grh-einbetten>
+      <GrhTeilnehmerKarte markers={programm.markers} punkte={programm.punkte} />
+    </div>
+    <script is:inline>
+      (function () {
+        if (window.parent === window) return;
+        var kasten = document.querySelector('[data-grh-einbetten]');
+        var zuletzt = 0;
+        function melde() {
+          var hoehe = Math.ceil(kasten.getBoundingClientRect().height);
+          if (hoehe === zuletzt) return;
+          zuletzt = hoehe;
+          window.parent.postMessage({ typ: 'grh-karte-hoehe', hoehe: hoehe }, '*');
+        }
+        new ResizeObserver(melde).observe(kasten);
+        window.addEventListener('load', melde);
+        melde();
+      })();
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  html, body.grh-einbetten { height: auto; }
+  body.grh-einbetten {
+    margin: 0;
+    background: transparent;
+    font-family: var(--grh-font-body);
+    color: var(--grh-stone-700);
+  }
+  /* Rand für die Schatten der Schalter, sonst schneidet der Rahmen sie ab */
+  body.grh-einbetten [data-grh-einbetten] { padding: 2px 2px 4px; }
+  body.grh-einbetten .grh-tk { margin: 0; }
+  /* Feste Höhe: Im Rahmen hängt „vh“ an der Rahmenhöhe, nicht am Bildschirm */
+  body.grh-einbetten .grh-tk__map { height: 480px; }
+  @media (max-width: 600px) {
+    body.grh-einbetten .grh-tk__map { height: 400px; }
+  }
+</style>

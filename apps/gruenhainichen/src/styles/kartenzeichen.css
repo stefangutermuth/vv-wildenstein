@@ -1,0 +1,32 @@
+/**
+ * Zeichen für Parkplatz, Shuttle-Haltestelle, Essen und WC (lib/kartenzeichen.ts).
+ * In der Liste und auf der Karte gleich; die Karte lädt die Datei, damit die
+ * Zeichen auch in der Einbettung ohne Programmtext stimmen
+ * (pages/veranstaltungen/[slug]/karte.astro).
+ */
+.grh-kz {
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+  box-sizing: border-box;
+  min-width: 24px; height: 24px; padding: 0 5px;
+  border-radius: 6px;
+  background: var(--grh-forest-900);
+  color: #fff;
+  font: 700 12px / 1 var(--grh-font-body);
+  white-space: nowrap;
+}
+.grh-kz--parken { background: #1957aa; }
+.grh-kz--haltestelle {
+  width: 24px; padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--grh-forest-900);
+  background: #ffd60a;
+  color: var(--grh-forest-950);
+}
+.grh-kz__h {
+  display: grid; place-items: center;
+  width: 16px; height: 16px; margin-right: -1px;
+  border-radius: 50%;
+  background: #ffd60a;
+  color: var(--grh-forest-950);
+  font-size: 10px;
+}
