@@ -1,4 +1,5 @@
 ---
+import { ergaenzeOrtsname } from '../../lib/cms-wordpress';
 /**
  * Downloads — Anträge & Formulare, nach Fachbereich gruppiert.
  *
@@ -49,13 +50,13 @@ const anzahl = fachbereiche.reduce((n, g) => n + g.dateien.length, 0);
 
       {fachbereiche.map((g) => (
         <section class="vv-dl__group">
-          <h2>{g.titel}</h2>
+          <h2>{ergaenzeOrtsname(g.titel)}</h2>
           <ul role="list">
             {g.dateien.map((d) => (
               <li>
                 <a href={d.url} target="_blank" rel="noopener">
                   <span class="vv-dl__typ" aria-hidden="true">{d.typ || 'DOC'}</span>
-                  <span class="vv-dl__titel">{d.titel}</span>
+                  <span class="vv-dl__titel">{ergaenzeOrtsname(d.titel)}</span>
                   <VvIcon name="arrow-up-right" size={14} class="vv-dl__arrow" />
                 </a>
               </li>

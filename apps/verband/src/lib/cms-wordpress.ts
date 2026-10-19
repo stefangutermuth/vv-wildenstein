@@ -204,11 +204,11 @@ function mapWPPostToNewsItem(
 
   return {
     slug: p.slug,
-    title: decodeEntities(p.title.rendered),
+    title: ergaenzeOrtsname(decodeEntities(p.title.rendered)),
     date: new Date(p.date),
     category,
     image,
-    excerpt: stripHtml(p.excerpt.rendered).trim(),
+    excerpt: ergaenzeOrtsname(stripHtml(p.excerpt.rendered).trim()),
     featured: p.sticky ?? false,
     // Interne Detailseite statt Link auf die alte WP-Ansicht
     href: `/neuigkeiten/${p.slug}`,
@@ -493,6 +493,65 @@ function entferneToteBedienelemente(html: string): string {
   return out;
 }
 
+/**
+ * Der amtliche Name der Gemeinde ist "Boernichen/Erzgeb." — nie "Boernichen"
+ * allein. In den Redaktionsfeldern steht er aber verkuerzt: fuenf Profile
+ * tragen "09437 Boernichen" als Anschrift, die Taxonomie einen "Gemeinderat
+ * Boernichen".
+ *
+ * Ergaenzt wird nur, wo der Name ALLEIN steht. Ausgenommen bleiben:
+ *   - "Boernichener Str." und aehnliche Ableitungen (Strassennamen)
+ *   - "Boernichen/Erzgeb.", "Boernichen/Erzgebirge" (schon vollstaendig)
+ *   - boernichen.de und andere Internetadressen
+ * Das ist ein Netz fuer die Anzeige; richtig waere, die Felder im
+ * Redaktionssystem zu vervollstaendigen.
+ */
+export function ergaenzeOrtsname(text: string): string {
+  if (!text || !text.includes('Börnichen')) return text;
+
+  /* 1. Vorhandene Abkuerzung vereinheitlichen: Im Redaktionssystem steht
+     teils "Börnichen/Erzg.", teils "Börnichen/ Erzgeb." mit Leerzeichen.
+     "Börnichen/Erzgebirge" bleibt unangetastet — ausgeschrieben ist es
+     ebenso richtig. */
+  let out = text.replace(
+    /Börnichen\s*\/\s*Erzg(?:eb)?\.?(?![a-zäöüA-ZÄÖÜ])/g,
+    'Börnichen/Erzgeb.',
+  );
+
+  /* 2. Der blosse Name wird ergaenzt. Nicht angefasst werden Ableitungen
+     ("Börnichener Str."), Internetadressen (boernichen.de) und alles, was
+     den Zusatz schon traegt. */
+  out = out.replace(/(\S+\s+)?Börnichen(?!\s*\/\s*Erzg|er\b|\.de\b)/g, (treffer, davor?: string) => {
+    /* "Gemarkung Börnichen" ist ein Flurname und heisst amtlich so, ohne
+       Zusatz — die Gemeinde dagegen nie. */
+    if (davor && /\bGemarkung\s+$/i.test(davor)) return treffer;
+    return `${davor ?? ''}Börnichen/Erzgeb.`;
+  });
+
+  /* Im Deutschen wird der Abkuerzungspunkt am Satzende nicht verdoppelt:
+     "…in Börnichen." wird zu "…in Börnichen/Erzgeb.", nicht "…Erzgeb..". */
+  return out.replace(/Erzgeb\.{2,}/g, 'Erzgeb.');
+}
+
+/**
+ * Dasselbe fuer HTML: Nur der sichtbare Text wird angefasst, nie der Inhalt
+ * von Tags — sonst wuerden Verweise wie href="…/gemeinde-boernichen/" oder
+ * Bildquellen mit verbogen.
+ */
+export function ergaenzeOrtsnameInHtml(html: string): string {
+  if (!html || !html.includes('Börnichen')) return html;
+  return html.replace(/>([^<]+)</g, (_t, text: string) => `>${ergaenzeOrtsname(text)}<`);
+}
+
+/** Kontaktfelder: leere aussortieren und den Ortsnamen vervollstaendigen. */
+function bereinigeKontakt(roh: unknown): VvKontakt | undefined {
+  if (!roh || typeof roh !== 'object') return undefined;
+  const eintraege = Object.entries(roh as Record<string, unknown>)
+    .filter(([, v]) => typeof v === 'string' && v.trim() !== '')
+    .map(([k, v]) => [k, ergaenzeOrtsname(v as string)]);
+  return eintraege.length ? (Object.fromEntries(eintraege) as VvKontakt) : undefined;
+}
+
 function rewriteContentUrls(
   html: string,
   postSlugs: Set<string>,
@@ -614,7 +673,7 @@ function rewriteContentUrls(
 
   // Zum Schluss: Erst jetzt — nach dem Entfernen von Skripten, Stylesheets
   // und Kurzcode-Resten — steht fest, welche Spalte wirklich leer ist.
-  return entferneLeereSpalten(out);
+  return ergaenzeOrtsnameInHtml(entferneLeereSpalten(out));
 }
 
 /* ----------------------------------------------------------------
@@ -702,7 +761,7 @@ function extractGridTiles(gridHtml: string): HubTile[] {
     const titleMatch =
       item.match(/<(?:h\d|div)[^>]*class="[^"]*post_title[^"]*"[^>]*>([\s\S]*?)<\/(?:h\d|div)>/i);
     if (!titleMatch) continue;
-    const title = decodeEntities(stripHtml(titleMatch[1]));
+    const title = ergaenzeOrtsname(decodeEntities(stripHtml(titleMatch[1])));
     if (!title) continue;
 
     // Ziel: eigener Titel-Link, sonst Bild-Link — Taxonomie-Links (…/gemeindeteil/…)
@@ -850,10 +909,10 @@ export async function fetchWordPressPages(): Promise<WPPageItem[]> {
         parentId: p.parent,
         hadHubGrid: stripped.had,
         gridTiles: kachelZieleUmschreiben(stripped.tiles, postSlugs),
-        title: decodeEntities(stripHtml(p.title.rendered).trim()),
+        title: ergaenzeOrtsname(decodeEntities(stripHtml(p.title.rendered).trim())),
         contentHtml: rewriteContentUrls(stripped.html, postSlugs, downloadKarte),
         breadcrumb: parents.slice(0, -1).map((x) => ({
-          title: decodeEntities(stripHtml(x.title.rendered).trim()),
+          title: ergaenzeOrtsname(decodeEntities(stripHtml(x.title.rendered).trim())),
           path: '/' + chain(x).map((y) => y.slug).join('/'),
         })),
       };
@@ -913,11 +972,7 @@ async function ladeCptPages(): Promise<WPPageItem[]> {
       >;
       for (const p of raw) {
         const stripped = stripUsGrids(p.content?.rendered ?? '');
-        const kontakt = p.vv_kontakt
-          ? (Object.fromEntries(
-              Object.entries(p.vv_kontakt).filter(([, v]) => typeof v === 'string' && v.trim() !== ''),
-            ) as VvKontakt)
-          : undefined;
+        const kontakt = bereinigeKontakt(p.vv_kontakt);
         out.push({
           id: p.id,
           slug: p.slug,
@@ -925,7 +980,7 @@ async function ladeCptPages(): Promise<WPPageItem[]> {
           parentId: 0,
           hadHubGrid: stripped.had,
           gridTiles: kachelZieleUmschreiben(stripped.tiles, postSlugs),
-          title: decodeEntities(stripHtml(p.title.rendered).trim()),
+          title: ergaenzeOrtsname(decodeEntities(stripHtml(p.title.rendered).trim())),
           contentHtml: rewriteContentUrls(stripped.html, postSlugs, downloadKarte),
           breadcrumb: [src.crumb],
           kontakt: kontakt && Object.keys(kontakt).length ? kontakt : undefined,
@@ -1028,15 +1083,13 @@ async function fetchCptTiles(
       ? (item._embedded?.['wp:term'] ?? []).flat().filter((t) => t.taxonomy === taxonomie)
       : [];
     const kats = taxonomie ? begriffe.map((t) => t.slug) : undefined;
-    const katNamen = taxonomie ? begriffe.map((t) => decodeEntities(t.name ?? t.slug)) : undefined;
-    // Leere Felder aussortieren, damit die Liste nicht mit Nichts rechnet
-    const kontakt = item.vv_kontakt
-      ? (Object.fromEntries(
-          Object.entries(item.vv_kontakt).filter(([, v]) => typeof v === 'string' && v.trim() !== ''),
-        ) as VvKontakt)
+    const katNamen = taxonomie
+      ? begriffe.map((t) => ergaenzeOrtsname(decodeEntities(t.name ?? t.slug)))
       : undefined;
+    // Leere Felder aussortieren, damit die Liste nicht mit Nichts rechnet
+    const kontakt = bereinigeKontakt(item.vv_kontakt);
     return {
-      title: decodeEntities(stripHtml(item.title.rendered).trim()),
+      title: ergaenzeOrtsname(decodeEntities(stripHtml(item.title.rendered).trim())),
       href: `/${pathPrefix}/${item.slug}`,
       image: cptImage(item),
       kats,
@@ -1162,7 +1215,7 @@ export async function fetchWordPressStellen(
       return {
         id: p.id,
         slug: p.slug,
-        titel: decodeEntities(stripHtml(p.title.rendered).trim()),
+        titel: ergaenzeOrtsname(decodeEntities(stripHtml(p.title.rendered).trim())),
         beschreibungHtml: p.content?.rendered ?? '',
         arbeitgeber: txt(s.arbeitgeber),
         ort: txt(s.ort),
@@ -1236,11 +1289,11 @@ function mapVWEvent(
 
   return {
     slug: ev.slug,
-    title: decodeEntities(ev.title),
+    title: ergaenzeOrtsname(decodeEntities(ev.title)),
     startDate,
     endDate: endDate && !Number.isNaN(endDate.valueOf()) ? endDate : undefined,
-    location: ev.location?.name || ev.location?.address || '',
-    teaser: stripHtml(ev.description_html).trim().slice(0, 180),
+    location: ergaenzeOrtsname(ev.location?.name || ev.location?.address || ''),
+    teaser: ergaenzeOrtsname(stripHtml(ev.description_html).trim().slice(0, 180)),
     featured: false,
     image: ev.image?.url,
     // Interne Detailseite (gleicher Pfad wie das Original-Permalink)
@@ -1577,14 +1630,15 @@ async function ladeGremien(): Promise<Gremium[]> {
     const mitglieder = personen
       .filter((p) => (p.gremien ?? []).includes(t.id))
       .map((p) => ({
-        name: decodeEntities(p.title.rendered),
+        name: ergaenzeOrtsname(decodeEntities(p.title.rendered)),
         rollen: (p.gremien ?? [])
           .filter((g) => g !== t.id && ROLLEN_SLUGS.has(termById.get(g)?.slug ?? ''))
           .map((g) => termById.get(g)!.name),
       }))
       .sort((a, b) => nachname(a.name).localeCompare(nachname(b.name), 'de'));
 
-    if (mitglieder.length > 0) out.push({ id: t.id, name: t.name, slug: t.slug, mitglieder });
+    if (mitglieder.length > 0)
+      out.push({ id: t.id, name: ergaenzeOrtsname(t.name), slug: t.slug, mitglieder });
   }
 
   /* Reihenfolge wie im Backend gepflegt: Verbandsversammlung zuerst, dann die
@@ -1701,7 +1755,7 @@ async function holeKategorieBeitraege(slug: string, anzahl: number): Promise<Kat
       excerpt?: { rendered: string };
     }>;
     return roh.map((b) => ({
-      titel: decodeEntities(stripHtml(b.title.rendered).trim()),
+      titel: ergaenzeOrtsname(decodeEntities(stripHtml(b.title.rendered).trim())),
       pfad: `/neuigkeiten/${entschaerfeSlug(b.slug)}`,
       datum: b.date?.slice(0, 10) ?? '',
       auszug: decodeEntities(stripHtml(b.excerpt?.rendered ?? '').trim()).slice(0, 180),
@@ -1988,7 +2042,7 @@ async function holeAusschreibungen(): Promise<Vergabeverfahren[]> {
       excerpt?: { rendered?: string };
     }>;
     return rohe.map((r) => ({
-      titel: decodeEntities(r.title?.rendered ?? '').trim(),
+      titel: ergaenzeOrtsname(decodeEntities(r.title?.rendered ?? '').trim()),
       datum: r.date,
       textHtml: (r.content?.rendered ?? r.excerpt?.rendered ?? '').trim(),
     })).filter((v) => v.titel);
