@@ -15,6 +15,7 @@ const fmtYear  = new Intl.DateTimeFormat('de-DE', { year: 'numeric' });
 const fmtWeek  = new Intl.DateTimeFormat('de-DE', { weekday: 'short' });
 const fmtTime  = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
 const fmtMonthYear = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' });
+const fmtDayMonth = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long' });
 
 // Für Filter: alle vorkommenden Ortsteile sammeln
 const ortsteile = Array.from(new Set(events.map((e) => e.ortsteil).filter(Boolean))) as string[];
@@ -35,6 +36,10 @@ type Enriched = typeof events[number] & {
   isoDate: string;  // YYYY-MM-DD
   weekday: string;
   time: string;
+  /** „Sa, 28. November · 15:00 Uhr“, mehrtägig mit „bis 30. November“ */
+  when: string;
+  /** Veranstaltungsort, sonst der Ortsteil */
+  place: string;
 };
 const enriched: Enriched[] = events.map((e) => {
   const isPast = (e.endDate ?? e.startDate).valueOf() < startOfToday.valueOf();
@@ -51,6 +56,12 @@ const enriched: Enriched[] = events.map((e) => {
     weekday: fmtWeek.format(e.startDate),
     // Ganztaegige Termine: keine Uhrzeit — sonst stuende dort 00:00 Uhr.
     time: e.allDay ? '' : fmtTime.format(e.startDate),
+    when: [
+      `${fmtWeek.format(e.startDate).replace('.', '')}, ${fmtDayMonth.format(e.startDate)}` +
+        (e.endDate && e.endDate.toDateString() !== e.startDate.toDateString() ? ` bis ${fmtDayMonth.format(e.endDate)}` : ''),
+      e.allDay ? '' : `${fmtTime.format(e.startDate)} Uhr`,
+    ].filter(Boolean).join(' · '),
+    place: e.location || (e.ortsteil ? ortsteilLabel(e.ortsteil) : ''),
   };
 });
 
@@ -132,40 +143,46 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
         </div>
       </div>
 
-      {/* Card-View (default) */}
-      {/* Die Kartentitel sind h3, ohne dass eine h2 dazwischenliegt. Für
-          Screenreader-Nutzer wirkt das wie ein übersprungener Abschnitt.
-          Die Monatsansicht hat solche Zwischenüberschriften bereits sichtbar;
-          hier trägt sie nur die Vorlesesoftware. */}
+      {/* Card-View (default): Kacheln zeilenweise je Monat. Vorher liefen sie als
+          Spalten von oben nach unten (CSS-columns); von links nach rechts gelesen
+          sprang das Datum dadurch vom November in den Dezember und Januar. */}
+      {/* Die h2 trägt nur die Vorlesesoftware; darunter sind die Monate h3 und
+          die Kartentitel h4. */}
       <h2 class="grh-visually-hidden">Veranstaltungen als Kacheln</h2>
       <div class="grh-ev-cards" data-grh-ev-pane="cards">
-        {enriched.map((e) => (
-          <a
-            class="grh-ev-card grh-ev-item"
-            href={`/veranstaltungen/${e.slug}`}
-            data-grh-ev-item
-            data-past={e.isPast ? '1' : '0'}
-            data-ortsteil={e.ortsteil ?? ''}
-            data-search={`${e.title} ${e.location ?? ''} ${e.teaser ?? ''}`.toLowerCase()}
-            data-month={e.monthKey}
-          >
-            <div class="grh-ev-card__media">
-              {e.image
-                ? <img src={e.image} alt="" loading="lazy" />
-                : <div class="grh-ev-card__placeholder" aria-hidden="true">
-                    <span class="grh-ev-card__ph-day">{fmtDay.format(e.startDate)}</span>
-                    <span class="grh-ev-card__ph-mon">{fmtMon.format(e.startDate).replace('.', '')}</span>
+        {months.map((m) => (
+          <section class="grh-ev-cards__month" data-grh-ev-group>
+            <h3 class="grh-ev-cards__month-title">{m.label}</h3>
+            <div class="grh-ev-cards__grid">
+              {m.events.map((e) => (
+                <a
+                  class="grh-ev-card grh-ev-item"
+                  href={`/veranstaltungen/${e.slug}`}
+                  data-grh-ev-item
+                  data-past={e.isPast ? '1' : '0'}
+                  data-ortsteil={e.ortsteil ?? ''}
+                  data-search={`${e.title} ${e.location ?? ''} ${e.teaser ?? ''}`.toLowerCase()}
+                  data-month={e.monthKey}
+                >
+                  <div class:list={['grh-ev-card__media', { 'is-empty': !e.image }]}>
+                    {e.image && <img src={e.image} alt="" loading="lazy" />}
+                    <div class="grh-ev-card__sheet" aria-hidden="true">
+                      <span class="grh-ev-card__sheet-day">{e.startDate.getDate()}</span>
+                      <span class="grh-ev-card__sheet-mon">{fmtMon.format(e.startDate).replace('.', '')}</span>
+                    </div>
+                    {e.isPast && <span class="grh-ev-card__past-badge">Vergangen</span>}
                   </div>
-              }
-              {e.isPast && <span class="grh-ev-card__past-badge">Vergangen</span>}
+                  <div class="grh-ev-card__body">
+                    <h4 class="grh-ev-card__title">{e.title}</h4>
+                    <p class="grh-ev-card__meta">
+                      <span class="grh-ev-card__when">{e.when}</span>
+                      {e.place && <span class="grh-ev-card__place">{e.place}</span>}
+                    </p>
+                  </div>
+                </a>
+              ))}
             </div>
-            <div class="grh-ev-card__body">
-              <span class="grh-ev-card__eyebrow">{e.location || (e.ortsteil ? ortsteilLabel(e.ortsteil) : 'Termin')}</span>
-              <h3 class="grh-ev-card__title">{e.title}</h3>
-              <p class="grh-ev-card__meta">{fmtDate.format(e.startDate)}{e.time && <> · {e.time} Uhr</>}</p>
-              {e.teaser && <p class="grh-ev-card__teaser">{e.teaser}</p>}
-            </div>
-          </a>
+          </section>
         ))}
         <p class="grh-ev-empty" data-grh-ev-empty hidden>Keine Veranstaltung entspricht den aktuellen Filtern.</p>
       </div>
@@ -369,49 +386,83 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
     color: var(--grh-cream-50);
   }
 
-  /* === Karten-Ansicht (Masonry via CSS-columns) ========================= */
+  /* === Karten-Ansicht: Reihen je Monat =================================== */
+  /* Die Kacheln stehen in Zeilen und lesen sich von links nach rechts in der
+     Reihenfolge der Termine. Höchstens drei Spalten, darunter so viele, wie
+     mit mindestens 17rem Breite passen. */
   .grh-ev-cards {
-    column-count: 1;
-    column-gap: var(--grh-space-5);
+    --grh-ev-density: 1.05;
+    --grh-ev-gap: calc(var(--grh-space-5) * var(--grh-ev-density));
   }
-  @media (min-width: 720px)  { .grh-ev-cards { column-count: 2; } }
-  @media (min-width: 1100px) { .grh-ev-cards { column-count: 3; } }
+  .grh-ev-cards__month { margin-bottom: calc(var(--grh-space-8) * var(--grh-ev-density)); }
+  .grh-ev-cards__month[hidden] { display: none; }
+  .grh-ev-cards__month-title {
+    margin: 0 0 var(--grh-ev-gap);
+    padding-bottom: var(--grh-space-3);
+    border-bottom: 1px solid var(--grh-line);
+    font-family: var(--grh-font-display);
+    font-size: var(--grh-fs-2xl);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--grh-forest-900);
+  }
+  .grh-ev-cards__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, max(17rem, calc((100% - 2 * var(--grh-ev-gap)) / 3))), 1fr));
+    gap: var(--grh-ev-gap);
+  }
   .grh-ev-card {
-    display: inline-block; /* für column-flow, verhält sich wie block */
-    width: 100%;
-    margin-bottom: var(--grh-space-5);
-    break-inside: avoid;
-    page-break-inside: avoid;
-    contain: layout paint;
+    display: flex;
+    flex-direction: column;
     text-decoration: none;
     color: inherit;
     background: var(--grh-cream-50);
     border: 1px solid var(--grh-line);
     border-radius: var(--grh-radius-md);
     overflow: hidden;
-    transition: transform var(--grh-dur-base) var(--grh-ease-out), box-shadow var(--grh-dur-base), border-color var(--grh-dur-base);
+    transition: box-shadow var(--grh-dur-base), border-color var(--grh-dur-base);
   }
   .grh-ev-card:hover {
     box-shadow: var(--grh-shadow-md);
     border-color: var(--grh-forest-700);
   }
   .grh-ev-card[data-past="1"] { opacity: 0.7; }
+  /* Einheitliche Bildfläche: Plakate erscheinen ganz, nicht beschnitten. */
   .grh-ev-card__media {
     position: relative;
+    aspect-ratio: 4 / 3;
     background: var(--grh-paper-100);
+    overflow: hidden;
   }
-  .grh-ev-card__media img { width: 100%; height: auto; display: block; }
-  .grh-ev-card__placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    aspect-ratio: 3 / 2;
-    background: linear-gradient(160deg, var(--grh-sage-100), var(--grh-paper-100));
+  .grh-ev-card__media img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  /* Kalenderblatt: klein auf dem Bild, groß, wenn es kein Bild gibt. */
+  .grh-ev-card__sheet {
+    position: absolute; left: 12px; top: 12px;
+    display: grid; justify-items: center;
+    min-width: 3.25rem; padding: 7px 8px 8px;
+    background: var(--grh-cream-50);
+    border-radius: var(--grh-radius-sm);
+    box-shadow: 0 3px 10px -3px rgba(20, 43, 31, 0.4);
+    line-height: 1;
+  }
+  .grh-ev-card__sheet-day {
     font-family: var(--grh-font-display);
+    font-size: 1.5rem; font-weight: 600; font-variant-numeric: lining-nums;
+    color: var(--grh-forest-900);
   }
-  .grh-ev-card__ph-day { font-size: 44px; line-height: 1; color: var(--grh-forest-900); }
-  .grh-ev-card__ph-mon { font-size: 14px; text-transform: uppercase; letter-spacing: 0.22em; color: var(--grh-moss-600); }
+  .grh-ev-card__sheet-mon {
+    margin-top: 4px;
+    font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--grh-moss-600);
+  }
+  .grh-ev-card__media.is-empty {
+    display: grid; place-items: center;
+    background: linear-gradient(160deg, var(--grh-sage-100), var(--grh-paper-100));
+  }
+  .grh-ev-card__media.is-empty .grh-ev-card__sheet { position: static; min-width: 0; padding: 0; background: none; box-shadow: none; }
+  .grh-ev-card__media.is-empty .grh-ev-card__sheet-day { font-size: 3.25rem; font-weight: 500; }
+  .grh-ev-card__media.is-empty .grh-ev-card__sheet-mon { margin-top: 8px; font-size: 0.8125rem; letter-spacing: 0.22em; }
   .grh-ev-card__past-badge {
     position: absolute; top: 10px; right: 10px;
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700;
@@ -419,23 +470,23 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
     background: rgba(20, 43, 31, 0.75); color: var(--grh-cream-50);
     backdrop-filter: blur(6px);
   }
-  .grh-ev-card__body { padding: var(--grh-space-4); display: flex; flex-direction: column; gap: 6px; }
-  .grh-ev-card__eyebrow {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 700; color: var(--grh-moss-600);
+  .grh-ev-card__body {
+    display: flex; flex-direction: column; gap: 8px; flex: 1;
+    padding: calc(var(--grh-space-4) * var(--grh-ev-density));
   }
   .grh-ev-card__title {
+    margin: 0;
     font-family: var(--grh-font-display);
     font-size: var(--grh-fs-lg);
+    font-weight: 500;
     line-height: 1.2;
-    color: var(--grh-forest-900);
-    margin: 0;
     letter-spacing: -0.01em;
-  }
-  .grh-ev-card__meta { font-size: 13px; color: var(--grh-stone-700); margin: 0; }
-  .grh-ev-card__teaser {
-    font-size: 13px; line-height: 1.5; color: var(--grh-stone-700); margin: 4px 0 0;
+    color: var(--grh-forest-900);
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
   }
+  .grh-ev-card__meta { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--grh-stone-700); }
+  .grh-ev-card__when { display: block; font-weight: 600; color: var(--grh-forest-900); font-variant-numeric: tabular-nums; }
+  .grh-ev-card__place { display: block; }
 
   /* === Listen-Ansicht =================================================== */
   .grh-ev-list {
@@ -562,6 +613,7 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
     const filterButtons = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-filter]'));
     const monthBtns = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-month-btn]'));
     const monthPanes = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-month-pane]'));
+    const cardGroups = Array.from(document.querySelectorAll<HTMLElement>('[data-grh-ev-group]'));
 
     const state = {
       view: 'cards' as 'cards' | 'list' | 'month',
@@ -599,6 +651,11 @@ const defaultMonthKey = months.find((m) => m.key >= currentMonthKey)?.key ?? mon
             perMonthCount[month] = (perMonthCount[month] || 0) + 1;
           }
         }
+      }
+
+      // Kartenansicht: Monatsabschnitte ohne sichtbaren Termin samt Überschrift ausblenden
+      for (const group of cardGroups) {
+        group.hidden = !group.querySelector('[data-grh-ev-item]:not([data-hidden="1"])');
       }
 
       // Monats-Pillen und -Panes ausblenden, wenn sie durch aktuelle Filter leer sind
