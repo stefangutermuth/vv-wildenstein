@@ -928,11 +928,18 @@ const CPT_SOURCES: Array<{
   restBase: string;
   pathPrefix: string;
   crumb: { title: string; path: string };
+  /** Beitragsbild nur für die Kachel der Übersicht, nicht groß über dem Text. */
+  ohneKopfbild?: boolean;
 }> = [
   { restBase: 'amter',     pathPrefix: 'amter',     crumb: { title: 'Verwaltung',       path: '/verwaltung' } },
   { restBase: 'tourismus', pathPrefix: 'tourismus', crumb: { title: 'Tourismus',        path: '/tourismus_uebersicht' } },
   { restBase: 'verein',    pathPrefix: 'verein',    crumb: { title: 'Leben & Freizeit', path: '/leben-freizeit' } },
   { restBase: 'profile',   pathPrefix: 'profile',   crumb: { title: 'Wirtschaft',       path: '/wirtschaft' } },
+  /* Projekte waren bis November 2026 Unterseiten von /projekte. Seit dem
+     Inhaltstyp „projekt" (mu-Plugin vv-projekte.php) kommen sie von hier, unter
+     denselben Adressen. Das Beitragsbild steht bei ihnen meist schon im Text
+     (Plakat, Logo): als Kopfbild darüber wäre es doppelt. */
+  { restBase: 'projekte',  pathPrefix: 'projekte',  crumb: { title: 'Projekte',         path: '/projekte' }, ohneKopfbild: true },
 ];
 
 /**
@@ -985,8 +992,8 @@ async function ladeCptPages(): Promise<WPPageItem[]> {
           breadcrumb: [src.crumb],
           kontakt: kontakt && Object.keys(kontakt).length ? kontakt : undefined,
           gallery: Array.isArray(p.vv_gallery) && p.vv_gallery.length ? p.vv_gallery : undefined,
-          image: cptImage(p),
-          imageBreit: cptImageIstBreit(p),
+          image: src.ohneKopfbild ? undefined : cptImage(p),
+          imageBreit: src.ohneKopfbild ? undefined : cptImageIstBreit(p),
         });
       }
       if (raw.length < 100) break;
@@ -1004,7 +1011,7 @@ export interface HubTile {
   title: string;
   href: string;
   image?: string;
-  /** Tourismus-Kategorien (tourismus_kat-Slugs) — nur bei Tourismus-Einträgen */
+  /** Kategorie-Kürzel (tourismus_kat, profilkategorie, projektkategorie) */
   kats?: string[];
   /** Anzeigenamen der Kategorien (z. B. „Handwerk") — für gruppierte Listen */
   katNamen?: string[];
@@ -1111,16 +1118,19 @@ export interface HubSources {
   amter: HubTile[];
   profile: HubTile[];
   tourismus: HubTile[];
+  /** Inhaltstyp „projekt", neueste zuerst; `katNamen` aus den Projektkategorien */
+  projekte: HubTile[];
 }
 
 /** Einmal pro Build alle CPT-Kachelquellen für die Hub-Seiten laden. */
 export async function fetchHubSources(): Promise<HubSources> {
-  const [amter, profile, tourismus] = await Promise.all([
+  const [amter, profile, tourismus, projekte] = await Promise.all([
     fetchCptTiles('amter', 'amter'),
     fetchCptTiles('profile', 'profile', 'profilkategorie'),
     fetchCptTiles('tourismus', 'tourismus', 'tourismus_kat'),
+    fetchCptTiles('projekte', 'projekte', 'projektkategorie'),
   ]);
-  return { amter, profile, tourismus };
+  return { amter, profile, tourismus, projekte };
 }
 
 /* ----------------------------------------------------------------

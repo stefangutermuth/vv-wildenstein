@@ -66,6 +66,8 @@ export async function getStaticPaths() {
     // CPT-Index-Hubs
     if (p === '/verwaltung') return hub.amter;
     if (p === '/wirtschaft') return hub.profile;
+    // Projekte sind seit November 2026 ein eigener Inhaltstyp, keine Unterseiten mehr
+    if (p === '/projekte') return hub.projekte;
     // Sektions-Hubs → echte WP-Kind-Seiten als Kacheln (nach Titel dedupliziert)
     const kids = childrenByParent.get(pg.id) ?? [];
     const seen = new Set<string>();
@@ -273,6 +275,25 @@ const kopfBild = (() => {
 const istWirtschaft = page.path === '/wirtschaft';
 const istVerwaltung = page.path === '/verwaltung';
 
+/* Projekte nach Projektkategorie gliedern, sobald der Verband Kategorien
+   vergeben hat. Ein Projekt mit zwei Kategorien steht in beiden Abschnitten,
+   Projekte ohne Kategorie am Ende. Solange keine Kategorie vergeben ist, bleibt
+   es bei einem Gitter ohne Zwischenüberschriften. */
+const projektGruppen = (() => {
+  if (page.path !== '/projekte') return [];
+  const namen = [...new Set(hubTiles.flatMap((t: HubTile) => t.katNamen ?? []))].sort((a, b) =>
+    a.localeCompare(b, 'de'),
+  );
+  if (namen.length === 0) return [];
+  const gruppen = namen.map((name) => ({
+    name,
+    tiles: hubTiles.filter((t: HubTile) => t.katNamen?.includes(name)),
+  }));
+  const ohne = hubTiles.filter((t: HubTile) => !t.katNamen?.length);
+  if (ohne.length > 0) gruppen.push({ name: 'Weitere Projekte', tiles: ohne });
+  return gruppen;
+})();
+
 /* Die Ausschreibungsseite ist eine Liste von Foerderbescheiden, kam aus dem
    Baukasten aber als ein einziger Textblock: neun Bewilligungen ohne
    Gliederung, die Betraege im Satz versteckt, fuenf Logos ohne
@@ -397,7 +418,9 @@ const parentTitle = page.breadcrumb.length ? page.breadcrumb[page.breadcrumb.len
               ? <VvAemterListe tiles={restKacheln} />
               : istWirtschaft
                 ? <VvGewerbeListe tiles={restKacheln} />
-                : <VvHubGrid tiles={restKacheln} icon={tileIcon} titel={istVersammlung ? 'Bekanntmachungen' : undefined} />
+                : projektGruppen.length > 0
+                  ? projektGruppen.map((g) => <VvHubGrid tiles={g.tiles} icon={tileIcon} titel={g.name} />)
+                  : <VvHubGrid tiles={restKacheln} icon={tileIcon} titel={istVersammlung ? 'Bekanntmachungen' : undefined} />
           )}
           {foerderUebersicht ? (
             <VvFoerderListe uebersicht={foerderUebersicht} vergaben={vergaben} />
