@@ -5,7 +5,10 @@
  *              Börnichen …) an, sobald auf vv-wildenstein.com ein Beitrag oder
  *              Termin angelegt, geändert oder gelöscht wird.
  * Author:      GUMU
- * Version:     1.2.0
+ * Version:     1.2.1
+ *
+ * 1.2.1 — Inhaltstyp „projekt“ und seine Kategorien lösen einen Neubau aus
+ *         (Projekte sind seit 16.11.2026 keine Seiten mehr).
  *
  * INSTALLATION (auf vv-wildenstein.com):
  *   1. Diese Datei nach  wp-content/mu-plugins/vv-deploy-webhook.php  kopieren.
@@ -72,6 +75,7 @@ function vv_deploy_is_relevant_post_type( $post_type ) {
 		'personen',            // Gremien, Verbandsversammlung
 		'vvw_stelle',          // Stellenanzeigen (rest_base: stellenanzeigen)
 		'vvw_room',            // Raumvermietung
+		'projekt',             // Projekte: /projekte und /projekte/<slug> (rest_base: projekte)
 	);
 	if ( in_array( $post_type, $relevant, true ) ) {
 		return true;
@@ -134,7 +138,7 @@ add_filter( 'wp_save_image_editor_file', function ( $override, $filename, $image
  */
 foreach ( array( 'created_term', 'edited_term', 'delete_term' ) as $vv_hook ) {
 	add_action( $vv_hook, function ( $term_id, $tt_id, $taxonomy ) use ( $vv_hook ) {
-		$relevant = array( 'profilkategorie', 'gemeindeteil', 'tourismus_kat', 'category', 'gremien', 'downloadkategorie', 'vw_event_category', 'vw_standort', 'vvw_stelle_ort', 'vvw_stelle_art' );
+		$relevant = array( 'profilkategorie', 'gemeindeteil', 'tourismus_kat', 'category', 'gremien', 'downloadkategorie', 'vw_event_category', 'vw_standort', 'vvw_stelle_ort', 'vvw_stelle_art', 'projektkategorie' );
 		if ( in_array( $taxonomy, $relevant, true ) ) {
 			vv_deploy_trigger( "term:{$vv_hook}:{$taxonomy}#{$term_id}" );
 		}
