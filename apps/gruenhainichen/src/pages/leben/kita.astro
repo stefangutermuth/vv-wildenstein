@@ -133,7 +133,15 @@ const einrichtungen = kitas.map((k) => {
  *  Bislang stand hier nur der Hinweis, sie „in den Einrichtungen oder über die
  *  Gemeindeverwaltung" zu erhalten; auf vv-wildenstein.com lagen sie längst
  *  zum Herunterladen bereit. */
-const formulare = await getDownloadListe('kita-formulare');
+const downloads = await getDownloadListe('kita-formulare');
+
+/** Die Schließtage stehen in WordPress in derselben Liste wie die Formulare
+ *  (Seite „Formulare der Kindertageseinrichtungen“, Gruppe „Schließtage …“).
+ *  Hier bekommen sie einen eigenen Abschnitt vor den Formularen: Eltern suchen
+ *  sie öfter als einen Vertrag. Neues Jahr = neues Paket in dieser Gruppe. */
+const istSchliesstage = (titel: string) => /^schlie(ß|ss)tage/i.test(titel.trim());
+const schliesstage = downloads.filter((g) => istSchliesstage(g.titel)).flatMap((g) => g.dateien);
+const formulare = downloads.filter((g) => !istSchliesstage(g.titel));
 
 function kb(bytes: number): string {
   if (!bytes) return '';
@@ -200,6 +208,35 @@ function kb(bytes: number): string {
       </div>
     </div>
   </section>
+
+  {schliesstage.length > 0 && (
+    <section class="grh-kita-dl grh-kita-dl--tage" id="schliesstage">
+      <div class="grh-container">
+        <h2 class="grh-kita-dl__title">Schließtage</h2>
+        <p class="grh-kita-dl__lead">
+          An diesen Tagen bleiben die Kindertageseinrichtungen der Gemeinde
+          Grünhainichen geschlossen. Die Übersicht gibt es für jedes Jahr zum
+          Herunterladen.
+        </p>
+        <div class="grh-kita-dl__group">
+          <ul>
+            {schliesstage.map((d) => (
+              <li>
+                <a href={d.url} class="grh-kita-dl__file">
+                  <span class="grh-kita-dl__ext" aria-hidden="true">{d.typ}</span>
+                  <span class="grh-kita-dl__name">{d.titel}</span>
+                  <span class="grh-kita-dl__meta">
+                    {kb(d.groesse)}
+                    {d.stand && <> · Stand {d.stand.split('-').reverse().join('.')}</>}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )}
 
   {formulare.length > 0 && (
     <section class="grh-kita-dl" id="formulare">
@@ -457,6 +494,9 @@ function kb(bytes: number): string {
     background: var(--grh-paper-100);
     border-top: 1px solid var(--grh-line);
   }
+  /* Schließtage und Formulare folgen direkt aufeinander: ein Abstand weniger. */
+  .grh-kita-dl--tage { padding-bottom: var(--grh-space-7); }
+  .grh-kita-dl--tage .grh-kita-dl__lead { margin-bottom: var(--grh-space-5); }
   .grh-kita-dl__title {
     font-family: var(--grh-font-display);
     font-size: clamp(1.5rem, 3vw, 2.1rem);
