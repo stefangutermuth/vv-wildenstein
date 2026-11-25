@@ -63,7 +63,27 @@ const ortsteilSpread = ortsteile.map((o, i) => ({
 }));
 
 const season = getCurrentSeason();
-const showAdventSection = season === 'advent';
+
+/* Adventskalender und Winterbilder richten sich nach dem Kalender, nicht nach
+   der Jahreszeit aus seasons.ts. Dort beginnt „advent" erst am 1. Dezember
+   und reicht bis Ende Januar; die Verwaltung wollte den Hinweis aber schon
+   in der Woche vor dem ersten Türchen sehen (Mail vom 25.11.2026), und nach
+   Heiligabend ist der Kalender vorbei.
+   Die Seite wird jeden Morgen neu gebaut, die Fenster schalten sich also von
+   selbst ein und aus. */
+const heute = new Date();
+const imFenster = (vonMonat: number, vonTag: number, bisMonat: number, bisTag: number) => {
+  const m = heute.getMonth() + 1;
+  const t = heute.getDate();
+  const nachBeginn = m > vonMonat || (m === vonMonat && t >= vonTag);
+  const vorEnde = m < bisMonat || (m === bisMonat && t <= bisTag);
+  // Fenster über den Jahreswechsel (z. B. 20.11. bis 28.02.)
+  return vonMonat <= bisMonat ? nachBeginn && vorEnde : nachBeginn || vorEnde;
+};
+/** 20. November bis Heiligabend */
+const showAdventSection = imFenster(11, 20, 12, 24);
+/** 20. November bis Ende Februar */
+const zeigeWinterbilder = imFenster(11, 20, 2, 29);
 
 // Blickfang: der nächste Termin mit der WordPress-Kategorie „Highlight“ (führt auf
 // seine eigene Seite mit Programm und Karte), sonst im Advent der Adventskalender.
@@ -72,7 +92,10 @@ const highlightTeilnehmer = highlight
   ? (await buildTeilnehmerProgramm(highlight.descriptionHtml ?? '')).markers.reduce((n, m) => n + m.namen.length, 0)
   : 0;
 
-const featured = highlight
+/* Im Adventsfenster steht der Adventskalender im Kasten, auch wenn ein
+   Termin als „Highlight" markiert ist — die Verwaltung nennt ihn „ganz
+   wichtig". Sonst wie bisher: erst das Highlight, dann nichts. */
+const featured = highlight && !showAdventSection
   ? {
       eyebrow: zeitraum(highlight),
       title: kurzTitel(highlight.title),
@@ -87,21 +110,22 @@ const featured = highlight
       eyebrow: 'Advent',
       title: 'Lebendiger Adventskalender',
       subtitle: 'Jeden Abend ein neues Türchen: ein Lichtermeer aus Schwibbögen, Engeln und Bergmann.',
-      ctas: [{ label: 'Programm 2026', href: '/leben/lebendiger-adventskalender', variant: 'primary' as const }],
+      ctas: [{ label: `Programm ${heute.getFullYear()}`, href: '/leben/lebendiger-adventskalender', variant: 'primary' as const }],
     }
   : undefined;
 
-const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
----
-<BaseLayout
-  header="compact"
-  title="Gemeinde Grünhainichen · Borstendorf · Waldkirchen im Erzgebirge"
-  description="Offizielle Website der Gemeinde Grünhainichen mit den Ortsteilen Borstendorf, Grünhainichen und Waldkirchen/Erzgeb. Heimat der Wendt-&-Kühn-Engel und des Schachwanderwegs."
->
-  <GrhHero
-    season={season}
-    featured={featured}
-    slides={[
+/* Bildleiste rechts im Helden. Winterbilder von der Verwaltung (WeTransfer
+   vom 25.11.2026, „Bilder Winter Grh."), im übrigen Jahr die bisherigen. */
+const winterSlides = [
+  { src: '/images/winter/freilandspieldose-winter.jpg', alt: 'Die Freilandspieldose von Wendt & Kühn im Schnee', caption: 'Freilandspieldose im Winter' },
+  { src: '/images/winter/kirche-borstendorf-winter.jpg', alt: 'Die Kirche Borstendorf im Schnee unter blauem Himmel', caption: 'Kirche Borstendorf' },
+  { src: '/images/winter/weihnachtsberg-borstendorf.jpg', alt: 'Holzkrippe mit Figuren am Weihnachtsberg in Borstendorf', caption: 'Weihnachtsberg Borstendorf' },
+  { src: '/images/winter/gemeinde-winter-luftbild.jpg', alt: 'Luftbild der verschneiten Gemeinde Grünhainichen', caption: 'Gemeinde Grünhainichen im Winter' },
+  { src: '/images/winter/kirche-waldkirchen-winter.jpg', alt: 'Die gelbe Kirche Waldkirchen inmitten verschneiter Häuser', caption: 'Kirche Waldkirchen' },
+  { src: '/images/winter/parochiekirche-waldkirchen-nacht.jpg', alt: 'Die beleuchtete Parochiekirche Waldkirchen bei Nacht im Schnee', caption: 'Parochiekirche Waldkirchen' },
+  { src: '/images/winter/winterlandschaft.jpg', alt: 'Verschneite Felder und Wälder im Erzgebirge', caption: 'Winterlandschaft' },
+];
+const sommerSlides = [
       {
         src: '/images/hero/floeha-antje-wolfeil.jpeg',
         alt: 'Die Flöha im Gemeindegebiet Grünhainichen',
@@ -129,7 +153,19 @@ const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-dig
         alt: 'Der Fuchsturm im Mai',
         caption: 'Fuchsturm',
       },
-    ]}
+];
+
+const fmtDate = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+---
+<BaseLayout
+  header="compact"
+  title="Gemeinde Grünhainichen · Borstendorf · Waldkirchen im Erzgebirge"
+  description="Offizielle Website der Gemeinde Grünhainichen mit den Ortsteilen Borstendorf, Grünhainichen und Waldkirchen/Erzgeb. Heimat der Wendt-&-Kühn-Engel und des Schachwanderwegs."
+>
+  <GrhHero
+    season={season}
+    featured={featured}
+    slides={zeigeWinterbilder ? winterSlides : sommerSlides}
   />
 
   {/* === Schnelleinstieg: zwei Karten direkt unter dem Hero =============== */}
