@@ -94,11 +94,17 @@ const highlights = [
   { label: 'Heiraten',      href: '/heiraten', image: '/images/highlights/heiraten.jpg' },
   { label: 'Amtsblatt',     href: '/amtsblatt', image: '/images/highlights/amtsblatt.jpg' },
 ];
+
+/* Vom 20. November bis Ende Februar ein Winterbild im Kopf der Seite
+   (Bilder der Gemeindeverwaltung Grünhainichen, WeTransfer 25.11.2026). */
+const heute = new Date();
+const monat = heute.getMonth() + 1;
+const winter = (monat === 11 && heute.getDate() >= 20) || monat === 12 || monat <= 2;
 ---
 <BaseLayout>
   <VvHero
-    image="/images/hero/verband-hero.jpg"
-    imageAlt="Landschaft im Verbandsgebiet Wildenstein"
+    image={winter ? '/images/hero/verband-hero-winter.jpg' : '/images/hero/verband-hero.jpg'}
+    imageAlt={winter ? 'Verschneites Grünhainichen im Winter, Luftbild' : 'Landschaft im Verbandsgebiet Wildenstein'}
     boxes={heroBoxes}
     chips={heroChips}
   />
