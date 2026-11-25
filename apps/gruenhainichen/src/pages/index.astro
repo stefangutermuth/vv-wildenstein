@@ -108,6 +108,9 @@ const featured = highlight && !showAdventSection
   : showAdventSection
   ? {
       eyebrow: 'Advent',
+      datum: '1. bis 24. Dezember',
+      variante: 'advent' as const,
+      bild: '/images/winter/advent-figuren.jpg',
       title: 'Lebendiger Adventskalender',
       subtitle: 'Jeden Abend ein neues Türchen: ein Lichtermeer aus Schwibbögen, Engeln und Bergmann.',
       ctas: [{ label: `Programm ${heute.getFullYear()}`, href: '/leben/lebendiger-adventskalender', variant: 'primary' as const }],

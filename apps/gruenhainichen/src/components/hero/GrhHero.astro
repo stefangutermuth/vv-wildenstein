@@ -21,6 +21,8 @@ interface Featured {
   logoAlt?: string;
   /** Vorschaubild statt Logo (eckig, randlos beschnitten) */
   bild?: string;
+  variante?: 'standard' | 'advent';
+  datum?: string;
 }
 interface Slide {
   src: string;
@@ -45,6 +47,9 @@ const {
   featured,
   slides = [],
 } = Astro.props;
+/* Die Adventskarte ist größer als der kleine Hinweis-Pin und steht deshalb
+   im Fluss unter den Schnellverweisen statt absolut am Fuß des Helden. */
+const istAdvent = featured?.variante === 'advent';
 ---
 <section class="grh-hero" data-grh-hero>
 
@@ -66,7 +71,7 @@ const {
 
   <div class="grh-hero__grid">
     {/* Linke Spalte: Forest-Wall mit Editorial-Typo */}
-    <div class="grh-hero__copy">
+    <div class:list={['grh-hero__copy', istAdvent && 'grh-hero__copy--mitkarte']}>
       <span class="grh-hero__pre grh-text-reveal">{preTitle}</span>
       <h1 class="grh-hero__title">
         <span class="grh-hero__line grh-text-reveal" style="transition-delay: 80ms;">{title}</span>
@@ -89,6 +94,19 @@ const {
         </a>
       </div>
 
+      {istAdvent && featured && (
+        <div class="grh-hero__karte grh-text-reveal" style="transition-delay: 640ms;">
+          <GrhFeaturedSlot
+            eyebrow={featured.eyebrow}
+            title={featured.title}
+            subtitle={featured.subtitle}
+            ctas={featured.ctas}
+            bild={featured.bild}
+            variante="advent"
+            datum={featured.datum}
+          />
+        </div>
+      )}
 
       <span class="grh-hero__sidetag" aria-hidden="true">09579 Grünhainichen · Sachsen / Erzgebirge</span>
 
@@ -173,7 +191,7 @@ const {
   </div>
 
   {/* FeaturedSlot — sitzt sauber im Hero, ohne Überhang */}
-  {featured && (
+  {featured && !istAdvent && (
     <div class="grh-hero__featured-wrap">
       <GrhFeaturedSlot
         eyebrow={featured.eyebrow}
@@ -719,6 +737,11 @@ const {
   }
   @media (min-width: 1280px) {
     .grh-hero__featured-wrap { width: 340px; }
+  }
+  /* Adventskarte in der Textspalte */
+  .grh-hero__karte { width: 100%; max-width: 440px; margin-top: var(--grh-space-3); }
+  @media (min-width: 980px) {
+    .grh-hero__copy--mitkarte { padding-bottom: calc(var(--grh-space-7) + 72px); }
   }
 </style>
 

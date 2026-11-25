@@ -11,12 +11,41 @@ interface Props {
   logoAlt?: string;
   /** Vorschaubild statt Logo (eckig, randlos beschnitten) */
   bild?: string;
+  /** 'advent': große Karte mit Illustration, nur in der Adventszeit */
+  variante?: 'standard' | 'advent';
+  /** Kurzangabe über dem Titel der Adventskarte, z. B. „1. bis 24. Dezember" */
+  datum?: string;
 }
-const { eyebrow, title, subtitle, ctas = [], logo, logoAlt = '', bild } = Astro.props;
+const { eyebrow, title, subtitle, ctas = [], logo, logoAlt = '', bild, variante = 'standard', datum } = Astro.props;
 
 // Reduce auf einen Primary-CTA — der Slot soll kein Buffet sein
 const primary = ctas[0];
 ---
+{variante === 'advent' ? (
+<a class="grh-advent grh-reveal" href={primary?.href ?? '#'}>
+  {bild && (
+    <span class="grh-advent__bild" aria-hidden="true">
+      <img src={bild} alt="" width="900" height="412" loading="eager" decoding="async" />
+      {[0, 1, 2, 3, 4, 5].map((i) => <span class="grh-advent__stern" style={`--i:${i}`}></span>)}
+    </span>
+  )}
+  <span class="grh-advent__body">
+    {(eyebrow || datum) && (
+      <span class="grh-advent__eyebrow">
+        {eyebrow}{eyebrow && datum && ' · '}{datum}
+      </span>
+    )}
+    <span class="grh-advent__title">{title}</span>
+    {subtitle && <span class="grh-advent__sub">{subtitle}</span>}
+    {primary && (
+      <span class="grh-advent__cta">
+        {primary.label}
+        <GrhIcon name="arrow-right" size={16} />
+      </span>
+    )}
+  </span>
+</a>
+) : (
 <a class="grh-pin grh-reveal" href={primary?.href ?? '#'} aria-label={`${eyebrow ?? ''} · ${title}`}>
   {bild ? (
     <span class="grh-pin__bild" aria-hidden="true">
@@ -36,8 +65,110 @@ const primary = ctas[0];
     <GrhIcon name="arrow-right" size={16} />
   </span>
 </a>
+)}
 
 <style>
+  /* === Adventskarte ====================================================
+     Hintergrund im Grün des Plakats, damit die Zeichnung randlos übergeht. */
+  .grh-advent {
+    --advent-gruen: #21542e;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: var(--advent-gruen);
+    border: 1px solid rgba(232, 182, 88, 0.55);
+    border-radius: 6px;
+    overflow: hidden;
+    color: var(--grh-cream-50);
+    text-decoration: none;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35), 0 0 0 4px rgba(232, 182, 88, 0.08);
+    transition: transform var(--grh-dur-base), box-shadow var(--grh-dur-base);
+  }
+  .grh-advent:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(232, 182, 88, 0.18);
+  }
+  .grh-advent__bild {
+    position: relative;
+    display: block;
+    padding: 18px 18px 0;
+    background:
+      radial-gradient(ellipse 60% 70% at 50% 40%, rgba(246, 221, 160, 0.22), transparent 70%),
+      var(--advent-gruen);
+  }
+  .grh-advent__bild img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform var(--grh-dur-base);
+  }
+  .grh-advent:hover .grh-advent__bild img { transform: scale(1.03); }
+
+  /* Kleine funkelnde Sterne über der Zeichnung */
+  .grh-advent__stern {
+    position: absolute;
+    width: 6px; height: 6px;
+    top: calc(8% + var(--i) * 3%);
+    left: calc(6% + var(--i) * 17%);
+    background: var(--grh-candle-300);
+    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    transform: scale(1.6);
+    opacity: 0.2;
+    animation: grh-advent-funkeln 3.2s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.55s);
+  }
+  .grh-advent__stern:nth-child(odd) { top: calc(20% + var(--i) * 2%); }
+  @keyframes grh-advent-funkeln {
+    0%, 100% { opacity: 0.15; transform: scale(1.2); }
+    50%      { opacity: 1;    transform: scale(2); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grh-advent__stern { animation: none; opacity: 0.6; }
+  }
+
+  .grh-advent__body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 22px 22px;
+    border-top: 1px solid rgba(232, 182, 88, 0.25);
+  }
+  .grh-advent__eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--grh-candle-500);
+    font-weight: 600;
+  }
+  .grh-advent__title {
+    font-family: var(--grh-font-display);
+    font-size: clamp(1.45rem, 1.2rem + 0.8vw, 1.8rem);
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: var(--grh-candle-300);
+  }
+  .grh-advent__sub {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: rgba(250, 247, 241, 0.86);
+  }
+  .grh-advent__cta {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: var(--grh-candle-500);
+    color: var(--grh-forest-950);
+    font-weight: 600;
+    font-size: 0.92rem;
+    transition: background var(--grh-dur-fast);
+  }
+  .grh-advent:hover .grh-advent__cta { background: var(--grh-candle-300); }
+
   .grh-pin {
     display: grid;
     grid-template-columns: auto 1fr auto;
