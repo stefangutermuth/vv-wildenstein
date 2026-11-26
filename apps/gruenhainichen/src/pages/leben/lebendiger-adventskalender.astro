@@ -3,10 +3,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 // Grafik des Heimatvereins ohne Jahreszahl (WordPress-Mediathek #48650)
 const grafik = 'https://vv-wildenstein.com/wp-content/uploads/2026/09/Lebendiger-Adventskalender.jpg';
-// Programm und Anmeldung pflegt der Grünhainichener Heimatverein; dieselben
-// Links wie auf vv-wildenstein.com.
+// Das Programm pflegt der Grünhainichener Heimatverein. Jedes Türchen steht
+// außerdem einzeln im Veranstaltungskalender (Wunsch der Verwaltung vom
+// 26.11.2026: Anmelde-Button weg, dafür Verweis auf den Online-Kalender).
 const HV_PROGRAMM = 'https://gruenhainichener-heimatverein.de/lebendiger_adventskalender/';
-const HV_ANMELDEN = 'https://gruenhainichener-heimatverein.de/neues-tuerchen-fuer-den-lebendigen-adventskalender/';
 ---
 <BaseLayout title="Lebendiger Adventskalender · Gemeinde Grünhainichen" header="compact">
 
@@ -26,7 +26,7 @@ const HV_ANMELDEN = 'https://gruenhainichener-heimatverein.de/neues-tuerchen-fue
         </p>
         <div class="grh-adv-links">
           <a class="grh-adv-btn" href={HV_PROGRAMM}>Programm beim Heimatverein</a>
-          <a class="grh-adv-btn grh-adv-btn--zwei" href={HV_ANMELDEN}>Türchen anmelden</a>
+          <a class="grh-adv-btn grh-adv-btn--zwei" href="/veranstaltungen">Alle Türchen im Online-Kalender</a>
         </div>
       </div>
       <figure class="grh-adv-poster">
